@@ -27,7 +27,7 @@ alias rule-6 "rule 6"
 alias surface "universal minimum"
 alias overflow "overflow rule"
 alias pm "PM — ideation & framing"
-alias brd "PM — the BRD-to-PRD route"
+alias brd "PM — the BRD-to-PRD route" "The landed condition"
 alias proposals "PM — effort proposals (optional, and they gate nothing on the build ladder)"
 alias pa "PA — architecture (optional)"
 alias pe "PE — breakdown & specification"
@@ -203,7 +203,7 @@ array carries every option.
 - `/product-workflows:create-prd <ADDRESS>`:
   `/docs-workflows:release-notes <PRD>` (PM — draft the release note; recommended clear next step); hand to PA
   *(optional)* → `/product-workflows:create-ard <PRD>`, which gates this PRD and so carries `<merge-clause>`; or hand to PE → `/product-workflows:epics <PRD>`, which gates this PRD and so carries `<merge-clause>` too (or `/product-workflows:specify <PRD>`, which gates it as well and so carries the clause).
-- `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD refresh. Its Phase 6 offers re-runs only for existing downstream artifacts, recommends those affected by the update, and skips the picker when none exist, without skipping terminal bookkeeping. Candidate routes are `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA), `/product-workflows:epics <PRD>` (PE), and `/product-workflows:update-spec <PRD>` (PE) — the revision of an existing specification, which `/product-workflows:specify` would rewrite from scratch. The architecture, Epics and specification routes each gate this PRD and so carry `<merge-clause>`; the release-note route gates nothing and carries none.
+- `/product-workflows:update-prd <KEY>` — re-entry, not a linear node: reached when `/product-workflows:create-prd` redirects an existing-PRD call, or when a later phase forces a PRD refresh. Its Phase 6 offers re-runs only for existing downstream artifacts, recommends those affected by the update, and skips the picker when none exist, without skipping terminal bookkeeping. Candidate routes are `/docs-workflows:release-notes <PRD>` (PM), `/product-workflows:create-ard <PRD>` (PA), `/product-workflows:epics <PRD>` (PE), and `/product-workflows:update-spec <PRD>` (PE) — the revision of an existing specification, which `/product-workflows:specify` would rewrite from scratch. The architecture, Epics and specification routes each gate this PRD and so carry `<merge-clause>`; the release-note route gates nothing and carries none. On a BRD-route slice — the feature folder carrying a `brd-link.md` — the architecture route is named as it stands, since `/product-workflows:update-prd` reads no slice's ledger for it, and is followed, once, by `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).` — which that command prints, citing `coverage-ledger-format.md` §5 in its own text, in this sentence's place: once beside the list and once in the question's own text.
 <!-- /part -->
 
 <!-- part: brd -->
@@ -221,10 +221,15 @@ array carries every option.
   (`/product-workflows:brd-package` Phase 0 owns that test); otherwise → another
   `/product-workflows:brd-interview <BRD-KEY>` round (PM), or `/product-workflows:prd-ground <BRD-KEY>` (PM)
   for a question no finding bears on yet. Where nothing is left for the customer to review, the slice is
-  decided and hands over from here, with no reconciliation: → `/product-workflows:create-ard <BRD-KEY>`
-  (PA, optional) or `/product-workflows:specify <BRD-KEY>` (PE), and `/product-workflows:create-prd <BRD-KEY>`
-  (PM) where the slice is PRD-eligible — the same conditions `/product-workflows:brd-reconcile`'s
-  advancing list applies (`/product-workflows:brd-interview`'s next-step phase owns that list).
+  decided and hands over from here, with no reconciliation: → `/product-workflows:create-prd <BRD-KEY>`
+  (PM), `/product-workflows:create-ard <BRD-KEY>` (PA, optional) and `/product-workflows:specify <BRD-KEY>`
+  (PE), on the conditions `/product-workflows:brd-reconcile`'s advancing list applies, stated in this
+  lane's `/product-workflows:brd-reconcile` bullet — all three where the slice passes its ledger
+  tests and *The landed condition* holds, save `/product-workflows:create-prd` where it holds on a
+  `prd.md` the slice holds. Here the slice's ledger tests
+  reduce to PRD-eligibility: `/product-workflows:brd-interview`'s own Phase 0 refuses a slice with a
+  row still `unallocated`, so the `covered-here` test is what its offer has left to read
+  (`/product-workflows:brd-interview`'s next-step phase owns that list).
 - `/product-workflows:brd-package <BRD-KEY>` → *(the customer reviews it off-platform, and the round
   holding each customer question stays open until the answer comes back, or the question stops
   applying)* →
@@ -253,17 +258,79 @@ array carries every option.
   only record a dependent's sweep, all three advance options are dropped: a `reopened` record may not
   be consumed downstream (`product-workflows:decision-register-format` §3) and all three consume the
   register, and a dependent recorded-not-written still reads a position the customer has since
-  settled. On an advancing slice run, `/product-workflows:create-prd <SLICE-KEY>` carries the further
-  condition that the reconciled ledger leaves no row `unallocated` and at least one `covered-here`
-  (`product-workflows:coverage-ledger-format` §5, the two refusals its Phase 0 raises); the other two
-  carry none of their own: neither reads the ledger as an authoring input, and although both now run the PRD gate on every
-  route, that gate's `absent` branch proceeds on a slice holding no `prd.md` — the ordinary state
-  for both, since `/product-workflows:create-prd` is a prerequisite for neither on a slice; a `prd.md`
-  the slice holds and never handed off — on an unmerged branch, or in the folder and on no ref —
-  stops both, as it does on the idea route, naming its landing, and the offering run, which reads no
-  `prd.md`, does not test for it. **That difference is where the conditions come from, and it matters:**
-  the level test and `/create-prd`'s eligibility test are each enforced by the offered command's own
-  Phase 0, so offering either wrongly hands over a run that stops;
+  settled. On an advancing slice run, each of the three carries two further conditions:
+  - **The slice's ledger tests, for all three** — the reconciled ledger leaves no row the slice's
+    `brd-link.md` `claims:` names `unallocated`, and at least one `covered-here`, read off the slice's
+    `coverage-ledger.md` as the offering run left it (`product-workflows:coverage-ledger-format` §5):
+    each of the three applies them in its own Phase 0, whatever the slice holds, and stops on a slice
+    that fails them (`CREATE_PRD_BRD_UNALLOCATED`, `CREATE_PRD_BRD_NOT_ELIGIBLE`,
+    `CREATE_ARD_BRD_UNALLOCATED`, `CREATE_ARD_BRD_NOT_ELIGIBLE`, `SPECIFY_BRD_UNALLOCATED`,
+    `SPECIFY_BRD_NOT_ELIGIBLE`). Where they fail, or cannot be read, all three are dropped, and the
+    offering command says why in its own words.
+  - ***The landed condition*, for all three** — the slice's `prd.md`, where one is written, is
+    landed. `/product-workflows:create-ard` and `/product-workflows:specify` each run the PRD gate on
+    every route (its Phase 0, *Gate the PRD*): on a slice that passed the tests and holds no
+    `prd.md` the gate's `absent` branch proceeds — the ordinary state for both, since
+    `/product-workflows:create-prd` is a prerequisite for neither on a slice — while a `prd.md` the
+    slice holds and never handed off, on an unmerged branch or in the folder and on no ref, stops
+    both, as it does on the idea route, naming its landing. `/product-workflows:create-prd`, which
+    writes that file and gates no copy of it, does not stop on one, but counts it as found and opens
+    on its existing-PRD question (`/product-workflows:create-prd` Phase 0 step 6, Phase 1 step 2),
+    whose recommended answer stops for `/product-workflows:update-prd`: named beside a landing that
+    says to land the file first, it would send the
+    operator the other way, so it is dropped with the two. The offering run writes no `prd.md` and
+    gates none, so before it names any of the three — and only on a slice that passed the tests,
+    since on any other all three are dropped already — it reads where that file stands. It
+    is a read and nothing more: the offering run runs no `require-on-main` on the file and gates
+    nothing on it. Where `$SPECS_PATH` is unset or empty, or names a specs tree that is no git
+    repository (`git -C "$SPECS_PATH" rev-parse --git-dir` fails), the slice folder's own file decides,
+    and the condition holds with or without a `prd.md` there: there is no ref to land it on, and on
+    `require-on-main`'s `unmanaged` each of the two's *Gate the PRD* goes on either way — where one
+    is there, `/product-workflows:create-prd` is left out as on `<default-ref>` (below). A slice
+    folder outside the work tree of the repository `$SPECS_PATH` stands in —
+    `git -C "<the slice folder>" rev-parse --show-toplevel`
+    failing, or printing other than `git -C "$SPECS_PATH" rev-parse --show-toplevel` prints — is read
+    as `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4's *The first missing document* reads
+    one — load `phase-handoff` whole for it (`Skill(skill: "workflows-core:reference", args: "phase-handoff")`),
+    as the case after it does — its own `prd.md` deciding: the condition holds —
+    `/product-workflows:create-prd` left out where that file is there, as on `<default-ref>` (below)
+    — and each command the offer names for that folder is followed, in the prose beside the list, by
+    that rule's sentence.
+    Otherwise load `phase-handoff` whole (`Skill(skill: "workflows-core:reference", args: "phase-handoff")`), which
+    the cases below apply, and test the ref first,
+    `git -C "$SPECS_PATH" rev-parse --verify --quiet "<default-ref>"`, `<default-ref>` being the ref
+    `workflows-core:specs-repo-git` §3.2 resolves for the default branch; then read the slice's
+    `prd.md` by its state, as `phase-handoff.md` §4.4's *The first missing document* reads a
+    document — with `phase-handoff.md` §3.2's read-only primitives and a look in the slice folder,
+    one that is nowhere being no gap on a slice that passed the tests. Then:
+    - **On the default branch, or nowhere** — on `<default-ref>`, or in no folder and on no ref — the
+      condition holds, and all three are named, save `/product-workflows:create-prd` where the file is
+      on `<default-ref>`, in whose place the offering run names `/product-workflows:update-prd <SLICE-KEY>`
+      in prose: that run counts the file as found and opens on its existing-PRD question, whose
+      recommended answer stops for `/product-workflows:update-prd`, as it does beside an unlanded one.
+    - **Not landed** — on a plugin branch and not on `<default-ref>` (`phase-handoff.md` §3.3's rows
+      D and E), or in the slice folder and on no ref (row F) — none of the three is named. In their
+      place the offering run prints
+      `<SLICE-KEY>'s prd.md is not on the specs repository's default branch yet, and /product-workflows:create-ard and /product-workflows:specify stop until it is — land it first:`,
+      `<SLICE-KEY>` being the key the offer names, then its landing as that rule names it: the file
+      with its path and state, then the commands `phase-handoff.md` §4.4 gives its row — row F's in
+      the form its HEAD test selects, a `<new-branch>` among them named as row F names it, under
+      `prd/`; rows D and E's with the branch and pull request found as `phase-handoff.md` §3.5 finds
+      them — each on a line of its own with no `#` comment and `$SPECS_PATH` substituted, then, in
+      prose, the pull request to open and merge, or the open one to merge. The offering command says
+      in its own words why `/product-workflows:create-prd` is left out beside them.
+    - **`<default-ref>` does not exist** (`phase-handoff.md` §3.3's row G) → §4.4's *The first missing
+      document* reads nothing: none of the three is named, and in their place the offering run says
+      that the specs repository's default branch could not be read and names row G's commands, as
+      that rule says.
+
+  **Where each condition is enforced is why the offer carries it, and it matters:** the level test,
+  the slice's ledger tests and *The landed condition* are each met in the offered commands' own runs
+  before they author — the first two in all three's Phase 0s, the last by `/create-ard`'s and
+  `/specify`'s *Gate the PRD* and by `/create-prd`'s existing-PRD question (its Phase 1 step 2, on a
+  file its Phase 0 step 6 counts as found) — so offering any of them wrongly hands over a run
+  that stops, or, for `/create-prd`, one that asks to refresh a PRD the offer has just said to land,
+  or one the slice already holds on the default branch;
   the advance/re-entry split is enforced **nowhere downstream** — `/create-ard` on the BRD route and
   `/specify` on the BRD route treat an `open` or `reopened` record as an open question to record rather
   than as a stop — so the station that offers them must make it: `/product-workflows:brd-reconcile` for a slice the customer reviewed, and `/product-workflows:brd-interview`, whose `nothing-to-review` state keeps a reopened record's list apart from the one that offers the three, for a slice that needs no review. **All
@@ -283,7 +350,12 @@ array carries every option.
   proposal. And, below tier 4, **the command that would raise the tier** —
   `/product-workflows:create-ard <KEY>` at tier 2, `/product-workflows:specify <KEY>` at tier 3 — named
   together with the plain statement that re-running the proposal afterwards narrows the range. Neither
-  of those two carries a clause: both gate on `prd.md`, which a proposal run does not write.
+  of those two carries a clause: both gate on `prd.md`, which a proposal run does not write. On a
+  BRD-route slice — the folder carrying a `brd-link.md` — the one named is named as it stands, since
+  `/product-workflows:prd-proposal` names it on the tier alone and reads no slice's ledger for it, and
+  is followed, once, by `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
+  — which that command prints citing `coverage-ledger-format.md` §5 in its own text, once and in
+  this sentence's place.
 - `/product-workflows:brd-proposal <BRD-KEY>` — **no forward advance.** The umbrella is the end of this
   branch, not a phase in the build ladder. It offers re-runs: `/product-workflows:prd-proposal
   <SLICE-KEY>` for each slice its readiness walk found stale or excluded, and itself once those land.
@@ -332,7 +404,11 @@ array carries every option.
   to `prd.md` the default branch lacks; until that change is merged, neither command reads it —
   from that branch each stops on the difference or offers to switch to the default branch, whose
   copy lacks the change — and the offers name that change's merge first
-  (`/product-workflows:epics` Phase 9).
+  (`/product-workflows:epics` Phase 9). On a BRD-route slice — the PRD folder carrying a
+  `brd-link.md` — both are named as they stand, since `/product-workflows:epics` names them on no test
+  of the slice's ledger and reads none for them, and are followed, once, by `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
+  — which that command prints citing `coverage-ledger-format.md` §5 in its own text, once and in
+  this sentence's place.
 - `/product-workflows:update-spec <KEY>` (a merged specification revised in place) → for each design it
   names — one citing an ID that changed, or one built on the specification it replaced — Dev →
   `/dev-workflows:design <ITS-KEY>` to revise it;
@@ -340,7 +416,12 @@ array carries every option.
   refine; where it names nothing, the next step `/product-workflows:specify` gives a specification at
   the same altitude. Where the PRD folder holds no `prd.md`, or its Phase 0 went on past a PRD
   `/product-workflows:specify` stops on, its Phase 8 says what it names first and names no run that
-  would stop on that PRD.
+  would stop on that PRD. On a BRD-route slice — the PRD folder carrying a `brd-link.md` — each
+  `/product-workflows:create-prd` and `/product-workflows:specify` run its Phase 8 names is named as
+  it stands, since `/product-workflows:update-spec` takes no ledger test and reads no slice's ledger,
+  and they are followed, once, by `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
+  — which that command prints citing `coverage-ledger-format.md` §5 in its own text, once and in
+  this sentence's place.
 <!-- /part -->
 
 <!-- part: epics-precondition -->
@@ -362,10 +443,19 @@ never an Epic's — save where that folder holds the PRD under its pre-rename fi
 `/product-workflows:specify <PRD>`, whose own stop prints the rename's commands, saying that run
 stops — **and only where `/product-workflows:create-prd` can itself run**: it refuses more than one shape —
 three on the BRD route, and an `EPIC-` folder on either, which is why the key is the PRD folder's
-— so on a BRD-route slice the two data refusals on that slice's own ledger are tested first and
-the offer resolves to `/product-workflows:brd-split` against one of two keys, or to no option at
-all, where either fails (`product-workflows:coverage-ledger-format` §5.2, the authority, applied
-by each offering command). Where the caller's PRD folder holds a `prd.md` asserting no `kind: prd`
+— so on a BRD-route slice the slice's ledger tests are read first, and each offering command
+names what `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4's *The first missing document*
+names for them at its `prd.md` rung, which restates them for a plugin that cannot read their
+authority, `product-workflows:coverage-ledger-format` §5.2 — a naming, as that rung is, never a stop
+that applies them, which is `/product-workflows:create-prd`'s own, taken in its Phase 0; and where they fail the offer resolves to what the
+failing outcome names: `/product-workflows:brd-split` against one of two keys; no option at all
+where none applies — the gate set non-empty and no row `covered-here`, the offer saying where the
+requirements went, or the gate set empty and the parent's ledger unreadable, that ledger reported by
+path; and, where the slice's `coverage-ledger.md` is missing or unreadable while `claims:` names
+rows, no option either, the file reported by path and `/product-workflows:prd-ground <PRD>` named
+beside the dropped option, in prose, never as an option or `(Recommended)`, as the run whose stop
+tells an interrupted carve from a lost file and names the repair, saying it stops there by design.
+Where the caller's PRD folder holds a `prd.md` asserting no `kind: prd`
 — which `/epics` reads as no PRD and `/product-workflows:create-prd` counts as found, offering
 `/product-workflows:update-prd` or an overwrite — the offer names neither: in their place it says
 that the file asserts no `kind: prd`, and that adding the `kind: prd` and `key: <PRD>` its format
@@ -397,8 +487,8 @@ cannot take from the state the report describes.
 - `/dev-workflows:implement <EPIC>` → first, where it answered a follow-up task its Phase 1 printed, each such task to tick once its change merges, and, where it recorded a change another code repository needs, the run from that repository, addressed to the unit the run implemented (the Epic itself, where it was one); then, before its pull request merges, `/dev-workflows:conformance <EPIC>` and then `/security-workflows:scan <EPIC>` (Dev), from the repository that run branched — the fixes from either return to `/dev-workflows:implement <EPIC>`, which continues on the Epic's branch (`workflows-core:implementation-format` §5); then the remaining Epics (breadth), each named and placed with this Epic's pull request in the ARD's landing order (*The remaining Epics are named*); once ALL Epics implemented and merged →
   PE → `/dev-workflows:conformance <PRD>` → `/docs-workflows:document <PRD>` → `/docs-workflows:release-notes <PRD>`. *(Direct mode → no forward offer.)*
 - `/dev-workflows:conformance <EPIC>` (Dev, before its pull request merges) → a `fix-code` decision → `/dev-workflows:implement <EPIC>`, which continues on the Epic's branch while its pull request is open, then `/dev-workflows:conformance <EPIC>` again — `/dev-workflows:implement <EPIC>` only where the Epic's `specification.md` and `design.md` are on the default branch, or, on a specs tree that is no git repository, in the Epic's folder, and otherwise, in its place, what its first missing document needs (*`/dev-workflows:implement` precondition*); none → where the run traced the Epic's branch before the merge (its `after_merge` false), `/security-workflows:scan <EPIC>` (Dev — a key run is the `dev` role's scan) from each repository whose branch the run traced before the merge, then the pull request's review and merge and the remaining Epics, ordered together by the ARD's landing order (*The remaining Epics are named*); then the PE's `/dev-workflows:conformance <PRD>` — the whole route after an Epic run that traced no branch before the merge, its pull request having merged.
-  `/dev-workflows:conformance <PRD>` (PE, every Epic merged) → a `fix-code` decision → `/dev-workflows:implement <EPIC>` (`<PRD>` where the PRD has no Epics), only where that unit's `specification.md` and `design.md` are on the default branch, or, on a specs tree that is no git repository, in that unit's folder, and otherwise, in its place, what its first missing document needs (*`/dev-workflows:implement` precondition*); an `amend-document` decision → the command its note names — `/product-workflows:update-spec <KEY>` only where `<KEY>`'s `specification.md` is on the default branch (on a specs tree that is no git repository, none: the note's change is made by hand there), and `/product-workflows:create-ard` or `/product-workflows:epics` only where the PRD folder's `prd.md` is (on a specs tree that is no git repository, in its folder), and otherwise, in its place, what that document needs (`${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4, *The first missing document*), save `/product-workflows:create-ard` on a BRD-route slice holding no `prd.md`, which it takes as it stands, and `/product-workflows:epics` where the folder holds no `prd.md`, or one asserting no `kind: prd`, for which the *`/epics` precondition* names what stands in its place; or `/dev-workflows:design <KEY>` for a `[DT#N]`, which takes no note; once settled → `/docs-workflows:document <PRD>`.
-  Either run, each threat, stand-alone design entry or stand-alone ARD Rule its `### Threats` lists → Dev → `/dev-workflows:design <KEY>` for `unanswered — no design answers it`, a `[DT#N]` decided *Amend the document*, a stand-alone entry that is `unreadable` and a stand-alone entry that is `unanswered — returned to the architect` and stands alone because `it answers no live threat with a deferred part`; PA → `/product-workflows:create-ard <KEY>` for `stale`, `review due` and a threat that is `unreadable`, and for `unanswered — returned to the architect`, save that stand-alone entry, `unanswered — no design takes it` and `open` on a decision the team will not build; the scan after an Epic run with no `fix-code` decision stays.
+  `/dev-workflows:conformance <PRD>` (PE, every Epic merged) → a `fix-code` decision → `/dev-workflows:implement <EPIC>` (`<PRD>` where the PRD has no Epics), only where that unit's `specification.md` and `design.md` are on the default branch, or, on a specs tree that is no git repository, in that unit's folder, and otherwise, in its place, what its first missing document needs (*`/dev-workflows:implement` precondition*); an `amend-document` decision → the command its note names — `/product-workflows:update-spec <KEY>` only where `<KEY>`'s `specification.md` is on the default branch (on a specs tree that is no git repository, none: the note's change is made by hand there), and `/product-workflows:create-ard` or `/product-workflows:epics` only where the PRD folder's `prd.md` is (on a specs tree that is no git repository, in its folder), and otherwise, in its place, what that document needs (`${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4, *The first missing document*), save `/product-workflows:create-ard` on a BRD-route slice, whatever its `prd.md`'s state, for which that rule's `prd.md` rung reads the slice's ledger tests first — `/product-workflows:create-ard` where they pass and the slice's `prd.md` needs no landing, one that is nowhere being no gap there, and otherwise, in its place, what the rung names — and `/product-workflows:epics` where the folder holds no `prd.md`, or one asserting no `kind: prd`, for which the *`/epics` precondition* names what stands in its place; or `/dev-workflows:design <KEY>` for a `[DT#N]`, which takes no note; once settled → `/docs-workflows:document <PRD>`.
+  Either run, each threat, stand-alone design entry or stand-alone ARD Rule its `### Threats` lists → Dev → `/dev-workflows:design <KEY>` for `unanswered — no design answers it`, a `[DT#N]` decided *Amend the document*, a stand-alone entry that is `unreadable` and a stand-alone entry that is `unanswered — returned to the architect` and stands alone because `it answers no live threat with a deferred part`; PA → `/product-workflows:create-ard <KEY>` for `stale`, `review due` and a threat that is `unreadable`, and for `unanswered — returned to the architect`, save that stand-alone entry, `unanswered — no design takes it` and `open` on a decision the team will not build — each, on a BRD-route slice or an Epic under one, on the terms the `amend-document` decision's `/product-workflows:create-ard` takes there above, since the run printing these lines names what `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4's *The first missing document* names in place of each of its offers of that run: `/product-workflows:create-ard` where that rule's `prd.md` rung finds the slice's ledger tests passing and the slice's `prd.md` needing no landing, and otherwise, in its place, what the rung names; the scan after an Epic run with no `fix-code` decision stays.
 - `/security-workflows:scan <EPIC>` (Dev, before its pull request merges) → a `fix` decision → `/dev-workflows:implement <EPIC>` (continues on the Epic's branch; only where the Epic's `specification.md` and `design.md` are on the default branch, or, on a specs tree that is no git repository, in the Epic's folder, and otherwise, in its place, what its first missing document needs: *`/dev-workflows:implement` precondition*), then the pull request's review and merge — where the scan ran under `after_merge`, whose pull request has merged already, the review and merge of the pull request that run opens; after the merge, `/security-workflows:scan <repo-path> --verify-fixes` (Security Engineer; register `security/<repo-slug>/`); none → the pull request's review and merge — none under `after_merge` — and the remaining Epics, ordered together by the ARD's landing order (*The remaining Epics are named*), then the PE's `/dev-workflows:conformance <PRD>`. Either way, `/security-workflows:scan <EPIC>` (Dev) from each other repository the Epic's `implementation.md` names, since a change scan reads the repository it is run from; and, where accepted risks are past their review-by date or decisions await security review, `/security-workflows:scan <repo-path> --triage` (Security Engineer; register `security/<repo-slug>/`).
 - `/docs-workflows:document <PRD>` (PRD-level, after all Epics) → `/docs-workflows:release-notes <PRD>`. *(Doc-edit mode → no
   forward offer.)*

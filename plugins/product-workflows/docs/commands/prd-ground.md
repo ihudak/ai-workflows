@@ -235,7 +235,10 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   `/brd-split` re-allocates a row already carrying a fate, apart from the key repair a removal
   performs (its Phase 4.5). That third outcome is not guaranteed to be
   on offer: it needs such a row to exist and it needs this slice never to have been interviewed, so a
-  slice emptied after its own interview can only be removed or kept.
+  slice emptied after its own interview can only be removed or kept. Where this slice's own ledger
+  or inventory is missing or cannot be read — as it is where a remedy table hands this stop's remedy
+  to a claimless slice with no ledger or no inventory — that run offers it no row, neither
+  `covered-by` nor a re-cut, and the stop says so: removing or keeping it is the whole of what it offers.
 - **This BRD's own inventory and ledger already on the specs repo's main branch.** `/prd-ground`
   gates `coverage-ledger.md` on `origin/<default>` via `require-on-main` before reading anything
   else; an unmerged pull request stops the run naming the branch/PR state. It gates
@@ -256,7 +259,11 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   with a file missing and never re-creates one — and on a folder naming no
   parent it names a fresh intake under a new key, and also `/create-prd` on the same key where the
   folder holds an `idea.md` and no `prd.md`. An inventory in the folder and on no ref, with a `coverage-ledger.md` there too, stops with
-  `PRD_GROUND_INVENTORY_NOT_HANDED_OFF`, whose action is to commit and merge it, and which names no
+  `PRD_GROUND_INVENTORY_NOT_HANDED_OFF`, whose action is to land it — the stop prints the git
+  commands, on a new `brd/` branch where it is uncommitted; where it is committed, on a branch of
+  your own or on your local default branch, by pushing that branch, where `origin` does not already
+  hold every commit of it, and, for one of your own, merging it, or, where the default branch is
+  protected, a new `brd/` branch and a pull request — and which names no
   `/brd-intake` run: that command refuses a slice and any folder that is not a container, and every
   container has already been refused as a root. Where the gate reports
   the ledger is on no branch the commands cut, the run **splits a state the gate cannot**, exactly as
@@ -289,7 +296,12 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   cannot be read, the run stops with `PRD_GROUND_SLICE_UNRECONCILED`, reporting that ledger by path
   and naming no `/brd-split` form, and so does a slice whose `brd-link.md` names no `parent:`. Only where the parent
   is fully allocated and this slice agrees with it was the handoff simply declined, and the run stops
-  with `PRD_GROUND_NOT_HANDED_OFF`, whose action is to commit and merge the files already on disk. It
+  with `PRD_GROUND_NOT_HANDED_OFF`, whose action is to land the inventory and the ledger already on
+  disk — the stop prints the git commands, on a new `brd/` branch where neither is committed (one the default branch already holds aside); where
+  they are committed, on a branch of your own or on your local default branch — where only one of them is, the
+  other committed onto that branch first — by pushing that branch, where
+  `origin` does not already hold every commit of it, and, for one of your own, merging it, or, where
+  the default branch is protected, a new `brd/` branch and a pull request. It
   names the producing command only where re-running it would actually stage them, and the clause it
   carries is read off this slice's own `claims:` list. Where this slice **claims rows**, a **bare**
   `/brd-split` on a fully-allocated parent writes nothing into this slice and declares none of its

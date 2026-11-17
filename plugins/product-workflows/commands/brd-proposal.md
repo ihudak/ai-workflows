@@ -438,10 +438,15 @@ collect it.
 whose proposals are all unmerged should be one stop naming six, not six runs each naming one. Emit one
 stop at the end of the sweep, carrying §4.4's four parts for **every** slice that stopped: a slice on
 rows D/E names the concrete branch and pull-request state the gate reported for it, and the slices
-that came back row F — the proposal is on no ref the plugin's branch prefixes name — collect into:
+that came back row F — the proposal is on no ref the plugin's branch prefixes name — collect into
+one stop, in the form the HEAD test selects, made before it prints as
+`workflows-core:phase-handoff` §4.4's row F makes it for a stop that lands several files: on each
+collected slice's `proposal.md`, `git -C "$SPECS_PATH" cat-file -e "HEAD:./<proposal-path>" 2>/dev/null`,
+`<proposal-path>` its path relative to `$SPECS_PATH`, exit 0 where HEAD holds it. Where HEAD holds
+none of them — untracked, or staged and never committed — the uncommitted form:
 
 ```
-BRD_PROPOSAL_SLICE_NOT_HANDED_OFF: these included slices have a proposal.md on disk that is on no ref — <keys> — so the umbrella would roll up numbers no later reader can reproduce.
+BRD_PROPOSAL_SLICE_NOT_HANDED_OFF: these included slices have a proposal.md on disk that is on no ref — <keys> — so the umbrella would roll up numbers no later reader can reproduce. This run rolled up nothing and wrote no umbrella.
   Land each one with the commands below, printed once for each slice with that slice's own values, or re-run this command and exclude it.
 
 git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
@@ -449,10 +454,26 @@ git -C "<SPECS_PATH>" add -f -- "<proposal-path>"
 git -C "<SPECS_PATH>" commit -m "<slice KEY> proposal" -- "<proposal-path>"
 git -C "<SPECS_PATH>" push -u origin <new-branch>
 
-  Then open a pull request from <new-branch> into <default>, merge it, and re-run this command.
+  Then open a pull request from <new-branch> into <default>, merge it, and re-run this command. Ignored, every /brd-proposal run that includes these slices stops here until each one's proposal.md is on <default>.
 ```
 
 Print one block for each slice in `<keys>`, with that slice's own values: `<new-branch>` is `prd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<proposal-path>` is that slice's `proposal.md`, and `<slice KEY>` its key. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+
+Where HEAD holds all of them, or some — committed on a branch no plugin prefix names, or on a local
+`<default>` that `origin` does not hold — the per-slice commands above do not apply, since the
+switch they open with takes the proposals HEAD holds out of the working tree; the committed form
+lands that one branch instead, in one block, never the uncommitted form (§4.4's row F):
+
+```
+BRD_PROPOSAL_SLICE_NOT_HANDED_OFF: these included slices have a proposal.md that is committed on <branch>, a branch this plugin does not hand off, and is not on <default> — <keys> — so the umbrella would roll up numbers no later reader can reproduce. This run rolled up nothing and wrote no umbrella.
+  Land that branch by running these, or re-run this command and exclude them.
+
+<the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
+
+  Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run this command. Ignored, every /brd-proposal run that includes these slices stops here until each one's proposal.md is on <default>.
+```
+
+In the committed form `<branch>` is the branch `git -C "$SPECS_PATH" symbolic-ref --short HEAD` prints, and the commands the stop prints are the ones §4.4's row F gives for a file HEAD holds, in the case row F selects — each chosen by the reads that row names before the stop prints, each on a line of its own, and an alternative introduced by a line saying when it applies; a `<new-branch>` among them is `prd/` and the `<KEY>-<slug>` of the first slice in `<keys>`, its free name found as in the uncommitted form. Three of the message's sentences change with the case, each on a test the stop makes itself. Where `<branch>` is `<default>`, the first says those proposals are committed on your local `<default>` and not pushed, and the one opening `Then` reads `Then re-run this command — where <default> is protected, once a pull request from <new-branch> into <default> is merged.` Where the specs repository has no `origin`, the one opening `Then` reads `Then re-run this command.` alone, since the local merge row F selects there needs no pull request. Where the reads row F names select no command — `<branch>` on `origin`, and the local branch holding no commit `origin` lacks, never on row F's *some*, whose `commit` those reads count among the commits `origin` lacks — the stop prints none: the sentence opening `Land that branch` says instead that `<branch>` is already on origin, so nothing is left to push and the pull request is all that is left, and keeps its alternative of excluding them. **Where HEAD holds some of the proposals and not the others** — row F's *some* — the first sentence names the slices whose proposal HEAD holds as committed on `<branch>` and the others as not committed; the sentence opening `Land that branch` opens `Commit the proposals of <the slices whose proposal HEAD lacks> onto <branch> and land that branch`; and the commands open with the `add -f` and `commit` row F gives for those proposals, `-m "<BRD-KEY> slice proposals"`. `<proposal-path>` and the `#` rule are as for the uncommitted form. On a read-only specs mount (§3.6) every command either form prints names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it.
 
 **A slice with no `proposal.md` at all never reaches this gate**: Phase 3 already decided whether to
 stop for it or exclude it, so row F here means *written and not handed off* and nothing else. That

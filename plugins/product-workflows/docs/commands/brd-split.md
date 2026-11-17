@@ -307,8 +307,18 @@ reads was already independently verified by `/prd-ground`'s own agents.
   run there at all; a root's own inventory-only check is stated separately below. Phase 0 gates
   `grounding/code-grounding.md` on `origin/<default>` via `require-on-main` before reading
   anything else — an open, unmerged grounding pull request stops the run naming the branch/PR
-  state, and a BRD that has never been grounded at all stops naming the fix — but which fix depends
-  on why no findings exist. With at least one `[BR#n]` row in the inventory, grounding simply has
+  state. Findings written and never handed off — a `grounding/code-grounding.md` in the slice's
+  folder that neither the default branch nor any branch the plugin hands off carries — stop it with
+  `BRD_SPLIT_GROUNDING_NOT_HANDED_OFF`, whose action is to land the grounding files already on
+  disk, the ones `/prd-ground`'s handoff would have landed: the stop prints the git commands that
+  land them — on a new `brd/` branch where none of them that the default branch lacks is committed;
+  where they are committed, on a branch of your own or on your local default branch — any of them
+  that branch does not hold committed onto it first — by pushing that branch, where `origin` does
+  not already hold every commit of it, and, for one of your own, merging it, or, where the default
+  branch is protected, a new `brd/` branch and a pull request — and it names `/prd-ground` only to
+  warn against it, since only the landing of the findings written is missing, which a re-run
+  reaches only through the same handoff. A BRD that has never been grounded at all — no `code-grounding.md` in the slice's folder
+  either — stops naming the fix — but which fix depends on why no findings exist. With at least one `[BR#n]` row in the inventory, grounding simply has
   not run: `BRD_SPLIT_NEEDS_GROUNDING`, naming `/prd-ground`. With **no** row, there is nothing to
   ground and `/prd-ground` would stop on the same emptiness (`PRD_GROUND_EMPTY_INVENTORY`), so
   naming it would be a loop: `BRD_SPLIT_EMPTY_INVENTORY (split_mode: allocate-only)` instead, naming
@@ -326,7 +336,10 @@ reads was already independently verified by `/prd-ground`'s own agents.
   main but records no `[CG#n]` stops with `BRD_SPLIT_NO_FINDINGS`. Where the folder's **design/**
   holds any frame set, `design-grounding.md` must itself be on the default branch — the run
   executes `require-on-main` against it rather than trusting the code gate's single-commit
-  implication, which `/prd-ground --no-code` breaks by design. A **design/** subdirectory that no
+  implication, which `/prd-ground --no-code` breaks by design. A `design-grounding.md` written in
+  the slice's folder and never handed off stops it with `BRD_SPLIT_GROUNDING_NOT_HANDED_OFF`, the
+  stop the code file takes, naming that file, and never with a `--no-code` re-ground, since only its landing is
+  missing. A **design/** subdirectory that no
   entry in `design-grounding.md`'s frame-set list covers — absent from it, or listed as having no
   index or a stale one (an index whose frames are all gone) — stops with `BRD_SPLIT_DESIGN_NOT_GROUND`, which names `/prd-ground <KEY> --no-code` as
   the repair so the missing design pass can be added without re-deriving verified code findings. A
@@ -449,8 +462,9 @@ with a "nothing to commit" report on the no-op path, and on a reconcile-path run
 - **Phase 0 — grounding merged to main, on a slice only.** `split_mode: allocate-only` only — a root
   is never ground, so this gate is skipped entirely there and a root's own gate is the inventory
   count above. On a slice, `require-on-main` against `grounding/code-grounding.md` runs before
-  anything else is read — an unmerged grounding pull request, or a BRD never grounded at all, stops
-  the run rather than acting on a deliverable that might still change underneath it.
+  anything else is read — an unmerged grounding pull request, findings written in the slice's
+  folder and never handed off, or a BRD never grounded at all, stops the run rather than acting on a
+  deliverable that might still change underneath it.
 - **Phase 0 — verification gate, on a slice only.** Same mode restriction. No row is resolved
   against a claim no one has verified: every grounding finding on file must carry a verifier
   outcome before this command does anything else.

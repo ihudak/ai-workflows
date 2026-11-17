@@ -236,10 +236,52 @@ and nothing downstream can tell the difference afterwards.
    all. Map the §3.7 return by `stopped` first: any stopping row → stop, naming the concrete branch/PR
    state it reports; `pass` → proceed; `pass_amending` → proceed, printing the §3.3 row-B message;
    `unmanaged` → proceed as before this feature; `absent` (row F — grounding findings are on no ref at
-   all) → **split it before stopping, on a test row F cannot make**, the way `/brd-reconcile` splits
+   all) → **split it before stopping, on tests row F cannot make**, the way `/brd-reconcile` splits
    its own row F. Row F covers more than one state here, and the message for any state in which
-   `/prd-ground` would not produce the findings this gate wants must not name it. Read
-   `<BRD-dir>/brd/brd-inventory.md` from the worktree and count its `[BR#n]` rows:
+   `/prd-ground` would not produce the findings this gate wants, or in which only the landing of
+   findings already written is missing, must not name it as the fix. **On a slice — the resolved folder's `brd-link.md`
+   naming a `parent:` — test first whether `<BRD-dir>/grounding/code-grounding.md` is in the
+   folder**: where it is, the findings were written and never landed, the first bullet below. Where
+   it is not, or on a folder naming no `parent:`, read `<BRD-dir>/brd/brd-inventory.md` from the
+   worktree and count its `[BR#n]` rows, on which the other bullets split. A folder naming no
+   `parent:` is read on its inventory below whatever grounding it holds: it is no slice this
+   command could interview, and landing what it holds would not make it one.
+   - **A slice, and `grounding/code-grounding.md` in the folder** — written and never handed off:
+     the `/prd-ground` run that wrote it did not land it, its handoff declined or never reached.
+     What is missing is the landing, so **name landing what is already on disk as the action**, and
+     name `/prd-ground` only to warn against it. The files to land are those of
+     `/product-workflows:prd-ground`'s handoff on the BRD route (its Phase 9, *`route: brd`*) that
+     are in this folder and not as `<default-ref>` holds them —
+     `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<path>" 2>/dev/null` exits non-zero, or
+     `git -C "$SPECS_PATH" diff --quiet "<default-ref>" -- "./<path>"` exits 1, `<path>` the file's
+     path relative to `$SPECS_PATH` — of `grounding/baselines.md`, `grounding/code-grounding.md`,
+     which is always among them, `grounding/design-grounding.md`, `brd-link.md` and
+     `coverage-ledger.md`. That handoff stages the last two only where its run changed them, and
+     this stop, which cannot read what that run did, lands each where its copy differs from
+     `<default-ref>`'s. Which of the stop's two forms to
+     print turns on the HEAD test, made before it prints as `workflows-core:phase-handoff` §4.4's
+     row F makes it for a stop that lands several files: on each of those files that
+     `<default-ref>` does not hold, `git -C "$SPECS_PATH" cat-file -e "HEAD:./<path>" 2>/dev/null`,
+     exit 0 where HEAD holds it. Where HEAD holds none of them — untracked, or staged and never
+     committed — the uncommitted form:
+     `BRD_INTERVIEW_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s grounding/code-grounding.md is written at <BRD-dir> but is on no branch — the /product-workflows:prd-ground run that wrote it did not hand it off. This run read none of its findings, decided nothing and wrote nothing. Commit and merge <files> to the specs repo's default branch with the commands printed beneath this message, then open a pull request from <new-branch> into <default>, merge it, and re-run '/product-workflows:brd-interview <BRD-KEY>'. Do not re-run /product-workflows:prd-ground for this: the findings are written and verified, and only their landing is missing, which a re-run reaches only through the handoff the run that wrote them did not make. Ignored, every /brd-interview run on this slice stops here until grounding/code-grounding.md is on <default>.`
+     ```
+     git -C "<SPECS_PATH>" switch --no-track -c <new-branch> <default-ref>
+     git -C "<SPECS_PATH>" add -f -- "<BRD-dir>/<file>" …
+     git -C "<SPECS_PATH>" commit -m "<BRD-KEY> grounding findings" -- "<BRD-dir>/<file>" …
+     git -C "<SPECS_PATH>" push -u origin <new-branch>
+     ```
+     `<files>` is those files, folder-relative, and `"<BRD-dir>/<file>"` each of them, one quoted path each in place of the `…`. `<new-branch>` is `brd/` and the folder's `<KEY>-<slug>`, or, where that name is taken locally or on `origin`, the lowest free `-<n>` suffix on it: the run finds the first free name under the handoff's branch-naming rule before it prints the stop, and prints that name. `<default-ref>` is the ref the preflight resolved for `<default>`. `<BRD-dir>` is the folder this message names. A path is absolute or relative to `<SPECS_PATH>`, is quoted, and names a file, never a directory, whose ignored files `add -f` would force in. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. Print the commands on lines of their own with no `#` comment, since a person pastes them and zsh passes a `#` to the command as an argument; opening and merging the pull request is the forge's to do, so it is worded in prose.
+
+     Where HEAD holds all of them, or some — committed on a branch no plugin prefix names, or on a
+     local `<default>` that `origin` does not hold — the commands above do not apply, since the
+     switch they open with takes the files HEAD holds out of the working tree; the committed form
+     lands the branch instead, never the uncommitted form (§4.4's row F):
+     `BRD_INTERVIEW_GROUNDING_NOT_HANDED_OFF: <BRD-KEY>'s grounding/code-grounding.md at <BRD-dir> is committed on <branch>, a branch this plugin does not hand off, and is not on <default>. This run read none of its findings, decided nothing and wrote nothing. Land that branch with the commands printed beneath this message; do not re-run /product-workflows:prd-ground for this: the findings are written and verified, and only their landing is missing. Then open a pull request from <branch> into <default> and merge it, or merge the one already open from <branch>, and re-run '/product-workflows:brd-interview <BRD-KEY>'. Ignored, every /brd-interview run on this slice stops here until grounding/code-grounding.md is on <default>.`
+     ```
+     <the commands §4.4's row F gives for a file HEAD holds, as the slot rules below say>
+     ```
+     In the committed form `<branch>` is the branch `git -C "$SPECS_PATH" symbolic-ref --short HEAD` prints, and the commands the stop prints are the ones §4.4's row F gives for a file HEAD holds, in the case row F selects — each chosen by the reads that row names before the stop prints, each on a line of its own, and an alternative introduced by a line saying when it applies; a `<new-branch>` among them is named as in the uncommitted form. Three of the message's sentences change with the case, each on a test the stop makes itself. Where `<branch>` is `<default>`, the first reads `<BRD-KEY>'s grounding/code-grounding.md at <BRD-dir> is committed on your local <default> and not pushed.`, and the one opening `Then` reads `Then re-run '/product-workflows:brd-interview <BRD-KEY>' — where <default> is protected, once a pull request from <new-branch> into <default> is merged.` Where the specs repository has no `origin`, the one opening `Then` reads `Then re-run '/product-workflows:brd-interview <BRD-KEY>'.` alone, since the local merge row F selects there needs no pull request. Where the reads row F names select no command — `<branch>` on `origin`, and the local branch holding no commit `origin` lacks, never on row F's *some*, whose `commit` those reads count among the commits `origin` lacks — the stop prints none: the sentence opening `Land that branch` says instead that `<branch>` is already on origin, so nothing is left to push and the pull request is all that is left, and keeps its warning not to re-run `/product-workflows:prd-ground`. **Where HEAD holds some of the files and not the others** — row F's *some* — the first sentence names, folder-relative, the files HEAD holds as committed on `<branch>` and says the others are not committed; the sentence opening `Land that branch` opens `Commit <the files HEAD lacks> onto <branch> and land that branch`; and the commands open with the `add -f` and `commit` row F gives for those files, `-m "<BRD-KEY> grounding findings"`. **A file of those that `<default-ref>` holds counts among the files HEAD lacks** wherever its working copy is not HEAD's — HEAD lacks it, or `git -C "<SPECS_PATH>" diff --quiet HEAD -- "<BRD-dir>/<file>"` exits 1 — since landing `<branch>` carries only what is committed on it; where HEAD holds every one `<default-ref>` lacks, those three changes are made for such files alone, and the reads row F names count that `commit` too among the commits `origin` lacks, so the stop never prints no command there. `<files>`, the paths and the `#` rule are as for the uncommitted form. On a read-only specs mount (§3.6) every command either form prints names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it.
    - **One or more rows** — grounding simply has not run yet, and running it is the fix:
      `BRD_INTERVIEW_NEEDS_GROUNDING: no grounding findings on file for <BRD-KEY> — run /product-workflows:prd-ground <BRD-KEY> first.`
    - **Zero rows, or no inventory file at all** — `/prd-ground` would not produce the findings this
@@ -286,7 +328,7 @@ and nothing downstream can tell the difference afterwards.
        this stop without a second copy to drift.
      - **`parent: <PARENT-KEY>` present, and the inventory present with no row** — this is a slice
        that claims nothing.
-       Where `<PARENT-KEY>`'s own `coverage-ledger.md` cannot be read, the stop names neither `/brd-split` form: replace its text from `Re-run /product-workflows:brd-split on <PARENT-KEY>` to the end exactly as `/product-workflows:prd-ground` Phase 0 step 8 replaces its own copy's, since which form runs is that ledger's to say.
+       Where `<PARENT-KEY>`'s own `coverage-ledger.md` cannot be read, the stop names neither `/brd-split` form: replace its text from `Re-run /product-workflows:brd-split on <PARENT-KEY>` to the end exactly as `/product-workflows:prd-ground` Phase 0 step 8 replaces its own copy's, since which form runs is that ledger's to say. Where this slice's own `coverage-ledger.md` is missing or cannot be read, drop and replace as that step does for its own copy, since a run on the parent marks such a slice unreconcilable and offers it no row.
        Otherwise:
        `BRD_INTERVIEW_EMPTY_INVENTORY: <BRD-KEY> is a slice of <PARENT-KEY> and its inventory holds no [BR#n] row — it claims nothing, so there is nothing to ground and nothing to decide. Do not run /product-workflows:prd-ground, and do not run /product-workflows:brd-intake on a slice; it has no source document of its own. Re-run /product-workflows:brd-split on <PARENT-KEY>: either way it resolves every standing empty child, so it will offer to remove this slice or to keep it against its recorded reason. Which form to type depends on that parent's own ledger. Where it still holds an unallocated row, the run walks it too and will offer covered-by against this slice — and a run with rows still to place needs a slicing instruction to group them, so type '/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"'. Where no row is left unallocated, the bare '/product-workflows:brd-split <PARENT-KEY>' is the run, and removing this slice or keeping it against a recorded reason is the whole of what it offers here. Adding an instruction to that same run, '/product-workflows:brd-split <PARENT-KEY> "<what to peel off>"', can additionally re-cut onto this slice a row the parent delegated to a sibling that has since recorded it will not build it — the one case, apart from the key repair a removal performs, in which /brd-split re-allocates a row already carrying a fate, and the only third thing that can change this slice's state. That third one is not guaranteed to be on offer: it needs such a row to exist, and it needs this slice never to have been interviewed, so a slice emptied after its own interview can only be removed or kept.`
 7. **Gate on verification — and on there being grounding to verify.** Three tests, in this order,
@@ -2525,22 +2567,46 @@ grounding pass is what the list carries — and, beside it, the step a decided s
 `/product-workflows:create-prd`, `/product-workflows:create-ard` and `/product-workflows:specify`
 each gate this slice's `decisions.md` on the default branch and read no reconciliation record. They
 are offered here on the conditions `/product-workflows:brd-reconcile`'s own advancing list applies,
-and for the same reasons: **`/product-workflows:create-ard <BRD-KEY>` and
-`/product-workflows:specify <BRD-KEY>` on the level test alone** — this command runs on a slice
-only (`BRD_INTERVIEW_ROOT_LEVEL`) — and **`/product-workflows:create-prd <BRD-KEY>` only where the
-slice is PRD-eligible**: no row of the gate set `/product-workflows:create-prd`'s Phase 0 step 7
-defines — this slice's ledger rows, narrowed by its `brd-link.md` `claims:`, so an orphan row
-reading `covered-here` never counts — is still `unallocated`, and at least one of them is
-`covered-here` (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5). This command's own
-gate has already found no row `unallocated`, so the covered-here test is the one left to read.
+and for the same reasons, both stated in the *PM — the BRD-to-PRD route* lane this phase loaded
+(`Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, its
+`/product-workflows:brd-reconcile` bullet): **all three only where the slice is PRD-eligible** —
+where it passes its ledger tests, which each of the three applies in its own Phase 0 and stops on a
+slice that fails — **and where *The landed condition* that lane states holds besides**, read as that
+lane says and never restated here, `/product-workflows:create-prd` left out where it holds on a
+`prd.md` the slice holds, as that lane says too. The level test is not among them: this
+command runs on a slice only (`BRD_INTERVIEW_ROOT_LEVEL`). **Here the slice's ledger tests reduce
+to PRD-eligibility.** This command's own gate has already refused a row
+`unallocated` (*Resolve inputs and gate the grounded BRD*, step 8), so of the slice's ledger tests
+(`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5) the covered-here test is the one
+left to read: the slice is PRD-eligible where at least one row of the gate set
+`/product-workflows:create-prd`'s Phase 0 step 7 defines — this slice's ledger rows, narrowed by its
+`brd-link.md` `claims:`, so an orphan row reading `covered-here` never counts — is `covered-here`,
+and not eligible where none is — a slice whose `claims:` names no row included, its gate set being
+empty whether or not its ledger file exists or can be read (§5.2). *The landed condition* is read
+only on an eligible slice. **Where `coverage-ledger.md` is absent, or present and unreadable, while
+that `brd-link.md` claims rows**, neither test can be read: step 8 counts `unallocated` rows and
+states no stop for a ledger it cannot read, and this run never writes the ledger, so a run can reach
+this phase without a readable one. Drop all three options then, report the path, as missing or as unreadable with
+the read error, and name `/product-workflows:prd-ground <BRD-KEY>` in prose beside the list — never
+as an option, since it stops on this slice by design — as the run whose stop tells a carve
+interrupted before the ledger was written from a file lost or damaged after it, and names the repair
+for each, as §5.2 requires (it is not an empty gate set).
 
-The routes below, with `Stop here`, do not fit in the prompt's four slots in either case, so apply the *overflow rule* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the
-*PM — the BRD-to-PRD route* lane: print every route in prose, in the order below, and put in the question's own text one line saying the list is
+The routes below, with `Stop here`, do not fit in the prompt's four slots where all three authoring
+routes stand, so apply the *overflow rule* of `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the
+*PM — the BRD-to-PRD route* lane: print every route in prose, in the order below, and, wherever a question is put, put in the question's own text one line saying the list is
 longer than the prompt, naming each route the array leaves out, and that anything on it is reachable by typing it into the free-text option.
-Leave the PRD line out of both the prose and the array where the slice is not PRD-eligible, and say
-why. The array carries the forward routes first, as `/product-workflows:brd-reconcile`'s does, and
-keeps the lateral move — interviewing another BRD — in the prose only, because this run has just
-finished the slice it was given:
+Leave out of both the prose and the array each route whose condition does not hold, and say why
+beside the list: the three authoring lines where the slice is not PRD-eligible — where its ledger was read and `claims:` names rows, saying what each claimed row resolved to and that no command makes the slice eligible (§5.2's non-empty row) — or where *The landed
+condition* does not hold, printing what that condition prints in their place; the PRD line alone
+where the slice is PRD-eligible and *The landed condition* holds on a `prd.md` the slice holds,
+printing in its place the line the array for that state gives, below; and, where the ledger cannot
+be read or `claims:` names no row, the three and the re-ground line, whose run stops on this slice
+too. The array carries the forward routes first, as
+`/product-workflows:brd-reconcile`'s does, and keeps the lateral move — interviewing another BRD —
+in the prose only, in every case, because this run has just finished the slice it was given; where
+the forward routes left fit beside `Stop here`, the array carries all of them, and the question's
+own text still names the lateral move it leaves out:
 
 ```
 Where this run can go next:
@@ -2551,17 +2617,60 @@ Where this run can go next:
   • Interview another BRD or slice
 ```
 
-Where the slice is PRD-eligible:
+Where the slice is PRD-eligible, *The landed condition* holds and the slice holds no `prd.md`:
 
 ```
 choices: ["Stop here — every question was settled from the findings and this BRD needs no customer review", "Author this slice's PRD — /product-workflows:create-prd <BRD-KEY> (PM) <merge-clause>", "Author this slice's architecture — /product-workflows:create-ard <BRD-KEY> (PA, optional) <merge-clause>", "Author this slice's specification — /product-workflows:specify <BRD-KEY> (PE) <merge-clause>"]
 ```
 
-Where it is not:
+Where it is PRD-eligible and *The landed condition* holds on a `prd.md` the slice holds — on the
+default branch, or in the folder where that condition reads the folder's own file: on a specs tree
+that is no git repository, or in a slice folder outside the work tree of the repository `$SPECS_PATH` stands in — the PRD line is left out of
+the prose and the array, since `/product-workflows:create-prd` counts that file as found and opens
+on its existing-PRD question, whose recommended answer stops for `/product-workflows:update-prd`.
+Print beside the list `<BRD-KEY>'s PRD is already authored: revise it with '/product-workflows:update-prd <BRD-KEY>'.`,
+and present the forward routes left, which fit beside `Stop here` with the re-ground pass among
+them:
 
 ```
 choices: ["Stop here — every question was settled from the findings and this BRD needs no customer review", "Author this slice's architecture — /product-workflows:create-ard <BRD-KEY> (PA, optional) <merge-clause>", "Author this slice's specification — /product-workflows:specify <BRD-KEY> (PE) <merge-clause>", "Re-ground every claim against current commits — /product-workflows:prd-ground <BRD-KEY> --rebaseline (a changed finding is what can make a new round askable)"]
 ```
+
+Where it is PRD-eligible and *The landed condition* does not hold — the slice's `prd.md` written and
+not on the default branch, its landing printed beside the list as that lane words it —
+`/product-workflows:create-prd` is dropped with the other two: that run counts the file as found and
+opens on its existing-PRD question, whose recommended answer stops for
+`/product-workflows:update-prd`, while the landing beside the list says to land the file first. There,
+and where the slice's ledger was read, its `claims:` names a row and the slice is not PRD-eligible,
+the re-ground pass is the forward route left, and it fits beside `Stop here`:
+
+```
+choices: ["Stop here — every question was settled from the findings and this BRD needs no customer review", "Re-ground every claim against current commits — /product-workflows:prd-ground <BRD-KEY> --rebaseline (a changed finding is what can make a new round askable)"]
+```
+
+**Where the ledger cannot be read** — `coverage-ledger.md` absent, or present and unreadable, while
+`brd-link.md` claims rows — **put no question.** With the three authoring options dropped and the
+re-ground option with them, since its run is the `/product-workflows:prd-ground` that stops on this
+slice by design, `Stop here` is all an array would hold, and no question is put with fewer than two
+options (`Skill(skill: "workflows-core:reference", args: "escalation-rules core")`, §0). Print the
+prose list, which holds only interviewing another BRD or slice; beside it, why each option was
+dropped, the ledger's path and `/product-workflows:prd-ground <BRD-KEY>`, as the paragraph that sets
+the three's conditions says (*A slice that needs no customer review goes to the authoring ladder*);
+and end the phase on the *Stop here* option's words, `Stop here — every question was settled from
+the findings and this BRD needs no customer review`, as a line of its own.
+
+**Where `claims:` names no row — an empty gate set, whatever its ledger file's state — put no
+question either.** The re-ground option's run stops on such a slice (`commands/prd-ground.md` Phase 0
+step 8, `PRD_GROUND_EMPTY_INVENTORY`), so it is dropped with the three, and `Stop here` is all an
+array would hold. Print the prose list, which holds only interviewing another BRD or slice; beside
+it, why each option was dropped, and `/product-workflows:brd-split <PARENT-KEY>`, the run that keeps
+or removes this slice — `'/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"'` where
+`<PARENT-KEY>`'s `coverage-ledger.md`, read in *Resolve inputs and gate the grounded BRD* step 9,
+still holds an `unallocated` row, the bare `'/product-workflows:brd-split <PARENT-KEY>'` where it
+holds none, and neither, that ledger reported by path and why none is named, where it cannot be read
+— and no re-cut form, since this slice has been interviewed
+(`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §3.2, §5.2); then end the phase on the
+*Stop here* option's words as a line of its own.
 
 **`package_offerable: nothing-to-review` with a reopened record waiting — name each record, with
 what reopened it, and offer the round that puts it:**
@@ -2570,7 +2679,7 @@ what reopened it, and offer the round that puts it:**
 choices: ["Stop here — the reopened decision named above waits for the next round", "Work another round now — /product-workflows:brd-interview <BRD-KEY> (puts the reopened decision's question again)", "Interview another BRD or slice"]
 ```
 
-**Five of the six lists carry no `(Recommended)` marker, and that omission is deliberate**, per
+**Six of the seven lists carry no `(Recommended)` marker, and that omission is deliberate**, per
 the `When no option is safe to recommend` guidance in
 `Skill(skill: "workflows-core:reference", args: "escalation-rules core")`: on `yes`, `rounds-unsettled`,
 `nothing-to-review` and its reopened-record list, which one is right depends entirely on what this round left behind.
@@ -2584,7 +2693,7 @@ gates pass is ready to package; one either content gate refuses is not — which
 shown the option rather than shown it with a caveat. The `nothing-to-review` lists carry no marker
 for the same reason and one of their own: stopping there is a legitimate, finished outcome, and
 marking a grounding pass "recommended" would imply this BRD is unfinished when it is not, while
-marking the PRD "recommended" would decide for the operator which of the three authoring commands
+marking the PRD "recommended" would decide for the operator which of the authoring commands offered
 comes first, which the route leaves to them exactly as `/product-workflows:brd-reconcile`'s own
 advancing list does. Its
 reopened-record list carries none because stopping there is legitimate too: the record waits, named,
@@ -2594,7 +2703,7 @@ until whoever owns the next round runs it.
 this run's own `Phase handoff:` outcome line; it is never written as an unconditional "once the pull
 request above is merged", because the no-new-round path reaches the handoff with nothing to commit
 wherever the register was already on file, and then opens no pull request, save where `workflows-core:phase-handoff` §2.3 re-publishes a reused branch carrying a deliverable an earlier handoff could not push, or the operator's merge of the default branch. **The lists that name
-`/product-workflows:prd-ground <BRD-KEY>` — `rounds-unsettled`'s, and `nothing-to-review`'s prose and its not-PRD-eligible array — carry no clause on that option, and that asymmetry is deliberate:** that command gates on `coverage-ledger.md`
+`/product-workflows:prd-ground <BRD-KEY>` — `rounds-unsettled`'s, and `nothing-to-review`'s prose and each of its arrays that carries the re-ground option — carry no clause on that option, nor does the prose naming it where the ledger cannot be read, and that asymmetry is deliberate:** that command gates on `coverage-ledger.md`
 (`commands/prd-ground.md` Phase 0 step 6), which this run never writes, so no handoff of this run's
 can hold it up and there is no wait to state. **The `defects-unasked` re-open, and the reopened-record list's round, carry none
 for the same reason**, and so does every *Work another round now* option: this command stops only
@@ -2623,10 +2732,11 @@ going on to `/product-workflows:brd-package <BRD-KEY>`? Both stay in the PM lane
 (`workflows-core:session-hygiene` §2's *Same role* bullet) → run **`/compact`**. Moving to a different BRD or slice? → run **`/clear`**.
 **Where the `nothing-to-review` list offers the authoring ladder, it spans roles, so print both
 branches** (`workflows-core:session-hygiene` §2's *Next options span both* bullet): authoring this slice's PRD yourself as PM
-(`/product-workflows:create-prd <BRD-KEY>`)? → run **`/compact`**. Handing on to PA
+(`/product-workflows:create-prd <BRD-KEY>`, or, where this phase prints `/product-workflows:update-prd <BRD-KEY>` in that route's place, revising it)? → run **`/compact`**. Handing on to PA
 (`/product-workflows:create-ard <BRD-KEY>`) or PE (`/product-workflows:specify <BRD-KEY>`), even
 when the same person does it? → run **`/clear`**; those runs read the slice folder from the specs
-repo, not from this session. Guidance only — nothing is auto-run.
+repo, not from this session. Where it offers none of the three, print neither branch, since each
+names a run that list left out. Guidance only — nothing is auto-run.
 
 ---
 

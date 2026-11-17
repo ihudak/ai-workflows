@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.12.7] — 2026-11-17
+
+LADDER-ORDER batch 4, the BRD route. **What changes for you.** `product-workflows` 3.85.0's `/create-ard` and `/specify` stop on a BRD-route slice that fails the slice's ledger tests — a claimed row still `unallocated`, or none `covered-here` — whatever its `prd.md`'s state. So the scan no longer leaves the product architect's follow-up line in the folder of such a slice, and its next step no longer offers `/product-workflows:create-ard` or `/product-workflows:specify` as a run to take for it: after the architect's sentence, which leaves the key for you to fill, it names what `workflows-core` 1.98.0's `phase-handoff` §4.4 *The first missing document* names at its `prd.md` rung. The register, `register.py` and what the scan records are unchanged. Update with `workflows-core` 1.98.0, whose rung the scan reads; `product-workflows` 3.85.0, `dev-workflows` 4.70.3 and `docs-workflows` 1.43.1 are released with them.
+
+### Changed
+
+- **The PRD test for the product architect's line** (7.2). A BRD-route slice — a candidate folder carrying a `brd-link.md` — passes only where its ledger tests pass, read as §4.4's rung reads them for an offer of `/create-ard`. Where they fail, no `--prd-key` is passed, so `weakness-classes` gives the architect's follow-up as a sentence for the report and no line goes into that slice's `follow-ups.md`.
+- **The next step for the product architect.** After each sentence for the architect, where the candidate folder is a slice whose ledger tests fail, the report prints `<PRD> is a BRD-route slice that does not pass the slice's ledger tests, and /product-workflows:create-ard stops on those first:` and what the failing outcome names — that alone, in place of the `prd.md` landing it prints for a PRD not yet on the default branch.
+- **The next step after findings went to fix**, where the unit `/dev-workflows:implement <KEY>` would build is on a slice whose ledger tests fail, names what the failing outcome names — that alone, in place of the `prd.md` landing or the `/product-workflows:specify` run it named there: the run it names, typed out with its key; no command, saying why none applies; or, for a `coverage-ledger.md` missing or unreadable while `claims:` names rows, that file by path and `/product-workflows:prd-ground <SLICE-KEY>`, saying that it stops there by design.
+- **Pages.** The scan page says all three; it, the workflow page, *Roles and phases*, the security register page and the session feedback page say where the architect's line lands — the folder that holds the PRD on the specs repository's default branch, on a slice only where it passes the slice's ledger tests, and otherwise the report.
+
 ## [0.12.6] — 2026-11-16
 
 Docs only: SEC-G2 D. The roles page says what `dev-workflows` 4.69.0's `/conformance` checks of a threat model before the scan, and what it leaves to the scan. It describes that release, and needs nothing of the other plugins' releases, nor they of it.

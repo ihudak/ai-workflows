@@ -133,7 +133,12 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   register in the folder means the run that wrote it — the interview, ordinarily, or
   [`/create-prd`](create-prd.md) or [`/brd-reconcile`](brd-reconcile.md) where either created it —
   had its handoff declined (`BRD_PACKAGE_REGISTER_NOT_HANDED_OFF`, land the files that are already
-  on disk). The second must
+  on disk: the stop prints the git commands that land the register and the round records and, where they are in the folder and not yet landed, the question set and the code-defect log — on a
+  new `brd/` branch where none of them that the default branch lacks is committed; where they are committed, on a branch of your
+  own or on your local default branch — any of them that branch does not hold committed onto it
+  first — by pushing that branch, where `origin` does not already hold every commit of it, and, for
+  one of your own, merging it, or, where the default branch is protected, a new `brd/` branch and a
+  pull request). The second must
   **not** send the operator back to `/brd-interview`: a bare re-run of that command hands off only
   the files it writes itself — at most the register, re-stamped with its lineage, where it finds nothing new to ask, and where it opens a
   new round, that round's record and not the earlier ones already on disk.
@@ -142,14 +147,17 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   handoff declined and landed in part, or a later interview run that lands the register without a
   question set an earlier run left, merges `decisions.md` alone. Each is gated with
   `require-on-main`, and one in the folder and on no ref stops the run with
-  `BRD_PACKAGE_SHIPPED_NOT_HANDED_OFF`. A file absent from the folder is not gated: a slice whose
+  `BRD_PACKAGE_SHIPPED_NOT_HANDED_OFF`, whose commands land those files as
+  `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF`'s land the register, in the same two forms. A file absent from the folder is not gated: a slice whose
   rounds held no `[C]` has no question set, and one whose decisions turned on no code defect has no
   log.
 - **Every round the register or the held questions name, on the default branch.** The rounds this
   BRD has are the distinct `round` values `decisions.md` records, together with the round of every
   held `[C]` question in **interview/customer-questions.md** — a round of held `[C]` questions puts
   no record in the register — and each one's **interview/round-`<N>`.md** is gated with
-  `require-on-main`; any on no ref stop the run together with `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN` —
+  `require-on-main`; any on no ref stop the run together with `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN`,
+  whose commands land those records as `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF`'s land the register,
+  in the same two forms —
   save a round whose record exists nowhere, not even in the folder, which is named only by a
   re-decision an interrupted `/brd-interview` run left standing: there is nothing to land, so that
   one stops with `BRD_PACKAGE_ROUND_NOT_RECORDED`, naming `/brd-interview` as the run that writes
@@ -169,7 +177,8 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   stops with `BRD_PACKAGE_RECONCILIATION_UNREADABLE`. The round record whose answer clears a flag,
   unlike the reconciliation records, is gated on the default branch: a round that only answered flags
   is named by no register record and no held question, so this gate checks it itself, and one on no
-  ref stops with `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN`.
+  ref stops with `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN`, whose commands land it as
+  `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF`'s land the register, in the same two forms.
 - **An interview that happened at all.** A BRD whose **interview/** holds no round record stops
   with `BRD_PACKAGE_NOT_INTERVIEWED`, naming `/brd-interview`, whatever its register holds — an open
   `[AS#n]` that [`/create-prd`](create-prd.md) wrote included — rather than being reported as a
