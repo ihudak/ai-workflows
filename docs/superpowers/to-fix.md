@@ -402,7 +402,7 @@ Found while DOC-D-G1's sub-project 1 built `/docs-workflows:docs-write` (`docs/s
     - **paths from committed data:** `docs-workflows/references/docs-profiles/docs-profile-schema.md:102`, `docs-workflows/commands/docs-brand.md:79`, and `workflows-core/references/session-hygiene.md:242` (probes only);
     - **git run in an admitted clone:** `workflows-core/agents/code-scanner.md:46` (`status` at `:69`, `switch` and `pull` at `:71`–`:72`) and `docs-workflows/agents/diff-summarizer.md:80` (`status` at `:82`, `fetch` and `pull` at `:83`–`:84`);
     - **a workspace listing rather than data:** `docs-workflows/commands/docs-init.md:78`. Lower risk, but it is the same test.
-  - **What would fix it.** The same two-part clone test at every admission site, and `-c safe.bareRepository=explicit` on the git calls the two agents make in a clone they were handed. Then re-run the reproduction from the final review against each.
+  - **What would fix it.** The same two-part clone test at every admission site, and `-c safe.bareRepository=explicit` on the git calls the two agents make in a clone they were handed. Then re-run the reproduction from the final review against each. The site list above is the fixer's search, not a derived set: re-derive it before closing the entry.
   - **Evidence.** `.superpowers/sdd/2026-11-17-doc-d-g1-docs-write/final-review.md` C1 and `final-fix-report.md`.
 
 ## Accepted — known, not to fix
