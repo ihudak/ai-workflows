@@ -403,7 +403,7 @@ Ask about:
   ```
   choices: ["fetch only (Recommended)", "fetch + pull default branch", "no refresh — resolve refs from local objects only; a ref not yet fetched will not resolve, and a dirty clone stops blocking"]
   ```
-  The `fetch only` default matches the `diff-summarizer` default (`refresh.fetch: true, refresh.pull: false`) — the diffs of refs the implementation record already named don't need the current branch tip, and pulling risks moving HEAD away from the commit we want to reach. Under `fetch + pull default branch`, `docs_repo_path` is still not pulled where it is one of the repositories diff-summarised (Phase 5's dispatch): this run writes there — Phase 6.2 step 1 brings its base up to date where it cuts the docs branch from it, an inline-profiling run's HEAD must stay on `profile_branch`, and a run with no branch writes where HEAD stands.
+  The `fetch only` default matches the `diff-summarizer` default (`refresh.fetch: true, refresh.pull: false`) — the diffs of refs the implementation record already named don't need the current branch tip, and pulling risks moving HEAD away from the commit we want to reach. Under `fetch + pull default branch`, `docs_repo_path` is still not pulled where it is one of the repositories diff-summarised (Phase 5's dispatch): this run writes there — on a run whose Phase 6.2 step 5 cuts the docs branch from the base, Phase 6.2 step 1 updates that base first; an inline-profiling run's HEAD must stay on `profile_branch`; and a run with no branch writes where HEAD stands.
 - **Repos search base (`$REPOS_PATH`) — resolved, never asked.** Phase 2's plan shows it on its `Repos:` line. **The repositories question is put in Phase 0 step 3a on a run whose record holds no block, and otherwise here — never in both.** On a run whose record holds no block (`record_blocks`, Phase 0 step 1), step 3a has already resolved `$REPOS_PATH` as this bullet resolves it, and put the repositories question there wherever no entry was an existing directory: take `$REPOS_PATH` as that step left it, with its answer (`repos_answer`), and ask nothing here. On a run whose record holds a block, resolve `${REPOS_PATH:-/workspace}` here (the container mounts every repo under `/workspace`; a single directory or a colon-separated list) and record it as `$REPOS_PATH`; **only where no entry is an existing directory**, put the repositories question, naming `REPOS_PATH`, per the `Required path environment variable unset` rule in `workflows-core:escalation-rules` — with this command's own way on without code beside it, and no option marked, since whether the code is reachable is the operator's to know:
   ```
   choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Proceed without the repos — PRD-only for every repo", "Cancel"]
@@ -551,8 +551,8 @@ alongside it.
 
    **What every scan's result gives the run.** From each scan's result — this step's own scan (over a
    base named at Phase 2's *Revise plan*, where one was), step 3a's that this step takes, or a re-run
-   Phase 4 step 5 makes, each replacing the one before — the run takes its commits, each repository's reach, the
-   probe's matches, the pull requests and its `docs`, before the file that holds it is removed. Later
+   Phase 4 step 5 makes, each replacing the one before — the run takes its commits, each repository's reach and
+   `error`, the probe's matches, the pull requests and its `docs`, before the file that holds it is removed. Later
    phases read the latest result's `docs`, beside the `error` of each clone in its `docs.clones`, after
    that: Phase 5's `docs_only_shas`, `scan_ref` and `keys_hierarchy`, Phase 8.5's `pr-draft.md` line
    and Phase 9's report.
@@ -712,7 +712,7 @@ For each repo, in the same Agent message:
   >   [`HEAD`, the ref that scan read, only where the scan's latest result's `docs.rule` is `paths`, this repo_path is among its `docs.clones`, compared by `realpath`, and the `repos[]` entry for that clone has no `error`, whether or not `docs_only_shas` is given; omit the field everywhere else]
   > refresh:
   >   fetch: [false if Phase 1 chose 'no refresh'; true otherwise]
-  >   pull:  [true if Phase 1 chose 'fetch + pull default branch' and this repo_path is not docs_repo_path, the two compared by `realpath`; false otherwise — this run writes in the documentation-holding repository: Phase 6.2 step 1 brings its base up to date where it cuts the docs branch from it, an inline-profiling run's HEAD must stay on profile_branch, and a run with no branch writes where HEAD stands]"
+  >   pull:  [true if Phase 1 chose 'fetch + pull default branch' and this repo_path is not docs_repo_path, the two compared by `realpath`; false otherwise — this run writes in the documentation-holding repository: on a run whose Phase 6.2 step 5 cuts the docs branch from its base, Phase 6.2 step 1 updates that base first, an inline-profiling run's HEAD must stay on profile_branch, and a run with no branch writes where HEAD stands]"
 
 After the batch returns, handle each per-repo status:
 
