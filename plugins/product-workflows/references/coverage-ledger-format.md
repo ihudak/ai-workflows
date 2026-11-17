@@ -635,8 +635,8 @@ passes on the grounding run's own branch (`pass_amending`), and the wait costs o
 **Where the stopping run could make no handoff from this checkout** — `workflows-core:phase-handoff`
 §2.1's gate failing for it, on a `.git` it cannot write, as that gate tests it, or on a
 `specs_git: misrooted` or `specs_git: blocked` flag it carries — the runs the line names meet the
-same refusal at their own handoffs, and what each writes reaches the default branch only as the
-operator lands it; so each wait names the files, not a handoff: `<once-parent-merged>` reads
+same refusal at their own handoffs on that checkout while its cause stands, and what each writes
+then reaches the default branch only as the operator lands it; so each wait names the files, not a handoff: `<once-parent-merged>` reads
 `once what the /product-workflows:brd-split <PARENT-KEY> run writes is on the default branch, `
 and `<once-grounding-merged>` reads
 `once what the /product-workflows:prd-ground <SLICE-KEY> run writes is on the default branch too, `.
