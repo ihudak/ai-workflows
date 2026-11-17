@@ -1,6 +1,6 @@
 # /docs-init
 
-Scaffolds a documentation repository for a project that has none — one that builds, serves, lints, and carries the profile [`/document`](document.md), `/docs-serve`, `/docs-brand` and [`/docs-audit`](docs-audit.md) read.
+Scaffolds a documentation repository for a project that has none — one that builds, serves, lints, and carries the profile [`/document`](document.md), `/docs-serve`, `/docs-brand` and [`/docs-audit`](docs-audit.md) read, and whose content paths the commit scan of [`/release-notes`](release-notes.md) takes.
 
 ## Who runs it
 

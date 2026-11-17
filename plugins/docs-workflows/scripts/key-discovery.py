@@ -99,7 +99,7 @@ NO_WORK_TREE_RE = re.compile(r"not a git repository|must be run in a work tree")
 # Each is matched from the repository's top level: "literal" as the path written, a directory with everything
 # below it; "glob" as a pattern whose "*" stops at "/", so "*.md" is the top level's markdown and nothing deeper,
 # and whose leading "**/" is any depth, the top level included. A generator's configuration and navigation files
-# match at any depth, since a site kept in a subfolder has them there and no profile field records them.
+# match at any depth, since a site kept in a subfolder has them there and a profile need not record them.
 # The list is stated for every reader in references/key-discovery.md §1, in the fenced block under its
 # "<!-- family-doc-paths -->" line; case_docs_family_paths_match_the_reference holds the two equal.
 FAMILY_DOC_PATHS = (
