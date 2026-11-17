@@ -43,13 +43,18 @@ counts the refs kept, each either compared or unreadable; more counts every ref 
 
 edit writes one unit's move. It refuses, exit 3, the file untouched: a backlog out of shape, an --id no entry or two
 entries hold, an entry with no page_path: line where --page-path is given, a page_path already set to another path
-(null, ~ and an empty value are unset), and a backlog that changed while it read it. Otherwise it replaces the
-status: value and, where --page-path is given and page_path is unset, the page_path value, keeping each line's indent,
-key, trailing comment and line ending and every other byte; checks that the result reads back as that edit, in shape;
-writes it atomically, a new file beside the backlog renamed over it; and runs `git -C <top> diff -U0 --no-color
---no-ext-diff --no-textconv -- .dev-workflows/docs-backlog.yml`. Where the lines that diff removes and adds are not
-exactly the lines it changed, all inside the entry -- or git cannot show them -- it writes back the bytes it read and
-exits 4. It prints {"first": <n>, "last": <n>, "changed": [<n>...]}, the entry's first and last line and the lines it
+(null, ~ and an empty value are unset), and a backlog that changed while it read it. Where the unit already holds
+the values asked for, it writes nothing -- the file keeps its bytes and its mtime -- and prints an empty changed.
+Otherwise it replaces the status: value and, where --page-path is given and page_path is unset, the page_path value,
+keeping each line's indent, key, trailing comment and line ending and every other byte; checks that the result reads
+back as that edit, in shape; and writes it atomically, a new file beside the backlog renamed over it. Immediately
+before the rename it reads the backlog again and refuses, exit 3, one that no longer holds the bytes it read; after
+it, it reads the backlog back and requires the bytes it wrote. That narrows the window in which another writer's
+change is lost to the instant between the last read and the rename; it does not close it. Then it runs `git -C <top>
+diff -U0 --no-color --no-ext-diff --no-textconv -- .dev-workflows/docs-backlog.yml`. Where the lines that diff
+removes and adds are not exactly the lines it changed, all inside the entry -- or git cannot show them -- it writes
+back the bytes it read, by the same rename, only where the file still holds what it wrote, reads them back, and exits
+4. It prints {"first": <n>, "last": <n>, "changed": [<n>...]}, the entry's first and last line and the lines it
 changed; on exit 3 {"refused": "<why>", "line": <n>|null, "reason": "<word>"|null}, <why> one of shape, id-absent,
 id-twice, no-page-path, page-path-set and changed-while-reading; on exit 4 {"undone": "<why>", "first": <n>, "last":
 <n>, "changed": [<n>...]}, <why> hunk-outside or diff-failed.
@@ -74,9 +79,10 @@ run -- an argument outside its class, a usage error, --repo no directory or no w
 or the backlog refused as above or unreadable, git not run or not answering where moved must have an answer (HEAD,
 the base, the branch list), the working backlog out of shape or not holding an --id once (moved), a write that failed
 (the backlog unchanged), or an internal error; stdout is empty and stderr holds one line, "backlog-lines: not run
-(<why>)", <why> fixed text. One exit 2 follows a write: edit's undo failing, whose <why> says the edit was written and
-not undone. Exit 3: edit refused on the file's content before writing; the file is untouched. Exit 4: edit undone; the
-file holds the bytes it read. --selftest exits 0 when every case passes and 1 otherwise.
+(<why>)", <why> fixed text. Two exits 2 follow a write, and each <why> says so: the written backlog not reading back
+as written, which is left as it is, since writing back the bytes it read would lose another writer's change too; and
+the undo failing. Exit 3: edit refused on the file's content before writing; the file is untouched. Exit 4: edit
+undone; the file holds the bytes it read. --selftest exits 0 when every case passes and 1 otherwise.
 
 The caller's rule, which fails closed. Any exit but 0, 3 and 4 -- a crash's 1, a signal's -- is read as 2, and so is a
 stdout that is not one JSON object. check or moved exiting anything but 0 is a stop, never a skip: never read as in
@@ -141,6 +147,8 @@ WHY_WORKING_SHAPE = "the working backlog is out of shape (run check)"
 WHY_WORKING_ID = "an --id is not held by exactly one unit of the working backlog"
 WHY_WRITE = "the backlog could not be written; it is unchanged"
 WHY_UNDO = "the edit was written and could not be undone; restore the backlog from the copy taken before the edit"
+WHY_RACED = ("the backlog was written and then did not read back as written -- another writer, or a failed read; "
+             "nothing was undone, so compare it with the copy taken before the edit")
 WHY_INTERNAL = "internal error"
 
 _IO = {"git": 0, "reads": 0, "writes": 0}  # what a run did, for --selftest's "nothing read or written"
@@ -210,12 +218,12 @@ CLOSER = {"[": "]", "{": "}"}
 
 def _chars(n, line):
     """Out where the line holds a tab or a control character: any C0 control, a CR not ending the line before its \\n,
-    U+0085, U+2028 or U+2029."""
+    DEL, a C1 control (U+0080 to U+009F, U+0085 among them), U+2028, U+2029, U+FFFE or U+FFFF."""
     for ch in line:
         o = ord(ch)
         if ch == "\t":
             raise Out(n, "tab")
-        if o < 0x20 or o in (0x85, 0x2028, 0x2029):
+        if o < 0x20 or 0x7F <= o <= 0x9F or o in (0x2028, 0x2029, 0xFFFE, 0xFFFF):
             raise Out(n, "control")
 
 
@@ -247,12 +255,19 @@ def _trailing(n, line, end):
 
 def _flow(n, line, j):
     """The index just past the flow collection opening at line[j], its brackets balanced outside quotes on this line.
-    It is read as a YAML reader's tokenizer reads it. Inside a plain scalar -- which spaces do not end; a ` #`, a `,`,
-    `?`, `[`, `]`, `{` or `}`, or a `:` before a space, one of those or the line's end does -- a quote or a `#` is the
-    scalar's. Anywhere else, between tokens -- after a bracket, a `,`, a `?`, a `:`, a `- ` or a closed quote -- a `#`
-    opens a comment and a quote a quoted scalar, which must close on this line, or the collection would go on past
-    it; an anchor, an alias or a tag there is out of shape too. The set of
-    places read as between tokens is the widest any YAML reader takes, so a reader that disagrees can only refuse more.
+    Two families of YAML tokenizer read a flow collection -- pure-Python PyYAML's, and libyaml's with YAML 1.2's --
+    and they disagree about a `?` and about where a quote opens a quoted scalar, which can hide a bracket. The shape
+    admits only what both read alike, and on one line:
+    - a plain scalar ends at a ` #`, a `,`, `[`, `]`, `{` or `}`, or a `:` before a space, one of `,[]{}` or the line's
+      end; spaces do not end it, and a quote or a `#` inside it is the scalar's;
+    - a `?` outside quotes anywhere in the collection is out of shape (key): one family ends a plain scalar there and
+      opens a key, the other keeps it in the scalar;
+    - a quote outside a plain scalar opens a quoted scalar, which must close on this line, and only directly after
+      `[`, `{`, `,` or a `:` a space follows, spaces between; a quote anywhere else -- after a closed quote or bracket,
+      a `- `, or a `:` with no space after it -- is out of shape (unclosed-quote), since one family opens a quoted
+      scalar there and the other does not;
+    - a `#` outside a plain scalar, or after a space, opens a comment, which leaves the collection open
+      (unclosed-flow); an anchor, an alias or a tag where a token starts is out of shape.
     """
     stack, i, plain = [], j, False
     while i < len(line):
@@ -262,14 +277,21 @@ def _flow(n, line, j):
             continue
         if c == "#" and (line[i - 1] == " " or not plain):  # a comment: the rest of the line is not the collection's
             break
+        if c == "?":  # the two tokenizer families read it differently, inside a plain scalar or out of one
+            raise Out(n, "key")
         if plain:
-            if not (c in ",?[]{}" or (c == ":" and (i + 1 == len(line) or line[i + 1] in " ,[]{}"))):
+            if not (c in ",[]{}" or (c == ":" and (i + 1 == len(line) or line[i + 1] in " ,[]{}"))):
                 i += 1
                 continue
             plain = False  # the scalar ends here, and c is read as the token it opens
         if c in "&*!":
             raise Out(n, {"&": "anchor", "*": "alias", "!": "tag"}[c])
         if c in "'\"":
+            k = i - 1
+            while line[k] == " ":
+                k -= 1
+            if not (line[k] in "[{," or (line[k] == ":" and k + 1 < i)):  # not where both families open a scalar
+                raise Out(n, "unclosed-quote")
             end = _quoted(line, i)
             if end is None:
                 raise Out(n, "unclosed-quote")
@@ -286,7 +308,7 @@ def _flow(n, line, j):
             if not stack:
                 return i
             continue
-        if c in ",?:" or (c == "-" and (i + 1 == len(line) or line[i + 1] == " ")):  # a token of its own
+        if c in ",:" or (c == "-" and (i + 1 == len(line) or line[i + 1] == " ")):  # a token of its own
             i += 1
             continue
         i, plain = i + 1, True
@@ -511,52 +533,65 @@ def _open_dir(top):
     return dfd
 
 
-def _read_backlog(top):
-    """(bytes, mode) of the backlog -- at most SHAPE_CAP + 1 bytes, which is enough to call it too large. It is a
-    regular file by lstat, opened without following a link and never waited on; anything else is NotRun."""
-    dfd = _open_dir(top)
+def _read_at(dfd):
+    """(bytes, mode) of the backlog in the open .dev-workflows `dfd` -- at most SHAPE_CAP + 1 bytes, which is enough
+    to call it too large. It is a regular file by lstat, opened without following a link and never waited on;
+    anything else is NotRun."""
     try:
-        try:
-            st = os.stat(BACKLOG_NAME, dir_fd=dfd, follow_symlinks=False)
-        except OSError:
+        st = os.stat(BACKLOG_NAME, dir_fd=dfd, follow_symlinks=False)
+    except OSError:
+        raise NotRun(WHY_FILE)
+    if not stat.S_ISREG(st.st_mode):
+        raise NotRun(WHY_FILE)
+    try:
+        fd = os.open(BACKLOG_NAME, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0),
+                     dir_fd=dfd)
+    except OSError:
+        raise NotRun(WHY_READ)
+    try:
+        fst = os.fstat(fd)
+        if not stat.S_ISREG(fst.st_mode) or (fst.st_dev, fst.st_ino) != (st.st_dev, st.st_ino):
             raise NotRun(WHY_FILE)
-        if not stat.S_ISREG(st.st_mode):
-            raise NotRun(WHY_FILE)
-        try:
-            fd = os.open(BACKLOG_NAME, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0),
-                         dir_fd=dfd)
-        except OSError:
-            raise NotRun(WHY_READ)
-        try:
-            fst = os.fstat(fd)
-            if not stat.S_ISREG(fst.st_mode) or (fst.st_dev, fst.st_ino) != (st.st_dev, st.st_ino):
-                raise NotRun(WHY_FILE)
-            chunks, left = [], SHAPE_CAP + 1
-            while left > 0:
-                b = os.read(fd, min(left, 1 << 20))
-                if not b:
-                    break
-                chunks.append(b)
-                left -= len(b)
-        except OSError:
-            raise NotRun(WHY_READ)
-        finally:
-            os.close(fd)
+        chunks, left = [], SHAPE_CAP + 1
+        while left > 0:
+            b = os.read(fd, min(left, 1 << 20))
+            if not b:
+                break
+            chunks.append(b)
+            left -= len(b)
+    except OSError:
+        raise NotRun(WHY_READ)
     finally:
-        os.close(dfd)
-    _IO["reads"] += 1
+        os.close(fd)
     return b"".join(chunks), stat.S_IMODE(fst.st_mode)
 
 
-def _write_backlog(top, data, mode):
-    """Replace the backlog with `data` atomically: a new file beside it, written and synced, renamed over it. The
-    backlog must still be a regular file; nothing is written through a link. OSError or NotRun where it cannot."""
+def _read_backlog(top):
+    """(bytes, mode) of <top>'s backlog, as _read_at reads it."""
+    dfd = _open_dir(top)
+    try:
+        got = _read_at(dfd)
+    finally:
+        os.close(dfd)
+    _IO["reads"] += 1
+    return got
+
+
+class _Changed(Exception):
+    """The backlog no longer held what a write expected to replace, so nothing was written."""
+
+
+def _write_backlog(top, data, mode, expect):
+    """Replace the backlog with `data` atomically: a new file beside it, written and synced, renamed over it, and the
+    rename synced where the platform allows. Nothing is written through a link.
+
+    Immediately before the rename it reads the backlog again, through the same directory descriptor, and where the
+    file no longer holds `expect` it removes its new file and raises _Changed, the backlog untouched. That narrows the
+    window in which another writer's change is lost to the instant between that read and the rename; it does not
+    close it, since no lock is shared with other writers. OSError or NotRun where it cannot write."""
     dfd = _open_dir(top)
     tmpname = None
     try:
-        st = os.stat(BACKLOG_NAME, dir_fd=dfd, follow_symlinks=False)
-        if not stat.S_ISREG(st.st_mode):
-            raise NotRun(WHY_FILE)
         tmpname = ".%s.%d.%s.tmp" % (BACKLOG_NAME, os.getpid(), os.urandom(4).hex())
         fd = os.open(tmpname, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600, dir_fd=dfd)
         try:
@@ -567,9 +602,13 @@ def _write_backlog(top, data, mode):
             os.fsync(fd)
         finally:
             os.close(fd)
+        if _read_at(dfd)[0] != expect:  # the last look before the rename: the window stays open only from here
+            raise _Changed()
         os.replace(tmpname, BACKLOG_NAME, src_dir_fd=dfd, dst_dir_fd=dfd)
         tmpname = None
         _IO["writes"] += 1
+        with contextlib.suppress(OSError):
+            os.fsync(dfd)
     finally:
         if tmpname is not None:
             with contextlib.suppress(OSError):
@@ -865,6 +904,9 @@ def cmd_edit(top, uid, status, page_path):
             return _refuse("page-path-set", pp.line)
     new_data = "\n".join(texts).encode("utf-8")
     changed = [k + 1 for k, (a, b) in enumerate(zip(shape.texts, texts)) if a != b]
+    result = {"first": entry.first, "last": entry.last, "changed": changed}
+    if not changed:  # the unit already holds these values: nothing is written, and the file keeps its bytes and mtime
+        return 0, result
     # What it is about to write must read back as the edit, in shape, the entry where it was.
     try:
         after = read_shape(new_data)
@@ -876,13 +918,20 @@ def cmd_edit(top, uid, status, page_path):
             or (page_path is not None and _scalar_text(back[0].keys["page_path"].value) != page_path)
             or not all(entry.first <= k <= entry.last for k in changed)):
         raise NotRun(WHY_INTERNAL)
-    if _read_backlog(top)[0] != data:
-        return _refuse("changed-while-reading")
     try:
-        _write_backlog(top, new_data, mode)
+        _write_backlog(top, new_data, mode, data)
+    except _Changed:
+        return _refuse("changed-while-reading")
     except OSError:
         raise NotRun(WHY_WRITE)
-    result = {"first": entry.first, "last": entry.last, "changed": changed}
+    # What landed must be what it wrote, byte for byte, before git is asked about it. Where it is not, another writer
+    # replaced it after the rename, and writing back the bytes this run read would lose that writer's change too.
+    try:
+        landed = _read_backlog(top)[0]
+    except NotRun:
+        landed = None
+    if landed != new_data:
+        raise NotRun(WHY_RACED)
     why = None
     try:
         r = _git(top, "diff", "-U0", "--no-color", "--no-ext-diff", "--no-textconv", "--", BACKLOG_PATH)
@@ -896,8 +945,11 @@ def cmd_edit(top, uid, status, page_path):
     if why is None:
         return 0, result
     try:
-        _write_backlog(top, data, mode)
-    except (OSError, NotRun):
+        _write_backlog(top, data, mode, new_data)
+        undone = _read_backlog(top)[0] == data
+    except (_Changed, OSError, NotRun):
+        undone = False
+    if not undone:
         raise NotRun(WHY_UNDO)
     return 4, dict({"undone": why}, **result)
 
@@ -1176,12 +1228,48 @@ def case_block_scalar_out(tmp):
 def case_quoted_multiline_out(tmp):
     _out(tmp, MINI.replace("    title: \"Place an order\"\n", "    title: \"Place an\n      order\"\n"), 4,
          "unclosed-quote")
-    # Inside a flow collection a quote between tokens -- after a closing quote, a `:` or a `?` -- opens a quoted scalar
-    # to a YAML reader, and this one runs past the line; inside a plain scalar a quote is the scalar's.
-    for name, line in (("after-quote", "    roles: [\"a\"' b]\n"), ("after-colon", "    roles: [a, :'b]\n"),
-                       ("after-question", "    roles: [a?'b]\n"), ("after-dash", "    roles: [- 'b]\n")):
+    # In a flow collection a quote opens a quoted scalar only directly after [, {, , or `: `, where both tokenizer
+    # families open one; anywhere else outside a plain scalar one family opens a scalar there and the other does not,
+    # so the quote is out of shape, closed or not. Inside a plain scalar a quote is the scalar's.
+    for name, line in (("after-quote", "    roles: [\"a\"' b]\n"), ("after-closed-quote", "    roles: [\"a\" 'b']\n"),
+                       ("after-colon", "    roles: [a, :'b]\n"), ("after-colon-closed", "    roles: [a, :'b']\n"),
+                       ("after-dash", "    roles: [- 'b]\n"),
+                       ("after-bracket", "    roles: [[a]'b']\n")):
         _out(tmp, MINI.replace("    roles: [customer]\n", line), 5, "unclosed-quote", name)
-    _eq(_shape(tmp, MINI.replace("    roles: [customer]\n", "    roles: [it's, a 'b c, x:'y]\n"), "in-plain"), _ok())
+    for name, line in (("in-plain", "    roles: [it's, a 'b c, x:'y]\n"),
+                       ("token-starts", "    roles: [ 'a', \"b\" , ['c'], {d: 'e', f:  \"g\"}]\n")):
+        _eq(_shape(tmp, MINI.replace("    roles: [customer]\n", line), name), _ok(), name)
+
+
+def case_flow_question_out(tmp):
+    """A `?` outside quotes in a flow collection is out of shape. libyaml keeps it inside a plain scalar and pure-Python
+    PyYAML opens a key there, so a quote after it hides a bracket from one family and not from the other: here libyaml
+    reads lines 6 to 9 as one string inside U-001's roles, while a reader taking the quote as a scalar would see a
+    second entry, U-002, and edit its status outside any entry a YAML reader knows."""
+    data = ("schema_version: 1\n"
+            "units:\n"
+            "  - id: U-001\n"
+            "    status: missing\n"
+            "    page_path: null\n"
+            "    roles: [a?', [' ]\n"
+            "  - id: U-002\n"
+            "    status: missing\n"
+            "    page_path: null\n"
+            "    title: ', ]] # '\n"
+            "threshold: 2\n")
+    _out(tmp, data, 6, "key", "check")
+    top = _repo(tmp, data, "edit")
+    code, out, err = _edit(top, "U-002", "drafted", "docs/x.md")
+    _eq((code, err), (3, ""), "edit on U-002")
+    _eq(_obj(out), {"refused": "shape", "line": 6, "reason": "key"}, "edit on U-002")
+    _eq(_get(top), data.encode("utf-8"), "untouched")
+    code, out, err = _moved(top, "U-002")
+    _refused(code, out, err, WHY_WORKING_SHAPE)
+    for name, line in (("mapping", "    roles: {a?', {': 1 }\n"), ("first", "    roles: [?'[']\n"),
+                       ("in-plain", "    roles: [what?]\n"), ("after-space", "    roles: [a ?b]\n")):
+        _out(tmp, MINI.replace("    roles: [customer]\n", line), 5, "key", name)
+    _eq(_shape(tmp, MINI.replace("    title: \"Place an order\"\n", "    title: what? 'yes'\n"), "block"), _ok(),
+        "a ? outside a flow collection")
 
 
 def case_flow_multiline_out(tmp):
@@ -1218,10 +1306,12 @@ def case_anchor_alias_tag_tab_out(tmp):
 
 def case_control_out(tmp):
     title = "    title: \"Place an order\"\n"
-    for name, line in (("cr", "    title: a\rb\n"), ("ls", "    title: a b\n"), ("nel", "    title: a\u0085b\n"),
-                       ("vt", "    title: a\x0bb\n")):
-        _out(tmp, MINI.replace(title, line), 4, "control", name)
+    for name, ch in (("cr", "\r"), ("vt", "\x0b"), ("del", "\x7f"), ("c1-first", "\x80"), ("nel", "\x85"),
+                     ("c1-last", "\x9f"), ("ls", "\u2028"), ("ps", "\u2029"), ("fffe", "\ufffe"), ("ffff", "\uffff")):
+        _out(tmp, MINI.replace(title, "    title: a%sb\n" % ch), 4, "control", name)
     _out(tmp, MINI + "# the end\r", 10, "control", "cr-at-eof")
+    _eq(_shape(tmp, MINI.replace(title, "    title: \"caf\u00e9 \u00a0 \ufffd\"\n"), "printable"), _ok(),
+        "printable non-ASCII")
 
 
 def case_encoding_out(tmp):
@@ -1252,8 +1342,8 @@ def case_column0_entries_out(tmp):
 
 def case_nbsp_indent_out(tmp):
     """An entry key indented with U+00A0: after the key indent's spaces, and in place of them."""
-    _out(tmp, MINI.replace(STATUS6, "     status: missing\n"), 6, "indent", "after")
-    _out(tmp, MINI.replace(STATUS6, "    status: missing\n"), 6, "indent", "instead")
+    _out(tmp, MINI.replace(STATUS6, "    \u00a0status: missing\n"), 6, "indent", "after")
+    _out(tmp, MINI.replace(STATUS6, "\u00a0\u00a0\u00a0\u00a0status: missing\n"), 6, "indent", "instead")
 
 
 def case_trailing_text_out(tmp):
@@ -1536,12 +1626,23 @@ def case_edit_refused_content(tmp):
         _eq(_get(top), data.encode("utf-8"), name + " untouched")
 
 
+def _with(name, wrapper, thunk):
+    """thunk() with this module's global `name` replaced by `wrapper`; the original comes back however it ends."""
+    real = globals()[name]
+    globals()[name] = wrapper
+    try:
+        return thunk()
+    finally:
+        globals()[name] = real
+
+
 def case_edit_changed_while_reading(tmp):
-    """A backlog that changed between the edit's read and its write is refused, exit 3, and the change left alone."""
+    """Another writer changes the backlog after the edit read it: the last look before the rename sees it, so the
+    edit is refused, exit 3, the other writer's bytes stand and no new file is left beside them."""
     top = _repo(tmp, MINI)
     theirs = MINI.replace("threshold: 2\n", "threshold: 3\n").encode("utf-8")
-    real = globals()["_read_backlog"]
     calls = []
+    real = _read_backlog
 
     def racing(path):
         got = real(path)
@@ -1549,14 +1650,64 @@ def case_edit_changed_while_reading(tmp):
             _put(top, theirs)
         calls.append(path)
         return got
-    globals()["_read_backlog"] = racing
-    try:
-        code, out, err = _edit(top, "U-001", "drafted")
-    finally:
-        globals()["_read_backlog"] = real
+    code, out, err = _with("_read_backlog", racing, lambda: _edit(top, "U-001", "drafted"))
     _eq((code, err), (3, ""))
     _eq(_obj(out), {"refused": "changed-while-reading", "line": None, "reason": None})
     _eq(_get(top), theirs, "the other writer's change stands")
+    _eq(sorted(os.listdir(os.path.join(top, BACKLOG_DIR))), [BACKLOG_NAME], "no new file left")
+
+
+def case_edit_changed_after_write(tmp):
+    """Another writer replaces the backlog after the edit's rename: the read-back finds bytes it did not write, so the
+    edit stops, exit 2, and writes nothing back, which would lose that writer's change too."""
+    top = _repo(tmp, MINI)
+    theirs = MINI.replace("threshold: 2\n", "threshold: 3\n").encode("utf-8")
+    calls = []
+    real = _read_backlog
+
+    def racing(path):
+        if len(calls) == 1:  # the read-back after the write
+            _put(top, theirs)
+        calls.append(path)
+        return real(path)
+    code, out, err = _with("_read_backlog", racing, lambda: _edit(top, "U-001", "drafted"))
+    _refused(code, out, err, WHY_RACED)
+    _eq(_get(top), theirs, "not undone over the other writer")
+
+
+def case_edit_undo_blocked(tmp):
+    """The diff calls for an undo, but another writer changed the backlog after the edit's read-back: the undo's last
+    look sees bytes the edit did not write, so nothing is written back, exit 2, and that writer's change stands."""
+    top = _repo(tmp, MINI)
+    _put(top, MINI.replace("schema_version: 1\n", "schema_version: 1  # touched\n"))
+    theirs = MINI.replace("threshold: 2\n", "threshold: 3\n").encode("utf-8")
+    real = _git
+
+    def racing(path, *args):
+        got = real(path, *args)
+        if args[:1] == ("diff",):
+            _put(top, theirs)
+        return got
+    code, out, err = _with("_git", racing, lambda: _edit(top, "U-001", "drafted"))
+    _refused(code, out, err, WHY_UNDO)
+    _eq(_get(top), theirs, "the other writer's change stands")
+
+
+def case_edit_noop(tmp):
+    """The unit already holds the values asked for: exit 0, changed empty, nothing written -- the same bytes, inode
+    and mtime."""
+    data = DRAFTED.replace("page_path: null", "page_path: docs/a.md")
+    top = _repo(tmp, data)
+    path = os.path.join(top, BACKLOG_DIR, BACKLOG_NAME)
+    before = os.stat(path)
+    for page_path in (None, "docs/a.md"):
+        code, out, err = _edit(top, "U-001", "drafted", page_path)
+        _eq((code, err), (0, ""), "no-op %r" % page_path)
+        _eq(_obj(out), {"first": 3, "last": 8, "changed": []}, "no-op %r" % page_path)
+        _eq(_IO["writes"], 0, "nothing written")
+    after = os.stat(path)
+    _eq((after.st_ino, after.st_mtime_ns), (before.st_ino, before.st_mtime_ns), "inode and mtime")
+    _eq(_get(top), data.encode("utf-8"), "bytes")
 
 
 def case_edit_not_a_repository(tmp):
@@ -1619,7 +1770,8 @@ def case_shape_paragraph_pinned(tmp):
 
 
 CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_block_scalar_out,
-         case_quoted_multiline_out, case_flow_multiline_out, case_continuation_out, case_nested_continuation_out,
+         case_quoted_multiline_out, case_flow_question_out,
+         case_flow_multiline_out, case_continuation_out, case_nested_continuation_out,
          case_anchor_alias_tag_tab_out, case_control_out, case_encoding_out, case_key_out, case_second_id_out,
          case_duplicate_status_out, case_column0_entries_out, case_nbsp_indent_out, case_trailing_text_out,
          case_status_missing_out, case_status_flow_out, case_entry_indent_non_id_out, case_too_large_out,
@@ -1628,7 +1780,8 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_ref_name_outside_class, case_ref_unreadable, case_absent_not_moved, case_twenty_cap,
          case_examined_cap, case_no_base, case_moved_working_refused, case_edit_two_keys, case_edit_tilde_null,
          case_edit_page_path_set, case_edit_page_path_same, case_edit_no_page_path_key, case_edit_refused_content,
-         case_edit_changed_while_reading, case_edit_not_a_repository, case_edit_undo, case_bad_args,
+         case_edit_changed_while_reading, case_edit_changed_after_write, case_edit_undo_blocked, case_edit_noop,
+         case_edit_not_a_repository, case_edit_undo, case_bad_args,
          case_shape_paragraph_pinned)
 
 
