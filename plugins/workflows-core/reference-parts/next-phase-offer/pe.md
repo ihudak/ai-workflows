@@ -202,10 +202,18 @@ never an Epic's — save where that folder holds the PRD under its pre-rename fi
 `/product-workflows:specify <PRD>`, whose own stop prints the rename's commands, saying that run
 stops — **and only where `/product-workflows:create-prd` can itself run**: it refuses more than one shape —
 three on the BRD route, and an `EPIC-` folder on either, which is why the key is the PRD folder's
-— so on a BRD-route slice the two data refusals on that slice's own ledger are tested first and
-the offer resolves to `/product-workflows:brd-split` against one of two keys, or to no option at
-all, where either fails (`product-workflows:coverage-ledger-format` §5.2, the authority, applied
-by each offering command). Where the caller's PRD folder holds a `prd.md` asserting no `kind: prd`
+— so on a BRD-route slice the slice's ledger tests are read first, applied by each offering
+command as `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4's *The first missing document*
+states them at its `prd.md` rung, for a plugin that cannot read their authority,
+`product-workflows:coverage-ledger-format` §5.2; and where they fail the offer resolves to what the
+failing outcome names: `/product-workflows:brd-split` against one of two keys; no option at all
+where none applies — the gate set non-empty and no row `covered-here`, the offer saying where the
+requirements went, or the gate set empty and the parent's ledger unreadable, that ledger reported by
+path; and, where the slice's `coverage-ledger.md` is missing or unreadable while `claims:` names
+rows, no option either, the file reported by path and `/product-workflows:prd-ground <PRD>` named
+beside the dropped option, in prose, never as an option or `(Recommended)`, as the run whose stop
+tells an interrupted carve from a lost file and names the repair, saying it stops there by design.
+Where the caller's PRD folder holds a `prd.md` asserting no `kind: prd`
 — which `/epics` reads as no PRD and `/product-workflows:create-prd` counts as found, offering
 `/product-workflows:update-prd` or an overwrite — the offer names neither: in their place it says
 that the file asserts no `kind: prd`, and that adding the `kind: prd` and `key: <PRD>` its format

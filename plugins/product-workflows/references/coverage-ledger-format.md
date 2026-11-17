@@ -359,7 +359,11 @@ Epic, to the slice above it — `/create-ard` under `CREATE_ARD_BRD_UNALLOCATED`
 `SPECIFY_BRD_NOT_ELIGIBLE`. `/update-spec` takes no ledger test,
 and `/update-prd` and `/epics` take no stop for them: each applies the tests only where it already
 does, to name the remedy of its own Phase 0 stop for a folder holding no PRD (`commands/epics.md`
-Phase 0 step 1b, `commands/update-prd.md` Phase 0 step 4).
+Phase 0 step 1b, `commands/update-prd.md` Phase 0 step 4). The tests are restated at
+`workflows-core:phase-handoff` §4.4, *The first missing document*, in its `prd.md` rung, for a
+plugin that cannot read this file — as what a stop or an offer of another run names on a slice in
+place of `/create-prd`, `/create-ard` or `/specify`, never as a stop that applies them — and the two
+are changed together.
 
 **The level test is a check the consumer performs, and it comes first.** A BRD is a container and is
 never the folder a PRD is authored in, so a consumer handed a `BRD-` folder refuses it **before
