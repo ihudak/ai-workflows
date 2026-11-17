@@ -6,7 +6,7 @@ These shared references load by part — `escalation-rules`, `finding-triage`, `
 
 Single source of truth for the vocabulary a documentation audit is built on: what a **surface** is and where each kind comes from (§2), what a page's **type** is and what the coverage grid is a grid of (§3), which quadrant does not automate (§4), the four **prioritisation signals** and the one guard on them (§5), how a **unit** enters the backlog (§6), and what **done** means (§7).
 
-Consumed by `/docs-audit` and by the agents it dispatches — `docs-auditor`, `ia-planner` and `docs-audit-reviewer` — each of which names the part of this file it is executing rather than restating it. These names are defined once, here; a command or agent body that re-derives them is the defect this file exists to prevent, because two copies of a vocabulary drift and then disagree about what a run produced.
+Consumed by `/docs-audit` and by the agents it dispatches — `docs-auditor`, `ia-planner` and `docs-audit-reviewer` — and by `/docs-write`, which holds each unit's `type` to §3's vocabulary for its `audience` before it drafts the page, each of which names the part of this file it is executing rather than restating it. These names are defined once, here; a command or agent body that re-derives them is the defect this file exists to prevent, because two copies of a vocabulary drift and then disagree about what a run produced.
 
 Its entry points, so a command can say which part it is executing: **the surface kinds** (§2), **the type vocabulary and the grid** (§3), **the signals** (§5), **the entry paths** (§6), and **the done criterion** (§7).
 
@@ -89,7 +89,7 @@ Five entry paths, and only the first three are automatic:
 | # | Path | Automatic | Produces |
 |---|---|---|---|
 | 1 | `/docs-audit` — the initial run | Yes | Every unit the enumerated surfaces earn. This is where a backlog comes from on day one |
-| 2 | `/docs-audit --refresh` — a later run | Yes | Units for surfaces that did not exist before: a new route, a new role, a new integration, a new release. Existing pages are matched back to their units and marked `published` |
+| 2 | `/docs-audit --refresh` — a later run | Yes | Units for surfaces that did not exist before: a new route, a new role, a new integration, a new release. Existing pages are matched back to their units, and a unit still `missing` moves to `published`, or to `drafted` where its page still carries a marked claim (`backlog-format.md` §3) |
 | 3 | `/docs-drift`, when that command ships | Yes | No new units. It moves existing ones to `stale` and re-queues them |
 | 4 | Tutorial selection | No | The audit proposes candidates; a human picks, and the picks become units. The one quadrant that does not automate (§4) |
 | 5 | A human editing `docs-backlog.yml` | No | Anything the code does not imply — a page answering a question a customer actually asked, a migration guide, a policy, a comparison |

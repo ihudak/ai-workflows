@@ -178,7 +178,7 @@ This rule binds every command in the family — this plugin's own and those of e
 
 `choices: ["Use `<fallback>` (default for this command)", "Use my initials (you'll be prompted for them)"]`
 
-Used by every branch-creating command (`/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` standalone, `/upgrade`, `/vuln`) when the `branch-naming.md` §2 identity ladder — `$GIT_USER_INITIALS`, `git config user.initials`, then inference from existing branches — yields nothing. `<fallback>` is that command's own default (`feat/`, `docs/`, `fix/`, `chore/`).
+Used by every branch-creating command (`/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` standalone, `/docs-write`, `/upgrade`, `/vuln`) when the `branch-naming.md` §2 identity ladder — `$GIT_USER_INITIALS`, `git config user.initials`, then inference from existing branches — yields nothing. `<fallback>` is that command's own default (`feat/`, `docs/`, `fix/`, `chore/`).
 
 **Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity — and so is the picker: an answer that is text with no default is asked in plain text, its way out named in the question (§0, *A selection carries no text*), as `branch-naming.md` §2.5 asks it, in one prompt whose opening line names the convention:
 

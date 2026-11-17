@@ -416,8 +416,8 @@ Used in `/document` Phase 5 when a diff-summarizer returns `DIRTY_TREE`. `/creat
 `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without reproducing the list,
 so per the "Choice lists are presented verbatim" convention they use the list written under
 this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list inline. **`/docs-audit`
-reproduces a list without the second choice**, and says why: its coverage denominator is a claim
-about the product as it ships. A new citer that reproduces a list inline states which one it uses.
+and `/docs-write` (Phase 4) reproduce a list without the second choice**, and each says why: a
+coverage denominator, or a page, is a claim about the product as it ships. A new citer that reproduces a list inline states which one it uses.
 
 **The uncommitted changes are the user's, in a repository the run only reads, so no choice commits,
 pushes or discards them.** Each choice does exactly this, and **the answer holds for the rest of the
@@ -445,7 +445,7 @@ left it, and asks nothing, save a Stash that stashed nothing (§ *Stashing the u
 
 `choices: ["Use `<fallback>` (default for this command)", "Use my initials (you'll be prompted for them)"]`
 
-Used by every branch-creating command (`/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` standalone, `/upgrade`, `/vuln`) when the `branch-naming.md` §2 identity ladder — `$GIT_USER_INITIALS`, `git config user.initials`, then inference from existing branches — yields nothing. `<fallback>` is that command's own default (`feat/`, `docs/`, `fix/`, `chore/`).
+Used by every branch-creating command (`/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` standalone, `/docs-write`, `/upgrade`, `/vuln`) when the `branch-naming.md` §2 identity ladder — `$GIT_USER_INITIALS`, `git config user.initials`, then inference from existing branches — yields nothing. `<fallback>` is that command's own default (`feat/`, `docs/`, `fix/`, `chore/`).
 
 **Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity — and so is the picker: an answer that is text with no default is asked in plain text, its way out named in the question (§0, *A selection carries no text*), as `branch-naming.md` §2.5 asks it, in one prompt whose opening line names the convention:
 
@@ -460,10 +460,10 @@ A `cancel` answer — or a blank one, where the host sends it — ends the run b
 `choices: ["Continue with current local state", "Skip this repo", "Cancel"]`
 
 Used in `/document` Phase 5 when a diff-summarizer returns `REFRESH_BLOCKED`. `/create-ard`, `/design`,
-`/docs-audit`, `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without
+`/docs-audit`, `/docs-write`, `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without
 reproducing the list, so per the "Choice lists are presented verbatim" convention they use the
 list written under this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list
-inline. **`/docs-audit` reproduces a list without *Continue with current local state* after a read by ref of the session's own repository**, and says why: its coverage denominator is a claim about the product as it ships, which that checkout's branch is not (`workflows-core:scan-refresh` §6 lets a fixed-policy caller leave it out). A new citer that reproduces a list inline states which one it uses.
+inline. **`/docs-audit` and `/docs-write` (Phase 4) reproduce a list without *Continue with current local state* after a read by ref of the session's own repository — `/docs-write` after one of the documentation repository it commits to, too**, and each says why: a coverage denominator, or a page, is a claim about the product as it ships, which that checkout's branch is not (`workflows-core:scan-refresh` §6 lets a fixed-policy caller leave it out). A new citer that reproduces a list inline states which one it uses.
 
 ## Read-only mount — ref stale or diverged
 
@@ -666,7 +666,7 @@ and nothing here offers another; a `BLOCK` the first settle prompt's **Proceed**
 fixer ran spent neither half, and is offered the re-review as above. **Which commands it reaches is a behavioural test, as above: a command whose cap
 allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
 edit the reviewed artifact on the way.** The eight commands that fix inline edit it through the offer
-above, and the six of the asking set through their decision questions too; `/epics` and `/document` dispatch `doc-fixer` over the findings — `/epics` also folds a
+above, and the six of the asking set through their decision questions too; `/epics`, `/document` and `/docs-write` dispatch `doc-fixer` over the findings — `/epics` also folds a
 finding's rewording in itself, under any verdict, where the user takes it for text they chose, and splits, at its last count, an Epic an *Epic size* finding named —
 and `/implement` `review-fixer`, over the findings and over those the user applies at the offer above. The open questions `A finding left open that needs a decision is
 recorded in the artifact` writes answer no finding, and make no offer. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
@@ -870,13 +870,13 @@ This picker is the prompt *Provide manual fix notes (you'll be prompted)* promis
 A free-text answer to the picker is that BLOCKER's notes.
 
 **A BLOCKER whose fix needs a decision the run does not have gets no draft** (as a BLOCKER
-`doc-fixer` deferred with `Stop condition flag: NEEDS HUMAN` in `/document` or `/epics` does), since a
+`doc-fixer` deferred with `Stop condition flag: NEEDS HUMAN` in `/document`, `/epics` or `/docs-write` does), since a
 draft would take that decision for the user. The run drafts nothing and asks in plain text, as §0
 asks: the prompt's first line says that the run waits for the notes and does nothing until they
 arrive, and the prompt then names the decision the notes must settle and the options the finding
 names, recommending none.
 
-Everything after is unchanged: the notes are applied in one bounded pass, with no further re-review — read first per *An inline fix is read against what it overlaps* in a command that fixes inline, and once more, in a command that dispatches `overlap-reader`, as *The read after the last review* says; and applied through `doc-fixer` in `/epics` and `/document`, as their commands say.
+Everything after is unchanged: the notes are applied in one bounded pass, with no further re-review — read first per *An inline fix is read against what it overlaps* in a command that fixes inline, and once more, in a command that dispatches `overlap-reader`, as *The read after the last review* says; and applied through `doc-fixer` in `/epics`, `/document` and `/docs-write`, as their commands say.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /document
 
@@ -885,7 +885,9 @@ Everything after is unchanged: the notes are applied in one bounded pass, with n
 Used in `/document` Phase 7 at either of two points: when `doc-fixer` returns `Stop condition flag: NEEDS HUMAN` — it deferred a BLOCKER as needing a human decision, so no re-review runs — or when the review stayed blocked (`workflows-core:finding-triage` § On re-review).
 Escalate per unresolved BLOCKER individually. "Manual fix notes" gets the BLOCKER's notes as
 *Manual fix notes — the run drafts them* says. "Override" asks for the rationale in plain text, which
-`/document` records with the finding in `### Deferred items`.
+`/document` records with the finding in `### Deferred items`. `/docs-workflows:docs-write` escalates at
+the same two points (its Phase 8) with a list of its own, which its command holds, since this one's
+*Defer* names `/document`'s report and a unit deferred there is not committed.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /epics
 

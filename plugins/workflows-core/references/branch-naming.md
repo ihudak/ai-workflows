@@ -4,7 +4,7 @@ Single source of truth for how a command that creates a git branch in a **code o
 
 **The repository's own documented convention always wins.** This doc's job is to find that convention, fill its placeholders, and supply a name only when the repo documents none.
 
-Commands that consume this: `/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` (standalone only — an `--inline` run writes on its caller's branch and creates none), `/upgrade`, `/vuln` (applied by the orchestrator, once per CVE in its Step 1, per the `/vuln` "Git Workflow" spec — `vuln-fixer` creates the branch it is handed and never derives a name), and `/promote-decisions` (its branch in the architecture repository).
+Commands that consume this: `/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` (standalone only — an `--inline` run writes on its caller's branch and creates none), `/docs-write` (once per run, where it cuts rather than continues on a branch), `/upgrade`, `/vuln` (applied by the orchestrator, once per CVE in its Step 1, per the `/vuln` "Git Workflow" spec — `vuln-fixer` creates the branch it is handed and never derives a name), and `/promote-decisions` (its branch in the architecture repository).
 
 ---
 

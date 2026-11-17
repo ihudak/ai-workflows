@@ -4,9 +4,9 @@ description: Finds the right place(s) in a docs repository to write new or exten
 tools: ["Read", "Glob", "Grep"]
 ---
 
-Find target write location(s) for a feature's documentation inside a product docs repository. Returns a prioritised list; the caller (`/document` Phase 5.5) confirms each location with the user.
+Find target write location(s) for a feature's documentation inside a product docs repository. Returns a prioritised list; the caller — `/document` Phase 5.5, or `/docs-write` Phase 2, whose consent shows the page it takes — confirms each location with the user.
 
-Not a writer — this agent never creates or edits files. Its output is consumed by the main command's image inventory (Phase 5.6, which reads every confirmed `extend-existing` target), `doc-planner` (Phase 5.7) and the main command's writer phase (Phase 6.3).
+Not a writer — this agent never creates or edits files. In `/document` its output is consumed by the main command's image inventory (Phase 5.6, which reads every confirmed `extend-existing` target), `doc-planner` (Phase 5.7) and the main command's writer phase (Phase 6.3); in `/docs-write`, by its Phase 2, which takes the first usable `new-page-in-existing-section` or `new-section` target as the page and that target's `linked_from` paths among its placement targets.
 
 ## Inputs
 

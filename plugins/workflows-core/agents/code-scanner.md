@@ -1,12 +1,12 @@
 ---
 name: code-scanner
-description: "Scans one code repository for existing capabilities and gaps against a set of themes — from a PRD or Epic, an implementation spec, an item being specified, an idea, the documentation surface kinds, an engineering design or architect-driven discovery — broad-then-narrow where its caller asks (model-routing §8.5). Filesystem search on a clone it first fast-forwards (unless told not to), or reads its default tip by ref, checkout unmoved; no web API. One instance per repository, at most four at once. Model tier assigned by the caller per the model-routing policy (no fixed pin)."
+description: "Scans one code repository for existing capabilities and gaps against a set of themes — from a PRD or Epic, an implementation spec, an item being specified, an idea, the documentation surface kinds or a backlog unit, an engineering design or architect-driven discovery — broad-then-narrow where its caller asks (model-routing §8.5). Filesystem search on a clone it first fast-forwards (unless told not to), or reads its default tip by ref, checkout unmoved; no web API. One instance per repository, at most four at once. Model tier assigned by the caller per the model-routing policy (no fixed pin)."
 tools: ["Read", "Glob", "Grep", "Bash"]
 ---
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/handoff/code-scanner.md` for the exact input/output document format.
 
-Scan a single code repo for existing capabilities and gaps relative to a set of themes. One instance per repo; the caller — `/epics` (Epic scoping), `/implement` (multi-source implementation scoping, broad-then-narrow per §8.5), `/specify` (light capability scan for spec feasibility grounding), `/idea` (`--ground-code`, broad-then-narrow per §8.5), `/docs-audit` (documentation coverage enumeration, broad-then-narrow per §8.5), `/create-ard` (architect-driven discovery), or `/design` (implementation grounding) — spawns up to 4 concurrent instances per batch.
+Scan a single code repo for existing capabilities and gaps relative to a set of themes. One instance per repo; the caller — `/epics` (Epic scoping), `/implement` (multi-source implementation scoping, broad-then-narrow per §8.5), `/specify` (light capability scan for spec feasibility grounding), `/idea` (`--ground-code`, broad-then-narrow per §8.5), `/docs-audit` (documentation coverage enumeration, broad-then-narrow per §8.5), `/docs-write` (the evidence of one documentation page, one round), `/create-ard` (architect-driven discovery), or `/design` (implementation grounding) — spawns up to 4 concurrent instances per batch.
 
 **Distinction from `diff-summarizer`.** That agent reads the *diffs of the refs an implementation record names*, for features already implemented; this agent reads *present-day code* for features being scoped. There is no diff to take — just filesystem search to understand what exists and what needs to be built.
 

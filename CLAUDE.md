@@ -178,7 +178,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `dev-workflows:bug-diagnosis` — repro first, ranked hypotheses, tagged instrumentation, a regression test at a seam → `dev-workflows.md`
 - `dev-workflows:code-handoff` — the code repo's `finish-code-branch`: commit, consent-gated push and pull request; a fixer's per-unit revert (§6) → `dev-workflows.md`
 - `docs-workflows:release-note-types` — the release-note section map, per-section draft shape and prose rules, the deprecation note → `release-notes.md`
-- `docs-workflows:gate-ledger` — verification-gate accounting: the six outcomes and the `/document` gate registry → `docs-workflows-gates.md`
+- `docs-workflows:gate-ledger` — verification-gate accounting: the six outcomes and the commands' gate registries → `docs-workflows-gates.md`
 - `docs-workflows:repo-verification-gates` — a docs repo's own pre-PR checklist as `repo_verification_gates` → `docs-workflows-gates.md`
 - `docs-workflows:toolchain-preflight` — the pre-write environment check, the `toolchain` block, each tool's test → `docs-workflows-gates.md`
 - `workflows-core:instruction-file-maintenance` — changes to agent-instruction files → § Editing discipline above
