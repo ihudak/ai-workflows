@@ -30,7 +30,7 @@ Draft documentation backlog units: $ARGUMENTS
 - **The branch class** of `workflows-core:read-only-repos` §3's *Branch names*, `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$`, tested as that section says for a name git printed. A name typed, or read from data, takes the class test below instead, since a line it holds could end that section's here-document.
 - **A relative path** — not empty, opening with neither `/` nor `-`, holding no `..` segment and no control character, U+2028 or U+2029.
 
-**The class test** takes the value as one single-quoted argument, so nothing in it can reach the shell; it exits 0 where the value is in the class, and any other exit is outside it:
+**The class test** takes the value as one single-quoted argument, so nothing in it can reach the shell; it exits 0 where the value is in the class, and 1 where it is not:
 
 ```bash
 python3 -I -c 'import re, sys
@@ -50,6 +50,8 @@ python3 -I -c 'import os, sys
 r, p = (os.path.realpath(a) for a in sys.argv[1:3])
 print("equal" if p == r else "inside" if p.startswith(r.rstrip("/") + "/") else "outside")' '<root>' '<path>'
 ```
+
+**`python3` is required.** A test or a listing of this body that does not answer in the form it gives — `python3` missing, exit 127, among the causes — is no answer, never read as outside a class or as nothing found: it stops the run with Phase 0 step 9's `DOCS_WRITE_BACKLOG_UNREADABLE`, its line naming `python3`, which the backlog's own reader needs too.
 
 **Units and their ends.** A **unit-level end** — a build still failing, or skipped at `gate-ledger.md` §5's question; *Defer* at Phase 8's escalation; *Keep the verdict* on a review that is not `BLOCK`; a `doc-writer` return of `BLOCKED`; a dispatched agent that fails or returns nothing usable; a tree comparison or a placement target's frontmatter that refuses a writing agent's edits (Phase 5); the ignore test or a refused commit (§6.3 of the finish); `backlog-lines.py edit` exiting 3 or 4 — runs §6.4 of the finish for the unit, which ends the batch: no later unit starts, the units already committed stand, and the run goes on to Phase 10. **A *Cancel*** at any question after Phase 3 has settled the branch runs §6.4 for the unit in hand, then takes the stop route: nothing is pushed, and the report names the branch and each unit committed on it. **A stop** in the per-unit phases does the same. §6.4 takes from this run, per unit, its **created paths** — the page, where it was written, and every other path inside `<top>` that a Phase 5, 6, 7 or 8 tree comparison reports as created — and its **edited paths**, each with the copy the run took before its first edit of it for the unit (*Copies*, Phase 5).
 
@@ -77,7 +79,7 @@ print("equal" if p == r else "inside" if p.startswith(r.rstrip("/") + "/") else 
 
 8. **The backlog and the profile, committed.** Where `<top>/.dev-workflows/docs-backlog.yml` does not exist, stop: `DOCS_WRITE_NO_BACKLOG: <top>/.dev-workflows/docs-backlog.yml does not exist — /docs-workflows:docs-audit writes it.` Then take the stop route. Then §6.1 of the finish, over the backlog and the profile: where it refuses, stop: `DOCS_WRITE_UNCOMMITTED: <the file> is <not tracked | changed since its last commit> — commit it as it stands, on the branch the repository stands on, and run /docs-write again.` Then take the stop route.
 
-9. **The backlog, read.** Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog-lines.py" check --repo '<top>'`, and read its exit and output by the caller's rule in the script's docstring. **Anything but exit 0 with one JSON object on stdout** — `python3` missing among them — stops: `DOCS_WRITE_BACKLOG_UNREADABLE: backlog-lines.py check <exited <n> | printed no JSON object>[: <the one stderr line, whose text is fixed>].` Then take the stop route. Of the JSON:
+9. **The backlog, read.** Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog-lines.py" check --repo '<top>'`, and read its exit and output by the caller's rule in the script's docstring. **Anything but exit 0 with one JSON object on stdout** — `python3` missing among them — stops: `DOCS_WRITE_BACKLOG_UNREADABLE: <backlog-lines.py check | python3> <exited <n> | printed no JSON object>[: <the one stderr line, whose text is fixed>].` Then take the stop route. Of the JSON:
    - `"shape": "out"` — stop: `DOCS_WRITE_BACKLOG_SHAPE: <top>/.dev-workflows/docs-backlog.yml line <line> is outside the shape a backlog run reads (<reason>) — reformat that line, or re-run /docs-workflows:docs-audit --refresh, whose write is in shape.` Then take the stop route. Nothing is written.
    - `schema_version` other than `"1"` — stop: `DOCS_WRITE_UNKNOWN_SCHEMA: <top>/.dev-workflows/docs-backlog.yml declares schema_version <value | none>; this release reads 1.` Then take the stop route.
    - `duplicates` not empty, or `duplicates_outside_class` above 0 — stop: `DOCS_WRITE_DUPLICATE_ID: <each id in duplicates>[ and <n> more outside the unit-id class] each name two or more units — give each unit an id of its own.` Then take the stop route.
