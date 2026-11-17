@@ -18,7 +18,14 @@ from a scan of your repository's commit messages for the key.
 
 The scan is what finds **everything the plugin did not do itself** — the commit you wrote by hand
 after the session ran out, the fix a colleague pushed, the follow-up nobody ran a command for. A
-commit whose subject names the key — any commit but a merge commit — is one those commands can find. A commit that names nothing is
+commit whose subject names the key — any commit but a merge commit — is one those commands can find,
+save in two repositories. The specs repository is left out, unless `implementation.md` names it. In
+the repository that holds the documentation, where the run can name the folders the documentation
+lives in, a commit that touches nothing but documentation — those folders, and the paths
+`docs-workflows`' key-discovery reference lists, every markdown file at the repository's top level
+among them — is never found; where it can name none, or the docs profile there takes the whole
+repository as documentation, that repository is left out whole, unless `implementation.md` names it,
+and then every commit there is found. A commit that names nothing is
 invisible to them, and the release note or the documentation page comes out thinner than the work
 was. Where `implementation.md` records nothing for the key either, a keyed `/docs-workflows:document`
 asks, before it writes any page, whether anything is built at all — its nothing-built question,
