@@ -1095,6 +1095,8 @@ def main(argv):
 BF_PATH = os.path.join(HERE, os.pardir, "references", "docs-audit", "backlog-format.md")
 FH_PATH = os.path.join(HERE, os.pardir, "references", "finish-and-handoff.md")
 BF_LEAD = "**The line shape a backlog run reads.**"
+# /docs-write finds the page-level marker in evidence-contract section 3 by this phrase, at its Phase 0 and Phase 9.
+EC_MARKER_PHRASE = "this page-level marker, character for character: "
 MINI = ("schema_version: 1\n"                          # 1
         "units:\n"                                     # 2
         "  - id: U-001\n"                              # 3
@@ -1803,6 +1805,23 @@ def case_edit_undo_failed(tmp):
     _true("'WHY_UNDO'" not in code and '"WHY_UNDO"' not in code, "no code names WHY_UNDO by string")
 
 
+def case_marker_phrase_pinned(tmp):
+    """/docs-write reads the page-level marker out of evidence-contract section 3 by one phrase, at its Phase 0 and
+    at its Phase 9. The phrase stands in that section directly before the marker, once, and in each of the command's
+    two programs, so a reword of either side turns the build red, not a run after its review."""
+    with open(os.path.join(HERE, os.pardir, "references", "docs-audit", "evidence-contract.md"), encoding="utf-8") as fh:
+        ec = fh.read()
+    sec = ec[ec.index("\n## 3. "):ec.index("\n## 4. ")]
+    _eq(sec.count(EC_MARKER_PHRASE + "`[NEEDS CLARIFICATION: "), 1,
+        "evidence-contract section 3 gives the marker directly after the phrase, once")
+    _eq(ec.count(EC_MARKER_PHRASE), 1, "the phrase stands nowhere else in evidence-contract")
+    with open(os.path.join(HERE, os.pardir, "commands", "docs-write.md"), encoding="utf-8") as fh:
+        dw = fh.read()
+    _eq(dw.count('r"' + EC_MARKER_PHRASE + '`(\\[NEEDS CLARIFICATION: [^`]*\\])`"'), 2,
+        "docs-write's Phase 0 and Phase 9 programs search by the phrase, byte for byte")
+    _eq(dw.count("character for character: `("), 2, "no program of docs-write searches by another phrase")
+
+
 def case_edit_undo_failed_over_another_writer(tmp):
     """The review's reproduction: another writer replaces the backlog after the edit's read-back, and the undo's own
     write fails before its last look. The read that follows finds that writer's bytes, so the exit 2 is the blocked
@@ -1936,7 +1955,7 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_edit_undo_failed_over_another_writer, case_edit_undo_failed_unreadable,
          case_edit_noop,
          case_edit_not_a_repository, case_edit_undo, case_bad_args,
-         case_shape_paragraph_pinned)
+         case_shape_paragraph_pinned, case_marker_phrase_pinned)
 
 
 def selftest():
