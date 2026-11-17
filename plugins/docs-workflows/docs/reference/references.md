@@ -22,7 +22,7 @@ The one handoff mechanic that belongs to a single command rather than to the fam
 
 How the two documentation commands find the code a feature changed, beyond the implementation record.
 
-- `key-discovery.md` — how `/document` (keyed mode) and `/release-notes` run the whole-key commit scan, its probe and the optional GitHub pull-request search through `scripts/key-discovery.py`; how the repository that holds the documentation is read by path — a commit touching only its documentation paths, which `key-discovery.md` lists, is never counted as work, and the repository is left out whole where no content path is known; how a merged pull request's landed commits join the scan's result — in that repository, only those touching another path — while every other pull request found is listed, never read; and the check `/document` runs on its own commit against the same paths.
+- `key-discovery.md` — how `/document` (keyed mode) and `/release-notes` run the whole-key commit scan, its probe and the optional GitHub pull-request search through `scripts/key-discovery.py`; how the repository that holds the documentation is read by path — a commit touching only its documentation paths, which `key-discovery.md` defines, is never counted as work — and, where no content path is known there, how the repository is left out whole, or read whole where the implementation record names it; how a merged pull request's landed commits join the scan's result — in that repository, where it is read by path, only those touching another path — while every other pull request found is listed, never read; and the check `/document` runs on its own commit against the same paths.
 
 ## Authoring formats
 
