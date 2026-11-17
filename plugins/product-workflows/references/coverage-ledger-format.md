@@ -356,7 +356,7 @@ step 7, under `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE`; `/
 `/specify` each apply them in a Phase 0 section of their own, *The slice's ledger tests* — on an
 Epic, to the slice above it — `/create-ard` under `CREATE_ARD_BRD_UNALLOCATED` and
 `CREATE_ARD_BRD_NOT_ELIGIBLE`, `/specify` under `SPECIFY_BRD_UNALLOCATED` and
-`SPECIFY_BRD_NOT_ELIGIBLE`. `/update-spec` takes no ledger test,
+`SPECIFY_BRD_NOT_ELIGIBLE`. Both carry each row of §5.2's table — its condition and what it names — into their own section's bullets and messages, so an edit to that table is swept in both. `/update-spec` takes no ledger test,
 and `/update-prd` and `/epics` take no stop for them: each applies the tests only where it already
 does, to name the remedy of its own Phase 0 stop for a folder holding no PRD (`commands/epics.md`
 Phase 0 step 1b, `commands/update-prd.md` Phase 0 step 4). The tests are restated at
@@ -609,7 +609,7 @@ Beside the bare form, where a sibling has recorded `deferred-to` on a row `<PARE
 to it — the re-cut form's condition in the row above — the re-cut form, which names the
 instruction run itself:
 
-`Or run '/product-workflows:brd-split <PARENT-KEY> "<what to peel off>"', which does the same and can also re-cut that row onto this slice where it was never interviewed and its brd/brd-inventory.md can be read; a re-cut row arrives unallocated: <once-parent-merged>ground it with '/product-workflows:prd-ground <SLICE-KEY>', <once-grounding-merged>walk it with '/product-workflows:brd-split <SLICE-KEY>', then re-run '<re-run>'.`
+`Or run '/product-workflows:brd-split <PARENT-KEY> "<what to peel off>"', which does the same and can also re-cut onto this slice a row <PARENT-KEY> delegated to a sibling that recorded it deferred-to, where this slice was never interviewed and its brd/brd-inventory.md can be read; a re-cut row arrives unallocated: <once-parent-merged>ground it with '/product-workflows:prd-ground <SLICE-KEY>', <once-grounding-merged>walk it with '/product-workflows:brd-split <SLICE-KEY>', then re-run '<re-run>'.`
 
 A row reaching this slice either way arrives `unallocated` (§3.2), so it is ground, then walked,
 before the stopping command is re-run — the order `/brd-split`'s own next steps give a child that
