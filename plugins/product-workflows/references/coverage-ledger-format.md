@@ -352,7 +352,9 @@ only where this slice's own ledger was read, and where the parent's ledger canno
 reported by path and neither form is named; and *ledger missing or unreadable while `claims:` names
 rows* — the file reported by path and `/product-workflows:prd-ground <SLICE-KEY>` named, the run
 whose stop names the repair. `/create-prd` applies the slice's ledger tests to a slice in its Phase 0
-step 7, under `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE`.
+step 7, under `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE`; `/create-ard` applies
+them in its Phase 0 section *The slice's ledger tests* — on an Epic-level run, to the slice above the
+Epic — under `CREATE_ARD_BRD_UNALLOCATED` and `CREATE_ARD_BRD_NOT_ELIGIBLE`.
 
 **The level test is a check the consumer performs, and it comes first.** A BRD is a container and is
 never the folder a PRD is authored in, so a consumer handed a `BRD-` folder refuses it **before
