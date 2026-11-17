@@ -401,6 +401,12 @@ Its contract:
 
 **The readings question.** Where the move test passes, the run asks once: `["Apply these readings (Recommended)", "Cancel"]`. The text names each `differs` with the code's phrasing and location, and counts the rest. A person turns a reading into an edit (SRC:12-13).
 
+**Note, 2026-11-18 — `claim-reader`'s tools, by the maintainer's answer to plan review 1's QP3 (*Export, no shell*).** The approved text above stands; this note records the departure from it that the maintainer approved.
+- **Tools.** `claim-reader` takes `tools: ["Read", "Grep", "Glob"]` and no Bash. Its contract's *Tools: Read and Bash*, its ROR §4 primitives and its pattern file are replaced: the agent runs no command, so neither the page's text nor a repository's file names reach a shell, and its read-only rule is held by its tools rather than its prompt (the residual I11 named is gone for this agent). It reads only under the export directory it is handed.
+- **The export.** The command writes the commits the reader reads into a scratch directory under `workflows-core:run-flags` §7, by one fixed program, `backlog-lines.py export`: each admitted clone's whole tree at today's commit, and the evidence paths at each recorded `ref` where this design reads at it. The program takes only class-tested refs and paths, single-quoted; runs git as an argument list with `-c safe.bareRepository=explicit`; writes regular files only, following and creating no symbolic link; and skips links, submodules, names outside class and files above 1 MiB, counting each. Above 50,000 files or 512 MiB the repository is *not read* and its claims stay marked. Today's whole tree is there, so the reader can still follow a claim to a file the evidence does not name — the cost *Rejected: no Bash* named does not arise.
+- **The return.** A reading's source is the export path the reader read; the command maps it back to the repository-relative path through the export's own file list, a known set, and tests `path` and `lines` by class before either becomes an `evidence:` entry.
+- **Where it is built:** the plan's R19, R27, R29 and R30 and its Task 2.1 (`docs/superpowers/plans/2026-11-17-doc-d-g1-docs-verify.md`, revision 2).
+
 ### S2-D6. The move test, the commits, and the walk recorded
 
 **The move test.** It is deterministic, and it runs before any apply.
