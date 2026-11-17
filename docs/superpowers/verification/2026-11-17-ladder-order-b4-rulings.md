@@ -213,7 +213,7 @@ These decisions changed what the branch ships but carry no `Ruling` line. Each w
 - **The pointer "outside its work tree" in older text** (line 176): `docs-workflows`' 1.40.0 changelog, `document-lineage` §6, `document.md` and `release-notes.md`. The ledger's words are *not an ordinary harm*: in each, the antecedent is the specs repository named just before.
 - **Noted by a re-review, with no ledger line.**
   - `architecture-grounding.md:112` would have `/update-spec` write *"…made with /product-workflows:create-ard <PRD-KEY>"* into a specification on a failing slice. `architecture-kb.md:93`'s harvest fix names `/create-ard` with no key. Both are R1 (c) sites with no population row. Re-review 2 judged that no ordinary setup reaches either: the first needs R3's state, a recurring weakness with no governing decision, and an `/update-spec` revision.
-  - Re-review 1 noted that a later interview round's declined handoff, the register already on the default branch, is row C at `/brd-package`'s step 6 and not `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF` — *the I-3 shape on round 2 and later*. It predates the batch and was not walked.
+  - Re-review 1 noted that a later interview round's declined handoff, the register already on the default branch, is row C at `/brd-package`'s step 6 and not `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF` — *the I-3 shape on round 2 and later*. It predates the batch and was not walked. Filed since, by the controller, as BRD-PACKAGE-LATER-ROUND in `docs/superpowers/to-fix.md`.
   - None of these three is filed in `docs/superpowers/to-fix.md`.
 
 ### Deferred, then fixed

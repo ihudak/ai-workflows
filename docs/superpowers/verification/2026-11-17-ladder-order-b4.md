@@ -428,4 +428,4 @@ On the process:
 - A `brd-link.md` with no `parent:` (ruling 18), and a hand-committed `brd-link.md` beside unlanded grounding (ruling 40).
 - Four items the final review triaged as *still stands, no ordinary setup*, and three it found wording only, all older than the batch.
 - The older text that says "outside its work tree" (ledger line 176).
-- Three items a re-review noted with no ledger line, none filed in `docs/superpowers/to-fix.md`: two R1 (c) sites in `architecture-grounding.md` and `architecture-kb.md`, and the later-round `/brd-package` chain.
+- Three items a re-review noted with no ledger line: two R1 (c) sites in `architecture-grounding.md` and `architecture-kb.md`, which no ordinary setup reaches and which are not filed, and the later-round `/brd-package` chain, filed in `docs/superpowers/to-fix.md` as BRD-PACKAGE-LATER-ROUND by the controller after this record was written (it is read from the command's text and was not walked).
