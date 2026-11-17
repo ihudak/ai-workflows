@@ -474,8 +474,8 @@ the map — `implementation.md` naming no repository — `<slug>: not read — n
 `<$REPOS_PATH>` the directory the map was built over; a scan over the repositories
 `implementation.md` names prints no such line (`key-discovery.md` §5). Under `left-out` no clone of it
 was read: the report's `left out as never code:` names it, with why (Phase 8). Where `docs` is null,
-print none of these: no `--docs-root` was passed, the documentation root not existing, and this step
-printed its `Documentation root: <path> does not exist …` line before the call; or the root passed is
+print none of these: no `--docs-root` was passed, the documentation root not existing, and step 2's
+*What this scan passes* printed its `Documentation root: <path> does not exist …` line before the call; or the root passed is
 not a directory in a git work tree, where print in their place, and carry to the report's bullet,
 `Documentation root: <path> is not a directory in a git work tree — no repository is read by path on this run, so a commit that touches only documentation is read as code; set DOCS_PATH or pass --docs <path>.`
 
