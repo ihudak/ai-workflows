@@ -3,9 +3,10 @@
 Single source of truth for extracting a documentation repository's **own** pre-PR checklist and
 applying it to the files a run just wrote.
 
-Consumed by `doc-planner` (`/document` keyed mode) and by `/document` Mode B directly — direct mode has
-no planner, so its orchestrator performs the extraction itself. Both produce the same block, and both
-feed the `repo_checklist` gate in `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md`.
+Consumed by `doc-planner` (`/document` keyed mode), by `/document` Mode B directly — direct mode has
+no planner, so its orchestrator performs the extraction itself — and by `/docs-workflows:docs-write`,
+whose orchestrator, with no planner either, does the same. All three produce the same block, and all
+three feed the `repo_checklist` gate in `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md`.
 
 ---
 
@@ -62,6 +63,10 @@ repo_verification_gates:        # [] when the repo publishes no checklist
   Phase 0, in the same pass that reads the repo's `Prerequisites` for
   `${CLAUDE_PLUGIN_ROOT}/references/toolchain-preflight.md` §2 source 3, checks the edited files
   against it at Phase 3.5, and records the `repo_checklist` row there.
+- **`/docs-workflows:docs-write`** — there is no planner either. The orchestrator extracts the block
+  itself, as direct mode does, checks each unit's page, and the entries the run added for it, against
+  it at its Phase 6, and records the `repo_checklist` row there (`gate-ledger.md` §9); each unit's brief
+  carries the block to `doc-writer` and `doc-reviewer` (`${CLAUDE_PLUGIN_ROOT}/references/docs-iteration/unit-brief.md` §2).
 
 A `validation`-kind entry is **not** satisfied by reading files — it names a command the run must
 actually have executed. Whether it ran is the business of the `style_check` / `build_check` ledger

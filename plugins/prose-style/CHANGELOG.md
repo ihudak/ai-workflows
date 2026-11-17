@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.4 — 2026-11-17
+
+### Changed
+- **`prose-style-checker`'s *When to invoke* names every style check `docs-workflows`' `docs-style-checker` runs** (DOC-D-G1): `/document` keyed mode Phase 6.4 and direct mode Phase 3.5, and `docs-workflows` 1.43.0's `/docs-write` Phase 6 — as the semantic pass beside a repository linter that produced a result, the fallback where every linter failed, or the sole check where the repository configures none. It named keyed `/document` alone, as the pass beside the repository's primary linter. Guidance only: the checker's inputs and output are unchanged, and it needs no other plugin's release.
+
 ## 0.8.3 — 2026-11-14
 
 ### Fixed

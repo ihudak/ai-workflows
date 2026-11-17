@@ -1,6 +1,6 @@
 # Getting started
 
-This page takes you from zero to your first successful run — install the plugin, set the environment variables it reads, and run [`/document`](commands/document.md) end to end. If the project you want to document has no documentation repository at all, start with [Your first run on a project with no docs](#your-first-run-on-a-project-with-no-docs) instead, and follow [The documentation route](docs-workflow.md) from there. Once you have done this once, [Workflow overview](workflow.md) shows how the seven commands fit together, and [Roles and phases](roles-and-phases.md) says which role runs each of them.
+This page takes you from zero to your first successful run — install the plugin, set the environment variables it reads, and run [`/document`](commands/document.md) end to end. If the project you want to document has no documentation repository at all, start with [Your first run on a project with no docs](#your-first-run-on-a-project-with-no-docs) instead, and follow [The documentation route](docs-workflow.md) from there. Once you have done this once, [Workflow overview](workflow.md) shows how the eight commands fit together, and [Roles and phases](roles-and-phases.md) says which role runs each of them.
 
 ## Install
 
@@ -51,7 +51,7 @@ Where your product documentation's clone lives, defaulting to `/workspace/docs`.
 
 ### `GIT_USER_INITIALS`
 
-Your branch identifier, used by every run that creates a branch in a documentation repository — `/document` in keyed mode, `/docs-profile`, `/docs-init`, and a standalone [`/docs-brand`](commands/docs-brand.md). Branch naming is repo-rule-first: each reads the target repo's own documented convention and follows it as written, and this variable fills a name-or-initials segment where the convention asks for one. Where a repository documents no convention — one `/docs-init` has just created, for one — the fallback prefix and this variable are the whole of it.
+Your branch identifier, used by every run that creates a branch in a documentation repository — `/document` in keyed mode, `/docs-profile`, `/docs-init`, a standalone [`/docs-brand`](commands/docs-brand.md), and [`/docs-write`](commands/docs-write.md) where it cuts one. Branch naming is repo-rule-first: each reads the target repo's own documented convention and follows it as written, and this variable fills a name-or-initials segment where the convention asks for one. Where a repository documents no convention — one `/docs-init` has just created, for one — the fallback prefix and this variable are the whole of it.
 
 ### Claude Code's skill-listing budget
 
@@ -71,7 +71,7 @@ That gives 20,000 characters at 200K and 100,000 at 1M; a session pays only for 
 /workflows-core:statusline
 ```
 
-It puts a multi-line status line at the bottom of your terminal — session identity, git state, context usage, running cost, tokens and rate limits — so you can watch a long command spend while it runs. Given `jq`, it also enables the **status-line cross-check**: the five commands of this plugin that write a cost entry gain it, so each cost entry then carries Claude Code's own figure for the run beside the one computed from the bundled price table, and a gap between the two over a window with no compaction says the price table needs refreshing. Skip it and you still get a cost report, with nothing to check it against; even with it, a session's first cost phase has no baseline yet and leaves the second figure out. See [Session cost](reference/session-cost.md) for what an entry holds; the companion plugin's Session cost page describes the cross-check in full. The command is idempotent, backs up anything it would overwrite, and changes no command's behaviour.
+It puts a multi-line status line at the bottom of your terminal — session identity, git state, context usage, running cost, tokens and rate limits — so you can watch a long command spend while it runs. Given `jq`, it also enables the **status-line cross-check**: the six commands of this plugin that write a cost entry gain it, so each cost entry then carries Claude Code's own figure for the run beside the one computed from the bundled price table, and a gap between the two over a window with no compaction says the price table needs refreshing. Skip it and you still get a cost report, with nothing to check it against; even with it, a session's first cost phase has no baseline yet and leaves the second figure out. See [Session cost](reference/session-cost.md) for what an entry holds; the companion plugin's Session cost page describes the cross-check in full. The command is idempotent, backs up anything it would overwrite, and changes no command's behaviour.
 
 Claude Code ships its own built-in `/statusline` command, so typing the bare form reaches that instead of the companion plugin's — always use the qualified `/workflows-core:statusline`.
 
@@ -79,7 +79,7 @@ Claude Code ships its own built-in `/statusline` command, so typing the bare for
 
 Run the plugin in an AI container — strongly recommended: a command run there can reach only what you mount into it and the network you allow.
 
-The plugin runs commands a docs repository declares, with your permissions: `/docs-serve` starts the dev server its profile names and, with `--build`, its build; `/document` runs the prose linter the repository configures. Its agents treat what they read in a repository — its `CLAUDE.md` included — as data that never adds a task or changes a verdict, and report text that tries to steer them, but a declared command is a value that rule lets through on purpose: serving or linting the docs is the task. On your own host, point the plugin only at repositories you would build yourself.
+The plugin runs commands a docs repository declares, with your permissions: `/docs-serve` starts the dev server its profile names and, with `--build`, its build; `/document` runs the prose linter the repository configures; `/docs-write` runs the profile's build and lint commands, each shown to you verbatim before it runs, and the repository's own linter. Its agents treat what they read in a repository — its `CLAUDE.md` included — as data that never adds a task or changes a verdict, and report text that tries to steer them, but a declared command is a value that rule lets through on purpose: serving or linting the docs is the task. On your own host, point the plugin only at repositories you would build yourself.
 
 ## Your first run on a project with no docs
 
@@ -93,7 +93,7 @@ If there is no documentation repository yet, `/docs-init` makes one:
 
 `/docs-init` resolves the target (and refuses outright if that directory already looks like a documentation repository — pointing you at `/docs-profile` instead, which is the command for one that already exists), offers to `git init` an empty or absent directory outside every git work tree (a target below a work tree's top level, existing or not, stops the run), confirms which code repositories the portal will document, branches, then writes the page skeleton, both build configs, `.vale.ini` with a project vocabulary seeded with the product name and the few technical words the scaffold's own pages use (so the scaffold passes its own lint gate, locally and in CI alike), a CI workflow carrying the visibility gates, and `.dev-workflows/docs-profile.yml`. It runs `/docs-brand --inline` to pick up a logo and colours from the product's own code, verifies that both builds and the linter actually work, gates the whole diff on an Opus review, and leaves it on a branch with a drafted pull request. It never pushes and never merges.
 
-Then `/docs-workflows:docs-serve` serves the result and reports a URL you can open in your browser — it opens nothing itself — and [`/docs-workflows:docs-audit`](commands/docs-audit.md) then finds what the portal is still missing and writes a prioritised backlog of it. From there, [The documentation route](docs-workflow.md) is the procedure that turns that backlog into pages — which of its steps a command runs, and which you do by hand. Skip straight to the next section if your documentation repository already exists.
+Then `/docs-workflows:docs-serve` serves the result and reports a URL you can open in your browser — it opens nothing itself — and [`/docs-workflows:docs-audit`](commands/docs-audit.md) then finds what the portal is still missing and writes a prioritised backlog of it. From there, [The documentation route](docs-workflow.md) is the procedure that turns that backlog into pages — [`/docs-write`](commands/docs-write.md) drafts each unit's page, and the route says which of its other steps a command runs and which you do by hand. Skip straight to the next section if your documentation repository already exists.
 
 ## Your first run
 

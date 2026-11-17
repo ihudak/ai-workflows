@@ -7,7 +7,7 @@ These shared references load by part — `escalation-rules`, `finding-triage`, `
 Single source of truth for verifying, before a run writes anything, that the tools its gates invoke
 are actually present.
 
-Consumed by `/document` (both modes) at Phase 0, and by `/docs-init` at Phase 2 step 3 — which **skips §2's derivation** (its Phase 7 still runs Vale in the form §2, source 2, gives) and hands §3 a fixed set of its own (`git`, `python3`/`pip` or `uv`, `mkdocs`, `vale`). All three of §2's sources are empty for it: there is no profile yet, because it is the run that writes the first one; an absent or empty scaffold target carries no config signals; and it documents no `Prerequisites` of its own until this run has written them. It is the one consumer of the preflight that derives nothing. `/docs-serve` runs no preflight, but its Mode dispatch tests its own tools as §3 tests a tool run through `bash -c` or as `command <name>`, its Phase 2 takes §2's set-aside of a leading `cd <dir> &&` and `VAR=value` words when it compares a recorded command with a process's command line, and its Phase 4 takes §2's definition of a command's tool, and §3's test for one, before it starts a server. Two agents cite it without running a preflight: `docs-style-checker` takes §2, source 2, for the names Vale reads its configuration from and §3 for its linter rung's tool test, and `docs-scaffold-reviewer` takes §2, source 2, for how it runs Vale over a scaffold. Pairs with
+Consumed by `/document` (both modes) at Phase 0, by `/docs-write` at its Phase 0 — which derives the set from the profile's build and lint commands and the repository's own files, never from `dev_servers`, since none of its gates boots a server, and reads its prediction against `gate-ledger.md` §9's registry, where `build_check` has no fallback — and by `/docs-init` at Phase 2 step 3 — which **skips §2's derivation** (its Phase 7 still runs Vale in the form §2, source 2, gives) and hands §3 a fixed set of its own (`git`, `python3`/`pip` or `uv`, `mkdocs`, `vale`). All three of §2's sources are empty for it: there is no profile yet, because it is the run that writes the first one; an absent or empty scaffold target carries no config signals; and it documents no `Prerequisites` of its own until this run has written them. It is the one consumer of the preflight that derives nothing. `/docs-serve` runs no preflight, but its Mode dispatch tests its own tools as §3 tests a tool run through `bash -c` or as `command <name>`, its Phase 2 takes §2's set-aside of a leading `cd <dir> &&` and `VAR=value` words when it compares a recorded command with a process's command line, and its Phase 4 takes §2's definition of a command's tool, and §3's test for one, before it starts a server. Two agents cite it without running a preflight: `docs-style-checker` takes §2, source 2, for the names Vale reads its configuration from and §3 for its linter rung's tool test, and `docs-scaffold-reviewer` takes §2, source 2, for how it runs Vale over a scaffold. Pairs with
 `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` — the preflight decides whether to start; the ledger
 records what actually happened. §2, source 2, is also where this plugin says how it runs Vale.
 
@@ -42,7 +42,9 @@ de-duplicate by binary name.
    `bash` and `curl` too, and `ps` where `test -r /proc/net/tcp` fails — off Linux: the render smoke
    check that boots those servers starts and stops them under `bash`, probes their ports with `curl`,
    and reads their process groups from `/proc` on Linux and with `ps` elsewhere, and cannot run
-   without any of them (`docs-profiles/render-verification.md` §2, **Portability**). Add every entry in
+   without any of them (`docs-profiles/render-verification.md` §2, **Portability**). `/docs-write`
+   takes only the build and lint commands its Phase 0 holds, never a `dev_servers` command and none
+   of those three, since none of its gates boots a server. Add every entry in
    `profile.prerequisites` as a named prerequisite (these are prose, not binaries — record them for
    reporting, and check them only when the prose names a checkable path or binary).
 2. **Repo config signals**, checked at `repo_root` — and, where the caller resolved the site to a
@@ -250,7 +252,7 @@ toolchain:
   - tool: <binary name; for a tool containing "/", the path §3 tested; or a directory signal such as "node_modules">
     status: present | missing
     source: <profile.commands | profile.prerequisites | .vale.ini | pnpm-lock.yaml | CONTRIBUTING.md Prerequisites | …>
-    required_by: [<gate ids from gate-ledger.md §4 whose primary mechanism runs this tool>]
+    required_by: [<gate ids from the caller's registry — gate-ledger.md §4, or §9 for /docs-write — whose primary mechanism runs this tool>]
     fallback_for: [<gate ids whose registered fallback runs it>]   # omitted when there are none
 ```
 
@@ -271,8 +273,9 @@ the tool of a command `build_check` runs — a `builds[].command`, `commands.bui
 `commands.per_space.<space>.build` (`docs-profiles/render-verification.md` §1) — powers
 `build_check`; the tool of a `dev_servers` command powers `render_smoke_check`, and so do `bash`,
 `curl` and, off Linux, `ps`, which that check runs itself. **Those same tools also run `build_check`'s
-registered fallback** — the Step 2 dev-server boot that stands in for a build that will not run
-(`gate-ledger.md` §4) — so each of them carries `fallback_for: [build_check]`. A tool with an empty
+registered fallback** in `/document`'s registry — the Step 2 dev-server boot that stands in for a build
+that will not run (`gate-ledger.md` §4) — so each of them carries `fallback_for: [build_check]`;
+`/docs-write`'s registry (§9) registers none, and that run derives no dev-server tool. A tool with an empty
 `required_by` is reported but never blocks.
 
 A tool §3 tests both ways — one a build or lint command and a dev-server command both run — takes
@@ -298,8 +301,13 @@ way the Phase 6.4 gate died.
 
 When one or more required tools are **missing**, print the `toolchain` rows (missing first), then the
 consequence — each affected gate and the outcome it is predicted to record: `DEGRADED` where the gate's
-registered fallback (`gate-ledger.md` §4) still runs without the missing tool, and `UNAVAILABLE`
-where neither the primary nor the fallback can (`gate-ledger.md` §2). A gate is affected where a
+registered fallback (the caller's registry: `gate-ledger.md` §4, or §9 for `/docs-write`) still runs
+without the missing tool, and `UNAVAILABLE` where neither the primary nor the fallback can
+(`gate-ledger.md` §2). **`/docs-write` reads this section against §9's registry**, where `build_check`
+registers no fallback: a missing build tool predicts `UNAVAILABLE` for it, never `DEGRADED`, and a
+profile that records no build command for a page's space makes the gate `NOT_APPLICABLE` there — so
+this section's per-build fallback test, its paragraph on a profile that records no build command and
+*What the `build_check` prediction assumes* are `/document`'s alone. A gate is affected where a
 missing tool's `required_by` names it. Its fallback still runs where no missing tool's
 `fallback_for` names it — except `build_check`'s, which is decided **per build**, by the test
 `/document` Phase 6.5 Step 1 makes when that build will not run: a build that will not run keeps its
