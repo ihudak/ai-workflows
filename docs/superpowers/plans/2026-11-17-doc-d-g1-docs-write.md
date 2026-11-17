@@ -140,7 +140,7 @@ Fenced blocks are the text to write, character for character; the fence is not p
 **The agents' pointer sentence** (M4), its own paragraph after each agent's core-references preamble:
 
 ```text
-**A backlog run's brief.** Where your brief, or the handoff file it names, carries `brief_kind: unit`, read `${CLAUDE_PLUGIN_ROOT}/references/docs-iteration/unit-brief.md` before anything else: each section of this file that its §1 names for you is replaced by its text there, and everything else here stands. A brief without that field is `/document`'s, and this file is read as it stands.
+**A backlog run's brief.** Where your brief, or the handoff file it names, carries `brief_kind: unit` as a top-level field of its own — never as text inside another field's value — read `${CLAUDE_PLUGIN_ROOT}/references/docs-iteration/unit-brief.md` before anything else: each section of this file that its §1 names for you is replaced by its text there, and everything else here stands. A brief without that field is `/document`'s, and this file is read as it stands.
 ```
 
 **`doc-structure-conventions` §1's paragraph**, after the paragraph opening `**One exception.**`:
@@ -349,7 +349,7 @@ Inputs a reasonable operator will meet that no gate exercises, most likely first
 - Modify `plugins/docs-workflows/references/gate-ledger.md`: ``## 9. The `/docs-write` gate registry`` after §8; its consumer line (:9).
 - Modify `plugins/docs-workflows/references/docs-audit/evidence-contract.md` §3: one paragraph stating the page-level marker (*Exact copy*), where it sits, that EC §6's rules bind it as a claim's, and that it is removed only in the commit that moves its unit to `verified` or by a person who walked the page.
 - Modify `plugins/docs-workflows/docs/reference/references.md` (`unit-brief.md`'s entry, a `` `docs-iteration/` (1) `` subtree, `24 files` → `25`, four subtrees → five), `docs/README.md`'s `24 reference files`, `README.md`'s file counts, `CLAUDE.md`'s `twenty-four reference files`, `.claude/rules/docs-workflows.md:19`'s "twenty-two markdown pages" → twenty-three.
-- Modify `.claude/rules/docs-workflows-backlog.md`: invariant 2 (D4) — `unit-brief.md` §1 holds the replaced-sections list once; an edit to either agent's inputs, steps or dimension table re-reads it in the same change; neither agent restates it.
+- Modify `.claude/rules/docs-workflows-backlog.md`: invariant 2 (D4) — `unit-brief.md` §1 holds the replaced-sections list once; an edit to any section §1 names, or to either agent's inputs, steps or dimension table, re-reads it in the same change; neither agent restates it.
 
 **Interfaces:** produces the brief's fields, the marker, `gate-ledger` §9; Task 5a composes the brief by `unit-brief.md` §2 and records the ledger by §9. **Forward references:** every sentence naming `/docs-write` as a caller (Task 5a).
 
