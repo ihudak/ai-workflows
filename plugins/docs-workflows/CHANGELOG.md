@@ -42,7 +42,7 @@ DOC-D-G1, sub-project 1: `/docs-write`, the first command that writes the pages 
 
 ### Notes
 
-- **Limits.** R1 and R6 are stated on the command page's *What it needs*; R7, R20, R3 and `release` units on the documentation route's step 4 (`docs/docs-workflow.md`), the command page listing their stop codes; and each in the command.
+- **Limits.** R1 and R6 are stated on the command page's *What it needs*; R7, R20, R3 and `release` units on the documentation route's step 4 (`docs/docs-workflow.md`), the command page listing the stop codes of R7, R3 and `release` units; and each in the command.
   - **The line shape (R1).** A backlog formatted by hand that a YAML reader accepts can still be refused, by `indent` or `key` above all; the stop names the line and the reason, and the remedy is to reformat that line or re-run `/docs-workflows:docs-audit --refresh`, whose write is always in shape.
   - **Page paths (R6).** A content root or page name holding a space or a non-ASCII character is refused: a proposed path is passed over, and a typed one refused and asked for again.
   - **An internal unit (R7)** is refused where no `builds[]` entry has `visibility: internal` — a `--public-only` scaffold, or a profile with no `builds[]` — since no build would keep its page out of the public site.
