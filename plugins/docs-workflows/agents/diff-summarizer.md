@@ -24,6 +24,13 @@ context: |
 keys_hierarchy:   # optional; passed by caller to enable the key-commit fallback below
   - <PRD-KEY>
   - <every EPIC- folder's key discovered by the folder read>
+docs_only_shas:   # optional; commits the key-commit fallback below must not read
+  - <the full sha of each commit the caller's commit scan left out as documentation only in this
+     clone: it names a key and touches only the paths taken as documentation in the
+     documentation-holding repository. The scan read one ref, `scan_ref`, so a documentation-only
+     commit only another ref holds is not here>
+scan_ref:         # optional; given for a clone the caller's commit scan read by path without an `error`, docs_only_shas or not
+  HEAD            # the ref that scan read; the key-commit fallback greps the commit it names before the Refresh step, in place of --all
 refresh:
   fetch: true   # default true
   pull:  false  # default false — a historical diff does not need the current branch tip;
@@ -58,17 +65,18 @@ repository. When `repo_url_slug` is absent, trust `repo_path` as given.
 
 Reached where an element's own diff does not resolve, in one of three ways: `branch_from` or `branch_to` does not resolve in the clone (a parentless commit's `<sha>^` aside) — a squash-merged branch deleted along with its commits leaves the first; it landed on `branch_to` as a branch name or a merge commit, with no merge to read it from (step 3 above); or the range it resolved to changes no file (above), save a single commit — one-parent or root — whose own change is empty.
 
-If the caller supplied `keys_hierarchy`, for each key run `git -C "<repo_path>" log --all --extended-regexp --regexp-ignore-case --grep='(^|[^A-Za-z0-9_-])<key>([^A-Za-z0-9_-]|$)' --oneline` — the whole-key match `workflows-core:implementation-format` §4 defines, the key's ERE metacharacters escaped, so a PRD key `ACME-7` finds `[ACME-7]` and never `[ACME-77]`. Treat matches as "commits associated with this feature" rather than a reconstruction of this element's own ref. Read every match's full diff (`git -C "<repo_path>" show --format= <sha>`) and return **one `per_pr` entry for this element** — `per_pr` is one entry per input element on every path, this one included — carrying the element's `ref`, `resolved_via: key_commits`, `head` = the newest matched sha, and `files_changed` / `insertions` / `deletions` summed over every commit read. Annotate the `summary` explicitly, naming each sha it drew on:
+If the caller supplied `keys_hierarchy`, for each key run `git -C "<repo_path>" log <where> --extended-regexp --regexp-ignore-case --grep='(^|[^A-Za-z0-9_-])<key>([^A-Za-z0-9_-]|$)' --oneline` — the whole-key match `workflows-core:implementation-format` §4 defines, the key's ERE metacharacters escaped, so a PRD key `ACME-7` finds `[ACME-7]` and never `[ACME-77]`. `<where>` is `--all`, save where the caller supplied `scan_ref`: there it is the commit the Refresh step recorded for that ref before it fetched or pulled (its step 0), so the grep reads only what the caller's scan read, with the same pattern and the same keys — every documentation-only match there is in `docs_only_shas`, and a ref the scan did not read, an earlier `/document` run's own branch tip that a squash or rebase landing left in the clone under another SHA among them, is not searched. **What that costs:** in that clone the fallback no longer finds a key-naming commit that only another ref holds; the caller's scan did not report one either. Where the caller supplied `docs_only_shas`, drop each match whose full SHA — `git -C "<repo_path>" rev-parse <sha>`, the list holding full ones — is in it, before reading any: such a commit names the key but touches only the paths taken as documentation in the documentation-holding repository — an earlier `/document` run's own pages among them — and read as code it would be summarised as the feature. Where the caller supplied no `scan_ref`, the grep reads every ref, and a documentation-only commit `docs_only_shas` does not hold — one only a ref the caller's scan did not read holds — is read as any match is. Treat the matches left as "commits associated with this feature" rather than a reconstruction of this element's own ref. Read every such match's full diff (`git -C "<repo_path>" show --format= <sha>`) and return **one `per_pr` entry for this element** — `per_pr` is one entry per input element on every path, this one included — carrying the element's `ref`, `resolved_via: key_commits`, `head` = the newest sha read, and `files_changed` / `insertions` / `deletions` summed over every commit read. Annotate the `summary` explicitly, naming each sha it drew on:
 *"Diff reconstructed from commits <sha>, <sha> … matched on key <key>; this may not correspond to the ref's own content exactly."*
 
 An element resolved this way is **partially resolved** — content is drawn from key-matched commits, and the output notes this clearly.
 
-If `keys_hierarchy` is not provided there is no key to grep with, and if the grep matches nothing — or only commits whose `show` prints no change, as a clean merge commit's does not — there is no commit to show: record the element under `unresolved_prs` and continue. The caller handles user-facing escalation.
+If `keys_hierarchy` is not provided there is no key to grep with, and if the grep matches nothing — or only commits `docs_only_shas` names, or whose `show` prints no change, as a clean merge commit's does not — there is no commit to show: record the element under `unresolved_prs` and continue. The caller handles user-facing escalation.
 
 ## Refresh step
 
 Before resolving any element:
 
+0. **Record the scanned ref.** Where the caller supplied `scan_ref`, record the commit it names now, `git -C "<repo_path>" rev-parse --verify --quiet "<scan_ref>^{commit}"`, before item 4's fetch or item 5's pull can move it: the key-commit fallback greps that commit. Where it prints nothing, the fallback greps nothing, and an element that reaches it goes to `unresolved_prs`.
 1. **Verify repo exists.** If `repo_path` is not a directory, return `status: REPO_MISSING`.
 2. **Read-only detection.** Per `workflows-core:read-only-repos` §1, test whether `repo_path` and `repo_path/.git` are writable. On a read-only mount, skip items 3–5 entirely and follow that reference — §2 for what to skip, §3 for ref resolution, §4 for reading at the ref, §5 for when to escalate. `refresh.fetch` writes refs and `refresh.pull` writes the working tree, so neither can run; resolution proceeds against the object database as it stands. A read-only mount is NOT `DIRTY_TREE` and NOT `REFRESH_BLOCKED`.
 3. **Clean-tree check.** `git -C "<repo_path>" status --porcelain`; if non-empty AND `refresh.fetch` is true, return `status: DIRTY_TREE`.

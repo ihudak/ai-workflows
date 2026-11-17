@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.70.1] — 2026-11-17
+
+DOCS-IN-CODE-REPO-SCAN: one sentence of a page, made true of `docs-workflows` 1.41.0's commit scan. No command, agent or reference changes, and nothing a run does or prints.
+
+### Fixed
+
+- **`docs/reference/commit-convention.md` said every commit whose subject names the key — any but a merge commit — is one `/docs-workflows:document` and `/docs-workflows:release-notes` can find.** It names the two repositories where that does not hold: the specs repository, left out unless `implementation.md` names it; and the repository that holds the documentation, where, wherever the run can name the folders the documentation lives in, a commit that touches nothing but documentation is never found, and which is left out whole where it can name none, or its docs profile takes the whole repository as documentation, unless `implementation.md` names it. The sentence was already incomplete: before `docs-workflows` 1.41.0 the scan left the documentation repository out whole wherever `implementation.md` did not name it; 1.41.0 finds a commit naming the key there, or not, by the paths it touches.
+
 ## [4.70.0] — 2026-11-17
 
 RETURNED-INTAKE: `/conformance`'s three routes to the architect now lead to a refine that puts each threat to the architect. `product-workflows` 3.84.0's `/create-ard`, on a refine of a threat model, lists each threat a design or a record on the specs repository's default branch sends back — `unanswered — returned to the architect`, `unanswered — no design takes it`, and `open` on a decision the team will not build — and asks the architect to re-dispose or keep it. So the report's line for each no longer ends with the caveat that no command re-disposes such a threat; one stand-alone design entry moves to the Dev; and the handoff prints one new line where a declined record would hide decisions that refine reads. No state, word or count of Phase 5 changes, and the record's form is unchanged. Update with `product-workflows` 3.84.0: beside an older one the routes send the architect to a `/create-ard` that lists nothing, and the new line names a read it does not make. `workflows-core` 1.96.0, whose Dev lane routes as this release does, is released with it. The design is `docs/superpowers/specs/2026-11-16-returned-intake-design.md`, revision 3, approved by the maintainer on 2026-11-16.
