@@ -43,21 +43,22 @@ counts the refs kept, each either compared or unreadable; more counts every ref 
 
 edit writes one unit's move. It refuses, exit 3, the file untouched: a backlog out of shape, an --id no entry or two
 entries hold, an entry with no page_path: line where --page-path is given, a page_path already set to another path
-(null, ~ and an empty value are unset), and a backlog that changed while it read it. Where the unit already holds
-the values asked for, it writes nothing -- the file keeps its bytes and its mtime -- and prints an empty changed.
+(null, ~ and an empty value are unset), and a backlog that changed while it read it. Where the unit already holds the
+values asked for, it writes nothing -- the file keeps its bytes and its mtime -- and prints an empty changed.
 Otherwise it replaces the status: value and, where --page-path is given and page_path is unset, the page_path value,
 keeping each line's indent, key, trailing comment and line ending and every other byte; checks that the result reads
 back as that edit, in shape; and writes it atomically, a new file beside the backlog renamed over it. Immediately
 before the rename it reads the backlog again and refuses, exit 3, one that no longer holds the bytes it read; after
 it, it reads the backlog back and requires the bytes it wrote. That narrows the window in which another writer's
 change is lost to the instant between the last read and the rename; it does not close it. Then it runs `git -C <top>
-diff -U0 --no-color --no-ext-diff --no-textconv -- .dev-workflows/docs-backlog.yml`. Where the lines that diff
-removes and adds are not exactly the lines it changed, all inside the entry -- or git cannot show them -- it writes
-back the bytes it read, by the same rename, only where the file still holds what it wrote, reads them back, and exits
-4. It prints {"first": <n>, "last": <n>, "changed": [<n>...]}, the entry's first and last line and the lines it
-changed; on exit 3 {"refused": "<why>", "line": <n>|null, "reason": "<word>"|null}, <why> one of shape, id-absent,
-id-twice, no-page-path, page-path-set and changed-while-reading; on exit 4 {"undone": "<why>", "first": <n>, "last":
-<n>, "changed": [<n>...]}, <why> hunk-outside or diff-failed.
+diff -U0 --no-color --no-ext-diff --no-textconv -- .dev-workflows/docs-backlog.yml`. Where the lines that diff removes
+and adds are not exactly the lines it changed, all inside the entry -- or git cannot show them -- it writes back the
+bytes it read, by the same rename, only where the file still holds what it wrote, reads them back, and exits 4; where
+the file no longer holds what it wrote, it writes nothing back and exits 2. It prints {"first": <n>, "last": <n>,
+"changed": [<n>...]}, the entry's first and last line and the lines it changed; on exit 3 {"refused": "<why>", "line":
+<n>|null, "reason": "<word>"|null}, <why> one of shape, id-absent, id-twice, no-page-path, page-path-set and
+changed-while-reading; on exit 4 {"undone": "<why>", "first": <n>, "last": <n>, "changed": [<n>...]}, <why>
+hunk-outside or diff-failed.
 
 The arguments are tested before anything is read or run: --id against the unit-id class; --base against the branch
 class; --status against ^[a-z][a-z-]{0,31}$, less the words YAML reads as something other than a string (null, true,
@@ -74,21 +75,27 @@ writes nothing but the backlog, and it runs git as an argument list, never a she
 call, in its own environment less every variable whose name starts with GIT_, plus GIT_TERMINAL_PROMPT=0,
 GIT_OPTIONAL_LOCKS=0 and GIT_NO_LAZY_FETCH=1. Git's stderr is never printed.
 
-Exit 0: it ran, and the answer is the one JSON object on stdout -- for check, the shape in or out. Exit 2: it could not
-run -- an argument outside its class, a usage error, --repo no directory or no work tree's top level, .dev-workflows
-or the backlog refused as above or unreadable, git not run or not answering where moved must have an answer (HEAD,
-the base, the branch list), the working backlog out of shape or not holding an --id once (moved), a write that failed
-(the backlog unchanged), or an internal error; stdout is empty and stderr holds one line, "backlog-lines: not run
-(<why>)", <why> fixed text. Two exits 2 follow a write, and each <why> says so: the written backlog not reading back
-as written, which is left as it is, since writing back the bytes it read would lose another writer's change too; and
-the undo failing. Exit 3: edit refused on the file's content before writing; the file is untouched. Exit 4: edit
-undone; the file holds the bytes it read. --selftest exits 0 when every case passes and 1 otherwise.
+Exit 0: it ran, and the answer is the one JSON object on stdout -- for check, the shape in or out. Exit 2: it could
+not run -- an argument outside its class, a usage error, --repo no directory or no work tree's top level,
+.dev-workflows or the backlog refused as above or unreadable, git not run or not answering where moved must have an
+answer (HEAD, the base, the branch list), the working backlog out of shape or not holding an --id once (moved), a
+write that failed (the backlog unchanged), or an internal error; stdout is empty and stderr holds one line,
+"backlog-lines: not run (<why>)", <why> fixed text. Three exits 2 follow edit's write, each with a <why> of its own: a
+write -- the edit's or its undo's -- not reading back as written; an undo not written, since the backlog no longer
+held the edit's bytes but another writer's; and an undo that failed on its own write, the backlog still holding the
+edit. Exit 3: edit refused on the file's content before writing; the file is untouched. Exit 4: edit undone; the file
+holds the bytes it read. --selftest exits 0 when every case passes and 1 otherwise.
 
 The caller's rule, which fails closed. Any exit but 0, 3 and 4 -- a crash's 1, a signal's -- is read as 2, and so is a
 stdout that is not one JSON object. check or moved exiting anything but 0 is a stop, never a skip: never read as in
-shape, as no duplicate or as nothing moved. edit exiting 3 or 4 ends the unit, the backlog as it was; edit exiting 2
-ends the unit and stops the run, since the backlog may hold a write nobody checked, and the caller restores it from
-its own copy.
+shape, as no duplicate or as nothing moved. edit exiting 3 or 4 ends the unit, the backlog as it was. edit exiting 2
+ends the unit and stops the run, and what the caller then does with the backlog turns on stderr's one line, matched
+whole. Only "backlog-lines: not run (the edit was written and its undo failed on its own write, so the backlog still
+holds the edit, unchecked; restore the backlog from the copy taken before the edit)" has the caller restore the
+backlog from the copy it took before the edit. Every other line -- the read-back and the blocked undo after a write
+among them, an exit 2 before any write, and a crash or a stderr it cannot read -- leaves the backlog as it is, to be
+compared with that copy: restoring there could overwrite another writer's change, and leaving it is the side that
+cannot destroy one.
 
 Python standard library only.
 """
@@ -146,9 +153,14 @@ WHY_LIST = "git could not list the branches of --repo"
 WHY_WORKING_SHAPE = "the working backlog is out of shape (run check)"
 WHY_WORKING_ID = "an --id is not held by exactly one unit of the working backlog"
 WHY_WRITE = "the backlog could not be written; it is unchanged"
-WHY_UNDO = "the edit was written and could not be undone; restore the backlog from the copy taken before the edit"
-WHY_RACED = ("the backlog was written and then did not read back as written -- another writer, or a failed read; "
-             "nothing was undone, so compare it with the copy taken before the edit")
+# After a write, three: only WHY_UNDO tells the caller to restore; the other two leave the backlog as it is.
+WHY_UNDO = ("the edit was written and its undo failed on its own write, so the backlog still holds the edit, "
+            "unchecked; restore the backlog from the copy taken before the edit")
+WHY_RACED = ("a write of the backlog -- the edit's or its undo's -- did not read back as written: another writer's "
+             "bytes, or a failed read; leave the backlog as it is and compare it with the copy taken before the edit")
+WHY_UNDO_BLOCKED = ("the edit was written, and its undo was not: the backlog no longer held the edit's bytes but "
+                    "another writer's, so nothing was written back; leave the backlog as it is and compare it with "
+                    "the copy taken before the edit")
 WHY_INTERNAL = "internal error"
 
 _IO = {"git": 0, "reads": 0, "writes": 0}  # what a run did, for --selftest's "nothing read or written"
@@ -613,7 +625,8 @@ def _write_backlog(top, data, mode, expect):
         if tmpname is not None:
             with contextlib.suppress(OSError):
                 os.unlink(tmpname, dir_fd=dfd)
-        os.close(dfd)
+        with contextlib.suppress(OSError):  # so an OSError always means the rename did not happen
+            os.close(dfd)
 
 
 # ---- git ----
@@ -928,7 +941,7 @@ def cmd_edit(top, uid, status, page_path):
     # replaced it after the rename, and writing back the bytes this run read would lose that writer's change too.
     try:
         landed = _read_backlog(top)[0]
-    except NotRun:
+    except Exception:
         landed = None
     if landed != new_data:
         raise NotRun(WHY_RACED)
@@ -944,13 +957,20 @@ def cmd_edit(top, uid, status, page_path):
         why = "diff-failed"
     if why is None:
         return 0, result
+    # The undo writes back only over the edit's own bytes. Which of three things went wrong decides what the caller
+    # may do: only an undo that failed on its own write leaves the edit in place for the caller's copy to replace.
     try:
         _write_backlog(top, data, mode, new_data)
-        undone = _read_backlog(top)[0] == data
-    except (_Changed, OSError, NotRun):
-        undone = False
-    if not undone:
+    except (_Changed, NotRun):  # the backlog no longer held the edit's bytes: another writer's change stands
+        raise NotRun(WHY_UNDO_BLOCKED)
+    except OSError:  # the undo's own write failed: the backlog still holds the edit
         raise NotRun(WHY_UNDO)
+    try:
+        landed = _read_backlog(top)[0]
+    except Exception:
+        landed = None
+    if landed != data:  # the undo landed and another writer replaced it, or it cannot be read back
+        raise NotRun(WHY_RACED)
     return 4, dict({"undone": why}, **result)
 
 
@@ -1677,20 +1697,58 @@ def case_edit_changed_after_write(tmp):
 
 def case_edit_undo_blocked(tmp):
     """The diff calls for an undo, but another writer changed the backlog after the edit's read-back: the undo's last
-    look sees bytes the edit did not write, so nothing is written back, exit 2, and that writer's change stands."""
-    top = _repo(tmp, MINI)
-    _put(top, MINI.replace("schema_version: 1\n", "schema_version: 1  # touched\n"))
+    look sees bytes the edit did not write, so nothing is written back, exit 2 with the blocked undo's own text -- leave
+    the backlog, compare it -- and that writer's bytes stand. Where the undo lands and another writer then replaces it,
+    the undo's read-back says so, exit 2 with the read-back's text, and those bytes stand too."""
+    dirty = MINI.replace("schema_version: 1\n", "schema_version: 1  # touched\n")
     theirs = MINI.replace("threshold: 2\n", "threshold: 3\n").encode("utf-8")
-    real = _git
+    top = _repo(tmp, MINI, "blocked")
+    _put(top, dirty)
+    real_git = _git
 
-    def racing(path, *args):
-        got = real(path, *args)
+    def racing_git(path, *args):
+        got = real_git(path, *args)
         if args[:1] == ("diff",):
             _put(top, theirs)
         return got
-    code, out, err = _with("_git", racing, lambda: _edit(top, "U-001", "drafted"))
+    code, out, err = _with("_git", racing_git, lambda: _edit(top, "U-001", "drafted"))
+    _refused(code, out, err, WHY_UNDO_BLOCKED)
+    _eq(_get(top), theirs, "the other writer's bytes, as that writer left them")
+    top = _repo(tmp, MINI, "landed")
+    _put(top, dirty)
+    real_read, calls = _read_backlog, []
+
+    def racing_read(path):
+        if len(calls) == 2:  # the undo's read-back: its rename has landed, and another writer replaces it now
+            _put(top, theirs)
+        calls.append(path)
+        return real_read(path)
+    code, out, err = _with("_read_backlog", racing_read, lambda: _edit(top, "U-001", "drafted"))
+    _refused(code, out, err, WHY_RACED)
+    _eq(_get(top), theirs, "the other writer's bytes, as that writer left them")
+
+
+def case_edit_undo_failed(tmp):
+    """The diff calls for an undo and the undo's own write fails: exit 2 with WHY_UNDO, the one text that has the
+    caller restore from its copy, since the backlog still holds the edit, unchecked. The docstring's caller rule quotes
+    that line whole, and no other text after a write says to restore."""
+    dirty = MINI.replace("schema_version: 1\n", "schema_version: 1  # touched\n")
+    top = _repo(tmp, MINI)
+    _put(top, dirty)
+    real, calls = _write_backlog, []
+
+    def failing(*args):
+        calls.append(args)
+        if len(calls) == 2:  # the undo's write
+            raise OSError("no space left on device")
+        return real(*args)
+    code, out, err = _with("_write_backlog", failing, lambda: _edit(top, "U-001", "drafted"))
     _refused(code, out, err, WHY_UNDO)
-    _eq(_get(top), theirs, "the other writer's change stands")
+    _eq(_get(top), dirty.replace("status: missing", "status: drafted").encode("utf-8"), "the edit, still in place")
+    doc = " ".join(__doc__.split())
+    _true(" ".join(("backlog-lines: not run (%s)" % WHY_UNDO).split()) in doc, "the caller rule quotes WHY_UNDO whole")
+    _true("restore" in WHY_UNDO and "restore" not in WHY_RACED and "restore" not in WHY_UNDO_BLOCKED,
+          "only WHY_UNDO says to restore")
 
 
 def case_edit_noop(tmp):
@@ -1780,7 +1838,8 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_ref_name_outside_class, case_ref_unreadable, case_absent_not_moved, case_twenty_cap,
          case_examined_cap, case_no_base, case_moved_working_refused, case_edit_two_keys, case_edit_tilde_null,
          case_edit_page_path_set, case_edit_page_path_same, case_edit_no_page_path_key, case_edit_refused_content,
-         case_edit_changed_while_reading, case_edit_changed_after_write, case_edit_undo_blocked, case_edit_noop,
+         case_edit_changed_while_reading, case_edit_changed_after_write, case_edit_undo_blocked, case_edit_undo_failed,
+         case_edit_noop,
          case_edit_not_a_repository, case_edit_undo, case_bad_args,
          case_shape_paragraph_pinned)
 
