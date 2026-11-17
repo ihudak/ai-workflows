@@ -3031,7 +3031,9 @@ this phase offers.
   applies — `'/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"'` where `<PARENT-KEY>`'s own
   `coverage-ledger.md` still holds an `unallocated` row, the bare `'/product-workflows:brd-split <PARENT-KEY>'`
   where it holds none, and neither where that ledger cannot be read — for the operator to check: this
-  run reads no ledger of the parent's for it. Name no re-cut form: that form turns on a sibling's own
+  run reads no ledger of the parent's for it. Where this `brd-link.md` names no `parent:`, which no
+  command writes, there is no `<PARENT-KEY>` to name: print in its place the sentence
+  `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2 words for that state, read there. Name no re-cut form: that form turns on a sibling's own
   `deferred-to` on a row the parent delegated to it, which this phase reads in no ledger, and on this
   slice never having been interviewed (§3.2) — which on the ordinary path it has been, since
   `/brd-package`, which refuses a slice holding no round record (`BRD_PACKAGE_NOT_INTERVIEWED`), ran

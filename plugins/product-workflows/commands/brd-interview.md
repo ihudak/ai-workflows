@@ -2674,8 +2674,10 @@ it, why each option was dropped, and `/product-workflows:brd-split <PARENT-KEY>`
 or removes this slice — `'/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"'` where
 `<PARENT-KEY>`'s `coverage-ledger.md`, read in *Resolve inputs and gate the grounded BRD* step 9,
 still holds an `unallocated` row, the bare `'/product-workflows:brd-split <PARENT-KEY>'` where it
-holds none, and neither, that ledger reported by path and why none is named, where it cannot be read
-— and no re-cut form, since this slice has been interviewed
+holds none, and neither, that ledger reported by path and why none is named, where it cannot be read,
+nor where this slice's `brd-link.md` names no `parent:`, which no command writes, the sentence
+`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2 words for that state, read there,
+standing in its place — and no re-cut form, since this slice has been interviewed
 (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §3.2, §5.2); then end the phase on the
 *Stop here* option's words as a line of its own.
 

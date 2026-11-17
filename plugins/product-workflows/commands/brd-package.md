@@ -331,7 +331,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    after that run's preflight: the later round's records written over the register, beside a round
    record no ref holds and, where the round wrote them, a question set or a code-defect log it
    changed or created. `workflows-core:phase-handoff` §4.4's commands for row C″ name the gated file,
-   so landing them would land the register alone, and steps 6b and 7 would then stop on the round's
+   so running them would land the register alone, and steps 6b and 7 would then stop on the round's
    other files one after the other, each landed by a pull request of its own. So this stop names,
    beside `decisions.md`, each other file of the round in the folder and not as `<default-ref>`
    holds it — each `interview/round-<N>.md`, and `interview/customer-questions.md` and

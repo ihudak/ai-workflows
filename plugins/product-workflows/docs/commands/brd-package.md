@@ -147,7 +147,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   other file that round left unlanded — its round record, and the question set and the code-defect
   log where the round changed or created them — with the commands that commit them together and push
   the default branch, or, where it is protected, a new `brd/` branch and a pull request, so the round
-  lands in one stop rather than three; it prints the commands that set them aside or discard them
+  lands in one stop rather than three or more; it prints the commands that set them aside or discard them
   too, for packaging without that round.
 - **The question set and the code-defect log on the default branch too, each where it is in the
   folder.** The bundle ships both whole, and the register being merged says nothing about either: a
