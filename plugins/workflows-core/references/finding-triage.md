@@ -33,7 +33,7 @@ Wherever an **Opus reviewer's reasoned findings feed a fixer**:
 | Path | Triage |
 |---|---|
 | `code-review` → `review-fixer` (`/implement`, `/vuln`, `/upgrade`) | yes |
-| `doc-reviewer` → `doc-fixer` (`/document`, keyed mode) | yes |
+| `doc-reviewer` → `doc-fixer` (`/document`, keyed mode; `/docs-write`) | yes |
 | `epic-reviewer` → `doc-fixer` (`/epics`) | yes |
 | `docs-scaffold-reviewer` → the orchestrator itself (`/docs-init`, and `/docs-brand` standalone) | yes |
 | `docs-audit-reviewer` → the orchestrator itself (`/docs-audit`) | yes |

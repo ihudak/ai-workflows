@@ -112,7 +112,7 @@ Mark every claim you could not ground with `[NEEDS CLARIFICATION: why]`, in the 
 
 **What helps today.** [`/document`](commands/document.md) in direct mode will apply a described edit to pages and run the style check over them, which is real work off your hands — but it reads no backlog: it does not open the unit, does not write the `unit:` key, does not move a `status`, and does not add the page to the `nav:` blocks. The prose is its half; the unit is yours.
 
-*Later: `/docs-write` is planned to take the highest-priority missing unit and draft it, leaving it `drafted` with its unresolved claims marked, and to regenerate both `nav:` blocks whenever it adds or renames a page. No such command exists yet.*
+*Later: [`/docs-write`](commands/docs-write.md) is planned to take the highest-priority missing unit and draft it, leaving it `drafted` with its unresolved claims marked, and to regenerate both `nav:` blocks whenever it adds or renames a page. No such command exists yet.*
 
 ### 5. Capture what the page shows — by hand
 

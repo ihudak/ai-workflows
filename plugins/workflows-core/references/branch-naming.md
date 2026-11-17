@@ -121,6 +121,7 @@ Tie-breaking:
 | `/docs-profile` | `docs/` |
 | `/docs-init` | `docs/` |
 | `/docs-brand` (standalone) | `docs/` |
+| `/docs-write` | `docs/` |
 | `/vuln` | `fix/` |
 | `/upgrade` | `chore/` |
 | `/promote-decisions` | `feat/` |
@@ -163,6 +164,7 @@ Used for the description segment (§1.2) or the §1.4 `<slug>`:
 - `/docs-profile` — `docs-profile`
 - `/docs-init` — `docs-init`
 - `/docs-brand` (standalone) — `docs-brand`
+- `/docs-write` — `docs-write-<id>` for one unit, or `docs-write-<first id>-and-<n>-more` for a batch, `<n>` the number of its other units, each unit id lowercased with every character outside `a-z`, `0-9` and `-` dropped (§1.3); it never prepends a key, since a unit id is none
 - `/vuln` — `<CVE-ID>`
 - `/upgrade` — `upgrade-<component>-to-<version>`, or `upgrade-<first>-and-<N>-more` for a batch
 - `/promote-decisions` — `promote-<YYYY-MM-DD>` where the pattern carries an ADR marker of its own (`feat/adr-<slug>`), else `adr-promote-<YYYY-MM-DD>`
