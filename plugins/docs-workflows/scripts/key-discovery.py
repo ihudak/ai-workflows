@@ -28,7 +28,8 @@ fetches nothing and writes nothing.
 --docs-root names the documentation root -- a site's own directory, or a repository's top level.
 The repository holding it is read by path, left out whole, or read whole, as below. Its content
 paths are the root's own directory where it lies below the top level, and each --docs-content,
-relative to the top level and matched as the literal path it is (an absolute one, or one with a
+relative to the top level, normalised ("./", a trailing "/" and any "." or empty segment
+dropped) and matched as the literal path it is (an empty one, an absolute one, or one with a
 ".." segment, is rejected and listed); the documentation set is those and FAMILY_DOC_PATHS. Where
 a content path is known, none of them the whole repository, and no --exclude names the
 repository, it is read by path ("rule" "paths"): every --repo that is that repository, by its
@@ -38,18 +39,25 @@ pathspec alone simplifies history, and a side branch netting to nothing would va
 count. Each commit the scan or the probe matched there, and each a merged pull request there
 landed, is then tested on its own, which walks no history and so needs no --full-history: a
 merge against its first parent, any other commit against its parent (a root commit against the
-empty tree). A commit naming a key that touches nothing outside the set is listed as
-documentation only and never found, the probe drops a commit that touches, and a merge that
-brought in, nothing outside it, and a merged pull request keeps only the landed commits touching a
-path outside it, listing the rest; where no --repo is that repository, its pull requests are
-dropped by name. Where no content path is known, or one is the whole repository, it is left out
+empty tree). A shallow clone's boundary commit shows no parent, so the paths it touches cannot
+be read: where the scan meets one, that clone has an "error"; where the probe does, a
+"probe_error"; where a pull request's landed commits do, that pull request's "reason" -- never a
+commit found, never documentation only. A commit naming a key that touches nothing outside the
+set is listed as documentation only and never found, the probe drops a commit that touches, and a
+merge that brought in, nothing outside it, and a merged pull request keeps only the landed commits
+touching a path outside it, listing the rest; where no --repo is that repository, its pull
+requests are dropped by name. Where no content path is known, or one is the whole repository, it is left out
 whole ("left-out"), as --exclude leaves one out -- or, with --docs-named, which says the
 implementation record names it, read whole ("whole"): every clone of it read as any other clone
 is, and its pull requests kept. An --exclude naming it leaves it out whole whatever else holds
-("left-out", reason "--exclude names it too"). A root in no git work tree changes nothing.
-docs-check prints, as "outside", the paths `git diff --name-only <base> <head>` lists outside the
-same documentation set, taking --docs-named and --exclude as scan does, and [] where "docs" is
-null or its "rule" is "left-out" or "whole".
+("left-out", reason "--exclude names it too"). A root that is not a directory, or that git says
+lies in no git work tree, changes nothing ("docs" is null); any other failure of git to say which
+repository holds it -- a timeout, a repository it does not trust -- is exit 2. No GIT_*_PATHSPECS
+variable reaches git, since each would change what the set's pathspecs match.
+docs-check prints, as "outside", the paths `git diff --name-only --no-renames <base> <head>` lists
+outside the same documentation set -- a renamed file as its old path and its new one -- taking
+--docs-named and --exclude as scan does, and [] where "docs" is null or its "rule" is "left-out"
+or "whole".
 
 Exit 0: it ran -- a clone or a search it could not reach is a field of the result. Exit 2: it
 could not run; the cause is on stderr. Python standard library only.
@@ -61,6 +69,7 @@ import itertools
 import io
 import json
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -82,6 +91,8 @@ SEARCH_LIMIT = 1000
 GH_BUDGET = 300
 _now = time.monotonic  # the budget's clock; the selftest replaces it
 STATES = {"merged": "MERGED", "open": "OPEN", "closed": "CLOSED"}
+PATHSPEC_ENV = ("GIT_LITERAL_PATHSPECS", "GIT_GLOB_PATHSPECS", "GIT_NOGLOB_PATHSPECS", "GIT_ICASE_PATHSPECS")
+NO_WORK_TREE_RE = re.compile(r"not a git repository|must be run in a work tree")  # git's own words, LC_ALL=C
 
 # The family's own paths: what the family itself writes into a documentation repository, and the configuration
 # and navigation files of the generators its docs signals name.
@@ -1029,11 +1040,13 @@ def case_docs_content_is_literal(tmp):
 def case_docs_content_whole_repository(tmp):
     r = _repo(tmp, "mono", "git@example.com:acme/mono.git")
     _commit(r, "[ACME-7] code", "src/a.py")
-    for content in (["."], ["./"], [""]):
+    for content in (["."], ["./"], ["./."]):
         out = discover(["ACME-7"], [r], "head", github=False, docs_root=r, docs_content=content)
         docs = out["docs"]
         assert docs["rule"] == "left-out" and docs["reason"] == "the content path is the whole repository", docs
         assert out["excluded"] == ["mono"] and out["repos"] == [] and out["commits"] == [], out
+    docs = discover(["ACME-7"], [r], "head", github=False, docs_root=r, docs_content=[""])["docs"]  # empty: refused
+    assert docs["reason"] == "no content path" and docs["rejected"] == [{"path": "", "why": "empty"}], docs
 
 
 def case_docs_content_rejected(tmp):
@@ -1191,6 +1204,12 @@ def case_docs_check(tmp):
     for argv in (["--base", "no-such-rev"], ["--base=-p"], ["--base", base, "--head=--output=x"]):
         rc, out, err = _main(["docs-check", "--docs-root", website] + argv)
         assert rc == 2 and out == "" and len(err.splitlines()) == 1, (argv, rc, out, err)
+    before = _git(mono, "rev-parse", "HEAD")
+    os.makedirs(os.path.join(mono, "lib"))
+    _git(mono, "mv", "src/app.py", "lib/app.py")  # a rename: the deletion of its old path, the addition of its new
+    _git(mono, "commit", "-q", "-m", "ACME-7 move")
+    rc, out, _ = _main(["docs-check", "--docs-root", website, "--base", before])
+    assert rc == 0 and json.loads(out)["outside"] == ["lib/app.py", "src/app.py"], out
 
 
 def case_docs_family_paths_match_the_reference(tmp):
@@ -1217,10 +1236,207 @@ def case_docs_content_without_root_is_a_usage_error(tmp):
     _commit(r, "x", "website/a.md")
     scan = ["scan", "--key", "A-1", "--repo", r, "--scope", "head", "--no-github"]
     for extra in (["--docs-content", "x"],
-                  ["--docs-root", r, "--docs-root", os.path.join(r, "website")],
-                  ["--docs-root", os.path.join(tmp, "missing")]):
+                  ["--docs-root", r, "--docs-root", os.path.join(r, "website")]):
         rc, out, err = _main(scan + extra)
         assert rc == 2 and out == "" and len(err.splitlines()) == 1, (extra, rc, out, err)
+
+
+def case_docs_root_that_is_no_directory_changes_nothing(tmp):
+    r = _repo(tmp, "r")
+    _commit(r, "[A-1] x", "website/a.md")
+    a_file = os.path.join(r, "website", "a.md")
+    scan = ["scan", "--key", "A-1", "--repo", r, "--scope", "head", "--no-github"]
+    rc, plain, _ = _main(scan)
+    assert rc == 0 and json.loads(plain)["docs"] is None, plain
+    for root in (os.path.join(tmp, "missing"), a_file):  # a documentation root that does not exist, or is a file
+        rc, out, err = _main(scan + ["--docs-root", root, "--docs-content", "website", "--docs-named"])
+        assert rc == 0 and out == plain, (root, rc, out, err)
+        rc, out, err = _main(["docs-check", "--docs-root", root, "--base", "HEAD"])
+        assert rc == 0 and json.loads(out) == {"docs": None, "base": "HEAD", "head": "HEAD", "outside": []}, (rc, out, err)
+
+
+@contextlib.contextmanager
+def _git_answers(match, answer):
+    """Every git call whose arguments hold each of `match` is answered `answer`, (returncode, stdout, stderr)."""
+    saved = globals()["_git_in"]
+
+    def answered(clone, *args, **kwargs):
+        return answer if all(m in args for m in match) else saved(clone, *args, **kwargs)
+    globals()["_git_in"] = answered
+    try:
+        yield
+    finally:
+        globals()["_git_in"] = saved
+
+
+def case_docs_root_git_cannot_answer_is_unrunnable(tmp):
+    mono = _mono(tmp)
+    root = os.path.join(mono, "website")
+    for answer in ((None, "", "timed out after 60s"),
+                   (128, "", "fatal: detected dubious ownership in repository at '%s'" % mono)):
+        with _git_answers(("rev-parse", "--show-toplevel"), answer):
+            try:
+                discover(["ACME-7"], [mono], "head", github=False, docs_root=root)
+            except Unrunnable as e:
+                assert answer[2] in str(e), (answer, e)
+            else:
+                raise AssertionError("discover took %r for a root in no git work tree" % (answer,))
+            rc, out, err = _main(["docs-check", "--docs-root", root, "--base", "HEAD"])
+            assert rc == 2 and out == "" and answer[2] in err, (answer, rc, out, err)
+    with _git_answers(("rev-parse", "--show-prefix"), (128, "", "fatal: boom")):
+        rc, out, err = _main(["docs-check", "--docs-root", root, "--base", "HEAD"])
+        assert rc == 2 and out == "" and "boom" in err, (rc, out, err)
+    _git(tmp, "init", "-q", "--bare", "bare.git")
+    for root in (os.path.join(tmp, "bare.git"), os.path.join(mono, ".git")):  # git says: in no work tree
+        assert discover(["ACME-7"], [mono], "head", github=False, docs_root=root)["docs"] is None, root
+
+
+def case_docs_pathspec_variables_change_nothing(tmp):
+    mono = _mono(tmp)
+    _commit(mono, "ACME-7 Document intake", "website/docs/intake.md")
+    _commit(mono, "[ACME-7] intake", "src/intake.py")
+    root = os.path.join(mono, "website")
+    plain = discover(["ACME-7"], [mono], "head", probe=True, github=False, docs_root=root)
+    check = docs_check(root, (), _git(mono, "rev-list", "--max-parents=0", "HEAD"))
+    assert len(plain["commits"]) == 1 and len(plain["docs"]["docs_only"]) == 1 and check["outside"], (plain, check)
+    for name in ("GIT_LITERAL_PATHSPECS", "GIT_GLOB_PATHSPECS", "GIT_NOGLOB_PATHSPECS", "GIT_ICASE_PATHSPECS"):
+        os.environ[name] = "1"
+        try:
+            assert discover(["ACME-7"], [mono], "head", probe=True, github=False, docs_root=root) == plain, name
+            assert docs_check(root, (), check["base"]) == check, name
+        finally:
+            del os.environ[name]
+
+
+def case_docs_content_normalised_and_empty_rejected(tmp):
+    mono = _mono(tmp)
+    page = _commit(mono, "ACME-7 a page", "website/docs/p.md")
+    code = _commit(mono, "[ACME-7] code", "website/src/app.py")
+    out = discover(["ACME-7"], [mono], "head", github=False, docs_root=mono,
+                   docs_content=["website//docs", "website/./docs", "website/docs/.", "", "  "])
+    docs = out["docs"]
+    assert docs["content_paths"] == ["website/docs"] and docs["rule"] == "paths", docs
+    assert docs["rejected"] == [{"path": "", "why": "empty"}, {"path": "  ", "why": "empty"}], docs["rejected"]
+    assert [d["sha"] for d in docs["docs_only"]] == [page] and [c["sha"] for c in out["commits"]] == [code], out
+
+
+def case_docs_shallow_boundary_is_never_documentation_only(tmp):
+    mono = _mono(tmp)
+    _commit(mono, "[ACME-7] intake", "src/intake.py")
+    tip = _commit(mono, "ACME-7 Document intake", ("website/docs/intake.md", ".dev-workflows/docs-profile.yml"))
+    full = discover(["ACME-7"], [mono], "head", github=False, docs_root=os.path.join(mono, "website"))
+    assert tip in [d["sha"] for d in full["docs"]["docs_only"]], full["docs"]
+    _git(tmp, "clone", "-q", "--depth", "1", "file://" + mono, "shallow")
+    shallow = os.path.join(tmp, "shallow")
+    out = discover(["ACME-7"], [shallow], "head", probe=True, github=False, docs_root=os.path.join(shallow, "website"))
+    (entry,) = out["repos"]
+    assert entry["error"] and "shallow" in entry["error"] and tip in entry["error"], entry
+    assert entry["scanned"] is None and entry["probe"] == [], entry
+    assert out["commits"] == [] and out["docs"]["docs_only"] == [], out
+    _commit(mono, "see ACME-7x", "src/later.py")  # names the key bare: a probe hit, never a commit found
+    _git(tmp, "clone", "-q", "--depth", "1", "file://" + mono, "shallow-2")
+    shallow = os.path.join(tmp, "shallow-2")
+    out = discover(["ACME-7"], [shallow], "head", probe=True, github=False, docs_root=os.path.join(shallow, "website"))
+    (entry,) = out["repos"]
+    assert entry["error"] is None and entry["matched"] == 0 and entry["probe"] == [], entry
+    assert entry["probe_error"] and "shallow" in entry["probe_error"], entry
+
+
+def case_docs_shallow_boundary_pull_request(tmp):
+    mono = _mono(tmp)
+    squash = _commit(mono, "Intake (#5)", ("src/intake.py", "website/docs/intake.md"))
+    _git(tmp, "clone", "-q", "--depth", "1", "file://" + mono, "shallow")
+    shallow = os.path.join(tmp, "shallow")
+    _git(shallow, "remote", "set-url", "origin", "git@github.com:acme/mono.git")
+    _no_ssh_alias(tmp)
+    _gh(tmp, [_search_hit("acme/mono", 5, "[ACME-7] intake")], {5: _merged_view(squash, ["wip"])})
+    out = discover(["ACME-7"], [shallow], "head", docs_root=os.path.join(shallow, "website"))
+    (pr,) = out["github"]["prs"]
+    assert pr["landed"] == [] and pr["landed_docs_only"] == [] and "shallow" in pr["reason"], pr
+    assert out["commits"] == [] and out["repos"][0]["error"] is None, out
+
+
+def case_docs_a_failed_scan_filter_is_the_clones_error(tmp):
+    mono = _mono(tmp)
+    _commit(mono, "ACME-7 Document intake", "website/docs/intake.md")
+    _commit(mono, "[ACME-7] intake", "src/intake.py")
+    with _git_answers(("log", "--no-walk=unsorted"), (128, "", "fatal: bad object")):
+        out = discover(["ACME-7"], [mono], "head", probe=True, github=False, docs_root=os.path.join(mono, "website"))
+    (entry,) = out["repos"]
+    assert entry["error"] and "bad object" in entry["error"] and entry["scanned"] is None, entry
+    assert out["commits"] == [] and out["docs"]["docs_only"] == [] and entry["probe"] == [], out
+    with _git_answers(("rev-parse", "--is-shallow-repository"), (128, "", "fatal: boom")):  # shallow or not: unknown
+        out = discover(["ACME-7"], [mono], "head", github=False, docs_root=os.path.join(mono, "website"))
+    assert "boom" in out["repos"][0]["error"] and out["commits"] == [] and out["docs"]["docs_only"] == [], out
+    with _git_answers(("rev-parse", "--is-shallow-repository"), (0, "true\n", "")), \
+            _git_answers(("rev-parse", "--git-path", "shallow"), (0, "no-such-file\n", "")):  # its boundary unread
+        out = discover(["ACME-7"], [mono], "head", github=False, docs_root=os.path.join(mono, "website"))
+    assert "boundary" in out["repos"][0]["error"] and out["commits"] == [] and out["docs"]["docs_only"] == [], out
+
+
+def case_docs_a_failed_pull_request_filter_reads_nothing(tmp):
+    r = _github_clone(tmp)
+    _commit(r, "base", ("src/app.py", "handbook/index.md"))
+    squash = _commit(r, "Intake (#32)", "src/intake.py")
+    _no_ssh_alias(tmp)
+    _gh(tmp, [_search_hit("acme/app", 32, "[ACME-7] intake")], {32: _merged_view(squash, ["wip"])})
+    with _git_answers(("rev-list", "--no-walk=unsorted", "--parents"), (128, "", "fatal: bad object")):
+        out = discover(["ACME-7"], [r], "head", docs_root=r, docs_content=["handbook"])
+    (pr,) = out["github"]["prs"]
+    assert pr["landed"] == [] and pr["landed_as"] is None and "bad object" in pr["reason"], pr
+    assert pr["landed_docs_only"] == [] and out["commits"] == [], out
+
+
+def case_docs_a_merge_git_cannot_compare_stays_in_the_probe(tmp):
+    r = _repo(tmp, "mono")
+    _commit(r, "base", ("src/app.py", "website/docs/a.md"))
+    _git(r, "checkout", "-q", "-b", "docs/ACME-7-y")
+    _commit(r, "docs on a branch", "website/docs/c.md")
+    _git(r, "checkout", "-q", "main")
+    _commit(r, "code on main", "src/c.py")
+    docs_merge = _merge(r, "docs/ACME-7-y", "Merge docs/ACME-7-y")
+    root = os.path.join(r, "website")
+    out = discover(["ACME-7"], [r], "head", probe=True, github=False, docs_root=root)
+    assert out["repos"][0]["probe"] == [], out["repos"]  # it brought in only documentation
+    with _git_answers(("diff", "--quiet"), (128, "", "fatal: bad object")):
+        out = discover(["ACME-7"], [r], "head", probe=True, github=False, docs_root=root)
+    assert [p["sha"] for p in out["repos"][0]["probe"]] == [docs_merge], out["repos"]
+
+
+def case_docs_a_clone_given_below_its_top_level(tmp):
+    mono = _mono(tmp, remote="git@example.com:acme/mono.git")
+    page = _commit(mono, "ACME-7 Document intake", "website/docs/intake.md")
+    lib = _commit(mono, "[ACME-7] the library", "lib/intake.py")
+    below = os.path.join(mono, "src")  # every pathspec is taken from the top level, wherever git runs
+    out = discover(["ACME-7"], [below], "head", github=False, docs_root=os.path.join(mono, "website"))
+    assert out["docs"]["clones"] == [below] and out["repos"][0]["docs_rule"] is True, out
+    assert [c["sha"] for c in out["commits"]] == [lib], out["commits"]
+    assert [d["sha"] for d in out["docs"]["docs_only"]] == [page], out["docs"]
+    assert out["repos"][0]["scanned"] == 2, out["repos"]  # base and the library; the page is not one
+
+
+def case_docs_a_merge_landing_read_by_path(tmp):
+    r = _github_clone(tmp)
+    _commit(r, "base", ("src/app.py", "handbook/index.md"))
+    _git(r, "checkout", "-q", "-b", "topic")
+    page = _commit(r, "a page", "handbook/intake.md")
+    code = _commit(r, "the code", "src/intake.py")
+    _git(r, "checkout", "-q", "-b", "pages", "main")
+    only = _commit(r, "pages only", "handbook/more.md")
+    _git(r, "checkout", "-q", "main")
+    _commit(r, "main moves on", "src/m.py")
+    merge = _merge(r, "topic", "Merge pull request #5 from acme/topic")
+    docs_merge = _merge(r, "pages", "Merge pull request #6 from acme/pages")
+    _no_ssh_alias(tmp)
+    _gh(tmp, [_search_hit("acme/app", 5, "[ACME-7] intake"), _search_hit("acme/app", 6, "ACME-7 Document intake")],
+        {5: _merged_view(merge, ["a page", "the code"]), 6: _merged_view(docs_merge, ["pages only"])})
+    out = discover(["ACME-7"], [r], "head", probe=True, docs_root=r, docs_content=["handbook"])
+    prs = {p["number"]: p for p in out["github"]["prs"]}
+    assert prs[5]["landed_as"] == "merge" and prs[5]["landed"] == [code], prs[5]
+    assert prs[5]["landed_docs_only"] == [page] and prs[5]["reason"] is None, prs[5]
+    assert prs[6]["landed_as"] == "merge" and prs[6]["landed"] == [] and prs[6]["landed_docs_only"] == [only], prs[6]
+    assert prs[6]["reason"] == "landed documentation only", prs[6]
+    assert [(c["sha"], c["via"]) for c in out["commits"]] == [(code, "pull-request")], out["commits"]
 
 
 def selftest():
@@ -1247,11 +1463,13 @@ def selftest():
 
 # ---- implementation ----
 
-def _run(argv, timeout, env=None):
-    """(returncode, stdout, stderr); the returncode is None where the program is missing or timed out."""
+def _run(argv, timeout, env=None, stdin=None):
+    """(returncode, stdout, stderr); the returncode is None where the program is missing or timed out. `stdin`, where
+    given, is the text the program reads; otherwise it reads nothing."""
+    feed = {"input": stdin} if stdin is not None else {"stdin": subprocess.DEVNULL}
     try:
         p = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                           timeout=timeout, stdin=subprocess.DEVNULL, env=env)
+                           timeout=timeout, env=env, **feed)
     except subprocess.TimeoutExpired:
         return None, "", "timed out after %ds" % timeout
     except OSError as e:
@@ -1272,15 +1490,23 @@ def whole_pattern(key):
     return re.compile(EDGE_L + re.escape(key) + EDGE_R, re.IGNORECASE | re.MULTILINE)
 
 
-def _git_env():
-    """The environment every git call runs in: a partial clone never fetches a missing object."""
+def _git_env(c_messages=False):
+    """The environment every git call runs in: a partial clone never fetches a missing object, and no environment
+    variable changes what a pathspec means -- GIT_LITERAL_PATHSPECS would make every magic pathspec of the
+    documentation set a literal file name, which matches nothing. With `c_messages`, git's messages are its own
+    untranslated ones, for a caller that tells one failure from another by them."""
     env = dict(os.environ)
     env["GIT_NO_LAZY_FETCH"] = "1"
+    for name in PATHSPEC_ENV:
+        env.pop(name, None)
+    if c_messages:
+        env["LC_ALL"] = "C"
+        env.pop("LANGUAGE", None)
     return env
 
 
-def _git_in(clone, *args):
-    return _run(["git", "-C", clone, *args], GIT_TIMEOUT, _git_env())
+def _git_in(clone, *args, stdin=None, c_messages=False):
+    return _run(["git", "-C", clone, *args], GIT_TIMEOUT, _git_env(c_messages), stdin)
 
 
 def _verified(clone, ref):
@@ -1358,14 +1584,38 @@ def scan_clone(clone, scope, keys, patterns, pathspecs=()):
     return entry, commits, docs_only, ref
 
 
+def _shallow_boundary(clone):
+    """The commits at a shallow clone's boundary, whose parents the clone does not hold; none in a full clone."""
+    rc, out, err = _git_in(clone, "rev-parse", "--is-shallow-repository")
+    if rc != 0:
+        raise SearchFailed("cannot tell whether the clone is shallow: " + _last_line(err, "exit %s" % rc))
+    if out.strip() != "true":
+        return set()
+    rc, out, err = _git_in(clone, "rev-parse", "--git-path", "shallow")
+    if rc != 0:
+        raise SearchFailed("cannot find the shallow clone's boundary: " + _last_line(err, "exit %s" % rc))
+    try:
+        with open(os.path.join(clone, out.strip()), encoding="utf-8") as fh:
+            return set(fh.read().split())
+    except OSError as e:
+        raise SearchFailed("cannot read the shallow clone's boundary: %s" % (e.strerror or e))
+
+
 def _touching_outside(clone, shas, pathspecs):
     """The commits among `shas` -- none of them a merge -- that touch a path outside the documentation set.
 
-    One --no-walk call compares each commit with its parent, a root commit with the empty tree, and walks no
-    history. No SHA, no call: given none, git would read HEAD instead."""
+    One --no-walk call, given the SHAs on its standard input, compares each commit with its parent, a root commit with
+    the empty tree, and walks no history. No SHA, no call: given none, git would read HEAD instead. A shallow clone's
+    boundary commit shows no parent either, so its whole tree would read as its change: where one is among `shas`, the
+    paths it touches cannot be read, and that is a failure, never an answer."""
     if not shas:
         return set()
-    rc, out, err = _git_in(clone, "log", "--no-walk=unsorted", "--format=%H", *shas, "--", *pathspecs)
+    cut = sorted(_shallow_boundary(clone) & set(shas))
+    if cut:
+        raise SearchFailed("shallow clone: %s is at the clone's boundary, so the paths it touches cannot be read"
+                           " -- deepen the clone" % ", ".join(cut))
+    rc, out, err = _git_in(clone, "log", "--no-walk=unsorted", "--format=%H", "--stdin", "--", *pathspecs,
+                           stdin="".join(sha + "\n" for sha in shas))
     if rc != 0:
         raise SearchFailed("cannot read which commits touch a path outside the documentation set: "
                            + _last_line(err, "exit %s" % rc))
@@ -1387,7 +1637,8 @@ def _brought_in_outside(clone, shas, pathspecs):
     other commit _touching_outside keeps. No merge reaches _touching_outside."""
     if not shas:
         return set()
-    rc, out, err = _git_in(clone, "rev-list", "--no-walk=unsorted", "--parents", *shas)
+    rc, out, err = _git_in(clone, "rev-list", "--no-walk=unsorted", "--parents", "--stdin",
+                           stdin="".join(sha + "\n" for sha in shas))
     if rc != 0:
         raise SearchFailed("cannot read the parents of the commits to filter: " + _last_line(err, "exit %s" % rc))
     merges, others = [], []
@@ -1689,35 +1940,45 @@ def _own_top(path):
 def documentation_set(root, content=(), named=False):
     """(docs, pathspecs) for the documentation root `root` and the content paths `content`.
 
-    docs is None where `root` is in no git work tree. Where no path rule applies -- no content path, or one that is
-    the whole repository -- docs["rule"] is "left-out", or "whole" where `named` says the implementation record names
-    the repository, which is then read whole rather than left out. pathspecs is None unless docs["rule"] is "paths";
-    it is then the whole tree less the documentation set -- each content path, matched as the literal path it is, and
-    each of FAMILY_DOC_PATHS -- every pathspec taken from the repository's top level.
+    docs is None where `root` is not a directory, or where git says it lies in no git work tree; any other failure of
+    git to say which repository holds it -- a timeout, a refusal of a repository it does not trust -- is Unrunnable,
+    never an answer. Where no path rule applies -- no content path, or one that is the whole repository --
+    docs["rule"] is "left-out", or "whole" where `named` says the implementation record names the repository, which
+    is then read whole rather than left out. pathspecs is None unless docs["rule"] is "paths"; it is then the whole
+    tree less the documentation set -- each content path, matched as the literal path it is, and each of
+    FAMILY_DOC_PATHS -- every pathspec taken from the repository's top level.
     """
-    rc, out, _ = _git_in(root, "rev-parse", "--show-toplevel")
-    top = out.rstrip("\n") if rc == 0 else ""
-    if not top:
+    if not os.path.isdir(root):
         return None, None
-    rc, out, _ = _git_in(root, "rev-parse", "--show-prefix")  # the root relative to the top level, "" at the top
+    rc, out, err = _git_in(root, "rev-parse", "--show-toplevel", c_messages=True)
+    if rc != 0 and rc is not None and NO_WORK_TREE_RE.search(err):
+        return None, None
     if rc != 0:
-        return None, None
+        raise Unrunnable("cannot tell which repository holds the documentation root %s: %s"
+                         % (root, _last_line(err, "exit %s" % rc)))
+    top = out.rstrip("\n")
+    if not top:
+        return None, None  # git answered with no top level: no work tree
+    rc, out, err = _git_in(root, "rev-parse", "--show-prefix")  # the root relative to the top level, "" at the top
+    if rc != 0:
+        raise Unrunnable("cannot tell where the documentation root %s lies in its repository: %s"
+                         % (root, _last_line(err, "exit %s" % rc)))
     top = os.path.realpath(top)
     content_paths, rejected = [], []
     below = out.rstrip("\n").rstrip("/")
     if below:
         content_paths.append(below)  # the root's own directory, where it lies below the top level
     for given in content:
+        if not given.strip():
+            rejected.append({"path": given, "why": "empty"})
+            continue
         if given.startswith("/"):
             rejected.append({"path": given, "why": "absolute -- a content path is relative to the top level"})
             continue
-        path = given
-        while path.startswith("./"):
-            path = path[2:]
-        path = path.rstrip("/") or "."
-        if ".." in path.split("/"):
+        if ".." in given.split("/"):
             rejected.append({"path": given, "why": "holds a .. segment"})
             continue
+        path = posixpath.normpath(given)  # "./", a trailing "/", and any "." or empty segment dropped
         if path not in content_paths:
             content_paths.append(path)
     if "." in content_paths:
@@ -1821,8 +2082,6 @@ def discover(keys, clones, scope, probe=False, github=True, excludes=(), owners_
             if pr["url"] not in known["prs"]:
                 known["prs"].append(pr["url"])
             known["keys"] = [k for k in keys if k in known["keys"] or k in pr["keys"]]
-        for sha in pr["landed_docs_only"]:
-            accounted.add((pr["clone"], sha))  # filtered out, but still the pull request's: never probed
     if probe:
         for entry in repos:
             if entry["error"] is None and entry["matched"] == 0:
@@ -1887,9 +2146,7 @@ def main(argv):
             raise Unrunnable("--docs-named needs --docs-root")
         if len(args.docs_root) > 1:
             raise Unrunnable("--docs-root is given %d times; it takes one directory" % len(args.docs_root))
-        docs_root = args.docs_root[0] if args.docs_root else None
-        if docs_root is not None and not os.path.isdir(docs_root):
-            raise Unrunnable("--docs-root %s is not a directory" % docs_root)
+        docs_root = args.docs_root[0] if args.docs_root else None  # one that is not a directory: "docs" is null
         if args.command == "docs-check":
             for flag, rev in (("--base", args.base), ("--head", args.head)):
                 if not rev or rev.startswith("-"):
