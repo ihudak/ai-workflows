@@ -352,9 +352,18 @@ only where this slice's own ledger was read, and where the parent's ledger canno
 reported by path and neither form is named; and *ledger missing or unreadable while `claims:` names
 rows* — the file reported by path and `/product-workflows:prd-ground <SLICE-KEY>` named, the run
 whose stop names the repair. `/create-prd` applies the slice's ledger tests to a slice in its Phase 0
-step 7, under `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE`; `/create-ard` applies
-them in its Phase 0 section *The slice's ledger tests* — on an Epic-level run, to the slice above the
-Epic — under `CREATE_ARD_BRD_UNALLOCATED` and `CREATE_ARD_BRD_NOT_ELIGIBLE`.
+step 7, under `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE`; `/create-ard` and
+`/specify` each apply them in a Phase 0 section of their own, *The slice's ledger tests* — on an
+Epic, to the slice above it — `/create-ard` under `CREATE_ARD_BRD_UNALLOCATED` and
+`CREATE_ARD_BRD_NOT_ELIGIBLE`, `/specify` under `SPECIFY_BRD_UNALLOCATED` and
+`SPECIFY_BRD_NOT_ELIGIBLE`. Beyond §5.2's table, those two commands' messages name the sequence that
+follows a row placed or re-cut onto a slice that claims nothing — the slice's grounding, then its
+walk, each after the merge of the run before it on a specs tree that is a git repository, then the
+re-run — so an edit to that table, or to what follows such a row, is swept in both commands'
+sections. `/update-spec` takes no ledger test,
+and `/update-prd` and `/epics` take no stop for them: each applies the tests only where it already
+does, to name the remedy of its own Phase 0 stop for a folder holding no PRD (`commands/epics.md`
+Phase 0 step 1b, `commands/update-prd.md` Phase 0 step 4).
 
 **The level test is a check the consumer performs, and it comes first.** A BRD is a container and is
 never the folder a PRD is authored in, so a consumer handed a `BRD-` folder refuses it **before
