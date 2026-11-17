@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.12.8] — 2026-11-17
+
+Docs only: a page LADDER-ORDER batch 4 left open. **What changes for you.** Nothing a run does. It needs no other release, nor they it; released beside `workflows-core` 1.98.1 and `product-workflows` 3.85.1.
+
+### Fixed
+
+- **The scan page's follow-up for the product architect.** It said what follows the sentence for the PA — a line on a slice that fails its ledger tests, or on a PRD written and not yet merged — without the case the command makes first: on a specs tree that is a git repository whose default branch does not exist, nothing is read and no line follows the sentence. The page now says so.
+
 ## [0.12.7] — 2026-11-17
 
 LADDER-ORDER batch 4, the BRD route. **What changes for you.** `product-workflows` 3.85.0's `/create-ard` and `/specify` stop on a BRD-route slice that fails the slice's ledger tests — a claimed row still `unallocated`, or none `covered-here` — whatever its `prd.md`'s state. So the scan no longer leaves the product architect's follow-up line in the folder of such a slice, and its next step no longer offers `/product-workflows:create-ard` or `/product-workflows:specify` as a run to take for it: after the architect's sentence, which leaves the key for you to fill, it names what `workflows-core` 1.98.0's `phase-handoff` §4.4 *The first missing document* names at its `prd.md` rung. The register, `register.py` and what the scan records are unchanged. Update with `workflows-core` 1.98.0, whose rung the scan reads; `product-workflows` 3.85.0, `dev-workflows` 4.70.3 and `docs-workflows` 1.43.1 are released with them.

@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.43.2] — 2026-11-17
+
+Wording only: a pointer LADDER-ORDER batch 4 left open. **What changes for you.** Nothing a run does. It needs no other release, nor they it; released beside `workflows-core` 1.98.1 and `product-workflows` 3.85.1.
+
+### Fixed
+
+- **"Outside its work tree" names whose.** `/document`'s and `/release-notes`' lineage check, `/release-notes`' rule on where a draft is written and its Phase 8 handoff, and the `/release-notes` page said a folder lay outside, or inside, "its work tree" — a pointer whose antecedent a reader had to guess. Each now says the work tree of the repository `$SPECS_PATH` stands in, as the batch's other sentences do.
+
 ## [1.43.1] — 2026-11-17
 
 LADDER-ORDER batch 4, the BRD route, and three sentences of 1.42.0 corrected. **What changes for you.** `product-workflows` 3.85.0's `/create-ard` and `/specify` stop on a BRD-route slice that fails the slice's ledger tests — a claimed row still `unallocated`, or none `covered-here` — so `/document`'s *Stop* line and `/release-notes`' next step no longer name either run for such a slice: each names, in its place, what `workflows-core` 1.98.0's `phase-handoff` §4.4 *The first missing document* names at its `prd.md` rung. And `DOCUMENT_NO_PRD` and `RELEASE_NOTES_NO_PRD` name `/product-workflows:prd-ground` for a slice whose ledger is missing or unreadable, where they named nothing. Nothing changes on the idea route; on a slice that passes the tests, only a stale ARD's or threat model's lineage finding gains a sentence (below). Update with `workflows-core` 1.98.0, whose rung these commands read; `product-workflows` 3.85.0, `dev-workflows` 4.70.3 and `security-workflows` 0.12.7 are released with them.
