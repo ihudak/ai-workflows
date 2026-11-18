@@ -59,7 +59,7 @@ before any seed is read (`/product-workflows:create-prd` Phase 0 step 5a), and `
 `parent:` into every slice's `brd-link.md` — so the earlier "omitted when it owns its source document"
 case describes a PRD the route can no longer author. An absent `brd_parent` beside a present
 `brd_key` is therefore a **finding**, not a legitimate omission, and `product-workflows:prd-reviewer`
-raises it, saying which of the two it is. **`/update-prd` preserves all three and authors
+raises it, saying whether it was authored from a root BRD or on a slice whose `brd-link.md` names no `parent:`. **`/update-prd` preserves all three and authors
 none of them** — on a PRD that carries them it copies each through the refresh unchanged, and on a
 PRD that does not it writes none — so the *written only by* rule above still reads exactly as it
 says: carrying an existing value forward mints no new one, and `/update-prd` mints none from what
