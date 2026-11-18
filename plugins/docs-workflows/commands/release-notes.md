@@ -149,9 +149,17 @@ This command makes **no external API calls but two**: key discovery's optional, 
        `<KEY>'s PRD is <its file>, under its name from before the artifact filenames lost their keys — run '/product-workflows:specify <KEY>': it stops on that file, and its stop prints the commands that rename it to prd.md and land it.`
        — on a specs tree that is no git repository, `and its stop says how to rename it to prd.md.` in
        place of its last clause.
-     - **A `brd-link.md`** — a BRD-route slice. Read the rows its `claims:` names (its gate set) and
-       their dispositions from the slice's own `coverage-ledger.md`, never from a `ledger:` line,
-       and take the first row that applies:
+     - **A `brd-link.md`** — a BRD-route slice. Where that `brd-link.md` names no `parent:` — on a
+       `PRD-` slice, a state no command writes — every `/product-workflows` run the rows below name
+       stops on it in its Phase 0, so read nothing more of the slice and print, in place of whichever
+       row would apply, the line `workflows-core:phase-handoff` §4.4's *The first missing document*
+       prints there, in its words, `<SLICE-KEY>` being `<KEY>`:
+       `<SLICE-KEY>'s brd-link.md names no parent:, so no run is named for it — every /product-workflows run that would be named here stops on it until it names one, and /product-workflows:brd-split writes a parent: into every slice's brd-link.md; restore that line from the ref that carried it, or report it.`
+       A legacy unprefixed folder whose `brd-link.md` names no `parent:` beside a `coverage-ledger.md`
+       or `brd/brd-inventory.md` never reaches this bullet: the BRD-container bullet above places it
+       a container first, by `workflows-core:addressing` §4.1's test. Otherwise, read the rows its
+       `claims:` names (its gate set) and their dispositions from the slice's own
+       `coverage-ledger.md`, never from a `ledger:` line, and take the first row that applies:
        - `coverage-ledger.md` missing, or present and unreadable, while `claims:` names rows: report
          `<path>/coverage-ledger.md` by path, as missing or as unreadable with the read error, and
          name `/product-workflows:prd-ground <KEY>` as the run whose stop on this slice tells a carve
@@ -256,7 +264,7 @@ traces the PRD's own requirements, and only one written after the requirement wa
 plan says how the claims are checked. It is reported,
 never a reason to stop: nothing is asked, accepted or written, and this command records no lineage of
 its own. Where there is no specs repository to read — an `@<path>` run with `$SPECS_PATH` unset, or one
-leading outside its work tree — run nothing, and carry `Lineage: not checked — no specs repository`.
+leading outside the work tree of the repository `$SPECS_PATH` stands in — run nothing, and carry `Lineage: not checked — no specs repository`.
 
 ---
 
@@ -324,7 +332,7 @@ leading outside its work tree — run nothing, and carry `Lineage: not checked �
 
   **NEVER write into a docs repo, a code repo, or the current working directory, where it is not the specs repository.** The PRD
   folder is in `$SPECS_PATH` — always on a `<KEY>`, and on an `@<path>` that leads there — which is where Phase 8's handoff commits it, on a `prd/` branch with a
-  pull request, behind the operator's consent — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when the handoff refuses, or `$SPECS_PATH` is unset on an `@<path>` run or the `@<path>` leads outside its work tree, when none is offered (Phase 8 step 1a); either way it is written and not committed.
+  pull request, behind the operator's consent — unless the run carries `specs_git: blocked` or `specs_git: misrooted` (`workflows-core:specs-repo-git` §3.3 G0, §3.1), when the handoff refuses, or `$SPECS_PATH` is unset on an `@<path>` run or the `@<path>` leads outside the work tree of the repository `$SPECS_PATH` stands in, when none is offered (Phase 8 step 1a); either way it is written and not committed.
 
 - **Release version** — **asked only where `--version` was not given**; the flag's value is the version, and nothing is asked:
   ```
@@ -741,7 +749,8 @@ Outside that one case there is no question to ask and no option that replaces th
 1a. **Hand off the draft** (commit-when-asked — never automatic). It is content a team reviews before
    it is published, so it lands on the specs repository's default branch by pull request, like any
    deliverable, and never through the terminal session commit. **Where `$SPECS_PATH` is unset, or the
-   resolved PRD folder lies outside its work tree, the offer is never made**: there is no specs
+   resolved PRD folder lies outside the work tree of the repository `$SPECS_PATH` stands in, the
+   offer is never made**: there is no specs
    repository to hand the draft to, and a handoff would cut a `prd/` branch in `$SPECS_PATH`, stage
    nothing there, and leave the checkout on that branch for the terminal session commit. The draft
    stays where it was written, and the report says no offer was made and why. The first case is an
@@ -836,7 +845,7 @@ Outside that one case there is no question to ask and no option that replaces th
    - **The default branch does not hold it** — the `prd.md` in its folder and on no ref, or on a plugin branch, its state read as §4.4's *The first missing document* reads a document → name neither. Print `<PRD>'s prd.md is not on the specs repository's default branch yet, and /product-workflows:create-ard and /product-workflows:epics stop until it is — land it first:` — or, where the PRD folder's copy asserts no `kind: prd`, which `/epics` reads as no PRD wherever it stands, `<PRD>'s prd.md is not on the specs repository's default branch yet, and /product-workflows:create-ard stops until it is — land it first:` — then its landing, as that rule names it: the file with its path and state, then the commands §4.4 gives its row — row F's in the form its HEAD test selects, a `<new-branch>` among them named as row F names it, under `prd/`; rows D and E's with the branch and pull request found as §3.5 finds them — each on a line of its own with no `#` comment and `$SPECS_PATH` substituted, then, in prose, the pull request to open and merge, or the open one to merge, and that re-running its producing command, `/product-workflows:create-prd`, would author a second one rather than land it. Where the PRD folder's copy asserts no `kind: prd`, say after the landing, as *The file is there* does, that it asserts none and that adding the `kind: prd` and `key: <PRD>` its format carries (`workflows-core:addressing` §5) is what lets `/product-workflows:epics <PRD>` read it, once that edit is merged to the default branch.
    - **`<default-ref>` does not exist** (§4.4's row G) → §4.4's *The first missing document* reads nothing: name neither, and in their place say that the specs repository's default branch could not be read and name row G's commands, as that rule says.
 
-   **On a BRD-route slice** — a PRD folder carrying a `brd-link.md` — `/product-workflows:create-ard <PRD>` also waits for the slice's ledger tests, which `workflows-core:phase-handoff` §4.4's *The first missing document* reads first at its `prd.md` rung, whatever `prd.md`'s state, on every tree (`Skill(skill: "workflows-core:reference", args: "phase-handoff")`, where the paragraph above did not load it); this command reads them through that rule only to know what to name. In the first two cases above `/product-workflows:create-ard <PRD>` is named only where the rung finds them passing; the last case adds nothing, since that rule reads nothing there. Where it finds them failing, that run is named in neither case and is left out of the not-landed sentence — which then reads `<PRD>'s prd.md is not on the specs repository's default branch yet, and /product-workflows:epics stops until it is — land it first:`, or, where the copy asserts no `kind: prd`, `<PRD>'s prd.md is not on the specs repository's default branch yet — land it first:` — and in its place, apart from the rest, the run prints what the failing outcome names, as the rung words it, `<SLICE-KEY>` there being `<PRD>`, that alone: the run it names, typed out with its key; no command, saying why none applies; or, for a `coverage-ledger.md` missing or unreadable while `claims:` names rows, that file by path and `/product-workflows:prd-ground <PRD>` as the run whose stop names the repair, saying that it stops there by design. `/product-workflows:epics` takes no ledger test, so it is named, or waits for the landing, on a slice as on the idea route.
+   **On a BRD-route slice** — a PRD folder carrying a `brd-link.md` — `/product-workflows:create-ard <PRD>` also waits for the slice's ledger tests, which `workflows-core:phase-handoff` §4.4's *The first missing document* reads first at its `prd.md` rung, whatever `prd.md`'s state, on every tree (`Skill(skill: "workflows-core:reference", args: "phase-handoff")`, where the paragraph above did not load it); this command reads them through that rule only to know what to name. In the first two cases above `/product-workflows:create-ard <PRD>` is named only where the rung finds them passing; the last case adds nothing, since that rule reads nothing there. Where the slice's `brd-link.md` names no `parent:`, which the rung reads first, or where it finds them failing, that run is named in neither case and is left out of the not-landed sentence — which then reads `<PRD>'s prd.md is not on the specs repository's default branch yet, and /product-workflows:epics stops until it is — land it first:`, or, where the copy asserts no `kind: prd`, `<PRD>'s prd.md is not on the specs repository's default branch yet — land it first:` — and in its place, apart from the rest, the run prints, on a slice whose `brd-link.md` names no `parent:`, the line Phase 0 step 1's *A `brd-link.md`* bullet quotes, `<SLICE-KEY>` there being `<PRD>`, that alone, naming no run; and otherwise what the failing outcome names, as the rung words it, `<SLICE-KEY>` there being `<PRD>`, that alone: the run it names, typed out with its key; no command, saying why none applies; or, for a `coverage-ledger.md` missing or unreadable while `claims:` names rows, that file by path and `/product-workflows:prd-ground <PRD>` as the run whose stop names the repair, saying that it stops there by design. `/product-workflows:epics` takes no ledger test, so it is named, or waits for the landing, on a slice as on the idea route.
 
 ---
 

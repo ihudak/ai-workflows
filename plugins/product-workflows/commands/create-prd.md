@@ -261,8 +261,11 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
    a `/create-prd <PARENT-KEY>` run, which offers the same refresh or an archived overwrite) — a run this step does not refuse, since it resolves
    the `PRD-` folder and not this one, subject to step 7's data refusals applied to *that* folder
    where it carries a `brd-link.md` (name instead what the matching row of
-   `/product-workflows:update-prd` Phase 0 step 4's table names); anywhere else, name no parent and
-   say so. It is a user halt,
+   `/product-workflows:update-prd` Phase 0 step 4's table names) — save that where that folder's
+   `brd-link.md` names no `parent:`, the run stops with `CREATE_PRD_BRD_LINK_NO_PARENT` on that
+   folder in place of this stop, its condition, message and remedy read in
+   `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, before that table reads
+   anything through `parent:`; anywhere else, name no parent and say so. It is a user halt,
    so `emit-block` does not fire. `/product-workflows:idea`'s `IDEA_NOT_AN_IDEA_FOLDER` refuses the
    same folder for the same reason.
 
@@ -274,10 +277,16 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
    `BRD-` container on every route, so anything reaching this step is a `PRD-` folder, or on a
    legacy tree an unprefixed slice (`coverage-ledger-format.md` §5.1).
 
+   **First, the no-`parent:` stop** — before this step reads anything through `parent:` and before
+   the tests: where this slice's `brd-link.md` names no `parent:`, stop with
+   `CREATE_PRD_BRD_LINK_NO_PARENT`, its condition, message and remedy read in
+   `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, never from memory, `<re-run>`
+   being `/product-workflows:create-prd <SLICE-KEY>` with the other arguments this run was given.
+
    **Refusals 1 and 2 are slice-only, and that is what step 5a's container refusal bought.** Both are
    `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5's rule, applied — that file is the
-   authority for each and neither is restated here — and both now run against exactly one shape: a
-   folder whose `brd-link.md` carries a `parent:`, `PRD-`-prefixed or, on a legacy tree, unprefixed — step 5a guarantees it. Read that file for its `parent:` and any
+   authority for each and neither is restated here — and both now run against a slice: a
+   folder whose `brd-link.md` carries a `parent:`, `PRD-`-prefixed or, on a legacy tree, unprefixed — step 5a refusing as a container an unprefixed folder that carries a ledger or an inventory and no `brd-link.md` naming a `parent:` (§5.1), and the stop above taking one that names none. Read that file for its `parent:` and any
    `depends-on:`; then read `<slice-dir>/coverage-ledger.md` and take the **`disposition` written on
    each row of the gate set defined immediately below**.
 
@@ -451,7 +460,7 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
 
 Use `choices` arrays; 2–4 options, and never author an "Other" option — the harness supplies the free-text escape itself (`workflows-core:escalation-rules` §0).
 
-1. **Confirm** the feature folder, the profile, and the resolved `idea.md` (or "none — grill from scratch"); on the BRD route, the resolved `PRD-` slice folder, the profile (`--full` unless a flag overrode it), and — instead of an idea — a `from BRD:` line naming `<SLICE-KEY>` and the `parent:` its `brd-link.md` records (always present — step 5a refuses the container), its `depends-on:` if any, how many of its gate-set rows (Phase 0 step 7) are `covered-here` out of how many, and whether `prd-seed.md` and `decisions.md` were found.
+1. **Confirm** the feature folder, the profile, and the resolved `idea.md` (or "none — grill from scratch"); on the BRD route, the resolved `PRD-` slice folder, the profile (`--full` unless a flag overrode it), and — instead of an idea — a `from BRD:` line naming `<SLICE-KEY>` and the `parent:` its `brd-link.md` records (always present — Phase 0 step 7 stops on a slice whose `brd-link.md` names none), its `depends-on:` if any, how many of its gate-set rows (Phase 0 step 7) are `covered-here` out of how many, and whether `prd-seed.md` and `decisions.md` were found.
    - **Resolve documentation grounding here, then show its line.** Run `resolve-docs-grounding create-prd` per `Skill(skill: "workflows-core:reference", args: "docs-grounding resolve-docs-grounding")` — its step 3.5 index prompt included — and show the `docs grounding:` line from what it returns, in the form that reference fixes — `ON <root> (retrieval: …)` or `OFF (<reason>)` — verbatim, including any index-build, staleness, or shadowing clause it carries (off switch: --no-docs). It runs here, before any agent is dispatched, because step 3.5 asks its one-time index question before the run's real work; this is the run's one resolution (`workflows-core:docs-grounding`, *Invariants*), and Phase 2.5 dispatches on the state it returns without resolving again.
    - **Then ask, below what this step shows**, the question's own text carrying the folder, the profile and the idea source or `from BRD:` line, since *Proceed* takes them as they stand (`workflows-core:epic-picker` *The cap*):
      ```
@@ -653,7 +662,7 @@ Author `prd.md` against `Skill(skill: "workflows-core:reference", args: "prd-for
 
    **On the BRD route the provenance fields are different, and every value is read, never asked.** There is no `idea.md`, so Phase 2's `sources` and `derived_from` rule has nothing to propagate from; write instead, per `workflows-core:prd-format`'s frontmatter:
    - **`brd_key`** — the slice's own key, the same value as `key` (the slice this PRD was authored from, and the value Phase 7's cost step names as this field's);
-   - **`brd_parent`** — the `parent:` of the slice's `brd-link.md`, the file Phase 0 step 7 read; always written, since a slice always has one (step 5a refuses the container);
+   - **`brd_parent`** — the `parent:` of the slice's `brd-link.md`, the file Phase 0 step 7 read; always written, since that step stops on a slice whose `brd-link.md` names none (`coverage-ledger-format.md` §5.3);
    - **`depends_on`** — that same file's `depends-on:` keys, as a list; **omitted** where it has none or an empty one, never written empty;
    - **`sources`** — one entry naming the customer's own document: `provenance: markdown` and `ref:` the value of the `source:` header of the slice's `brd/brd-inventory.md`, as written there — the parent's `brd/source/` document, relative to the parent's folder (`${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §2.1) — and no `vendored`. Never `brd-link.md`, which carries no `source:`. Where the inventory carries no `source:`, write no `sources` and say so in the final report rather than inventing a ref;
    - **no `derived_from`** and **no `seeded_from_prd`** — there is no idea on this route, and `--from-prd` is refused on it (Phase 0 step 2a).
@@ -985,7 +994,7 @@ Guidance only — nothing is auto-run. See `workflows-core:session-hygiene` §5.
 
 Terminal phase — runs after Phase 6, NEVER interrupts an earlier phase; a run that ended early (*Ending early*, above Phase 0) runs only its steps 3 and 5.
 
-**Capture-at-block invariant.** If an EARLIER phase **halts on a plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked), `emit-block` (per `workflows-core:feedback-emission`) at that halt **before** escalating. NEVER `emit-block` for an environment / user halt (missing key, unset `$SPECS_PATH`, cancellation) or a work-quality review BLOCK. **The three BRD-route refusals are of that second class, not the first**: `CREATE_PRD_BRD_NOT_SLICED` (structural, step 5a), `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE` (slice-only, step 7) each report the state of the operator's own BRD tree, not a capability this plugin lacks, so none of them `emit-block`s. `CREATE_PRD_EPIC_FOLDER` (step 5b), `CREATE_PRD_NEEDS_KEY` and `CREATE_PRD_TWO_ADDRESSES` (step 1), and step 2a's `CREATE_PRD_SEED_NOT_FOUND` and `CREATE_PRD_FROM_PRD_ON_BRD_ROUTE` are the same — each reports an argument the operator typed — and so are step 7a's `CREATE_PRD_REGISTER_NOT_ON_MAIN` and `CREATE_PRD_REGISTER_NOT_HANDED_OFF`, which report where the operator's register sits in git, and Phase 1 step 2's `CREATE_PRD_PRIOR_UNREADABLE` and Phase 3's `CREATE_PRD_ARCHIVE_FAILED`, which report a file or directory the operator's environment will not let this run read or write. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
+**Capture-at-block invariant.** If an EARLIER phase **halts on a plugin / skill / command / reference gap** (a capability the run needed but the plugin lacked), `emit-block` (per `workflows-core:feedback-emission`) at that halt **before** escalating. NEVER `emit-block` for an environment / user halt (missing key, unset `$SPECS_PATH`, cancellation) or a work-quality review BLOCK. **The four BRD-route refusals are of that second class, not the first**: `CREATE_PRD_BRD_NOT_SLICED` (structural, step 5a), `CREATE_PRD_BRD_LINK_NO_PARENT`, `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE` (slice-only, step 7) each report the state of the operator's own BRD tree, not a capability this plugin lacks, so none of them `emit-block`s. `CREATE_PRD_EPIC_FOLDER` (step 5b), `CREATE_PRD_NEEDS_KEY` and `CREATE_PRD_TWO_ADDRESSES` (step 1), and step 2a's `CREATE_PRD_SEED_NOT_FOUND` and `CREATE_PRD_FROM_PRD_ON_BRD_ROUTE` are the same — each reports an argument the operator typed — and so are step 7a's `CREATE_PRD_REGISTER_NOT_ON_MAIN` and `CREATE_PRD_REGISTER_NOT_HANDED_OFF`, which report where the operator's register sits in git, and Phase 1 step 2's `CREATE_PRD_PRIOR_UNREADABLE` and Phase 3's `CREATE_PRD_ARCHIVE_FAILED`, which report a file or directory the operator's environment will not let this run read or write. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Session-hygiene invariant.** End Phase 6 with a `### Context hygiene` block per
 `Skill(skill: "workflows-core:reference", args: "session-hygiene guidance")` — prepare-first (the
@@ -1016,8 +1025,7 @@ Report: the PRD path + profile; the lineage record Phase 5 stamped — the `idea
 
 **On the BRD route, additionally:** the `<SLICE-KEY>` seeded from and its resolved folder; which of
 `prd-seed.md` and `decisions.md` were present; the frontmatter `brd_key` / `brd_parent` /
-`depends_on` and `sources` as written — or `sources: none written`, with the reason, where the slice inventory carries no `source:` (Phase 3 spine item 1) — — `brd_parent` is present on every run of this route, since the route
-resolves a slice and a slice always has a `parent:` (naming `depends_on` if omitted, and why); how many of the gate-set ledger rows
+`depends_on` and `sources` as written — or `sources: none written`, with the reason, where the slice inventory carries no `source:` (Phase 3 spine item 1) — naming `depends_on` if omitted, and why, `brd_parent` being present on every run of this route, since Phase 0 step 7 stops on a slice whose `brd-link.md` names no `parent:`; how many of the gate-set ledger rows
 (Phase 0 step 7) are `covered-here`, read from `coverage-ledger.md` — **not** as a `ledger:` line, which this command
 neither parses nor prints (Phase 0 step 7); every `[VD#n]`/`[CD#n]`/`[AS#n]` carried in as a gap
 rather than an input, by id and status; every contradiction Phase 3 recorded rather than decided,

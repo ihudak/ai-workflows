@@ -24,7 +24,8 @@ questions it held, are what this command gates on and packages.
   format-validated only, never checked against a tracker. **Only a slice is packaged**: a resolved
   root stops with `BRD_PACKAGE_ROOT_LEVEL`, naming [`/brd-split`](brd-split.md) as the way to carve one, and an idea-route PRD folder — a `PRD-`
   folder no BRD carved, carrying no `brd-link.md` — stops with `BRD_PACKAGE_NOT_A_SLICE`, naming
-  [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on, once its PRD is on the default branch wherever the specs tree is a git repository — after [`/create-prd`](create-prd.md), its handoff merged, where the folder holds none yet. An `EPIC-` folder stops with `BRD_PACKAGE_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one.
+  [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on, once its PRD is on the default branch wherever the specs tree is a git repository — after [`/create-prd`](create-prd.md), its handoff merged, where the folder holds none yet. An `EPIC-` folder stops with `BRD_PACKAGE_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one — or, where that slice's `brd-link.md` names no `parent:`, the run stops with `BRD_PACKAGE_BRD_LINK_NO_PARENT` on that slice instead.
+- **A slice whose `brd-link.md` names its `parent:`.** [`/brd-split`](brd-split.md) writes a `parent:` into every slice's `brd-link.md`; one a hand edit left with none stops the run with `BRD_PACKAGE_BRD_LINK_NO_PARENT` in Phase 0, before anything is read through it. The stop names the file, prints `git log -p` on it to find the commit that carried the line, and says to restore the line and land it — or, where no commit carried it, to write it by hand as the key of the BRD folder the slice sits in, or to report it. A legacy folder with no kind prefix whose `brd-link.md` names no `parent:` beside its ledger or inventory is read as a BRD container instead, as before (the [`coverage-ledger-format`](../reference/references.md) reference states the stop once).
 - **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `BRD_PACKAGE_TWO_ADDRESSES`.
 - **`--depends-on <BRD-KEY>`** (optional, repeatable) — declares a prerequisite BRD. Persisted
   additively to `brd-link.md`, never replacing what is already there. Any key at any level is
@@ -91,7 +92,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
 - **`<BRD-KEY>`** — mandatory, unless an `@<path>` address names the folder; absent with no such address, or malformed, stops the run with `BRD_PACKAGE_NEEDS_KEY`.
 - **A slice, not a root and not an idea-route PRD folder.** The moment the folder resolves, its
   prefix is tested — `BRD-` is a root, `EPIC-` an Epic folder, `PRD-` a slice or an idea-route PRD folder — never the
-  folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_PACKAGE_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-package <SLICE-KEY>` on the slice above it where there is one, and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD
+  folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_PACKAGE_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-package <SLICE-KEY>` on the slice above it where there is one — a `PRD-` folder carrying a `brd-link.md`, whatever its `parent:` says, the run stopping with `BRD_PACKAGE_BRD_LINK_NO_PARENT` on that slice instead where it names none — and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD
   and stops with `BRD_PACKAGE_NOT_A_SLICE` before any gate runs: it has no register and no customer to package for, so the stop sends it on along the
   idea route — `/create-ard` or `/specify`. A resolved root stops with
   `BRD_PACKAGE_ROOT_LEVEL`, naming `/brd-split <BRD-KEY> "<how to cut it>"` to carve a slice and
@@ -141,7 +142,16 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   pull request). The second must
   **not** send the operator back to `/brd-interview`: a bare re-run of that command hands off only
   the files it writes itself — at most the register, re-stamped with its lineage, where it finds nothing new to ask, and where it opens a
-  new round, that round's record and not the earlier ones already on disk.
+  new round, that round's record and not the earlier ones already on disk. A register already on the
+  default branch, whose copy in your checkout of the default branch a later round's declined handoff
+  changed, stops the run with `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF` too, naming beside it every
+  other file that round left unlanded — its round record, and the question set and the code-defect
+  log where the round changed or created them — with the commands that add and commit them together and push
+  the default branch — after a pull where `origin` holds commits your default branch lacks, and saying so
+  where the push would publish other unpushed commits of yours — or, where it is protected, a new
+  `brd/` branch and a pull request, so the round
+  lands in one stop rather than three or more; it prints the commands that set them aside or discard them
+  too, for packaging without that round.
 - **The question set and the code-defect log on the default branch too, each where it is in the
   folder.** The bundle ships both whole, and the register being merged says nothing about either: a
   handoff declined and landed in part, or a later interview run that lands the register without a
@@ -158,10 +168,11 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   `require-on-main`; any on no ref stop the run together with `BRD_PACKAGE_ROUNDS_NOT_ON_MAIN`,
   whose commands land those records as `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF`'s land the register,
   in the same two forms —
-  save a round whose record exists nowhere, not even in the folder, which is named only by a
-  re-decision an interrupted `/brd-interview` run left standing: there is nothing to land, so that
-  one stops with `BRD_PACKAGE_ROUND_NOT_RECORDED`, naming `/brd-interview` as the run that writes
-  the record. The
+  save a round whose record is on no branch the gate reads and not in the folder either, which only
+  a re-decision names — ordinarily one an interrupted `/brd-interview` run left standing: there is
+  nothing in the folder to land, so that one stops with `BRD_PACKAGE_ROUND_NOT_RECORDED`, naming
+  `/brd-interview` as the run that writes the record, or, where you committed the record on a branch
+  of your own, that branch to land. The
   set is derived from those two sources rather than from the **interview/** listing, which is what
   makes a partial merge visible — enumerating the directory finds the rounds that landed and never
   learns a third was owed.

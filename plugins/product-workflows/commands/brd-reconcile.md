@@ -268,8 +268,13 @@ write would re-ask a question already answered.
 
     Stop, on an Epic folder:
     `BRD_RECONCILE_EPIC_LEVEL: <KEY> resolves to an Epic folder at <path>, and reconciling happens at a slice carved from a customer's BRD — an Epic is refined from the PRD folder above it and holds no package, coverage ledger or inventory of its own. No gate was run and nothing was written. <remedy> Re-running this command on this Epic stops here again.`
-    `<remedy>` turns on the folder containing this one: where it carries a `brd-link.md` naming a
-    `parent:` — a slice — `Re-run this command against the slice this Epic sits in — '/product-workflows:brd-reconcile <SLICE-KEY>' with the rest of this invocation unchanged.`, `<SLICE-KEY>` being that `brd-link.md`'s own `key`, read and
+    `<remedy>` turns on the folder containing this one: where it is a slice — a `PRD-` folder carrying
+    a `brd-link.md`, or an unprefixed one whose `brd-link.md` names a `parent:` — `Re-run this command against the slice this Epic sits in — '/product-workflows:brd-reconcile <SLICE-KEY>' with the rest of this invocation unchanged.`,
+    save that where that slice's `brd-link.md` names no `parent:` the run stops with
+    `BRD_RECONCILE_BRD_LINK_NO_PARENT` on that slice in place of this stop, its condition, message and
+    remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, `<re-run>` being
+    `/product-workflows:brd-reconcile <SLICE-KEY>` with the other arguments this run was given, since a
+    re-run on this Epic stops here again; `<SLICE-KEY>` being that `brd-link.md`'s own `key`, read and
     never parsed out of either folder's name; anywhere else, `The folder above it is not a slice carved from a customer's BRD, so there is no package, ledger or inventory for this command to reconcile into here, and --sent does not change that.` — naming no command, since step 5b refuses an idea-route PRD folder too. It is an argument halt, so `emit-block` does not fire.
 5b. **The idea-route refusal — a `PRD-` folder is a slice only where a BRD carved it.** Step 5a's
     prefix test accepts every `PRD-` folder, and an idea-route PRD folder — `/product-workflows:create-prd`'s
@@ -289,6 +294,11 @@ write would re-ask a question already answered.
 
     Stop:
     `BRD_RECONCILE_NOT_A_SLICE: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a slice carved from a customer's BRD — no gate was run and nothing was written. Reconciling applies a customer's returned review of a BRD slice's package, and this folder was never packaged by this route and holds no coverage ledger and no requirement inventory for a correction to land in; --sent does not change that. Check the key names the slice whose package the customer answered. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>', its handoff merged, where the folder holds no prd.md yet). Where it holds a prd.md, run '/product-workflows:update-prd <KEY>' to revise that PRD from what the review says. Re-running this command on this folder stops here again.`
+    **Then the no-`parent:` stop**, once steps 5a and 5b have let the folder through as a slice — a
+    folder carrying a `brd-link.md` — and before step 6c's gate on the parent's defect log and every read through the parent after it, the first reads through `parent:`:
+    where its `brd-link.md` names no `parent:`, stop with `BRD_RECONCILE_BRD_LINK_NO_PARENT`, its
+    condition, message and remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md`
+    §5.3, never from memory, `<re-run>` being `/product-workflows:brd-reconcile <BRD-KEY>` with the other arguments this run was given.
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`, the prefix of its first handoff; a stop it makes ends the run here. A dependent BRD under another root folder is checked by the cross-BRD write guard, before anything is written into it.
 
 6. **Gate the sent package on main — unless `--sent` supplied one.**
@@ -3366,7 +3376,7 @@ reports the operator's own arguments, the tree, the environment, the customer's 
 working — never a capability, reference or command path this plugin lacks. Among them: a missing or
 malformed key, an unreadable review or `--sent` path (`BRD_RECONCILE_SENT_NOT_READABLE`), a `--sent`
 given where a handed-off package already exists (`BRD_RECONCILE_SENT_REDUNDANT`), an unresolved BRD,
-a resolved root BRD, a resolved Epic folder (`BRD_RECONCILE_EPIC_LEVEL`), an idea-route PRD folder (`BRD_RECONCILE_NOT_A_SLICE`), an ungated or absent package, a review file that already exists under a
+a resolved root BRD, a resolved Epic folder (`BRD_RECONCILE_EPIC_LEVEL`), an idea-route PRD folder (`BRD_RECONCILE_NOT_A_SLICE`), a slice whose `brd-link.md` names no `parent:` (`BRD_RECONCILE_BRD_LINK_NO_PARENT`), an ungated or absent package, a review file that already exists under a
 different content, and an unset `$SPECS_PATH` are environment or sequencing halts;
 `BRD_RECONCILE_EMPTY_DIGEST` is a returned review the reader's digest cannot be squared with — a
 well-formed return over the customer's own file, which the stop's own text puts down to either a

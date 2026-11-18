@@ -86,7 +86,9 @@ ON when `$DOCS_PATH` resolves, advisory, never a gate) and `workflows-core:impl-
   `coverage-ledger.md` are created by `/brd-split` on the parent — and re-running here would overwrite the allocations `/brd-split` recorded in its ledger. A key
   that resolves to any other folder that is not a BRD stops too, before anything is copied: an
   **Epic** folder with `BRD_INTAKE_EPIC_LEVEL`, and an **idea-route PRD folder** — a `PRD-` folder no
-  BRD carved — or a folder placed at no level with `BRD_INTAKE_NOT_A_BRD`. Both leave the folder as it
+  BRD carved — a slice whose `brd-link.md` names no `parent:`, or a folder placed at no level with
+  `BRD_INTAKE_NOT_A_BRD`, which for that slice says the `parent:` line is missing and to restore it or
+  report it. Both leave the folder as it
   stands and ask for a key no folder asserts, since the run creates a BRD folder only where the key
   resolves to nothing; an existing root BRD is the one folder a key may name, and that is a re-run.
 - **`@<brd-file>`** — mandatory; absent stops the run with `BRD_INTAKE_NEEDS_SOURCE`.

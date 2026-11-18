@@ -173,13 +173,25 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    `/update-prd` step 3a do: where the folder above holds a `prd.md` asserting `kind: prd`, `This is
    probably the PRD you meant: price it with '/product-workflows:prd-proposal <PRD-KEY>'.`,
    `<PRD-KEY>` being that `prd.md`'s own `key` (`workflows-core:addressing` §4) — never parsed out
-   of either folder's name; where it holds none, this Epic has no PRD above it, the shape
+   of either folder's name — save that where the folder above is a slice whose `brd-link.md` names
+   no `parent:`, the run stops with `PRD_PROPOSAL_BRD_LINK_NO_PARENT` on that folder in place of
+   this stop, as step 4b words it, since the run that remedy names stops there; where it holds none, this Epic has no PRD above it, the shape
    `/product-workflows:epics <KEY>` reports as `EPICS_EPIC_NOT_UNDER_PRD` where this folder holds an
    `epic.md` and as `EPICS_NO_PRD` where it holds none, and the remedy is the one both stops give:
    where the folder above is a `PRD-` folder, `The PRD folder above it holds no PRD yet: author one
    there with '/product-workflows:create-prd <PARENT-KEY>'.`, `<PARENT-KEY>` being that folder's own
-   `key`, subject to step 5's `<remedy>` table applied to *that* folder; anywhere else, name no
-   parent and say so. It is a user halt, so `emit-block` does not fire.
+   `key`, subject to step 5's `<remedy>` table applied to *that* folder — save that where that
+   folder's `brd-link.md` names no `parent:`, the run stops with `PRD_PROPOSAL_BRD_LINK_NO_PARENT` on
+   that folder in place of this stop, as step 4b words it; anywhere else, name no parent and say so.
+   It is a user halt, so `emit-block` does not fire.
+4b. **The no-`parent:` stop**, once steps 4 and 4a have let a folder through — before any read through
+   `parent:`, of which this run makes three: step 5's remedy for a slice claiming nothing, step 4a's,
+   which applies that remedy to the folder above an Epic and takes this stop there, and Phase 11's
+   umbrella and sibling options, which read the parent BRD. Where the resolved folder is a BRD-route
+   slice whose `brd-link.md` names no `parent:`, stop with `PRD_PROPOSAL_BRD_LINK_NO_PARENT`, its
+   condition, message and remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md`
+   §5.3, never from memory, `<re-run>` being `/product-workflows:prd-proposal <ADDRESS>` with the
+   other arguments this run was given.
 
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: prd`; a stop it makes ends the run here.
 
@@ -890,7 +902,7 @@ canonical emitter tail (`workflows-core:session-hygiene` §5 rule 2): feedback �
 gap, `emit-block` (per `workflows-core:feedback-emission`) fires at that halt **before** escalating.
 **None of this command's own stops qualifies**, and that is the point of naming them here:
 `PRD_PROPOSAL_NEEDS_KEY`, `PRD_PROPOSAL_NOT_FOUND`, `PRD_PROPOSAL_BRD_NOT_SLICED`,
-`PRD_PROPOSAL_EPIC_FOLDER`, `PRD_PROPOSAL_NEEDS_PRD`, `PRD_PROPOSAL_PRD_NOT_HANDED_OFF`,
+`PRD_PROPOSAL_EPIC_FOLDER`, `PRD_PROPOSAL_BRD_LINK_NO_PARENT`, `PRD_PROPOSAL_NEEDS_PRD`, `PRD_PROPOSAL_PRD_NOT_HANDED_OFF`,
 `PRD_PROPOSAL_BASELINE_UNREADABLE`, `PRD_PROPOSAL_BASELINE_IS_OUTPUT`, `PRD_PROPOSAL_NEEDS_PROFILE` and an unset `$SPECS_PATH` each
 report the state of the operator's own argument list, tree or environment — not a capability this
 plugin lacks. **`PRD_PROPOSAL_RECORD_FAILED` qualifies only by its cause**: where the script's stderr, or the shell's, names the operator's tree or environment — a file it cannot read or a name it cannot record, a missing `python3` or `git` (the last two the image exception below) — it is one of these; where it names something this run produced — a record file that no longer parses, an argument the run built — it is a plugin defect, and `emit-block` fires before the stop. A review BLOCK is not one either: that is the gate working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.

@@ -400,17 +400,6 @@ Found while DOC-D-G1's sub-project 1 built `/docs-workflows:docs-write` (`docs/s
   - **What would fix it.** The same two-part clone test at every admission site, and `-c safe.bareRepository=explicit` on the git calls the two agents make in a clone they were handed. Then re-run the reproduction from the final review against each. The site list above is the fixer's search, not a derived set: re-derive it before closing the entry.
   - **Evidence.** `.superpowers/sdd/2026-11-17-doc-d-g1-docs-write/final-review.md` C1 and `final-fix-report.md`.
 
-## From LADDER-ORDER batch 4 — any machine
-
-Found by LADDER-ORDER batch 4's final review (2026-11-17; `docs/superpowers/plans/2026-11-17-ladder-order-b4-brd-route.md`, `product-workflows` 3.85.0), after its one fix wave, by the re-review of that wave. The wave fixed the first-round form of this (`BRD_PACKAGE_REGISTER_NOT_HANDED_OFF` now lands a declined handoff's files together); this is the same shape on a later round, older than the batch and not walked. Everything else the batch found is fixed in it or listed, with its reason, in `docs/superpowers/verification/2026-11-17-ladder-order-b4-rulings.md`.
-
-- **BRD-PACKAGE-LATER-ROUND — after a declined handoff of a second or later interview round, `/product-workflows:brd-package` may stop three times in turn, each on its own files.** Owner: `product-workflows`, `/brd-package` Phase 0 steps 6, 6b and 7. Priority: the maintainer's to schedule.
-  - **The case.** On a first round, the register is on no ref and step 6 takes `phase-handoff` §4.4's row F: since 3.85.0 its stop lands the register, the round records, the question set and the code-defect log in one set. On a later round the register is already on the default branch and changed in the working tree, which is the gate's row C, not row F — so step 6 answers for the register alone, and by the text steps 6b and 7 then gate and stop on the round's other files one after another. A re-run after each landing meets the next.
-  - **Not verified.** Read from the command's text by the final re-review; nobody walked row C's own commands to see which files they carry. If row C's remedy already commits the round's files together, there is one stop and this entry closes with that walk.
-  - **What would fix it.** The walk first. If it confirms three stops: step 6's row-C remedy names the round's other unlanded files with the register, as the row-F stop now does, and steps 6b and 7 stay for their own causes.
-  - **Until then.** Accept a round's handoff when `/brd-interview` offers it; after a declined one, land every file of the round in one commit by hand before `/brd-package`.
-  - **Evidence.** `brd-package.md` Phase 0 steps 6 to 7; the batch's final re-review, first half, its closing notes.
-
 ## Accepted — known, not to fix
 
 - **Which of the customer's sentences is the reason** a `/brd-reconcile` *Correct it* copies out of the review is a reading no test can make. product-workflows 3.34.5 records every *Correct it* pick in the reconciliation record — the reader's row, the corrected `chosen` and reason, and where in the review each was copied from — so the pick can be checked, as a re-point already is. Nothing further can be done in the command; a reviewer of the record is the check.

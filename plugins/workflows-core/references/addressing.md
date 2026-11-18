@@ -617,7 +617,7 @@ is re-run (on an `@<path>`, which returns no key for such a folder, §3 step 1 s
 supplies it). That command is named by a caller for which it is a way on: one working at the PRD
 level, which the placing lets re-run, or a BRD-route command refusing the folder, which names it as
 the idea route's next step (`/product-workflows:brd-interview`'s and `/product-workflows:brd-split`'s
-no-parent stops and `/product-workflows:prd-ground`'s two no-link stops in its Phase 0 step 6 among them). `/product-workflows:brd-intake` names no command for the folder it refuses, and its
+`*_EMPTY_INVENTORY` stops for a folder that is neither a slice nor a container and `/product-workflows:prd-ground`'s two no-link stops in its Phase 0 step 6 among them). `/product-workflows:brd-intake` names no command for the folder it refuses, and its
 own stop says why. **That stop binds a caller that needs the folder placed, and not every caller does:**
 one that refuses only the levels it does not work at tests for those and proceeds on the rest, and
 where what it writes asserts `kind: prd` beside the key, that file places the folder from then on.

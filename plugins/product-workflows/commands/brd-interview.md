@@ -203,8 +203,13 @@ and nothing downstream can tell the difference afterwards.
 
     Stop, on an Epic folder:
     `BRD_INTERVIEW_EPIC_LEVEL: <KEY> resolves to an Epic folder at <path>, and deciding happens at a slice carved from a customer's BRD — an Epic is refined from the PRD folder above it and holds no coverage ledger, inventory or grounding of its own. No gate was run and nothing was written. <remedy> Re-running this command on this Epic stops here again.`
-    `<remedy>` turns on the folder containing this one: where it carries a `brd-link.md` naming a
-    `parent:` — a slice — `Run '/product-workflows:brd-interview <SLICE-KEY>' against the slice this Epic sits in.`, `<SLICE-KEY>` being that `brd-link.md`'s own `key`, read and
+    `<remedy>` turns on the folder containing this one: where it is a slice — a `PRD-` folder carrying
+    a `brd-link.md`, or an unprefixed one whose `brd-link.md` names a `parent:` — `Run '/product-workflows:brd-interview <SLICE-KEY>' against the slice this Epic sits in.`,
+    save that where that slice's `brd-link.md` names no `parent:` the run stops with
+    `BRD_INTERVIEW_BRD_LINK_NO_PARENT` on that slice in place of this stop, its condition, message and
+    remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, `<re-run>` being
+    `/product-workflows:brd-interview <SLICE-KEY>` with the other arguments this run was given, since a
+    re-run on this Epic stops here again; `<SLICE-KEY>` being that `brd-link.md`'s own `key`, read and
     never parsed out of either folder's name; anywhere else, `The folder above it is not a slice carved from a customer's BRD, so there is nothing for this command to decide here.` — naming no command, since step 5b refuses an idea-route PRD folder too. It is an argument halt, so `emit-block` does not fire.
 5b. **The idea-route refusal — a `PRD-` folder is a slice only where a BRD carved it.** Step 5a's
     prefix test accepts every `PRD-` folder, and an idea-route PRD folder — `/product-workflows:create-prd`'s
@@ -224,6 +229,12 @@ and nothing downstream can tell the difference afterwards.
 
     Stop:
     `BRD_INTERVIEW_NOT_A_SLICE: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a slice carved from a customer's BRD — no gate was run and nothing was written. Interviewing settles a BRD slice's requirements into a decision register the customer reviews, and this folder has no coverage ledger, no requirement inventory and no customer BRD to decide against. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>', its handoff merged, where the folder holds no prd.md yet — each gates prd.md with require-on-main); each reads this folder's grounding/ findings wherever /product-workflows:prd-ground wrote them, and marks the ones it drew on. Re-running this command on this folder stops here again, whatever grounding it holds.`
+5c. **The no-`parent:` stop**, once steps 5a and 5b have let the folder through as a slice — a folder
+    carrying a `brd-link.md` — and before step 6, whose row-F split and step 8a, the inventory reads
+    and the next steps read through `parent:`: where its `brd-link.md` names no `parent:`, stop with
+    `BRD_INTERVIEW_BRD_LINK_NO_PARENT`, its condition, message and remedy read in
+    `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, never from memory, `<re-run>`
+    being `/product-workflows:brd-interview <BRD-KEY>` with the other arguments this run was given.
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`; a stop it makes ends the run here.
 
 6. **Gate the grounding deliverable on main.** This command **consumes** a `$SPECS_PATH` deliverable
@@ -242,9 +253,9 @@ and nothing downstream can tell the difference afterwards.
    findings already written is missing, must not name it as the fix. **On a slice — the resolved folder's `brd-link.md`
    naming a `parent:` — test first whether `<BRD-dir>/grounding/code-grounding.md` is in the
    folder**: where it is, the findings were written and never landed, the first bullet below. Where
-   it is not, or on a folder naming no `parent:`, read `<BRD-dir>/brd/brd-inventory.md` from the
-   worktree and count its `[BR#n]` rows, on which the other bullets split. A folder naming no
-   `parent:` is read on its inventory below whatever grounding it holds: it is no slice this
+   it is not, or on a folder carrying no `brd-link.md`, read `<BRD-dir>/brd/brd-inventory.md` from the
+   worktree and count its `[BR#n]` rows, on which the other bullets split. A folder carrying no
+   `brd-link.md` is read on its inventory below whatever grounding it holds: it is no slice this
    command could interview, and landing what it holds would not make it one.
    - **A slice, and `grounding/code-grounding.md` in the folder** — written and never handed off:
      the `/prd-ground` run that wrote it did not land it, its handoff declined or never reached.
@@ -258,7 +269,15 @@ and nothing downstream can tell the difference afterwards.
      which is always among them, `grounding/design-grounding.md`, `brd-link.md` and
      `coverage-ledger.md`. That handoff stages the last two only where its run changed them, and
      this stop, which cannot read what that run did, lands each where its copy differs from
-     `<default-ref>`'s. Which of the stop's two forms to
+     `<default-ref>`'s. **Save a file `<default-ref>` holds whose working copy is HEAD's** —
+     `git -C "$SPECS_PATH" diff --quiet HEAD -- "./<path>"` exiting 0, the state a hand commit of
+     `brd-link.md` or `coverage-ledger.md` leaves, or a branch cut before `<default-ref>` changed it: the uncommitted form's `switch` puts
+     `<default-ref>`'s copy in its place, so that form leaves the file out of `<files>` and its
+     commands, and says, where `git -C "$SPECS_PATH" diff --quiet "$(git -C "$SPECS_PATH" merge-base HEAD "<default-ref>")" HEAD -- "./<path>"`
+     exits 1, before the sentence opening `Ignored`, `<file> is committed on <branch> with a change <default-ref> does not hold; the switch below puts <default-ref>'s copy in its place, so land <branch> too where that change is wanted.`,
+     `<file>` folder-relative and `<branch>` what `git -C "$SPECS_PATH" symbolic-ref --short HEAD`
+     prints. The HEAD test below decides nothing on such a file, which `<default-ref>` holds, and the
+     committed form lands `<branch>` with any change it made. Which of the stop's two forms to
      print turns on the HEAD test, made before it prints as `workflows-core:phase-handoff` §4.4's
      row F makes it for a stop that lands several files: on each of those files that
      `<default-ref>` does not hold, `git -C "$SPECS_PATH" cat-file -e "HEAD:./<path>" 2>/dev/null`,
@@ -300,12 +319,11 @@ and nothing downstream can tell the difference afterwards.
      §2), and a folder an earlier intake left with `brd/source/` alone carries neither BRD file, so
      `/brd-intake` refuses it too and the remedy is the same as the first branch below gives. The
      branches:
-     - **No `brd-link.md`, or one with no `parent:`** — not a slice, and not a root: a folder
-       holding an inventory beside no `brd-link.md` naming a `parent:` has already been refused, a
-       legacy one by 5a's §5.1 test and a `PRD-` one carrying no `brd-link.md` at all by 5b. What
-       reaches here is an unprefixed folder carrying neither BRD file, or a `PRD-` folder whose
-       `brd-link.md` names no `parent:`, which no command writes (`/brd-split` is the only writer of
-       one inside a `PRD-` folder, and always with `parent:`). **Name no re-run of `/brd-intake`
+     - **No `brd-link.md`** — not a slice, and not a root: a folder holding an inventory beside no
+       `brd-link.md` naming a `parent:` has already been refused, a legacy one by 5a's §5.1 test and
+       a `PRD-` one carrying no `brd-link.md` at all by 5b, and one carrying a `brd-link.md` that
+       names no `parent:` stopped at step 5c. What reaches here is an unprefixed
+       folder carrying neither BRD file and no `brd-link.md`. **Name no re-run of `/brd-intake`
        over it**: that command re-runs only over a container (`workflows-core:addressing` §4.1)
        and refuses this folder with `BRD_INTAKE_NOT_A_BRD`, so a customer's BRD is intaken under a
        new key instead. Substitute `<what it carries>` with the folder's top-level files and
@@ -2759,7 +2777,8 @@ by the same test. Among them, the *Resolve inputs and gate the grounded BRD* sto
 operator's argument are argument halts — a missing or malformed key or `--round` value
 (`BRD_INTERVIEW_BAD_ROUND`), an unresolved BRD, a resolved root BRD, a resolved Epic folder
 (`BRD_INTERVIEW_EPIC_LEVEL`), an idea-route PRD folder (`BRD_INTERVIEW_NOT_A_SLICE` — the operator's
-key naming a folder no BRD carved), and the no-parent form of `BRD_INTERVIEW_EMPTY_INVENTORY`, whose
+key naming a folder no BRD carved), a slice whose `brd-link.md` names no `parent:`
+(`BRD_INTERVIEW_BRD_LINK_NO_PARENT`), and the no-parent form of `BRD_INTERVIEW_EMPTY_INVENTORY`, whose
 key names a folder that is neither a slice nor a BRD container. The rest of that phase's stops are
 environment / sequencing halts: an ungated or absent grounding deliverable, a grounding file on main
 recording no finding (`BRD_INTERVIEW_NO_FINDINGS`), a slice's inventory carrying no claim at all

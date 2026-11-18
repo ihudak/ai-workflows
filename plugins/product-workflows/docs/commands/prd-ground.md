@@ -72,7 +72,8 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   name; format-validated only, never checked against a tracker. **Only a slice or an idea-route PRD
   folder is ground**: a resolved `BRD-` root stops with `PRD_GROUND_ROOT_LEVEL`, naming
   [`/brd-split`](brd-split.md) as the way to carve one; a resolved `EPIC-` folder stops with
-  `PRD_GROUND_EPIC_LEVEL`, naming the PRD folder it sits in.
+  `PRD_GROUND_EPIC_LEVEL`, naming the PRD folder it sits in — or, where that folder is a slice whose
+  `brd-link.md` names no `parent:`, stops with `PRD_GROUND_BRD_LINK_NO_PARENT` on that slice instead.
 - **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `PRD_GROUND_TWO_ADDRESSES`.
 - **`--repos <name>[,<name>…]`** (optional) — the repositories to ground against, as one
   comma-separated token — a slug, or an absolute path to a clone — so the run asks nothing about
@@ -171,6 +172,7 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
 - **`<KEY>`** — mandatory, unless an `@<path>` address names the folder; absent with no such address, or malformed, stops the run with `PRD_GROUND_NEEDS_KEY`.
 - **Not a root, and not an Epic folder.** `PRD_GROUND_ROOT_LEVEL` and `PRD_GROUND_EPIC_LEVEL`, per
   "Which route" above.
+- **A slice whose `brd-link.md` names its `parent:`.** [`/brd-split`](brd-split.md) writes a `parent:` into every slice's `brd-link.md`; one a hand edit left with none stops the run with `PRD_GROUND_BRD_LINK_NO_PARENT` in Phase 0, before anything is read through it. The stop names the file, prints `git log -p` on it to find the commit that carried the line, and says to restore the line and land it — or, where no commit carried it, to write it by hand as the key of the BRD folder the slice sits in, or to report it. A legacy folder with no kind prefix whose `brd-link.md` names no `parent:` beside its ledger or inventory is read as a BRD container instead, as before (the [`coverage-ledger-format`](../reference/references.md) reference states the stop once).
 - **A specs checkout not behind for the folder.** Once the folder resolves and the specs-repo
   preflight has run, the run checks the branch the specs checkout stands on, before either route's
   gate below. Where it is a plugin branch the default branch has moved past under the address's
@@ -256,8 +258,8 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   ledger is on the default branch but missing from the working tree — on the default branch since
   before the run's own branch was cut, and unchanged there since — is told to restore it from there (a ledger that arrived
   or changed after the cut stops at the gate, which tells you to merge the default branch in); and otherwise the inventory is restored from the ref that carried it, or reported, since a parent `/brd-split` writes nothing into a slice
-  with a file missing and never re-creates one — and on a folder naming no
-  parent it names a fresh intake under a new key, and also `/create-prd` on the same key where the
+  with a file missing and never re-creates one — and on a folder carrying no
+  `brd-link.md` it names a fresh intake under a new key, and also `/create-prd` on the same key where the
   folder holds an `idea.md` and no `prd.md`. An inventory in the folder and on no ref, with a `coverage-ledger.md` there too, stops with
   `PRD_GROUND_INVENTORY_NOT_HANDED_OFF`, whose action is to land it — the stop prints the git
   commands, on a new `brd/` branch where it is uncommitted; where it is committed, on a branch of
@@ -268,8 +270,8 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   container has already been refused as a root. Where the gate reports
   the ledger is on no branch the commands cut, the run **splits a state the gate cannot**, exactly as
   [`/brd-reconcile`](brd-reconcile.md) does for a file that is on no branch at all. No `coverage-ledger.md` in the folder
-  means it was never produced or was lost after it was written, and the stop names the producing run by level: a folder naming no
-  parent — no slice, and no container [`/brd-intake`](brd-intake.md) would re-run over — stops with
+  means it was never produced or was lost after it was written, and the stop names the producing run by level: a folder carrying no
+  `brd-link.md` — no slice, and no container [`/brd-intake`](brd-intake.md) would re-run over — stops with
   `PRD_GROUND_NEEDS_INTAKE`, naming a fresh intake under a new key, and also `/create-prd` on the
   same key where the folder holds an `idea.md` and no `prd.md`; a
   **slice** — recognised by the `parent:` field in its `brd-link.md` — stops with
@@ -290,11 +292,14 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   which — the run stops with `PRD_GROUND_CARVE_UNFINISHED`: the slice's files are provisional,
   nothing in the folder is to be committed, and the fix is the parent's **instructed** re-run,
   `/brd-split <PARENT-KEY> "<how to cut it>"`, taken to completion, since the bare form stops asking
-  for an instruction while a row is unallocated. Where the parent is fully allocated but this slice
+  for an instruction while a row is unallocated. Where the parent is fully allocated and the slice's
+  ledger or inventory cannot be read, the run stops with `PRD_GROUND_SLICE_FILE_UNREADABLE` (below),
+  naming the file and the error, rather than landing a file no run can read; for a file no branch
+  holds, it says to report it where its content is lost, since nothing re-creates it. Where the parent is fully allocated but this slice
   is not what it records — a carve stopped after its last walk write and before it reconciled this
   slice — the run stops with `PRD_GROUND_SLICE_UNRECONCILED` (below). Where the parent's ledger
   cannot be read, the run stops with `PRD_GROUND_SLICE_UNRECONCILED`, reporting that ledger by path
-  and naming no `/brd-split` form, and so does a slice whose `brd-link.md` names no `parent:`. Only where the parent
+  and naming no `/brd-split` form. Only where the parent
   is fully allocated and this slice agrees with it was the handoff simply declined, and the run stops
   with `PRD_GROUND_NOT_HANDED_OFF`, whose action is to land the inventory and the ledger already on
   disk — the stop prints the git commands, on a new `brd/` branch where neither is committed (one the default branch already holds aside); where

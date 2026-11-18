@@ -248,6 +248,15 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    and each happens after every other gate has already refused the run — the step 1a remedy
    above is still a directory listing, and no phase of a proceeding run opens a ledger.
 
+   **The no-`parent:` stop, first.** Where the folder this table's slice rows read — the resolved
+   folder for `EPICS_NO_PRD`, or, where the resolved folder is an Epic folder, the `PRD-` folder above
+   it holding no `prd.md`, to which the table's first row and `EPICS_EPIC_NOT_UNDER_PRD` apply those
+   rows — is a slice whose `brd-link.md` names no `parent:`, stop with `EPICS_BRD_LINK_NO_PARENT` in place of either stop, before the table reads
+   anything through `parent:` — the only place this command reads it — its condition, message and
+   remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, never from
+   memory, `<re-run>` being `/product-workflows:epics <KEY>` with the other arguments this run was
+   given.
+
    | The resolved folder | What the stop names |
    |---|---|
    | An `EPIC-` folder — its name beginning `EPIC-<the resolved key>-`, a prefix as `workflows-core:addressing` §4.1 defines one — holding no `epic.md` | **Not** `/create-prd` or `/update-prd`, which refuse an Epic folder with `CREATE_PRD_EPIC_FOLDER` and `UPDATE_PRD_EPIC_FOLDER`; every row below reads a folder that is not this one. No command writes an `EPIC-` folder without its `epic.md`, so this one is hand-made or left by an interrupted run, and no command takes it as an input. Where the folder above holds a `prd.md` asserting `kind: prd`, name `/product-workflows:epics <PRD-KEY>`, `<PRD-KEY>` being that `prd.md`'s own `key` — it drafts this PRD's Epics, each in a folder it creates and keys itself, so this folder is not an input to it; say what the folder holds, and that it may be removed once the operator has checked nothing in it is wanted — a hand-made folder can hold notes. Where *Gate the PRD* returned `absent` — that `prd.md` is on no ref the gate reads — say too that the `/product-workflows:epics <PRD-KEY>` run it names stops first on that PRD (`EPICS_PRD_NOT_HANDED_OFF`) and prints the commands that land it. Where the folder above is a `PRD-` folder holding no `prd.md`, name `/product-workflows:create-prd <PARENT-KEY>` first, `<PARENT-KEY>` being that folder's own `key`, subject to the rows below applied to *that* folder, and `/product-workflows:epics <PARENT-KEY>` second, once that PRD exists and its handoff is merged — on a specs tree that is no git repository (*Gate the PRD* returned `unmanaged`), once it exists, there being no handoff or merge to name. Anywhere else, name no command and say so |

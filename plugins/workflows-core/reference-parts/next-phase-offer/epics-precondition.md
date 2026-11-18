@@ -72,7 +72,9 @@ three on the BRD route, and an `EPIC-` folder on either, which is why the key is
 names what `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4's *The first missing document*
 names for them at its `prd.md` rung, which restates them for a plugin that cannot read their
 authority, `product-workflows:coverage-ledger-format` §5.2 — a naming, as that rung is, never a stop
-that applies them, which is `/product-workflows:create-prd`'s own, taken in its Phase 0; and where they fail the offer resolves to what the
+that applies them, which is `/product-workflows:create-prd`'s own, taken in its Phase 0; where the
+slice's `brd-link.md` names no `parent:`, which that rung reads first, no option at all, the offer
+printing in its place the rung's no-`parent:` line; and where they fail the offer resolves to what the
 failing outcome names: `/product-workflows:brd-split` against one of two keys; no option at all
 where none applies — the gate set non-empty and no row `covered-here`, the offer saying where the
 requirements went, or the gate set empty and the parent's ledger unreadable, that ledger reported by

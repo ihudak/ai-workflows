@@ -101,6 +101,8 @@ Problems never stop a harvest and never change its exit code; each leaves the re
 | `source-missing` | a record whose ARD is no longer on the default branch | restore the ARD, or keep the record as history |
 | `decision-missing` | a record whose decision is no longer in its ARD | restore the decision, or keep the record as history |
 
+A listing that prints the `unparseable` fix prints once, directly after the first such fix, `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
+
 ## Invariants
 
 - Only `/product-workflows:harvest-decisions` and `/product-workflows:promote-decisions` write here, through `workflows-core:phase-handoff`'s `handoff-to-main` on a `kb/` branch — `/product-workflows:promote-decisions` only the promotion keys of records that exist; nothing is ever deleted, and nothing is written outside this folder.
