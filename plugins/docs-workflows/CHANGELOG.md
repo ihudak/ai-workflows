@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.43.2] — 2026-11-18
 
-Wording only: a pointer LADDER-ORDER batch 4 left open. **What changes for you.** Nothing a run does. It needs no other release, nor they it; released beside `workflows-core` 1.98.1 and `product-workflows` 3.85.1.
+Wording only: a pointer LADDER-ORDER batch 4 left open. **What changes for you.** Nothing a run does. It needs no other release, nor they it; released beside `workflows-core` 1.98.1 and `product-workflows` 3.86.0.
 
 ### Fixed
 
