@@ -760,9 +760,9 @@ a line of its own with no `#` comment and `$SPECS_PATH` substituted: `git -C "<S
 and `git -C "<SPECS_PATH>" commit -m "<SLICE-KEY> restore parent:" -- "<path>"`, then, on `<default>`, row C″'s commands for an uncommitted change after that commit — the pull where
 `origin` holds a commit the local `<default>` lacks, the push and its protected-branch alternative,
 none where there is no `origin`, the commit being the whole landing there — and, on any other
-branch, row E's — row D's where a pull request from it is open: the push and, in prose, the pull
+branch inside `workflows-core:specs-repo-git` §3.2's safe class, row E's — row D's where a pull request from it is open: the push and, in prose, the pull
 request to open and merge, or the open one to merge, or, where there is no `origin`, the local merge;
-where HEAD is detached or on a branch outside `workflows-core:specs-repo-git` §3.2's safe class
+where HEAD is detached or on a branch outside that class
 (§4.4's row I), none, the message's `with the commands printed beneath this message` left out. On a specs tree that is no git repository there is no ref to read: the sentence opening
 `Restore the line` reads `Restore the line from a copy you hold, then re-run '<re-run>'.`, the one
 after it reads `Where you hold none, write it by hand as parent: <the key the coverage-ledger.md of the BRD folder this slice sits in records>, or report it.`,
