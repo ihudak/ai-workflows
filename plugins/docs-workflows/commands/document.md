@@ -171,6 +171,14 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
          off the same `brd-link.md`'s `parent:` — with `"<how to cut it>"` where the parent's ledger
          still holds an `unallocated` row, bare where it holds none, and neither form where it cannot be read: report the parent's ledger
          by path, and say that which form applies is that ledger's to say.
+         Where that `brd-link.md` names no `parent:` — on a `PRD-` slice, a state no command writes —
+         there is no `<PARENT-KEY>` and neither form is named: print in their place the line
+         `workflows-core:phase-handoff` §4.4's *The first missing document* prints there, in its words,
+         `<SLICE-KEY>` being `<KEY>`:
+         `<SLICE-KEY>'s brd-link.md names no parent:, so no /product-workflows:brd-split run can be named for it — /product-workflows:brd-split writes a parent: into every slice's brd-link.md; restore that line from the ref that carried it, or report it.`
+         A legacy unprefixed folder whose `brd-link.md` names no `parent:` beside a `coverage-ledger.md`
+         or `brd/brd-inventory.md` never reaches this row: the BRD-container bullet above places it
+         a container first, by `workflows-core:addressing` §4.1's test.
        - No gate-set row `covered-here`, and the gate set **non-empty**: name no command.
          `This slice holds no PRD of its own — <what each claimed row resolved to> — so there is nothing here to document.`
        - Otherwise: `Run /product-workflows:create-prd <KEY> first.`

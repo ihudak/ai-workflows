@@ -7,11 +7,12 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.43.2] — 2026-11-18
 
-Wording only: a pointer LADDER-ORDER batch 4 left open. **What changes for you.** Nothing a run does. It needs no other release, nor they it; released beside `workflows-core` 1.98.1 and `product-workflows` 3.86.0.
+A pointer LADDER-ORDER batch 4 left open, and one line on a hand-damaged slice. **What changes for you.** On a slice whose `brd-link.md` a hand edit left with no `parent:`, `/document` and `/release-notes` say why no `/brd-split` run is named, where they printed one with no key; nothing else a run does changes. It needs no other release, nor they it; released beside `workflows-core` 1.98.1 and `product-workflows` 3.86.0.
 
 ### Fixed
 
 - **"Outside its work tree" names whose.** `/document`'s and `/release-notes`' lineage check, `/release-notes`' rule on where a draft is written and its Phase 8 handoff, and the `/release-notes` page said a folder lay outside, or inside, "its work tree" — a pointer whose antecedent a reader had to guess. Each now says the work tree of the repository `$SPECS_PATH` stands in, as the batch's other sentences do.
+- **A slice whose `brd-link.md` names no `parent:`.** Where `/document` and `/release-notes` stop on a BRD-route slice holding no PRD and claiming nothing, they named `/product-workflows:brd-split <PARENT-KEY>` off that `parent:` line, so a slice whose line a hand edit removed got that command with no key. They now say, as `workflows-core` 1.98.1's `phase-handoff` rung does, that the `brd-link.md` names no `parent:`, so no `/brd-split` run can be named, and to restore the line from the commit that carried it, or report it.
 
 ## [1.43.1] — 2026-11-17
 
