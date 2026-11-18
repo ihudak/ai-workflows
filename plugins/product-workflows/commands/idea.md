@@ -64,9 +64,14 @@ Usage: `/idea <KEY> [<prompt>|@<file>] [--deep] [--no-docs] [--docs <path>] [--g
 
    **A `found` folder must be an idea-route PRD folder.** Test the folder, never the kind it asserts
    — a BRD-route slice is `PRD-`-prefixed and asserts `kind: brd` through its `brd-link.md`
-   (`workflows-core:addressing` §4) — in this order, stopping on the first that holds. A folder
-   carrying a `brd-link.md` naming a `parent:` at its top level is a BRD-route slice, whatever its
-   name. Then, where the resolution record reads `legacy: false`, test the prefix: `BRD-` is a BRD
+   (`workflows-core:addressing` §4) — in this order, stopping on the first that holds. A `PRD-`
+   folder carrying a `brd-link.md` at its top level is a BRD-route slice whatever its `parent:` says,
+   a prefixed folder being placed by its prefix (`workflows-core:addressing` §4.1), and an unprefixed folder carrying one that
+   names a `parent:` is a slice too. Where that slice's `brd-link.md` names no `parent:`, stop with
+   `IDEA_BRD_LINK_NO_PARENT` in place of the stop below, before its remedy reads anything through
+   `parent:`, its condition, message and remedy read in
+   `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, never from memory, `<re-run>`
+   being `/product-workflows:idea` with the arguments this run was given. Then, where the resolution record reads `legacy: false`, test the prefix: `BRD-` is a BRD
    container, `EPIC-` an Epic folder. Where it reads `legacy: true` there is no prefix to test —
    §5's unprefixed name starts with the key, and a key may itself begin with a kind token, so
    `BRD-12-checkout/` is a legacy folder keyed `BRD-12` and not a BRD container — so place it by

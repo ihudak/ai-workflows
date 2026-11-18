@@ -289,6 +289,11 @@ write would re-ask a question already answered.
 
     Stop:
     `BRD_RECONCILE_NOT_A_SLICE: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a slice carved from a customer's BRD — no gate was run and nothing was written. Reconciling applies a customer's returned review of a BRD slice's package, and this folder was never packaged by this route and holds no coverage ledger and no requirement inventory for a correction to land in; --sent does not change that. Check the key names the slice whose package the customer answered. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>', its handoff merged, where the folder holds no prd.md yet). Where it holds a prd.md, run '/product-workflows:update-prd <KEY>' to revise that PRD from what the review says. Re-running this command on this folder stops here again.`
+    **Then the no-`parent:` stop**, once steps 5a and 5b have let the folder through as a slice — a
+    folder carrying a `brd-link.md` — and before step 6c's gate on the parent's defect log and every read through the parent after it, the first reads through `parent:`:
+    where its `brd-link.md` names no `parent:`, stop with `BRD_RECONCILE_BRD_LINK_NO_PARENT`, its
+    condition, message and remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md`
+    §5.3, never from memory, `<re-run>` being `/product-workflows:brd-reconcile <BRD-KEY>` with the other arguments this run was given.
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`, the prefix of its first handoff; a stop it makes ends the run here. A dependent BRD under another root folder is checked by the cross-BRD write guard, before anything is written into it.
 
 6. **Gate the sent package on main — unless `--sent` supplied one.**
@@ -3031,9 +3036,7 @@ this phase offers.
   applies — `'/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"'` where `<PARENT-KEY>`'s own
   `coverage-ledger.md` still holds an `unallocated` row, the bare `'/product-workflows:brd-split <PARENT-KEY>'`
   where it holds none, and neither where that ledger cannot be read — for the operator to check: this
-  run reads no ledger of the parent's for it. Where this `brd-link.md` names no `parent:`, which no
-  command writes, there is no `<PARENT-KEY>` to name: print in its place the sentence
-  `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2 words for that state, read there. Name no re-cut form: that form turns on a sibling's own
+  run reads no ledger of the parent's for it. Name no re-cut form: that form turns on a sibling's own
   `deferred-to` on a row the parent delegated to it, which this phase reads in no ledger, and on this
   slice never having been interviewed (§3.2) — which on the ordinary path it has been, since
   `/brd-package`, which refuses a slice holding no round record (`BRD_PACKAGE_NOT_INTERVIEWED`), ran
@@ -3368,7 +3371,7 @@ reports the operator's own arguments, the tree, the environment, the customer's 
 working — never a capability, reference or command path this plugin lacks. Among them: a missing or
 malformed key, an unreadable review or `--sent` path (`BRD_RECONCILE_SENT_NOT_READABLE`), a `--sent`
 given where a handed-off package already exists (`BRD_RECONCILE_SENT_REDUNDANT`), an unresolved BRD,
-a resolved root BRD, a resolved Epic folder (`BRD_RECONCILE_EPIC_LEVEL`), an idea-route PRD folder (`BRD_RECONCILE_NOT_A_SLICE`), an ungated or absent package, a review file that already exists under a
+a resolved root BRD, a resolved Epic folder (`BRD_RECONCILE_EPIC_LEVEL`), an idea-route PRD folder (`BRD_RECONCILE_NOT_A_SLICE`), a slice whose `brd-link.md` names no `parent:` (`BRD_RECONCILE_BRD_LINK_NO_PARENT`), an ungated or absent package, a review file that already exists under a
 different content, and an unset `$SPECS_PATH` are environment or sequencing halts;
 `BRD_RECONCILE_EMPTY_DIGEST` is a returned review the reader's digest cannot be squared with — a
 well-formed return over the customer's own file, which the stop's own text puts down to either a

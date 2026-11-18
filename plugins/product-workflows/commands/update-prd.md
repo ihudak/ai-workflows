@@ -50,7 +50,14 @@ Usage: `/update-prd <KEY> [@transcript-or-notes ...] [--no-docs] [--docs <path>]
    ```
    UPDATE_PRD_BASE_UNREADABLE: <feature-folder>/prd.md exists but cannot be read (<error>). /update-prd refreshes the PRD it reads as its base and never overwrites one it has not archived. Make the file readable, then re-run '/product-workflows:update-prd <KEY>'.
    ```
-   **Absent → stop gracefully:**
+   **Absent, on a slice whose `brd-link.md` names no `parent:` → the no-`parent:` stop**, taken here,
+   before the table below reads anything through `parent:` — the one path on which this command reads
+   it: stop with `UPDATE_PRD_BRD_LINK_NO_PARENT`, its condition, message and remedy read in
+   `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, never from memory, `<re-run>`
+   being `/product-workflows:update-prd <ADDRESS>`. A slice holding a `prd.md` reads no `parent:`
+   here and goes on.
+
+   **Absent otherwise → stop gracefully:**
    ```
    UPDATE_PRD_NO_PRD: <ADDRESS> resolves a folder at <path> holding no prd.md, and /update-prd refreshes an existing PRD rather than authoring one. <the remedy, per the row below that matches>
    ```

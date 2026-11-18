@@ -337,11 +337,10 @@ leaves out an orphan row whatever it reads (§2). Two tests, and the first one i
 row.
 
 **On a slice, the row test is read together with §4's allocation gate, and this file calls the pair
-*the slice's ledger tests*.** A slice here is a folder whose `brd-link.md` names a `parent:` —
-`PRD-`-prefixed, or unprefixed on a legacy tree (§5.1); a `BRD-` container never reaches the tests,
-being refused on the level test first. A `PRD-` folder whose `brd-link.md` names no `parent:`, which
-no command writes, is tested as a slice by the commands that detect the route from `brd-link.md`,
-and the one outcome that reads `parent:` says it is missing (§5.2). The tests are read over §5.2's gate set, out of the slice's
+*the slice's ledger tests*.** A slice here is a folder carrying a `brd-link.md` that the container
+refusal lets through — `PRD-`-prefixed, or unprefixed on a legacy tree (§5.1); a `BRD-` container never reaches the tests,
+being refused on the level test first; and a slice whose `brd-link.md` names no `parent:` never
+reaches them, since each command that applies them stops on it first (§5.3). The tests are read over §5.2's gate set, out of the slice's
 `coverage-ledger.md` as the run finds the tree and never off a `ledger:` line (§6.1): **no row is
 `unallocated`**, tested first (the hard refusal below); **then at least one row is `covered-here`**.
 A slice whose `claims:` is empty has an empty gate set whether or not its ledger file exists, and a
@@ -350,9 +349,8 @@ read: both fail the tests, and they differ in what is named (§5.2). The tests h
 each a row of §5.2's table after its container row: *passes*; *unallocated*; *none covered-here,
 gate set non-empty*; *none covered-here, gate set empty* — `claims:` empty, whatever the ledger
 file's state, the parent's ledger deciding the form of what is named, the re-cut form among them
-only where this slice's own ledger was read, where the parent's ledger cannot be read it is
-reported by path and neither form is named, and where `brd-link.md` names no `parent:` neither is
-named either; and *ledger missing or unreadable while `claims:` names
+only where this slice's own ledger was read, and where the parent's ledger cannot be read it is
+reported by path and neither form is named; and *ledger missing or unreadable while `claims:` names
 rows* — the file reported by path and `/product-workflows:prd-ground <SLICE-KEY>` named, the run
 whose stop names the repair. `/create-prd` applies the slice's ledger tests to a slice in its Phase 0
 step 7, under `CREATE_PRD_BRD_UNALLOCATED` and `CREATE_PRD_BRD_NOT_ELIGIBLE`; `/create-ard` and
@@ -513,8 +511,8 @@ container:
 never `parent:` (`/brd-reconcile` only where a returned review's correction asks to add a
 prerequisite, its *Apply the required corrections* table's `brd-link.md` row) — and the idea route
 has never written one at all. So "no `brd-link.md`, or one carrying
-no `parent:`", which is the correct test for **root versus slice** *once a folder is known to be on
-the BRD route*, separates nothing here: used as the container test it refuses the legacy idea-route
+no `parent:`", which is the correct test for **root versus slice** *once an unprefixed folder is known
+to be on the BRD route* (a prefixed one is placed by its prefix, §5.3), separates nothing here: used as the container test it refuses the legacy idea-route
 PRD folder too, and then offers `/brd-split` on a folder holding no coverage ledger to walk — a stop
 naming a remedy that cannot run. An unprefixed idea-route folder is not an exotic input: it misses
 `workflows-core:addressing` §3's `*-<KEY>-*` prefixed glob by construction and lands in §5's fallback
@@ -594,7 +592,7 @@ tests' five outcomes:
 | the resolved folder's prefix, or §5.1's evidence where it has none (§5, §5.1) | it is a `BRD-` container | `CREATE_PRD_BRD_NOT_SLICED` — the `PRD-` slices under it, or `/brd-split <BRD-KEY> "<how to cut it>"` where there are none |
 | the gate set | *unallocated* — a row is still `unallocated` | `CREATE_PRD_BRD_UNALLOCATED` — `/brd-split <SLICE-KEY>`, whose walk moves exactly those rows; and beside it, that `/brd-split`'s own Phase 0 gates on this slice's grounding findings each carrying a verifier verdict and stops naming `/prd-ground <SLICE-KEY>` where they do not, so a slice that has only been carved reaches it through `/prd-ground` first |
 | the gate set | *none covered-here, gate set non-empty* — the ledger read, `claims:` naming rows, no row `covered-here` and none `unallocated` (the row above is tested first) | `CREATE_PRD_BRD_NOT_ELIGIBLE` — **no command at all**, and what each row resolved to (§5's table, its last row) |
-| `claims:` | *none covered-here, gate set empty* — `claims:` names no row: a *standing empty child*, whatever the state of its `coverage-ledger.md` — read, absent, or present and unreadable (the converse paragraph below) | `CREATE_PRD_BRD_NOT_ELIGIBLE` — `/brd-split <PARENT-KEY>`, in the form the parent's own ledger decides: `/brd-split <PARENT-KEY> "<how to cut it>"` where it still holds an `unallocated` row (a bare run stops there with `BRD_SPLIT_NEEDS_INSTRUCTION`); the bare `/brd-split <PARENT-KEY>` where it holds none, and beside it, where a sibling has recorded `deferred-to` on a row the parent delegated to it, `/brd-split <PARENT-KEY> "<what to peel off>"`, a run that still offers the keep-or-remove (its Phase 4.5) and can also re-cut that row onto this slice (§3.2), which needs this slice never to have been interviewed and its own ledger and inventory readable — a slice missing either, or holding either unreadable, is unreconcilable to that run and no receiver (§3.2; `commands/brd-split.md` Phase 0 steps 9 and 9a), so this form is named only where this slice's own ledger was read; and neither form, the parent's ledger reported by path, where it cannot be read; nor where the slice's `brd-link.md` names no `parent:`, which the paragraph on `<PARENT-KEY>` below words. After the form it names, a stop prints *the placed-row line* below, under its conditions |
+| `claims:` | *none covered-here, gate set empty* — `claims:` names no row: a *standing empty child*, whatever the state of its `coverage-ledger.md` — read, absent, or present and unreadable (the converse paragraph below) | `CREATE_PRD_BRD_NOT_ELIGIBLE` — `/brd-split <PARENT-KEY>`, in the form the parent's own ledger decides: `/brd-split <PARENT-KEY> "<how to cut it>"` where it still holds an `unallocated` row (a bare run stops there with `BRD_SPLIT_NEEDS_INSTRUCTION`); the bare `/brd-split <PARENT-KEY>` where it holds none, and beside it, where a sibling has recorded `deferred-to` on a row the parent delegated to it, `/brd-split <PARENT-KEY> "<what to peel off>"`, a run that still offers the keep-or-remove (its Phase 4.5) and can also re-cut that row onto this slice (§3.2), which needs this slice never to have been interviewed and its own ledger and inventory readable — a slice missing either, or holding either unreadable, is unreconcilable to that run and no receiver (§3.2; `commands/brd-split.md` Phase 0 steps 9 and 9a), so this form is named only where this slice's own ledger was read; and neither form, the parent's ledger reported by path, where it cannot be read. After the form it names, a stop prints *the placed-row line* below, under its conditions |
 | `coverage-ledger.md`, while `claims:` names rows | *ledger missing or unreadable while `claims:` names rows* — the file is absent, or present and cannot be read | `CREATE_PRD_BRD_NOT_ELIGIBLE` — the file by path, as missing or as unreadable with the read error, and `/prd-ground <SLICE-KEY>` named in prose as the run whose stop tells a carve interrupted before the ledger was written from a file lost or damaged after it and names the repair: a stop's remedy, never an option of an array (the converse paragraph below) |
 | the gate set | *passes* — no row `unallocated`, and at least one `covered-here` | neither data refusal fires: `/create-prd <SLICE-KEY>` is reachable on these tests |
 
@@ -603,8 +601,7 @@ reach this slice.** A stop that applies the tests — `/create-prd`'s, `/create-
 — prints, after the `/brd-split <PARENT-KEY>` form that row names, the form of this line that goes
 with it, and only where this slice's own `coverage-ledger.md` was read: a slice whose ledger is
 missing or unreadable is unreconcilable to that run, which offers it no row (§3.2), so no form is
-printed for it, and none is printed where the parent's ledger cannot be read, or the slice's
-`brd-link.md` names no `parent:`, and no run is named.
+printed for it, and none is printed where the parent's ledger cannot be read and no run is named.
 After the `"<how to cut it>"` form, the walk-placement form:
 
 `Its walk may instead place one of those rows on this slice where this slice's brd/brd-inventory.md can be read; a row placed there arrives unallocated: <once-parent-merged>ground it with '/product-workflows:prd-ground <SLICE-KEY>', <once-grounding-merged>walk it with '/product-workflows:brd-split <SLICE-KEY>', then re-run '<re-run>'.`
@@ -666,12 +663,8 @@ handoffs, or their files where no handoff can be made, not such a clause.
 **`<PARENT-KEY>` is read, never derived.** It is the `parent:` field of the same `brd-link.md` the
 `claims:` list came from (`workflows-core:addressing` §4) — the offering run has already opened that
 file to build the gate set, so the key is in hand and is never parsed out of the slice's own key or
-its folder name. **Where that `brd-link.md` names no `parent:`** — which no command writes, since
-`/brd-split` writes one into every slice's and no other command writes the field (§5.1), so a hand
-edit removed it or never wrote it — there is no `<PARENT-KEY>` to read, and none is derived: the
-empty-gate-set row names neither form and no placed-row line, and a stop or an offer says in their
-place `<SLICE-KEY>'s brd-link.md names no parent:, so no /product-workflows:brd-split run can be named for it — /product-workflows:brd-split writes a parent: into every slice's brd-link.md; restore that line from the ref that carried it, or report it.`
-No other outcome of the tests reads `parent:`.
+its folder name. A slice whose `brd-link.md` names no `parent:` never reaches this read: each
+command that would make it stops first (§5.3).
 
 **Only a BRD-route folder has a gate set at all.** A resolved folder carrying no `brd-link.md` is an
 idea-route PRD folder: neither data refusal exists for it, and `/create-prd <ADDRESS>` is reachable
@@ -715,14 +708,58 @@ for themselves. Dropping is not going quiet: name what moves the failing test wh
 — `/brd-split <SLICE-KEY>` for an `unallocated` row, `/brd-split <PARENT-KEY>` for a standing empty
 child, in the table's form: with a slicing instruction where the parent still holds an `unallocated`
 row, bare (the keep-or-remove run) where it holds none, and neither, reporting the parent's ledger by
-path, where it cannot be read, or saying the slice's `brd-link.md` names no `parent:`, where it names
-none; and, for a ledger missing or unreadable while `claims:` names rows,
+path, where it cannot be read; and, for a ledger missing or unreadable while `claims:` names rows,
 the file by path and `/prd-ground <SLICE-KEY>` in prose as the run whose stop names the repair (the
 converse paragraph above) — and where none exists, say so. **The non-empty
 `CREATE_PRD_BRD_NOT_ELIGIBLE` branch is the one that must never be offered into**: it names no
 command by design, so an offer that sends the operator there hands them a stop with no way out, and
 nothing in this plugin moves a slice's `deferred-to`, `rejected` or `superseded-by` row back to
 `unallocated` (§3).
+
+### 5.3 A slice whose `brd-link.md` names no `parent:` — the stop
+
+**`/brd-split` writes a `parent:` into every slice's `brd-link.md`, and no command writes one
+without it** (§5.1), so a slice whose `brd-link.md` names none is hand damage, and every read through
+`parent:` — the parent's ledger and defect log, its seeds and its source, its ARD, the key a PRD or
+an ARD records — has nothing to read. **The run stops** (decided by the maintainer, 2026-11-18).
+**Where:** a command that holds the folder it resolved — or, on an Epic address, the PRD folder above
+the Epic — as a BRD-route slice, a folder carrying a `brd-link.md` that its container refusal let
+through, stops where that `brd-link.md` names no `parent:`. It stops in its Phase 0, after the container refusal and the
+placement that tell it it holds a slice, before its first read through `parent:`, and, in
+`/product-workflows:create-prd`, `/product-workflows:create-ard` and `/product-workflows:specify`,
+before *the slice's ledger tests*; each command says where against its own order of reads, and cites
+this section for the condition, the message and the remedy, which none restates. A command that reads
+`parent:` on one path alone — a no-PRD remedy that names the parent's `/brd-split` — takes the stop at
+the head of that path. **The level of a prefixed folder is its prefix** (`workflows-core:addressing`
+§4.1), so a `PRD-` folder carrying a `brd-link.md` is a slice whatever its `parent:` says, and no
+command creates a root BRD under a `PRD-` prefix: `/product-workflows:brd-intake` writes a root
+`BRD-`-prefixed and refuses a `PRD-` folder.
+
+**The id** is the stopping command's own prefix followed by `_BRD_LINK_NO_PARENT`
+(`CREATE_PRD_BRD_LINK_NO_PARENT`, `BRD_PACKAGE_BRD_LINK_NO_PARENT`, and so on), and the message
+carries `workflows-core:phase-handoff` §4.4's four parts, in order:
+
+`<ID>: <SLICE-KEY>'s brd-link.md at <path> names no parent:, so this run cannot read the BRD that carved the slice — /product-workflows:brd-split writes a parent: into every slice's brd-link.md, and no command writes one without it. This run read nothing through it and wrote nothing. Restore the line from the ref that carried it: 'git -C "<SPECS_PATH>" log -p -- "<path>"' prints every commit that changed the file, the parent: line among them; commit the restored file and land it on the default branch, then re-run '<re-run>'. Where no ref carried the line, write it by hand as parent: <the key the coverage-ledger.md of the BRD folder this slice sits in records>, or report it. Ignored, every run of a command that reads this slice's parent: stops here until its brd-link.md names one.`
+
+`<SLICE-KEY>` is the slice's resolved key, `<path>` its `brd-link.md`'s path relative to
+`$SPECS_PATH`, and `<re-run>` the stopping command with the address it was given — the Epic's on an
+Epic address. On a specs tree that is no git repository there is no ref to read: the sentence opening
+`Restore the line` reads `Restore the line from a copy you hold, then re-run '<re-run>'.`, and the one
+after it opens `Where you hold none`. On a read-only specs mount the `git log` names
+`"<writable path>"` in place of `"<SPECS_PATH>"`, as `workflows-core:phase-handoff` §4.4 words it. The stop marks nothing
+`(Recommended)`, carries no merge clause, asks no question and does not `emit-block`: it reports the
+state of the operator's own tree.
+
+**A legacy unprefixed slice that lost its `parent:` is not reached by the stop.** With no kind
+prefix, a `brd-link.md` naming no `parent:` beside a `coverage-ledger.md` or `brd/brd-inventory.md`
+is, by everything on disk, a legacy root container (§5.1): nothing tells a legacy slice that lost the
+line from a legacy root. Such a folder meets each command's container refusal instead, as it did
+before this stop, and `/product-workflows:brd-split`, which places a prefixed folder by its prefix and
+an unprefixed one by its `parent:` (its Phase 0 step 5), runs on it as on a root. That is a limit, not a rule: no command's container refusal changes for it.
+`/product-workflows:brd-split` and `/product-workflows:idea` place an unprefixed folder by its
+`parent:` and take the stop on a `PRD-` folder alone; the other commands, which take a folder
+carrying a `brd-link.md` past their container refusal as a slice, take it on an unprefixed one
+holding neither file as well.
 
 ## 6. The ledger line
 

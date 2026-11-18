@@ -106,10 +106,12 @@ four-resolution one.
    every level `workflows-core:addressing` §3 bounds — three below `specifications/`, plus §5's legacy fallback (§2 step 2) — and so can return any folder kind it finds there: a `BRD-` folder directly under `specifications/`, a `PRD-` folder (a slice inside a BRD, or an idea-route PRD folder), or an `EPIC-` folder inside a `PRD-` folder. Step 5 answers the level question on what it returns. Absent → stop, without asserting which command would create it, because nothing on disk
    says whether this key names a BRD with a source document or a slice of one:
    `BRD_SPLIT_NOT_FOUND: no folder found for <BRD-KEY> under $SPECS_PATH/specifications/ (every level addressing.md §3 bounds, plus §5's legacy fallback) — check the key. A BRD with a source document of its own is created by /product-workflows:brd-intake <BRD-KEY> @<brd-file>; a slice is created by /product-workflows:brd-split on its parent.`
-5. **Resolve the run mode.** Read the resolved folder's `brd-link.md` and branch on its `parent:`
-   field — the signal `/prd-ground` Phase 0 step 6 reads to tell a slice from a folder naming no parent
-   (its step 5a tells a slice from a root by the directory prefix), and, unlike a key's segment
-   count, a reliable one: a segment count is a naming convention, never a depth declaration
+5. **Resolve the run mode.** Read the resolved folder's `brd-link.md` and branch on it. **A prefixed
+   folder's level is its prefix** (`workflows-core:addressing` §4.1), as `/prd-ground` Phase 0 step 5a
+   tells a slice from a root: a `PRD-` folder carrying a `brd-link.md` is a slice whatever its `parent:`
+   says, and no command creates a root BRD under a `PRD-` prefix. **On an unprefixed folder its
+   `parent:` field decides** — the signal `/prd-ground` Phase 0 step 6 reads — and, unlike a key's
+   segment count, a reliable one: a segment count is a naming convention, never a depth declaration
    (`workflows-core:addressing` §1).
    - **An Epic folder** → stop, before either mode is set, and before the idea-route test below.
      `resolve-address` searches every level `workflows-core:addressing` §3 bounds, the Epic level
@@ -123,8 +125,10 @@ four-resolution one.
      `kind: epic`, taken after §5.1's container test as §4.1 orders it. Never the asserted `kind:` of
      a prefixed folder.
      `BRD_SPLIT_EPIC_LEVEL: <KEY> resolves to an Epic folder at <path>, and splitting allocates a BRD's coverage ledger — an Epic is refined from the PRD folder above it and holds no coverage ledger, inventory or grounding of its own. No gate was run and nothing was written. <remedy> Re-running this command on this Epic stops here again.`
-     `<remedy>` turns on the folder containing this one: where it carries a `brd-link.md` naming a
-     `parent:` — a slice — `Run '/product-workflows:brd-split <SLICE-KEY>' against the slice this Epic sits in.`, `<SLICE-KEY>` being that `brd-link.md`'s own `key`, read and never parsed out of either folder's name; anywhere else, `The folder above it is not a slice carved from a customer's BRD, so there is no slice ledger for this command to allocate for this Epic.` — naming no command, since the bullet below refuses an idea-route PRD folder too.
+     `<remedy>` turns on the folder containing this one: where it is a slice — a `PRD-` folder carrying
+     a `brd-link.md`, or an unprefixed one whose `brd-link.md` names a `parent:` — `Run '/product-workflows:brd-split <SLICE-KEY>' against the slice this Epic sits in.`,
+     save that where that slice's `brd-link.md` names no `parent:` the run stops with
+     `BRD_SPLIT_BRD_LINK_NO_PARENT` on that slice in place of this stop, as step 5's bullet for it says; `<SLICE-KEY>` being that `brd-link.md`'s own `key`, read and never parsed out of either folder's name; anywhere else, `The folder above it is not a slice carved from a customer's BRD, so there is no slice ledger for this command to allocate for this Epic.` — naming no command, since the bullet below refuses an idea-route PRD folder too.
    - **An idea-route PRD folder** → stop, before either mode is set. `split_mode: full` below reads
      "no `brd-link.md`" as a source-owning BRD, and an idea-route PRD folder —
      `/product-workflows:create-prd`'s own output, never carved from a BRD — carries none either.
@@ -135,7 +139,7 @@ four-resolution one.
      legacy unprefixed fallback carrying no `brd-link.md`, neither `coverage-ledger.md` nor
      `brd/brd-inventory.md`, and a `prd.md` asserting `kind: prd`
      (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.1). The same unprefixed shape
-     without such a `prd.md` is not decided here, and falls to the next bullet as it always has —
+     without such a `prd.md` is not decided here, and falls to the `split_mode: full` bullet below as it always has —
      which is no claim that it is a BRD: it holds no inventory, so step 8 stops it, and that stop
      names no `/brd-intake` re-run over a folder that is not a container. **Where that folder holds an
      `idea.md` and no `prd.md`** — the folder the idea route handed an idea off into before the kind
@@ -144,9 +148,14 @@ four-resolution one.
      no `prd.md` yet: that command accepts the folder (its Phase 0 steps 5a and 5b refuse only a
      container and an Epic folder) and writes the `prd.md` that brings a re-run to this bullet.
      `BRD_SPLIT_NOT_A_BRD: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a BRD or a slice carved from one — no gate was run and nothing was written. Splitting allocates a customer BRD's coverage ledger to slices, and this folder has no coverage ledger and no requirement inventory to allocate. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>', its handoff merged, where the folder holds no prd.md yet). If <KEY> was meant to name a BRD, check the key — a BRD with a source document of its own is created by /product-workflows:brd-intake <BRD-KEY> @<brd-file>. Re-running this command on this folder stops here again.`
-   - **No `brd-link.md`, or one with no `parent:`** → this BRD owns its source document. Set
-     `split_mode: full`; carry it for the whole run. Nothing is announced — this is the ordinary
-     case.
+   - **A `PRD-` folder whose `brd-link.md` names no `parent:`** → stop, before either mode is set —
+     never `split_mode: full`, whose run would carve children inside a slice — with
+     `BRD_SPLIT_BRD_LINK_NO_PARENT`, its condition, message and remedy read in
+     `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, never from memory, `<re-run>`
+     being this run's `/product-workflows:brd-split <BRD-KEY>` with any instruction it was given.
+   - **Otherwise no `brd-link.md`, or one with no `parent:`** — a `BRD-` folder, or an unprefixed
+     one → this BRD owns its source document. Set `split_mode: full`; carry it for the whole run.
+     Nothing is announced — this is the ordinary case.
    - **`parent: <PARENT-KEY>` present** → this is a slice. Set `split_mode: allocate-only`, carry
      it for the whole run, and **emit this notice now, and again in the final report** — a run that
      silently skips two phases and drops a resolution from its own picker is worse than one that
@@ -354,8 +363,7 @@ four-resolution one.
    names a new key instead. A container:
    `BRD_SPLIT_EMPTY_INVENTORY (split_mode: full): <BRD-KEY>'s inventory holds no [BR#n] row, so there is nothing to ground and nothing to allocate — do not run /product-workflows:prd-ground, which refuses a root outright. Re-run '/product-workflows:brd-intake <BRD-KEY> @<brd-file>' over this same folder with a source whose requirements brd-reader can identify, and merge that pull request; if the source genuinely states no requirement, this BRD has nothing for the route to carry.`
    Any other folder — an unprefixed one carrying neither BRD file, the shape the idea-route bullet
-   in step 5 leaves undecided, or a `PRD-` folder whose `brd-link.md` names no `parent:`, which no
-   command writes — `<what it carries>` being its top-level files and subdirectories, as read:
+   in step 5 leaves undecided — `<what it carries>` being its top-level files and subdirectories, as read:
    `BRD_SPLIT_EMPTY_INVENTORY (split_mode: full): <BRD-KEY> resolves to <path>, which carries <what it carries> and no [BR#n] row in any brd/brd-inventory.md — it is not a BRD container, so there is nothing to allocate, and /product-workflows:brd-intake would refuse to re-run over it. Nothing was written. Do not run /product-workflows:prd-ground, which refuses this folder too. To intake a customer's BRD, run '/product-workflows:brd-intake <NEW-KEY> @<brd-file>' with a key no folder under $SPECS_PATH/specifications/ asserts; this folder is left exactly as it stands.<where the folder holds an idea.md and no prd.md, append:> It holds an idea.md and no prd.md, so the idea route goes on from it: run '/product-workflows:create-prd <BRD-KEY>', merge its handoff, then '/product-workflows:create-ard <BRD-KEY>' or '/product-workflows:specify <BRD-KEY>'.`
    **On a slice this check is not made, and nothing here stops an empty inventory.** Step 6's row-F
    branch stops a slice whose inventory is absent or holds no row only where its grounding is on no
@@ -1707,7 +1715,7 @@ reports the state of the operator's own argument, the tree or the environment, n
 reference or command path this plugin lacks, so it is classified by that test, never by a list, and
 a stop added later is classified by the same test. Among them: a missing or malformed key
 (`BRD_SPLIT_NEEDS_KEY`), an unresolved BRD (`BRD_SPLIT_NOT_FOUND`), a key naming an Epic folder
-(`BRD_SPLIT_EPIC_LEVEL`), an idea-route PRD folder (`BRD_SPLIT_NOT_A_BRD`) or any other folder that is
+(`BRD_SPLIT_EPIC_LEVEL`), an idea-route PRD folder (`BRD_SPLIT_NOT_A_BRD`), a slice whose `brd-link.md` names no `parent:` (`BRD_SPLIT_BRD_LINK_NO_PARENT`) or any other folder that is
 not a BRD container and holds no `[BR#n]` row (`BRD_SPLIT_EMPTY_INVENTORY`'s second form at step 8) and an unset `$SPECS_PATH`
 are argument or environment halts; a missing instruction on a root with a row still `unallocated`
 (`BRD_SPLIT_NEEDS_INSTRUCTION`) is the operator's own argument left out; a missing grounding

@@ -216,6 +216,11 @@ cannot review, and they will not tell you that — they will review it anyway, b
 
     Stop:
     `BRD_PACKAGE_NOT_A_SLICE: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a slice carved from a customer's BRD — no gate was run and nothing was written. Packaging bundles a BRD slice's decision register for the customer who wrote the BRD, and this folder has no customer BRD, no coverage ledger and no interview behind it, so there is no register to bundle. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>', its handoff merged, where the folder holds no prd.md yet). Re-running this command on this folder stops here again.`
+    **Then the no-`parent:` stop**, once steps 5a and 5b have let the folder through as a slice — a
+    folder carrying a `brd-link.md` — and before step 7a's flag read and step 10's resolution of the parent's source, defect log and figures, the first reads through `parent:`:
+    where its `brd-link.md` names no `parent:`, stop with `BRD_PACKAGE_BRD_LINK_NO_PARENT`, its
+    condition, message and remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md`
+    §5.3, never from memory, `<re-run>` being `/product-workflows:brd-package <BRD-KEY>`.
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`; a stop it makes ends the run here.
 5c. **Refuse a folder holding a torn write — before any gate, so no gate's remedy lands one.** Read
     `decisions.md`, `interview/customer-questions.md`, `code-defect-log.md` and every
@@ -2258,7 +2263,8 @@ the operator's own ruling, or a defect in the package's own content that a sente
 change to fix — as a review BLOCK is a defect in the work and not in the plugin. Among them: a
 missing or malformed key, an unresolved BRD, a resolved root BRD, a resolved Epic folder
 (`BRD_PACKAGE_EPIC_LEVEL`), an idea-route PRD folder
-(`BRD_PACKAGE_NOT_A_SLICE`), an ungated, absent or unmerged
+(`BRD_PACKAGE_NOT_A_SLICE`), a slice whose `brd-link.md` names no `parent:`
+(`BRD_PACKAGE_BRD_LINK_NO_PARENT`), an ungated, absent or unmerged
 register or round record, a shipped question set or log on no ref (`BRD_PACKAGE_SHIPPED_NOT_HANDED_OFF`),
 a round a standing re-decision names and no record holds
 (`BRD_PACKAGE_ROUND_NOT_RECORDED`), a folder holding a torn write (`BRD_PACKAGE_TORN_WRITES`), a

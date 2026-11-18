@@ -257,6 +257,12 @@ behaviour, not the behaviour.
       clause: that command accepts the folder (its Phase 0 steps 5a and 5b refuse only a container and
       an Epic folder) and writes the `prd.md` whose `kind: prd` sets `route: idea` here on the re-run,
       which is what `PRD_GROUND_NEEDS_PRD` names for a `PRD-` folder in the same state.
+    **The no-`parent:` stop**, on `route: brd`, once the refusals and the route above have placed the
+    folder as a slice, and before step 6, whose row-F splits and step 6a read through `parent:`:
+    where its `brd-link.md` names no `parent:`, stop with `PRD_GROUND_BRD_LINK_NO_PARENT`, its
+    condition, message and remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md`
+    §5.3, never from memory, `<re-run>` being `/product-workflows:prd-ground <BRD-KEY>`. Past it, every
+    `brd-link.md` step 6 reads names a `parent:`.
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd` on `route: brd` and `prefix: prd` on the idea route, the prefix its handoff names; a stop it makes ends the run here.
 
 6. **On `route: brd`, gate this BRD's own inventory and ledger on main.** (The idea route's own
@@ -306,9 +312,9 @@ behaviour, not the behaviour.
      inventory's header before it copies anything (`${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §2); a folder an earlier intake
      left with `brd/source/` alone carries neither BRD file, and `/brd-intake` refuses it too, so the
      remedy is the same.
-     - **No `brd-link.md`, or one with no `parent:`** — not a slice with a `<PARENT-KEY>` to read,
-       and not a BRD container either: it carries neither BRD file, or is a `PRD-` folder whose
-       `brd-link.md` names no `parent:`, which no command writes. `/brd-intake` re-runs only over a
+     - **No `brd-link.md`** — not a slice with a `<PARENT-KEY>` to read, and not a BRD container
+       either: it carries neither BRD file (a slice whose `brd-link.md` names no `parent:` stopped at
+       *The no-`parent:` stop*, after step 5a). `/brd-intake` re-runs only over a
        container (`workflows-core:addressing` §4.1) and refuses this folder with
        `BRD_INTAKE_NOT_A_BRD`, so name no re-run over it — and, where the folder holds an `idea.md` and
        no `prd.md`, name `/create-prd` on this key (step 5a). `<what it carries>` is the folder's
@@ -380,7 +386,7 @@ behaviour, not the behaviour.
    step 5a would otherwise guarantee — and, as step 6's inventory branch above says, one an intake
    earlier than product-workflows 3.7.0 left with `brd/source/` alone is refused by `/brd-intake`
    too, so the remedy is the same.
-   - **No `brd-link.md`, or one with no `parent:`** — not a slice and not a BRD container, so
+   - **No `brd-link.md`** — not a slice and not a BRD container, so
      `/brd-intake` refuses it with `BRD_INTAKE_NOT_A_BRD` rather than re-running over it; name a new
      key instead — and, where the folder holds an `idea.md` and no `prd.md`, `/create-prd` on this
      one (step 5a) — `<what it carries>` being the folder's top-level files and subdirectories, as read.
@@ -418,7 +424,7 @@ behaviour, not the behaviour.
    finished one whose handoff was declined. **The parent's ledger tells them apart**, so read
    `<PARENT-KEY>`'s own `coverage-ledger.md` from the worktree — `<PARENT-KEY>` being the `parent:`
    of the `brd-link.md` read above — before printing anything, and take the first case that matches. (Where `brd/brd-inventory.md` is not in the folder, the gate order's one exception applies instead, and nothing in this branch prints.)
-   - **`brd-link.md` names no `parent:`, or `<PARENT-KEY>`'s ledger cannot be read** — whether the
+   - **`<PARENT-KEY>`'s ledger cannot be read** — whether the
      carve finished, and whether the handoff was declined, is that ledger's to say, so assert
      neither: print step 6a's unreadable-parent `PRD_GROUND_SLICE_UNRECONCILED`, which reports the
      ledger by path, names no `/brd-split` form, and is the same situation — this slice cannot be
@@ -558,10 +564,9 @@ behaviour, not the behaviour.
     are equal, proceed. **This step never runs on `route: idea`**: that route has no `brd-link.md`,
     no inventory and no parent, and step 6i is its whole gate.
 
-    Where `brd-link.md` names no `parent:`, or `<PARENT-KEY>`'s ledger cannot be read, stop
-    reporting it by path and naming no `/brd-split` form, since which form reconciles this slice is
-    that ledger's to say. `<path>` is that ledger's path, and reads `no parent: named in brd-link.md`
-    where there is no `parent:` to resolve one from:
+    Where `<PARENT-KEY>`'s ledger cannot be read, stop reporting it by path and naming no
+    `/brd-split` form, since which form reconciles this slice is that ledger's to say. `<path>` is that
+    ledger's path:
     `PRD_GROUND_SLICE_UNRECONCILED: <BRD-KEY> cannot be tested against its parent: the parent's ledger at <path> cannot be read, and which /product-workflows:brd-split form reconciles this slice is that ledger's to say — report it; no form is named here.`
 
     Otherwise, where the three sets are not all equal, stop, naming each id by the set that lacks

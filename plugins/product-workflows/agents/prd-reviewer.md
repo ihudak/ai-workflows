@@ -26,11 +26,14 @@ runs a fix cycle and re-reviews once.
 2. Verify frontmatter: `kind: prd`; `key` matches `^[A-Z][A-Z0-9_]*(-\d+)+$` — **the one grammar, which fixes no depth** (`workflows-core:addressing` §1). There is one key namespace and no second, narrower grammar: no tracker mints keys any more, and the keys the plugin mints itself — `/brd-split`'s slice keys, `/epics`' Epic keys — are minted against this same grammar, so a three-segment slice key such as `EPIC-008-01` is exactly as valid here as `EPIC-008`, and a PRD carrying one is correct rather than a finding. **`key` is required on every route, including the BRD route**, where it is the `<SLICE-KEY>` of the `PRD-` slice folder this PRD is written into — never the parent BRD's key, which is `brd_parent`'s value — an absent `key` IS a finding, because `workflows-core:addressing` §4 resolves a folder's identity from an artifact carrying both `kind:` and `key:`, and a `prd.md` missing one leaves the folder resolving as whatever else is in it.
 2a. **`brd_parent` beside `brd_key`.** A PRD carrying `brd_key` was authored on the BRD route, which
    resolves a `PRD-` slice folder and refuses a `BRD-` container before any seed is read
-   (`commands/create-prd.md` Phase 0 step 5a). `/brd-split` writes a `parent:` into every slice's `brd-link.md`, so
-   `brd_parent` is **present** on such a PRD
+   (`commands/create-prd.md` Phase 0 step 5a). `/brd-split` writes a `parent:` into every slice's `brd-link.md`, and
+   `/create-prd` stops on a slice whose `brd-link.md` names none (its Phase 0 step 7), so
+   `brd_parent` is **always present** on a PRD it authors now
    (`workflows-core:prd-format`). An absent `brd_parent` beside a present
    `brd_key` IS a finding — `MAJOR` — and not a legitimate omission: it is the signature of a PRD
-   authored from a root BRD, which is the container a PRD may never be authored in, or of one authored on a slice whose `brd-link.md` a hand edit left with no `parent:` — read that `brd-link.md` and say which. `depends_on` is
+   authored from a root BRD, which is the container a PRD may never be authored in, or of one
+   authored before that stop existed (`product-workflows` 3.86.0) on a slice whose `brd-link.md` a
+   hand edit had left with no `parent:` — read that `brd-link.md` and say which. `depends_on` is
    a different case and is legitimately absent when the customer committed to no prerequisite.
 3. Apply every spine rule from `Skill(skill: "workflows-core:reference", args: "prd-format")`; for each adapt-in section present, apply its rule.
 4. Apply the dimension checks below.

@@ -224,6 +224,12 @@ and nothing downstream can tell the difference afterwards.
 
     Stop:
     `BRD_INTERVIEW_NOT_A_SLICE: <KEY> resolves to an idea-route PRD folder (<path> carries no brd-link.md), not a slice carved from a customer's BRD — no gate was run and nothing was written. Interviewing settles a BRD slice's requirements into a decision register the customer reviews, and this folder has no coverage ledger, no requirement inventory and no customer BRD to decide against. The idea route goes on from its PRD: run '/product-workflows:create-ard <KEY>' or '/product-workflows:specify <KEY>' (after '/product-workflows:create-prd <KEY>', its handoff merged, where the folder holds no prd.md yet — each gates prd.md with require-on-main); each reads this folder's grounding/ findings wherever /product-workflows:prd-ground wrote them, and marks the ones it drew on. Re-running this command on this folder stops here again, whatever grounding it holds.`
+5c. **The no-`parent:` stop**, once steps 5a and 5b have let the folder through as a slice — a folder
+    carrying a `brd-link.md` — and before step 6, whose row-F split and step 8a, the inventory reads
+    and the next steps read through `parent:`: where its `brd-link.md` names no `parent:`, stop with
+    `BRD_INTERVIEW_BRD_LINK_NO_PARENT`, its condition, message and remedy read in
+    `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, never from memory, `<re-run>`
+    being `/product-workflows:brd-interview <BRD-KEY>`.
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`; a stop it makes ends the run here.
 
 6. **Gate the grounding deliverable on main.** This command **consumes** a `$SPECS_PATH` deliverable
@@ -242,9 +248,9 @@ and nothing downstream can tell the difference afterwards.
    findings already written is missing, must not name it as the fix. **On a slice — the resolved folder's `brd-link.md`
    naming a `parent:` — test first whether `<BRD-dir>/grounding/code-grounding.md` is in the
    folder**: where it is, the findings were written and never landed, the first bullet below. Where
-   it is not, or on a folder naming no `parent:`, read `<BRD-dir>/brd/brd-inventory.md` from the
-   worktree and count its `[BR#n]` rows, on which the other bullets split. A folder naming no
-   `parent:` is read on its inventory below whatever grounding it holds: it is no slice this
+   it is not, or on a folder carrying no `brd-link.md`, read `<BRD-dir>/brd/brd-inventory.md` from the
+   worktree and count its `[BR#n]` rows, on which the other bullets split. A folder carrying no
+   `brd-link.md` is read on its inventory below whatever grounding it holds: it is no slice this
    command could interview, and landing what it holds would not make it one.
    - **A slice, and `grounding/code-grounding.md` in the folder** — written and never handed off:
      the `/prd-ground` run that wrote it did not land it, its handoff declined or never reached.
@@ -308,12 +314,11 @@ and nothing downstream can tell the difference afterwards.
      §2), and a folder an earlier intake left with `brd/source/` alone carries neither BRD file, so
      `/brd-intake` refuses it too and the remedy is the same as the first branch below gives. The
      branches:
-     - **No `brd-link.md`, or one with no `parent:`** — not a slice, and not a root: a folder
-       holding an inventory beside no `brd-link.md` naming a `parent:` has already been refused, a
-       legacy one by 5a's §5.1 test and a `PRD-` one carrying no `brd-link.md` at all by 5b. What
-       reaches here is an unprefixed folder carrying neither BRD file, or a `PRD-` folder whose
-       `brd-link.md` names no `parent:`, which no command writes (`/brd-split` is the only writer of
-       one inside a `PRD-` folder, and always with `parent:`). **Name no re-run of `/brd-intake`
+     - **No `brd-link.md`** — not a slice, and not a root: a folder holding an inventory beside no
+       `brd-link.md` naming a `parent:` has already been refused, a legacy one by 5a's §5.1 test and
+       a `PRD-` one carrying no `brd-link.md` at all by 5b, and one carrying a `brd-link.md` that
+       names no `parent:` stopped at step 5c. What reaches here is an unprefixed
+       folder carrying neither BRD file and no `brd-link.md`. **Name no re-run of `/brd-intake`
        over it**: that command re-runs only over a container (`workflows-core:addressing` §4.1)
        and refuses this folder with `BRD_INTAKE_NOT_A_BRD`, so a customer's BRD is intaken under a
        new key instead. Substitute `<what it carries>` with the folder's top-level files and
@@ -2675,10 +2680,8 @@ it, why each option was dropped, and `/product-workflows:brd-split <PARENT-KEY>`
 or removes this slice — `'/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"'` where
 `<PARENT-KEY>`'s `coverage-ledger.md`, read in *Resolve inputs and gate the grounded BRD* step 9,
 still holds an `unallocated` row, the bare `'/product-workflows:brd-split <PARENT-KEY>'` where it
-holds none, and neither, that ledger reported by path and why none is named, where it cannot be read,
-nor where this slice's `brd-link.md` names no `parent:`, which no command writes, the sentence
-`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.2 words for that state, read there,
-standing in its place — and no re-cut form, since this slice has been interviewed
+holds none, and neither, that ledger reported by path and why none is named, where it cannot be read
+— and no re-cut form, since this slice has been interviewed
 (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §3.2, §5.2); then end the phase on the
 *Stop here* option's words as a line of its own.
 
@@ -2769,7 +2772,8 @@ by the same test. Among them, the *Resolve inputs and gate the grounded BRD* sto
 operator's argument are argument halts — a missing or malformed key or `--round` value
 (`BRD_INTERVIEW_BAD_ROUND`), an unresolved BRD, a resolved root BRD, a resolved Epic folder
 (`BRD_INTERVIEW_EPIC_LEVEL`), an idea-route PRD folder (`BRD_INTERVIEW_NOT_A_SLICE` — the operator's
-key naming a folder no BRD carved), and the no-parent form of `BRD_INTERVIEW_EMPTY_INVENTORY`, whose
+key naming a folder no BRD carved), a slice whose `brd-link.md` names no `parent:`
+(`BRD_INTERVIEW_BRD_LINK_NO_PARENT`), and the no-parent form of `BRD_INTERVIEW_EMPTY_INVENTORY`, whose
 key names a folder that is neither a slice nor a BRD container. The rest of that phase's stops are
 environment / sequencing halts: an ungated or absent grounding deliverable, a grounding file on main
 recording no finding (`BRD_INTERVIEW_NO_FINDINGS`), a slice's inventory carrying no claim at all
