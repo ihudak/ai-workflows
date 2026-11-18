@@ -729,8 +729,10 @@ placement that tell it it holds a slice, before its first read through `parent:`
 `/product-workflows:create-prd`, `/product-workflows:create-ard` and `/product-workflows:specify`,
 before *the slice's ledger tests*; each command says where against its own order of reads, and cites
 this section for the condition, the message and the remedy, which none restates. A command that reads
-`parent:` on one path alone — a no-PRD remedy that names the parent's `/brd-split` — takes the stop at
-the head of that path. **The level of a prefixed folder is its prefix** (`workflows-core:addressing`
+`parent:` only in a no-PRD remedy that names the parent's `/brd-split` takes the stop at the head of
+that remedy wherever it applies it — to the resolved folder, and, in its refusal of an Epic address,
+to the folder above the Epic. A command whose refusal of an Epic address names its own run on the
+slice above, a run that would stop there, takes the stop on that slice in place of its refusal. **The level of a prefixed folder is its prefix** (`workflows-core:addressing`
 §4.1), so a `PRD-` folder carrying a `brd-link.md` is a slice whatever its `parent:` says, and no
 command creates a root BRD under a `PRD-` prefix: `/product-workflows:brd-intake` writes a root
 `BRD-`-prefixed and refuses a `PRD-` folder.
@@ -739,14 +741,28 @@ command creates a root BRD under a `PRD-` prefix: `/product-workflows:brd-intake
 (`CREATE_PRD_BRD_LINK_NO_PARENT`, `BRD_PACKAGE_BRD_LINK_NO_PARENT`, and so on), and the message
 carries `workflows-core:phase-handoff` §4.4's four parts, in order:
 
-`<ID>: <SLICE-KEY>'s brd-link.md at <path> names no parent:, so this run cannot read the BRD that carved the slice — /product-workflows:brd-split writes a parent: into every slice's brd-link.md, and no command writes one without it. This run read nothing through it and wrote nothing. Restore the line from the ref that carried it: 'git -C "<SPECS_PATH>" log -p -- "<path>"' prints every commit that changed the file, the parent: line among them; commit the restored file and land it on the default branch, then re-run '<re-run>'. Where no ref carried the line, write it by hand as parent: <the key the coverage-ledger.md of the BRD folder this slice sits in records>, or report it. Ignored, every run of a command that reads this slice's parent: stops here until its brd-link.md names one.`
+`<ID>: <SLICE-KEY>'s brd-link.md at <path> names no parent:, so this run cannot read the BRD that carved the slice — /product-workflows:brd-split writes a parent: into every slice's brd-link.md, and no command writes one without it. This run read nothing through it and wrote nothing. Restore the line from the ref that carried it: 'git -C "<SPECS_PATH>" log -p -- "<path>"' prints every commit that changed the file, the parent: line among them; commit the restored file and land it on the default branch with the commands printed beneath this message, then re-run '<re-run>'. Where no ref carried the line, write it by hand as parent: <the key the coverage-ledger.md of the BRD folder this slice sits in records> and land it the same way, or report it. Ignored, every run of a command that reads this slice's parent: stops here until its brd-link.md names one.`
 
 `<SLICE-KEY>` is the slice's resolved key, `<path>` its `brd-link.md`'s path relative to
-`$SPECS_PATH`, and `<re-run>` the stopping command with the address it was given — the Epic's on an
-Epic address. On a specs tree that is no git repository there is no ref to read: the sentence opening
-`Restore the line` reads `Restore the line from a copy you hold, then re-run '<re-run>'.`, and the one
-after it opens `Where you hold none`. On a read-only specs mount the `git log` names
-`"<writable path>"` in place of `"<SPECS_PATH>"`, as `workflows-core:phase-handoff` §4.4 words it. The stop marks nothing
+`$SPECS_PATH`, and `<re-run>` the stopping command with the address and the arguments it was given —
+the Epic's address on an Epic address, save where a command's own text sets it to its run on the
+slice (the Epic refusals of `/product-workflows:prd-ground`, `/product-workflows:brd-interview`,
+`/product-workflows:brd-package`, `/product-workflows:brd-reconcile` and
+`/product-workflows:brd-split`), since a re-run on the Epic would stop on that refusal again.
+`<the key the coverage-ledger.md of the BRD folder this slice sits in records>` stays literal, since
+the run reads nothing above the slice. **The commands printed beneath it** commit `<path>` and land it
+as `workflows-core:phase-handoff` §4.4 words a landing for the branch the checkout stands on, each on
+a line of its own with no `#` comment and `$SPECS_PATH` substituted: `git -C "<SPECS_PATH>" add -f -- "<path>"`
+and `git -C "<SPECS_PATH>" commit -m "<SLICE-KEY> restore parent:" -- "<path>"`, then, on `<default>`, row C″'s commands for an uncommitted change after that commit — the pull where
+`origin` holds a commit the local `<default>` lacks, the push and its protected-branch alternative,
+none where there is no `origin`, the commit being the whole landing there — and, on any other
+branch, row E's: the push and, in prose, the pull request to open and merge, or, where there is no
+`origin`, the local merge. On a specs tree that is no git repository there is no ref to read: the sentence opening
+`Restore the line` reads `Restore the line from a copy you hold, then re-run '<re-run>'.`, the one
+after it reads `Where you hold none, write it by hand as parent: <the key the coverage-ledger.md of the BRD folder this slice sits in records>, or report it.`,
+and no commands are printed beneath it. On a read-only specs
+mount the `git log` and the commands beneath it name `"<writable path>"` in place of
+`"<SPECS_PATH>"`, as `workflows-core:phase-handoff` §4.4 words it. The stop marks nothing
 `(Recommended)`, carries no merge clause, asks no question and does not `emit-block`: it reports the
 state of the operator's own tree.
 
@@ -755,7 +771,9 @@ prefix, a `brd-link.md` naming no `parent:` beside a `coverage-ledger.md` or `br
 is, by everything on disk, a legacy root container (§5.1): nothing tells a legacy slice that lost the
 line from a legacy root. Such a folder meets each command's container refusal instead, as it did
 before this stop, and `/product-workflows:brd-split`, which places a prefixed folder by its prefix and
-an unprefixed one by its `parent:` (its Phase 0 step 5), runs on it as on a root. That is a limit, not a rule: no command's container refusal changes for it.
+an unprefixed one by its `parent:` (its Phase 0 step 5), runs on it as on a root; and
+`/product-workflows:brd-intake` re-runs over it as over one, after its confirmation (its Phase 0
+step 7). That is a limit, not a rule: no command's container refusal changes for it.
 `/product-workflows:brd-split` and `/product-workflows:idea` place an unprefixed folder by its
 `parent:` and take the stop on a `PRD-` folder alone; the other commands, which take a folder
 carrying a `brd-link.md` past their container refusal as a slice, take it on an unprefixed one

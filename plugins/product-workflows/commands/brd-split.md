@@ -128,7 +128,7 @@ four-resolution one.
      `<remedy>` turns on the folder containing this one: where it is a slice — a `PRD-` folder carrying
      a `brd-link.md`, or an unprefixed one whose `brd-link.md` names a `parent:` — `Run '/product-workflows:brd-split <SLICE-KEY>' against the slice this Epic sits in.`,
      save that where that slice's `brd-link.md` names no `parent:` the run stops with
-     `BRD_SPLIT_BRD_LINK_NO_PARENT` on that slice in place of this stop, as step 5's bullet for it says; `<SLICE-KEY>` being that `brd-link.md`'s own `key`, read and never parsed out of either folder's name; anywhere else, `The folder above it is not a slice carved from a customer's BRD, so there is no slice ledger for this command to allocate for this Epic.` — naming no command, since the bullet below refuses an idea-route PRD folder too.
+     `BRD_SPLIT_BRD_LINK_NO_PARENT` on that slice in place of this stop, as step 5's bullet for a `PRD-` folder words it, `<re-run>` being `/product-workflows:brd-split <SLICE-KEY>` with any instruction this run was given, since a re-run on this Epic stops here again; `<SLICE-KEY>` being that `brd-link.md`'s own `key`, read and never parsed out of either folder's name; anywhere else, `The folder above it is not a slice carved from a customer's BRD, so there is no slice ledger for this command to allocate for this Epic.` — naming no command, since the bullet below refuses an idea-route PRD folder too.
    - **An idea-route PRD folder** → stop, before either mode is set. `split_mode: full` below reads
      "no `brd-link.md`" as a source-owning BRD, and an idea-route PRD folder —
      `/product-workflows:create-prd`'s own output, never carved from a BRD — carries none either.

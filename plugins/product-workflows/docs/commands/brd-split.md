@@ -161,9 +161,11 @@ was read on this path too — one instruction, read once, and only the set it wa
 
 ## Two modes
 
-Phase 0 step 5 reads the resolved folder's `brd-link.md` and sets the mode from its `parent:` field
-— a reliable signal, unlike a key's segment count, which is a naming convention rather than a depth
-declaration.
+Phase 0 step 5 sets the mode from the resolved folder's prefix and its `brd-link.md`: a `BRD-` folder
+is a root, a `PRD-` folder carrying a `brd-link.md` is a slice — or stops with
+`BRD_SPLIT_BRD_LINK_NO_PARENT` where that file names no `parent:` — and only a folder with no kind
+prefix is placed by its `parent:` field, a reliable signal, unlike a key's segment count, which is a
+naming convention rather than a depth declaration.
 
 | | `split_mode: full` | `split_mode: allocate-only` |
 |---|---|---|
@@ -283,8 +285,9 @@ reads was already independently verified by `/prd-ground`'s own agents.
   `/brd-intake` where the key was meant to name a BRD.
 - **Not an Epic folder.** An `EPIC-` folder carries no `brd-link.md` either, and would be read the
   same way; it stops with `BRD_SPLIT_EPIC_LEVEL` before the run mode is set, naming
-  `/brd-split <SLICE-KEY>` on the slice above the Epic where it sits in one, and no command where it
-  does not.
+  `/brd-split <SLICE-KEY>` on the slice above the Epic where it sits in one — or, where that slice's
+  `brd-link.md` names no `parent:`, stopping with `BRD_SPLIT_BRD_LINK_NO_PARENT` on that slice instead —
+  and no command where it does not.
 - **A slice whose `brd-link.md` names its `parent:`.** A `PRD-` folder carrying a `brd-link.md` is a slice whatever its `parent:` says — its prefix decides, and only an unprefixed folder is placed by its `parent:` — so the run never takes one naming none for a root and carves children inside it. [`/brd-split`](brd-split.md) writes a `parent:` into every slice's `brd-link.md`; one a hand edit left with none stops the run with `BRD_SPLIT_BRD_LINK_NO_PARENT` in Phase 0, before anything is read through it and before the run mode is set. The stop names the file, prints `git log -p` on it to find the commit that carried the line, and says to restore the line and land it — or, where no commit carried it, to write it by hand as the key of the BRD folder the slice sits in, or to report it. A legacy folder with no kind prefix whose `brd-link.md` names no `parent:` beside its ledger or inventory is read as a BRD container instead, as before (the [`coverage-ledger-format`](../reference/references.md) reference states the stop once).
 - **Nothing more, at either level.** A key that resolves to a **slice** does not stop the run; it
   sets `allocate-only` (see "Two modes" above) and emits the `BRD_SPLIT_ON_SLICE` notice. What the

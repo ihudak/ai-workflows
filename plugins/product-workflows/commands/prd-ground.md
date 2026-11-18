@@ -196,6 +196,12 @@ behaviour, not the behaviour.
 
     Stop, on an Epic folder:
     `PRD_GROUND_EPIC_LEVEL: <KEY> resolves to an Epic folder, and grounding is PRD-altitude on both routes. Run '/product-workflows:prd-ground <PRD-KEY>' against the PRD folder this Epic sits in.`
+    Save that where that PRD folder is a slice — a `PRD-` folder carrying a `brd-link.md` — whose
+    `brd-link.md` names no `parent:`, the run stops with `PRD_GROUND_BRD_LINK_NO_PARENT` on that
+    slice in place of this stop, its condition, message and remedy read in
+    `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, `<re-run>` being
+    `/product-workflows:prd-ground <PRD-KEY>` with the other arguments this run was given, since a
+    re-run on this Epic stops here again.
 
     **Once past both refusals, set the run's route — again by positive evidence in both directions,
     never by the absence of a file, the same discipline the root question above already applies:**
@@ -261,7 +267,8 @@ behaviour, not the behaviour.
     folder as a slice, and before step 6, whose row-F splits and step 6a read through `parent:`:
     where its `brd-link.md` names no `parent:`, stop with `PRD_GROUND_BRD_LINK_NO_PARENT`, its
     condition, message and remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md`
-    §5.3, never from memory, `<re-run>` being `/product-workflows:prd-ground <BRD-KEY>`. Past it, every
+    §5.3, never from memory, `<re-run>` being `/product-workflows:prd-ground <BRD-KEY>` with the other
+    arguments this run was given. Past it, every
     `brd-link.md` step 6 reads names a `parent:`.
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd` on `route: brd` and `prefix: prd` on the idea route, the prefix its handoff names; a stop it makes ends the run here.
 

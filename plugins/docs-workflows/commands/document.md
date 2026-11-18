@@ -153,9 +153,17 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
        `<KEY>'s PRD is <its file>, under its name from before the artifact filenames lost their keys — run '/product-workflows:specify <KEY>': it stops on that file, and its stop prints the commands that rename it to prd.md and land it.`
        — on a specs tree that is no git repository, `and its stop says how to rename it to prd.md.` in
        place of its last clause.
-     - **A `brd-link.md`** — a BRD-route slice. Read the rows its `claims:` names (its gate set) and
-       their dispositions from the slice's own `coverage-ledger.md`, never from a `ledger:` line,
-       and take the first row that applies:
+     - **A `brd-link.md`** — a BRD-route slice. Where that `brd-link.md` names no `parent:` — on a
+       `PRD-` slice, a state no command writes — every `/product-workflows` run the rows below name
+       stops on it in its Phase 0, so read nothing more of the slice and print, in place of whichever
+       row would apply, the line `workflows-core:phase-handoff` §4.4's *The first missing document*
+       prints there, in its words, `<SLICE-KEY>` being `<KEY>`:
+       `<SLICE-KEY>'s brd-link.md names no parent:, so no run is named for it — every /product-workflows run that would be named here stops on it until it names one, and /product-workflows:brd-split writes a parent: into every slice's brd-link.md; restore that line from the ref that carried it, or report it.`
+       A legacy unprefixed folder whose `brd-link.md` names no `parent:` beside a `coverage-ledger.md`
+       or `brd/brd-inventory.md` never reaches this bullet: the BRD-container bullet above places it
+       a container first, by `workflows-core:addressing` §4.1's test. Otherwise, read the rows its
+       `claims:` names (its gate set) and their dispositions from the slice's own
+       `coverage-ledger.md`, never from a `ledger:` line, and take the first row that applies:
        - `coverage-ledger.md` missing, or present and unreadable, while `claims:` names rows: report
          `<path>/coverage-ledger.md` by path, as missing or as unreadable with the read error, and
          name `/product-workflows:prd-ground <KEY>` as the run whose stop on this slice tells a carve
@@ -171,14 +179,6 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
          off the same `brd-link.md`'s `parent:` — with `"<how to cut it>"` where the parent's ledger
          still holds an `unallocated` row, bare where it holds none, and neither form where it cannot be read: report the parent's ledger
          by path, and say that which form applies is that ledger's to say.
-         Where that `brd-link.md` names no `parent:` — on a `PRD-` slice, a state no command writes —
-         there is no `<PARENT-KEY>` and neither form is named: print in their place the line
-         `workflows-core:phase-handoff` §4.4's *The first missing document* prints there, in its words,
-         `<SLICE-KEY>` being `<KEY>`:
-         `<SLICE-KEY>'s brd-link.md names no parent:, so no /product-workflows:brd-split run can be named for it — /product-workflows:brd-split writes a parent: into every slice's brd-link.md; restore that line from the ref that carried it, or report it.`
-         A legacy unprefixed folder whose `brd-link.md` names no `parent:` beside a `coverage-ledger.md`
-         or `brd/brd-inventory.md` never reaches this row: the BRD-container bullet above places it
-         a container first, by `workflows-core:addressing` §4.1's test.
        - No gate-set row `covered-here`, and the gate set **non-empty**: name no command.
          `This slice holds no PRD of its own — <what each claimed row resolved to> — so there is nothing here to document.`
        - Otherwise: `Run /product-workflows:create-prd <KEY> first.`

@@ -261,8 +261,11 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
    a `/create-prd <PARENT-KEY>` run, which offers the same refresh or an archived overwrite) — a run this step does not refuse, since it resolves
    the `PRD-` folder and not this one, subject to step 7's data refusals applied to *that* folder
    where it carries a `brd-link.md` (name instead what the matching row of
-   `/product-workflows:update-prd` Phase 0 step 4's table names); anywhere else, name no parent and
-   say so. It is a user halt,
+   `/product-workflows:update-prd` Phase 0 step 4's table names) — save that where that folder's
+   `brd-link.md` names no `parent:`, the run stops with `CREATE_PRD_BRD_LINK_NO_PARENT` on that
+   folder in place of this stop, its condition, message and remedy read in
+   `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, before that table reads
+   anything through `parent:`; anywhere else, name no parent and say so. It is a user halt,
    so `emit-block` does not fire. `/product-workflows:idea`'s `IDEA_NOT_AN_IDEA_FOLDER` refuses the
    same folder for the same reason.
 
@@ -278,7 +281,7 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
    the tests: where this slice's `brd-link.md` names no `parent:`, stop with
    `CREATE_PRD_BRD_LINK_NO_PARENT`, its condition, message and remedy read in
    `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, never from memory, `<re-run>`
-   being `/product-workflows:create-prd <SLICE-KEY>`.
+   being `/product-workflows:create-prd <SLICE-KEY>` with the other arguments this run was given.
 
    **Refusals 1 and 2 are slice-only, and that is what step 5a's container refusal bought.** Both are
    `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5's rule, applied — that file is the

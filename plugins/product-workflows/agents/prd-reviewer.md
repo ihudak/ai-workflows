@@ -33,7 +33,8 @@ runs a fix cycle and re-reviews once.
    `brd_key` IS a finding — `MAJOR` — and not a legitimate omission: it is the signature of a PRD
    authored from a root BRD, which is the container a PRD may never be authored in, or of one
    authored before that stop existed (`product-workflows` 3.86.0) on a slice whose `brd-link.md` a
-   hand edit had left with no `parent:` — read that `brd-link.md` and say which. `depends_on` is
+   hand edit had left with no `parent:` — read that `brd-link.md` and say which, or, where it names
+   a `parent:`, say that the PRD's own frontmatter lost the field. `depends_on` is
    a different case and is legitimately absent when the customer committed to no prerequisite.
 3. Apply every spine rule from `Skill(skill: "workflows-core:reference", args: "prd-format")`; for each adapt-in section present, apply its rule.
 4. Apply the dimension checks below.

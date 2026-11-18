@@ -196,8 +196,13 @@ cannot review, and they will not tell you that — they will review it anyway, b
 
     Stop, on an Epic folder:
     `BRD_PACKAGE_EPIC_LEVEL: <KEY> resolves to an Epic folder at <path>, and packaging happens at a slice carved from a customer's BRD — an Epic is refined from the PRD folder above it and holds no decision register, coverage ledger or grounding of its own. No gate was run and nothing was written. <remedy> Re-running this command on this Epic stops here again.`
-    `<remedy>` turns on the folder containing this one: where it carries a `brd-link.md` naming a
-    `parent:` — a slice — `Run '/product-workflows:brd-package <SLICE-KEY>' against the slice this Epic sits in.`, `<SLICE-KEY>` being that `brd-link.md`'s own `key`, read and
+    `<remedy>` turns on the folder containing this one: where it is a slice — a `PRD-` folder carrying
+    a `brd-link.md`, or an unprefixed one whose `brd-link.md` names a `parent:` — `Run '/product-workflows:brd-package <SLICE-KEY>' against the slice this Epic sits in.`,
+    save that where that slice's `brd-link.md` names no `parent:` the run stops with
+    `BRD_PACKAGE_BRD_LINK_NO_PARENT` on that slice in place of this stop, its condition, message and
+    remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, `<re-run>` being
+    `/product-workflows:brd-package <SLICE-KEY>` with the other arguments this run was given, since a
+    re-run on this Epic stops here again; `<SLICE-KEY>` being that `brd-link.md`'s own `key`, read and
     never parsed out of either folder's name; anywhere else, `The folder above it is not a slice carved from a customer's BRD, so there is no register for this command to package here.` — naming no command, since step 5b refuses an idea-route PRD folder too. It is an argument halt, so `emit-block` does not fire.
 5b. **The idea-route refusal — a `PRD-` folder is a slice only where a BRD carved it.** Step 5a's
     prefix test accepts every `PRD-` folder, and an idea-route PRD folder — `/product-workflows:create-prd`'s
@@ -220,7 +225,8 @@ cannot review, and they will not tell you that — they will review it anyway, b
     folder carrying a `brd-link.md` — and before step 7a's flag read and step 10's resolution of the parent's source, defect log and figures, the first reads through `parent:`:
     where its `brd-link.md` names no `parent:`, stop with `BRD_PACKAGE_BRD_LINK_NO_PARENT`, its
     condition, message and remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md`
-    §5.3, never from memory, `<re-run>` being `/product-workflows:brd-package <BRD-KEY>`.
+    §5.3, never from memory, `<re-run>` being `/product-workflows:brd-package <BRD-KEY>` with the other
+    arguments this run was given.
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: brd`; a stop it makes ends the run here.
 5c. **Refuse a folder holding a torn write — before any gate, so no gate's remedy lands one.** Read
     `decisions.md`, `interview/customer-questions.md`, `code-defect-log.md` and every
