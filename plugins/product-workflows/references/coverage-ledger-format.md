@@ -745,10 +745,14 @@ carries `workflows-core:phase-handoff` §4.4's four parts, in order:
 
 `<SLICE-KEY>` is the slice's resolved key, `<path>` its `brd-link.md`'s path relative to
 `$SPECS_PATH`, and `<re-run>` the stopping command with the address and the arguments it was given —
-the Epic's address on an Epic address, save where a command's own text sets it to its run on the
-slice (the Epic refusals of `/product-workflows:prd-ground`, `/product-workflows:brd-interview`,
-`/product-workflows:brd-package`, `/product-workflows:brd-reconcile` and
-`/product-workflows:brd-split`), since a re-run on the Epic would stop on that refusal again.
+the Epic's address on an Epic address; where the command refuses an Epic
+(`/product-workflows:create-prd`, `/product-workflows:update-prd`, `/product-workflows:prd-proposal`,
+`/product-workflows:idea`, `/product-workflows:epics`), that re-run, once the line is restored, meets
+the refusal again, which then names the run that goes on — save where a command's own text sets it
+to its run on the slice (the Epic refusals of `/product-workflows:prd-ground`,
+`/product-workflows:brd-interview`, `/product-workflows:brd-package`,
+`/product-workflows:brd-reconcile` and `/product-workflows:brd-split`), whose refusal names that one
+run, so the re-run goes straight to it.
 `<the key the coverage-ledger.md of the BRD folder this slice sits in records>` stays literal, since
 the run reads nothing above the slice. **The commands printed beneath it** commit `<path>` and land it
 as `workflows-core:phase-handoff` §4.4 words a landing for the branch the checkout stands on, each on
@@ -756,8 +760,10 @@ a line of its own with no `#` comment and `$SPECS_PATH` substituted: `git -C "<S
 and `git -C "<SPECS_PATH>" commit -m "<SLICE-KEY> restore parent:" -- "<path>"`, then, on `<default>`, row C″'s commands for an uncommitted change after that commit — the pull where
 `origin` holds a commit the local `<default>` lacks, the push and its protected-branch alternative,
 none where there is no `origin`, the commit being the whole landing there — and, on any other
-branch, row E's: the push and, in prose, the pull request to open and merge, or, where there is no
-`origin`, the local merge. On a specs tree that is no git repository there is no ref to read: the sentence opening
+branch, row E's — row D's where a pull request from it is open: the push and, in prose, the pull
+request to open and merge, or the open one to merge, or, where there is no `origin`, the local merge;
+where HEAD is detached or on a branch outside `workflows-core:specs-repo-git` §3.2's safe class
+(§4.4's row I), none, the message's `with the commands printed beneath this message` left out. On a specs tree that is no git repository there is no ref to read: the sentence opening
 `Restore the line` reads `Restore the line from a copy you hold, then re-run '<re-run>'.`, the one
 after it reads `Where you hold none, write it by hand as parent: <the key the coverage-ledger.md of the BRD folder this slice sits in records>, or report it.`,
 and no commands are printed beneath it. On a read-only specs

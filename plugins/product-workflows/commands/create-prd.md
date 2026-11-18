@@ -1025,7 +1025,7 @@ Report: the PRD path + profile; the lineage record Phase 5 stamped — the `idea
 
 **On the BRD route, additionally:** the `<SLICE-KEY>` seeded from and its resolved folder; which of
 `prd-seed.md` and `decisions.md` were present; the frontmatter `brd_key` / `brd_parent` /
-`depends_on` and `sources` as written — or `sources: none written`, with the reason, where the slice inventory carries no `source:` (Phase 3 spine item 1) — — `brd_parent` is present on every run of this route, since Phase 0 step 7 stops on a slice whose `brd-link.md` names no `parent:` (naming `depends_on` if omitted, and why); how many of the gate-set ledger rows
+`depends_on` and `sources` as written — or `sources: none written`, with the reason, where the slice inventory carries no `source:` (Phase 3 spine item 1) — naming `depends_on` if omitted, and why, `brd_parent` being present on every run of this route, since Phase 0 step 7 stops on a slice whose `brd-link.md` names no `parent:`; how many of the gate-set ledger rows
 (Phase 0 step 7) are `covered-here`, read from `coverage-ledger.md` — **not** as a `ledger:` line, which this command
 neither parses nor prints (Phase 0 step 7); every `[VD#n]`/`[CD#n]`/`[AS#n]` carried in as a gap
 rather than an input, by id and status; every contradiction Phase 3 recorded rather than decided,

@@ -249,9 +249,9 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    above is still a directory listing, and no phase of a proceeding run opens a ledger.
 
    **The no-`parent:` stop, first.** Where the folder this table's slice rows read — the resolved
-   folder for `EPICS_NO_PRD`, or the folder above it where the resolved folder is an Epic folder (the
-   table's first row, and `EPICS_EPIC_NOT_UNDER_PRD`) — is a slice whose `brd-link.md` names no
-   `parent:`, stop with `EPICS_BRD_LINK_NO_PARENT` in place of either stop, before the table reads
+   folder for `EPICS_NO_PRD`, or, where the resolved folder is an Epic folder, the `PRD-` folder above
+   it holding no `prd.md`, to which the table's first row and `EPICS_EPIC_NOT_UNDER_PRD` apply those
+   rows — is a slice whose `brd-link.md` names no `parent:`, stop with `EPICS_BRD_LINK_NO_PARENT` in place of either stop, before the table reads
    anything through `parent:` — the only place this command reads it — its condition, message and
    remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5.3, never from
    memory, `<re-run>` being `/product-workflows:epics <KEY>` with the other arguments this run was

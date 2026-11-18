@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [0.12.8] — 2026-11-18
 
-A page LADDER-ORDER batch 4 left open, and a slice whose `brd-link.md` names no `parent:`. **What changes for you.** On such a slice — a line `product-workflows` 3.86.0 stops every command on — `/scan` no longer writes the architect's `/product-workflows:create-ard` follow-up into the slice, or names a run beside the report's sentence: it prints the line `workflows-core` 1.98.1's `phase-handoff` §4.4 prints there, saying the line is missing and to restore it or report it. Update with `workflows-core` 1.98.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.98.1 bullet).
+A page LADDER-ORDER batch 4 left open, and a slice whose `brd-link.md` names no `parent:`. **What changes for you.** On such a slice — one on which `product-workflows` 3.86.0 stops every command that would read through that line — `/scan` no longer writes the architect's `/product-workflows:create-ard` follow-up into the slice, or names a run beside the report's sentence: it prints the line `workflows-core` 1.98.1's `phase-handoff` §4.4 prints there, saying the line is missing and to restore it or report it. Update with `workflows-core` 1.98.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.98.1 bullet).
 
 ### Fixed
 
