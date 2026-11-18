@@ -73,14 +73,16 @@ no-blocked-by, blocked and changed-while-reading, and line, where it is not null
 refused or, for a key the entry lacks, the entry's first; on exit 4 {"undone": "<why>", "first": <n>, "last": <n>,
 "changed": [<n>...]}, <why> hunk-outside or diff-failed.
 
-The arguments are tested before anything is read or run: --id and --walkthrough against the unit-id class; --base
-against the branch class; --status, --from and --block against ^[a-z][a-z-]{0,31}$, less the words YAML reads as
-something other than a string (null, true, false, yes, no, on, off, y, n); --page-path against
-^[A-Za-z0-9_][A-Za-z0-9._/-]*\.md$ with no empty, . or .. segment; --repo, a directory, which moved and edit also hold
-to being a git work tree's top level. --own-moves takes no value. A flag given twice (--id to moved aside), or as
---flag=value, refuses the run. <top>/.dev-workflows must be a real directory and the backlog a regular file, both by
-lstat: a symbolic link to either is refused, never followed, and the backlog is opened without following a link and
-never waited on.
+The arguments are tested before anything is read or run: --id against the unit-id class; --walkthrough against the
+same class, less every value YAML reads, written plain as edit writes it, as something other than a string -- a null,
+boolean, integer, float or date of YAML 1.1 or of YAML 1.2's core schema, such as null, true, y, 017, 0x1f, 1_000,
+1.5, 1e3 or 2026-11-18 -- which would not read back as an id, null as no walkthrough at all; --base against the branch
+class; --status, --from and --block against ^[a-z][a-z-]{0,31}$, less the words YAML reads as something other than a
+string (null, true, false, yes, no, on, off, y, n); --page-path against ^[A-Za-z0-9_][A-Za-z0-9._/-]*\.md$ with no
+empty, . or .. segment; --repo, a directory, which moved and edit also hold to being a git work tree's top level.
+--own-moves takes no value. A flag given twice (--id to moved aside), or as --flag=value, refuses the run.
+<top>/.dev-workflows must be a real directory and the backlog a regular file, both by lstat: a symbolic link to either
+is refused, never followed, and the backlog is opened without following a link and never waited on.
 
 What it prints of the backlog, a ref or an argument is line numbers, counts, fixed words, and values that passed a
 class test: a unit id in the unit-id class, a branch name in the branch class, the schema version's digits. A value
@@ -140,6 +142,17 @@ GIT_TIMEOUT = 30  # seconds, every git call
 UNIT_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", re.ASCII)
 STATUS_RE = re.compile(r"[a-z][a-z-]{0,31}", re.ASCII)
 STATUS_RESERVED = ("null", "true", "false", "yes", "no", "on", "off", "y", "n")  # YAML reads these as no string
+# A plain scalar YAML reads as something other than a string, in every form the unit-id class lets through: YAML 1.1's
+# null, bool, int, float and date, by its type repository's expressions (PyYAML resolves the same less y, n and the
+# spec's wider float), a date's month and day taken at one digit or two as some loaders read one; and YAML 1.2 core's
+# null, bool, int and float. edit writes --walkthrough plain, so such a value would not read back as an id: null, the
+# one that matters most, as no walkthrough at all.
+NON_STRING_RE = re.compile(
+    r"null|Null|NULL"
+    r"|y|Y|yes|Yes|YES|n|N|no|No|NO|true|True|TRUE|false|False|FALSE|on|On|ON|off|Off|OFF"
+    r"|0b[01_]+|0o[0-7]+|0x[0-9a-fA-F_]+|[0-9][0-9_]*"
+    r"|[0-9][0-9_]*\.[0-9._]*(?:[eE][-+]?[0-9]+)?|[0-9]+(?:\.[0-9]*)?[eE][-+]?[0-9]+"
+    r"|[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}", re.ASCII)
 PAGE_PATH_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._/-]*\.md", re.ASCII)
 OBJECT_ID_RE = re.compile(r"[0-9a-f]{40}([0-9a-f]{24})?", re.ASCII)
 BRANCH_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._/@+-]*", re.ASCII)  # read-only-repos section 3's class
@@ -159,7 +172,7 @@ WHY_BASE = "--base is outside the branch class"
 WHY_STATUS = "--status is outside the status class"
 WHY_PAGE_PATH = "--page-path is outside the page-path class"
 WHY_FROM = "--from is outside the status class"
-WHY_WALKTHROUGH = "--walkthrough is outside the unit-id class"
+WHY_WALKTHROUGH = "--walkthrough is outside the unit-id class, or YAML reads it as no string"
 WHY_BLOCK = "--block is outside the status class"
 WHY_DIR = "<top>/.dev-workflows is not a real directory (absent, or a symbolic link)"
 WHY_FILE = "the backlog is not a regular file (absent, a symbolic link, or another kind of file)"
@@ -1075,6 +1088,12 @@ def _status(s):
     return STATUS_RE.fullmatch(s) is not None and s not in STATUS_RESERVED
 
 
+def _walkthrough(s):
+    """The unit-id class, less every value YAML reads, written plain, as something other than a string:
+    --walkthrough."""
+    return _unit_id(s) and NON_STRING_RE.fullmatch(s) is None
+
+
 def _page_path(s):
     return PAGE_PATH_RE.fullmatch(s) is not None and all(seg not in ("", ".", "..") for seg in s.split("/"))
 
@@ -1119,7 +1138,7 @@ def _args(argv):
                   (_status(a.status), WHY_STATUS),
                   (a.page_path is None or _page_path(a.page_path), WHY_PAGE_PATH),
                   (a.from_status is None or _status(a.from_status), WHY_FROM),
-                  (a.walkthrough is None or _unit_id(a.walkthrough), WHY_WALKTHROUGH),
+                  (a.walkthrough is None or _walkthrough(a.walkthrough), WHY_WALKTHROUGH),
                   (a.block is None or _status(a.block), WHY_BLOCK)]
     for ok, why in checks:
         if not ok:
@@ -2113,7 +2132,8 @@ def case_own_moves_merge_base_unreadable(tmp):
     for name, at_base in (("shape", MINI.replace("    roles: [customer]\n", "    roles: [a?', [' ]\n")),
                           ("big", big),
                           ("linked", None),
-                          ("twice", MINI.replace("threshold: 2\n", "  - id: U-001\n    status: missing\nthreshold: 2\n")),
+                          ("twice",
+                           MINI.replace("threshold: 2\n", "  - id: U-001\n    status: missing\nthreshold: 2\n")),
                           ("odd-status", MINI.replace("status: missing", "status: Missing!"))):
         top = os.path.join(tmp, name)
         path = os.path.join(top, BACKLOG_PATH)
@@ -2280,7 +2300,8 @@ def case_edit_block_sets(tmp):
     three flags together change two lines; over a backlog dirty on another line the same edit is undone, exit 4."""
     for name, line, want in (("flow", "    blocked_by: []\n", "    blocked_by: [claims-unresolved]\n"),
                              ("empty", "    blocked_by:\n", "    blocked_by: [claims-unresolved]\n"),
-                             ("commented", "    blocked_by:   # none\n", "    blocked_by: [claims-unresolved]   # none\n")):
+                             ("commented", "    blocked_by:   # none\n",
+                              "    blocked_by: [claims-unresolved]   # none\n")):
         data = MINI.replace("    blocked_by: []\n", line)
         top = _repo(tmp, data, name)
         code, out, err = _edit(top, "U-001", "missing", block="claims-unresolved")
@@ -2304,12 +2325,14 @@ def case_edit_block_sets(tmp):
 
 
 def case_edit_block_refused(tmp):
-    """A blocked_by holding anything but [] or an empty value -- a token, the same token, a block sequence, null -- is
-    blocked: exit 3, its line."""
+    """A blocked_by holding anything but [] or an empty value -- a token, the same token, a block sequence, null, ~, or
+    an empty flow sequence spelled other than [] -- is blocked: exit 3, its line."""
     for name, lines in (("token", "    blocked_by: [env-down]\n"),
                         ("same-token", "    blocked_by: [claims-unresolved]\n"),
                         ("sequence", "    blocked_by:\n      - env-down\n"),
-                        ("null", "    blocked_by: null\n")):
+                        ("null", "    blocked_by: null\n"),
+                        ("tilde", "    blocked_by: ~\n"),
+                        ("spaced", "    blocked_by: [ ]\n")):
         data = MINI.replace("    blocked_by: []\n", lines)
         top = _repo(tmp, data, name)
         _edit_refused(top, data, {"refused": "blocked", "line": 8, "reason": None}, "U-001", "missing",
@@ -2337,8 +2360,22 @@ def case_edit_record_noop(tmp):
         _eq((_get(top), _stat(top)), (data.encode("utf-8"), before), name + ": bytes, inode and mtime")
 
 
+# --walkthrough values in the unit-id class that YAML reads, written plain, as no string, one row per form: null (the
+# one that would read back as no walkthrough), YAML 1.1's and 1.2's booleans, integers (decimal, 1.1's octal, hex,
+# binary, underscores; 1.2's octal), floats (1.1's dotted forms, the spec's wider one, 1.2's exponent forms) and a date
+# (two digits each, as YAML 1.1 has it, and one, as some loaders take it). `~` is outside the class already, and its row
+# holds that too.
+NON_STRING_IDS = ("null", "Null", "NULL", "~", "true", "True", "FALSE", "yes", "No", "ON", "off", "y", "N", "123", "0",
+                  "017", "08", "0x1F", "0o17", "0b101", "1_000", "1__", "1.5", "1.", "1.2.3", "1e3", "1E-3", "1.5e3",
+                  "2026-11-18", "2026-1-5")
+# Ids near those forms that YAML reads as strings, which --walkthrough takes.
+STRING_IDS = ("U-001", "W-9", "1-2", "inf", "nan", "x1e3", "0x", "0b2", "1_000e3", "1.2-3", "2026-11", "Y2K",
+              "nullable", "onboarding", "yes-no")
+
+
 def case_edit_new_flags_bad_args(tmp):
-    """Each new flag outside its class, given twice or as --flag=value: exit 2, nothing read, run or written."""
+    """Each new flag outside its class, given twice or as --flag=value: exit 2, nothing read, run or written. A
+    --walkthrough YAML reads as no string is outside its class; one near such a form passes."""
     top = _repo(tmp, MINI)
     before = _stat(top)
     edit = ["edit", "--repo", top, "--id", "U-001", "--status", "drafted"]
@@ -2348,10 +2385,13 @@ def case_edit_new_flags_bad_args(tmp):
                        (["--from", "drafted", "--from", "drafted"], WHY_USAGE),
                        (["--walkthrough", "U-001", "--walkthrough", "U-001"], WHY_USAGE),
                        (["--block", "x", "--block", "x"], WHY_USAGE), (["--block=x"], WHY_USAGE),
-                       (["--from"], WHY_USAGE)):
+                       (["--from"], WHY_USAGE)) + tuple((["--walkthrough", v], WHY_WALKTHROUGH)
+                                                        for v in NON_STRING_IDS):
         code, out, err = _call(edit + extra)
         _refused(code, out, err, why)
         _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "%r: nothing read, run or written" % (extra,))
+    for v in STRING_IDS:
+        _eq(_args(edit + ["--walkthrough", v])[1][5], v, "%r passes" % v)
     for flag in ("--from", "--walkthrough", "--block"):  # edit's flags, unknown to moved
         code, out, err = _call(["moved", "--repo", top, "--base", "main", "--id", "U-001", flag, "x"])
         _refused(code, out, err, WHY_USAGE)
