@@ -7,10 +7,11 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [0.12.8] — 2026-11-18
 
-Docs only: a page LADDER-ORDER batch 4 left open. **What changes for you.** Nothing a run does. It needs no other release, nor they it; released beside `workflows-core` 1.98.1 and `product-workflows` 3.86.0.
+A page LADDER-ORDER batch 4 left open, and a slice whose `brd-link.md` names no `parent:`. **What changes for you.** On such a slice — a line `product-workflows` 3.86.0 stops every command on — `/scan` no longer writes the architect's `/product-workflows:create-ard` follow-up into the slice, or names a run beside the report's sentence: it prints the line `workflows-core` 1.98.1's `phase-handoff` §4.4 prints there, saying the line is missing and to restore it or report it. Update with `workflows-core` 1.98.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.98.1 bullet).
 
 ### Fixed
 
+- **A slice whose `brd-link.md` names no `parent:`.** The PRD key `/scan` passes for the architect's follow-up, and its next step's first missing document, read a slice's ledger tests as the rung does but had no case for this state, so on such a slice whose `prd.md` was on the default branch the run wrote a follow-up naming `/product-workflows:create-ard`, or named `/product-workflows:specify`, each a run that stops there. The slice now passes no PRD key, the follow-up stays a sentence in the report, and the line the rung prints there stands beside it and in place of the run the next step would name. The scan page and the pages that describe the follow-up say the same.
 - **The scan page's follow-up for the product architect.** It said what follows the sentence for the PA — a line on a slice that fails its ledger tests, or on a PRD written and not yet merged — without the case the command makes first: on a specs tree that is a git repository whose default branch does not exist, nothing is read and no line follows the sentence. The page now says so.
 
 ## [0.12.7] — 2026-11-17
