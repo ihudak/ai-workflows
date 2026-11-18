@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.43.2] — 2026-11-17
+## [1.43.2] — 2026-11-18
 
 Wording only: a pointer LADDER-ORDER batch 4 left open. **What changes for you.** Nothing a run does. It needs no other release, nor they it; released beside `workflows-core` 1.98.1 and `product-workflows` 3.85.1.
 

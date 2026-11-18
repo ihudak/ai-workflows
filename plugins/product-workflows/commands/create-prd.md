@@ -653,7 +653,7 @@ Author `prd.md` against `Skill(skill: "workflows-core:reference", args: "prd-for
 
    **On the BRD route the provenance fields are different, and every value is read, never asked.** There is no `idea.md`, so Phase 2's `sources` and `derived_from` rule has nothing to propagate from; write instead, per `workflows-core:prd-format`'s frontmatter:
    - **`brd_key`** — the slice's own key, the same value as `key` (the slice this PRD was authored from, and the value Phase 7's cost step names as this field's);
-   - **`brd_parent`** — the `parent:` of the slice's `brd-link.md`, the file Phase 0 step 7 read; always written, since a slice always has one (step 5a refuses the container);
+   - **`brd_parent`** — the `parent:` of the slice's `brd-link.md`, the file Phase 0 step 7 read, which `/brd-split` writes into every slice's; a `brd-link.md` a hand edit left with none, which no command writes, leaves it unwritten, and `prd-reviewer` reports the absence;
    - **`depends_on`** — that same file's `depends-on:` keys, as a list; **omitted** where it has none or an empty one, never written empty;
    - **`sources`** — one entry naming the customer's own document: `provenance: markdown` and `ref:` the value of the `source:` header of the slice's `brd/brd-inventory.md`, as written there — the parent's `brd/source/` document, relative to the parent's folder (`${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §2.1) — and no `vendored`. Never `brd-link.md`, which carries no `source:`. Where the inventory carries no `source:`, write no `sources` and say so in the final report rather than inventing a ref;
    - **no `derived_from`** and **no `seeded_from_prd`** — there is no idea on this route, and `--from-prd` is refused on it (Phase 0 step 2a).
@@ -1016,8 +1016,7 @@ Report: the PRD path + profile; the lineage record Phase 5 stamped — the `idea
 
 **On the BRD route, additionally:** the `<SLICE-KEY>` seeded from and its resolved folder; which of
 `prd-seed.md` and `decisions.md` were present; the frontmatter `brd_key` / `brd_parent` /
-`depends_on` and `sources` as written — or `sources: none written`, with the reason, where the slice inventory carries no `source:` (Phase 3 spine item 1) — — `brd_parent` is present on every run of this route, since the route
-resolves a slice and a slice always has a `parent:` (naming `depends_on` if omitted, and why); how many of the gate-set ledger rows
+`depends_on` and `sources` as written — or `sources: none written`, with the reason, where the slice inventory carries no `source:` (Phase 3 spine item 1) — — `brd_parent` as written, or `none written — <SLICE-KEY>'s brd-link.md names no parent:`, a state no command writes (naming `depends_on` if omitted, and why); how many of the gate-set ledger rows
 (Phase 0 step 7) are `covered-here`, read from `coverage-ledger.md` — **not** as a `ledger:` line, which this command
 neither parses nor prints (Phase 0 step 7); every `[VD#n]`/`[CD#n]`/`[AS#n]` carried in as a gap
 rather than an input, by id and status; every contradiction Phase 3 recorded rather than decided,

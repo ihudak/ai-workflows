@@ -532,8 +532,9 @@ behaviour, not the behaviour.
     `PRD_GROUND_SLICE_FILE_UNREADABLE: <BRD-KEY>'s <file(s)> at <path(s)> <is|are> in the folder but cannot be read (<error>), so nothing here can be tested against its parent or ground, and nothing was written. Repair the file — its permissions, or restore it from the ref that carried it — then re-run '/product-workflows:prd-ground <BRD-KEY>'. No /product-workflows:brd-split run repairs it: that command writes nothing into a slice whose inventory or ledger cannot be read.`
 
     **Its form for a file no ref holds** — printed from step 6's row-F branch (b), where the ledger
-    is on no ref and the inventory may be too: for the ledger, and for the inventory where its own
-    gate returns row F as well, `or restore it from the ref that carried it` reads
+    is on no ref and the inventory may be too: for the ledger, and for the inventory where no ref
+    holds it either — `git -C "$SPECS_PATH" cat-file -e "<default-ref>:./<path>" 2>/dev/null` exits
+    non-zero and no plugin branch §3.2 scans holds it — `or restore it from the ref that carried it` reads
     `or, since no ref holds it and no command re-creates it, report it where its content is lost`.
 
     Read three sets of

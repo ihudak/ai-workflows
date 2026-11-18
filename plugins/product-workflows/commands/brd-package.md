@@ -339,17 +339,25 @@ cannot review, and they will not tell you that — they will review it anyway, b
    exits non-zero or `git -C "$SPECS_PATH" diff --quiet "<default-ref>" -- "./<file>"` exits 1,
    `<file>` its path relative to `$SPECS_PATH` — and prints §4.4's row-C″ commands with every one of
    them wherever a command names a file, each on a line of its own and each alternative introduced
-   by a line saying when it applies: the commit, naming each file whose working copy HEAD does not
-   hold — `git -C "$SPECS_PATH" cat-file -e "HEAD:./<file>" 2>/dev/null` exiting non-zero, or
-   `git -C "$SPECS_PATH" diff --quiet HEAD -- "./<file>"` exiting 1 — left out where HEAD holds them
-   all, its message `"<BRD-KEY> decision register"`; then, where `origin` exists, the push row C″
-   gives for a commit the default branch holds and `origin` does not, and its protected-branch
-   alternative, `<new-branch>` named as the uncommitted form's above, since a commit left on the
-   local `<default>` meets row C″ again; then the set-aside and the discard, for an operator who
-   packages without the change:
+   by a line saying when it applies: the commit — `git -C "<SPECS_PATH>" add -f -- "<path>" "<file>" …`
+   then `git -C "<SPECS_PATH>" commit -m "<BRD-KEY> decision register" -- "<path>" "<file>" …`, the
+   `add -f` printed whatever ignore rules hold, since a round record HEAD lacks is untracked and
+   `commit -- <path>` refuses a path git does not know — naming each file whose working copy HEAD
+   does not hold (`git -C "$SPECS_PATH" cat-file -e "HEAD:./<file>" 2>/dev/null` exiting non-zero, or
+   `git -C "$SPECS_PATH" diff --quiet HEAD -- "./<file>"` exiting 1), and left out where HEAD holds
+   them all; then, where `origin` exists, the pull §4.4 gives row C″ where `origin` holds a commit
+   the local `<default>` lacks, and the push §4.4 gives for a commit the default branch holds and
+   `origin` does not, and its protected-branch alternative, `<new-branch>` named as the uncommitted
+   form's above, since a commit left on the local `<default>` meets row C″ again; then, for the files
+   whose working copy HEAD does not hold, the set-aside and the discard, for an operator who packages
+   without the change — both left out where HEAD holds them all, with the message's sentence opening
+   `To package without`, and `Commit and push` reading `Push` there:
    `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF: <BRD-KEY>'s decision register at <path> is on <default>, and your checkout of <default> holds a change to it that <default-ref> does not — ordinarily a later /product-workflows:brd-interview round whose handoff was declined — beside <files>, which <default-ref> does not hold as the folder does. This run built no package and wrote nothing. Commit and push them together with the first commands printed beneath this message — where <default> is protected, the alternative printed after them, then open a pull request from <new-branch> into <default> and merge it — and re-run '/product-workflows:brd-package <BRD-KEY>'; do not re-run /product-workflows:brd-interview, whose no-new-round path never stages the round records already on disk. To package without the change instead, set the files aside or discard them with the last commands. Ignored, every /brd-package run on this slice stops here until the register on <default> is the one your checkout holds.`
    `<files>` is those other files, folder-relative, and the clause opening `beside` is left out where
-   there are none — a register edited by hand, say. Where the specs repository has no `origin`, the
+   there are none — a register edited by hand, say. Where `git -C "$SPECS_PATH" rev-list <default-ref>..refs/heads/<default>`
+   lists a commit that touches no file the stop names, the message says, before the sentence opening
+   `Ignored`, that the push publishes those commits too, naming each as
+   `git -C "$SPECS_PATH" log --oneline <default-ref>..<default>` prints it (§4.4's row C″). Where the specs repository has no `origin`, the
    commit is the whole landing, `<default-ref>` being the local `<default>` (§3.2): `and push` and
    the protected-branch clause are left out, and so is that alternative. A path, the `#` rule and a
    read-only specs mount are as the committed form's slot rules above say. Steps 6b and 7 keep their

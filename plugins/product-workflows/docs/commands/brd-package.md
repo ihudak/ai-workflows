@@ -145,8 +145,10 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   default branch, whose copy in your checkout of the default branch a later round's declined handoff
   changed, stops the run with `BRD_PACKAGE_REGISTER_NOT_HANDED_OFF` too, naming beside it every
   other file that round left unlanded — its round record, and the question set and the code-defect
-  log where the round changed or created them — with the commands that commit them together and push
-  the default branch, or, where it is protected, a new `brd/` branch and a pull request, so the round
+  log where the round changed or created them — with the commands that add and commit them together and push
+  the default branch — after a pull where `origin` holds commits your default branch lacks, and saying so
+  where the push would publish other unpushed commits of yours — or, where it is protected, a new
+  `brd/` branch and a pull request, so the round
   lands in one stop rather than three or more; it prints the commands that set them aside or discard them
   too, for packaging without that round.
 - **The question set and the code-defect log on the default branch too, each where it is in the

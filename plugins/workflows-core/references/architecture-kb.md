@@ -90,7 +90,7 @@ Problems never stop a harvest and never change its exit code; each leaves the re
 
 | Kind | Meaning | Fix |
 |---|---|---|
-| `unparseable` | an ARD with no `## Architecture decisions` section (the heading's case and a leading number are tolerated), a decision with no **Rule**, a duplicate number, a heading with no number, no brackets or no colon (`### [AD#N]: <title>` is the form), both **Superseded by** and **Withdrawn**, a **Superseded by** naming no `[AD#M]` or one the ARD does not hold, a **Supersedes** whose link text does not start with a record id, or an ARD outside a `PRD-` or `EPIC-` folder, or a frontmatter `key:` that is not a key | refine the ARD (`/product-workflows:create-ard`) — a listing that names this fix prints once, after its problems, `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).` |
+| `unparseable` | an ARD with no `## Architecture decisions` section (the heading's case and a leading number are tolerated), a decision with no **Rule**, a duplicate number, a heading with no number, no brackets or no colon (`### [AD#N]: <title>` is the form), both **Superseded by** and **Withdrawn**, a **Superseded by** naming no `[AD#M]` or one the ARD does not hold, a **Supersedes** whose link text does not start with a record id, or an ARD outside a `PRD-` or `EPIC-` folder, or a frontmatter `key:` that is not a key | refine the ARD (`/product-workflows:create-ard`) |
 | `key-conflict` | two ARD paths with one scope key | remove or rename one of the two |
 | `ambiguous-citation` | a cited number two area ARDs of one Epic both hold | cite it where only one ARD holds it |
 | `supersedes-carrier-not-live` | a `Supersedes` on a superseded or withdrawn decision | repeat it on the replacing decision, or drop it |
@@ -100,6 +100,8 @@ Problems never stop a harvest and never change its exit code; each leaves the re
 | `supersede-conflict` | two live decisions superseding one record | drop the `Supersedes` from one of the two ARDs |
 | `source-missing` | a record whose ARD is no longer on the default branch | restore the ARD, or keep the record as history |
 | `decision-missing` | a record whose decision is no longer in its ARD | restore the decision, or keep the record as history |
+
+A listing that prints the `unparseable` fix prints once, directly after the first such fix, `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
 
 ## Invariants
 
