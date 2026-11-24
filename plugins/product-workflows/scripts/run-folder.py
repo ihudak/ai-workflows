@@ -10,10 +10,12 @@ Usage:
   run-folder.py log <folder> <text>
   run-folder.py fact <folder> <name> [--set <value>]
   run-folder.py dispatch <folder> <id> --area main|blind --agent <name> --agent-file <path> --model <id>
-                --input <file|-> [--attach <path relative to the folder>]...
-  run-folder.py done <folder> <id> [--from <file|->]
+                --input <file|-> [--attach <path relative to the folder>]... [--redo]
+  run-folder.py done <folder> <id> [--from <file|->] [--pin <name>=<value>]...
   run-folder.py gate <folder> <gate-id> --shown <file|->
-  run-folder.py gate-record <folder> <gate-id> --shown <file|-> --answer <text>
+  run-folder.py gate-record <folder> <gate-id> --shown <file|-> --answer <text> [--keep-shown]
+  run-folder.py answers <folder> [--match <substring>]
+  run-folder.py put <folder> scratch/<path> --from <file|->
   run-folder.py effect <folder> <effect-id> start|done|state
   run-folder.py stale <folder> [--agent <name>=<file>]... [--model <name>=<id>]...
   run-folder.py keep <folder> --ids <id>... [--agent <name>=<file>]... [--model <name>=<id>]...
@@ -45,7 +47,12 @@ is reused only once `done` has recorded it, from the file its record names, and 
 SHA-256 over the input's bytes, each attached run-folder file's
 bytes (sorted by path), the agent definition file's SHA-256 and the model id. `done` records, in run.json
 "results", what `results`, `stale` and `keep` read; "dispatches" holds what was handed out, "gates" the
-answers to questions, "effects" the side effects started or finished. --command and --key are limited to
+answers to questions (each with a sequence number, kept by a re-record, that `answers` lists them by), "effects"
+the side effects started or finished. `put` writes a file the command generated under scratch/ (atomically,
+under the lock) so a resumed run reads it back rather than generating it again; `done --pin` stores values a
+reuse reports back; `dispatch --redo` dispatches anew whatever the fingerprint says; a keyless `open` with
+--workdir also lists (`others`, at most 3) the unfinished runs of the same command and working directory
+whose arguments differ. --command and --key are limited to
 [A-Za-z0-9._-]. A value of --args, --set or --answer, and a log text, may be one flag-shaped token.
 Standard library only.
 """
@@ -305,7 +312,7 @@ def write_lock(folder):
 
 
 def needs_lock(args):
-    if args.cmd in ("resume", "discard", "close", "phase", "log", "dispatch", "done", "gate-record", "keep"):
+    if args.cmd in ("resume", "discard", "close", "phase", "log", "dispatch", "done", "gate-record", "keep", "put"):
         return True
     return (args.cmd == "fact" and args.set is not None) or (args.cmd == "effect" and args.action != "state")
 
@@ -386,6 +393,34 @@ def summarize(run):
             "facts": sorted(facts) if isinstance(facts, dict) else []}
 
 
+OTHERS_MAX = 3
+
+
+def other_runs(root, command, workdir, own_folder):
+    """Unfinished keyless runs of this command in this working directory (a finished run's folder is gone)
+    whose arguments differ, newest first: read from each run.json, which records the identity in clear."""
+    wd = workdir_identity(workdir)
+    found = []
+    for name in sorted(os.listdir(root)):
+        path = os.path.join(root, name)
+        if path == own_folder or os.path.islink(path) or not os.path.isdir(path):
+            continue
+        try:
+            with open(os.path.join(path, "run.json"), encoding="utf-8") as fh:
+                run = json.load(fh)
+            if run.get("command") != command or run.get("key") or run["identity"].get("workdir") != wd:
+                continue
+            results = run.get("results")
+            found.append({"folder": path, "args": run.get("args"), "started": run.get("started"),
+                          "updated": run.get("updated"), "last_phase": run.get("last_phase"),
+                          "results": len(results) if isinstance(results, (dict, list)) else 0,
+                          "owner": run.get("owner")})
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            continue
+    found.sort(key=lambda r: r["updated"] or "", reverse=True)
+    return found[:OTHERS_MAX]
+
+
 def cmd_open(a):
     for label, value in (("--command", a.command), ("--key", a.key)):
         if value is not None and value != "" and not NAME_RE.match(value):
@@ -396,6 +431,7 @@ def cmd_open(a):
     identity = make_identity(a.specs, a.workdir, a.args, keyless)
     run_key = make_run_key(a.command, a.key, identity)
     pruned = {"count": 0, "bytes": 0}
+    others = []
     try:
         root = runs_root()
         os.makedirs(root, mode=0o700, exist_ok=True)
@@ -405,6 +441,11 @@ def cmd_open(a):
                   % (pruned["count"], STALE_DAYS, pruned["bytes"]), file=sys.stderr)
         folder = os.path.join(root, run_key)
         rj = os.path.join(folder, "run.json")
+        if keyless and a.workdir:
+            try:
+                others = other_runs(root, a.command, a.workdir, folder)
+            except OSError:
+                others = []
         for _attempt in range(2):
             run = None
             if os.path.lexists(rj):
@@ -416,7 +457,7 @@ def cmd_open(a):
                     os.unlink(rj)
             if run is not None:
                 emit({"state": "unfinished", "folder": folder, "run_key": run_key, "reason": "",
-                      "pruned": pruned, "summary": summarize(run)})
+                      "pruned": pruned, "others": others, "summary": summarize(run)})
                 return 0
             os.makedirs(folder, mode=0o700, exist_ok=True)
             os.chmod(folder, 0o700)
@@ -427,7 +468,7 @@ def cmd_open(a):
             if create_json_exclusive(rj, run):
                 append_progress(folder, "opened %s" % run_key)
                 emit({"state": "new", "folder": folder, "run_key": run_key, "reason": "",
-                      "pruned": pruned, "summary": summarize(run)})
+                      "pruned": pruned, "others": others, "summary": summarize(run)})
                 return 0
             # another open made this run's run.json first: read theirs on the next pass
         raise OSError("run.json could not be created: " + rj)
@@ -435,7 +476,7 @@ def cmd_open(a):
         reason = "%s: %s" % (type(e).__name__, e)
         print("NOTE: no run folder (%s); continuing without one" % reason, file=sys.stderr)
         emit({"state": "unavailable", "folder": None, "run_key": run_key, "reason": reason,
-              "pruned": pruned, "summary": None})
+              "pruned": pruned, "others": [], "summary": None})
     return 0
 
 
@@ -594,12 +635,13 @@ def cmd_dispatch(a):
     results = run.setdefault("results", {})
     rec = results.get(a.id)
     recorded = recorded_result(folder, rec, a.id)
-    reusable = (recorded is not None and rec.get("fingerprint") == fp and rec.get("area") == a.area
+    reusable = (not a.redo and recorded is not None and rec.get("fingerprint") == fp and rec.get("area") == a.area
                 and os.path.isfile(recorded) and os.path.getsize(recorded) > 0)
     if reusable:
         save_run(folder, run)
         append_progress(folder, "dispatch %s reuse" % a.id)
-        emit({"action": "reuse", "input": input_path, "result": recorded, "fingerprint": fp})
+        emit({"action": "reuse", "input": input_path, "result": recorded, "fingerprint": fp,
+              "pins": dict(rec.get("pins") or {})})
         return 0
     # Each dispatch names a result file of its own, so an agent of an earlier dispatch of this id — a
     # superseded session's, still running — writes a file no record names, which is never read.
@@ -636,6 +678,7 @@ def cmd_done(a):
     rec = run.get("dispatches", {}).get(a.id)
     if not isinstance(rec, dict):
         raise CannotRun("no dispatch recorded for " + a.id)
+    pins = name_map(a.pin, "--pin")
     result_path = recorded_result(folder, rec, a.id)
     if result_path is None:
         raise CannotRun("the dispatch of %s names no result file; dispatch it again" % a.id)
@@ -645,7 +688,7 @@ def cmd_done(a):
         write_bytes_atomic(result_path, data)
     if not os.path.isfile(result_path) or os.path.getsize(result_path) == 0:
         raise MissingResult("no result file (or an empty one) for %s: %s" % (a.id, result_path))
-    run.setdefault("results", {})[a.id] = dict(rec, done=now_iso())
+    run.setdefault("results", {})[a.id] = dict(rec, done=now_iso(), pins=pins)
     save_run(folder, run)
     append_progress(folder, "done %s" % a.id)
     emit({"recorded": True})
@@ -664,11 +707,63 @@ def cmd_gate(a):
 def cmd_gate_record(a):
     check_name(a.id, "gate id")
     run = load_for_write(a.folder)
-    shown = sha256_bytes(read_input(a.shown))
-    run.setdefault("gates", {})[a.id] = {"shown": shown, "answer": a.answer, "at": now_iso()}
+    shown_bytes = read_input(a.shown)
+    gates = run.setdefault("gates", {})
+    prior = gates.get(a.id)
+    seq = prior.get("seq") if isinstance(prior, dict) and isinstance(prior.get("seq"), int) else None
+    if seq is None:
+        seq = 1 + max([g["seq"] for g in gates.values()
+                       if isinstance(g, dict) and isinstance(g.get("seq"), int)] or [0])
+    if a.keep_shown:
+        folder = folder_path(a.folder)
+        os.makedirs(os.path.join(folder, "gates"), mode=0o700, exist_ok=True)
+        write_bytes_atomic(os.path.join(folder, "gates", a.id + ".md"), shown_bytes)
+    gates[a.id] = {"shown": sha256_bytes(shown_bytes), "answer": a.answer, "at": now_iso(), "seq": seq,
+                   "kept": bool(a.keep_shown)}
     save_run(a.folder, run)
     append_progress(a.folder, "gate %s answered" % a.id)
     emit({})
+    return 0
+
+
+def cmd_answers(a):
+    run = load_run(a.folder)
+    folder = folder_path(a.folder)
+    rows = []
+    for gid, rec in (run.get("gates") or {}).items():
+        if not isinstance(rec, dict) or (a.match and a.match not in gid):
+            continue
+        shown = os.path.join(folder, "gates", gid + ".md")
+        seq = rec.get("seq") if isinstance(rec.get("seq"), int) else 0
+        rows.append((seq, rec.get("at") or "", gid,
+                     {"id": gid, "answer": rec.get("answer"), "at": rec.get("at"),
+                      "shown": shown if rec.get("kept") is True and os.path.isfile(shown) else None}))
+    emit({"answers": [r[3] for r in sorted(rows, key=lambda r: r[:3])]})
+    return 0
+
+
+def cmd_put(a):
+    rel = a.rel
+    parts = rel.split("/")
+    if (os.path.isabs(rel) or "\\" in rel or parts[0] != "scratch" or len(parts) < 2
+            or any(p in ("", ".", "..") for p in parts)):
+        raise CannotRun("put needs a file path under scratch/ with no '..': %r" % rel)
+    load_for_write(a.folder)
+    folder = folder_path(a.folder)
+    data = read_input(a.from_)
+    cur = folder
+    for part in parts[:-1]:
+        cur = os.path.join(cur, part)
+        if os.path.islink(cur):
+            raise CannotRun("put refuses a link on the way: " + rel)
+        os.makedirs(cur, mode=0o700, exist_ok=True)
+        os.chmod(cur, 0o700)
+    target = os.path.join(folder, *parts)
+    if os.path.islink(target) or os.path.isdir(target):
+        raise CannotRun("put cannot replace " + rel)
+    write_bytes_atomic(target, data)
+    append_progress(folder, "put %s" % rel)
+    emit({"path": target, "sha256": sha256_bytes(data)})
     return 0
 
 
@@ -753,7 +848,7 @@ def cmd_results(a):
 
 COMMANDS = {"open": cmd_open, "resume": cmd_resume, "discard": cmd_discard, "close": cmd_close,
             "phase": cmd_phase, "log": cmd_log, "fact": cmd_fact, "dispatch": cmd_dispatch,
-            "done": cmd_done, "gate": cmd_gate, "gate-record": cmd_gate_record, "effect": cmd_effect,
+            "done": cmd_done, "gate": cmd_gate, "gate-record": cmd_gate_record, "answers": cmd_answers, "put": cmd_put, "effect": cmd_effect,
             "stale": cmd_stale, "keep": cmd_keep, "kept": cmd_kept, "results": cmd_results}
 
 
@@ -1592,6 +1687,115 @@ def selftest():
             rc, r, err = cli(["resume", folder, "--args", "--no-design"], home, "C")
             expect(rc == 0 and run_json(folder)["args"] == "--no-design", (rc, err, run_json(folder)))
 
+        # ---- Part 2a: put, answers, pins, redo, keyless others
+
+        @case("put-atomic-owner-checked")
+        def _():
+            home = newdir("home")
+            f = nr(home, "A")
+            rc, o, err = cli(["put", f, "scratch/brief.md", "--from", "-"], home, "A", stdin=b"first")
+            expect(rc == 0 and o["path"] == os.path.join(f, "scratch", "brief.md"), (rc, o, err))
+            expect(o["sha256"] == hashlib.sha256(b"first").hexdigest() and read(o["path"]) == "first", o)
+            expect(stat.S_IMODE(os.stat(os.path.join(f, "scratch")).st_mode) == 0o700, "scratch not 0700")
+            rc, o, _e = cli(["put", f, "scratch/sub/deep.md", "--from", "-"], home, "A", stdin=b"x")
+            expect(rc == 0 and stat.S_IMODE(os.stat(os.path.join(f, "scratch", "sub")).st_mode) == 0o700, (rc, o))
+            rc, o, _e = cli(["put", f, "scratch/brief.md", "--from", "-"], home, "A", stdin=b"second")
+            expect(rc == 0 and read(o["path"]) == "second", (rc, o))
+            rc, o, _e = cli(["put", f, "scratch/brief.md", "--from", "-"], home, "B", stdin=b"stolen")
+            expect(rc == 9 and o is None and read(os.path.join(f, "scratch", "brief.md")) == "second", (rc, o))
+            before = snapshot(f)
+            for bad in ("inputs/x", "../x", "/abs", "scratch/../x", "scratch", "scratch/"):
+                rc, o, _e = cli(["put", f, bad, "--from", "-"], home, "A", stdin=b"x")
+                expect(rc == 2 and o is None, (bad, rc))
+            expect(snapshot(f) == before, "a refused put wrote something")
+
+        @case("answers-in-first-order")
+        def _():
+            home = newdir("home")
+            f = nr(home)
+            shown = [mkfile("shown %d" % i) for i in range(3)]
+            cli(["gate-record", f, "g-002", "--shown", shown[0], "--answer", "one"], home)
+            cli(["gate-record", f, "g-001", "--shown", shown[1], "--answer", "two", "--keep-shown"], home)
+            cli(["gate-record", f, "g-002", "--shown", shown[2], "--answer", "three"], home)
+            rc, o, err = cli(["answers", f], home)
+            expect(rc == 0 and [x["id"] for x in o["answers"]] == ["g-002", "g-001"], (rc, o, err))
+            by = {x["id"]: x for x in o["answers"]}
+            expect(by["g-002"]["answer"] == "three" and by["g-001"]["answer"] == "two", o)
+            expect(by["g-002"]["shown"] is None and by["g-001"]["shown"] == os.path.join(f, "gates", "g-001.md"), o)
+            expect(read(by["g-001"]["shown"]) == "shown 1" and re.match(r"^\d{4}-", by["g-001"]["at"]), o)
+            rc, o, _e = cli(["answers", f, "--match", "g-00"], home)
+            expect(len(o["answers"]) == 2, o)
+            rc, o, _e = cli(["answers", f, "--match", "g-001"], home)
+            expect([x["id"] for x in o["answers"]] == ["g-001"], o)
+            rc, o, _e = cli(["answers", f, "--match", "zzz"], home)
+            expect(o == {"answers": []}, o)
+            owned = nr(home, "A")
+            rc, _o, _e = cli(["gate-record", owned, "g-010", "--shown", shown[0], "--answer", "x", "--keep-shown"],
+                             home, "B")
+            expect(rc == 9 and not os.path.exists(os.path.join(owned, "gates")), rc)
+
+        @case("pin-recorded-and-returned")
+        def _():
+            home = newdir("home")
+            f, inp, af = nr(home), mkfile("hello"), mkfile("agent v")
+            _rc, o, _e = disp(home, f, "d1", inp, afile=af)
+            os.makedirs(os.path.dirname(o["result"]), exist_ok=True)
+            with open(o["result"], "w") as fh:
+                fh.write("r")
+            rc, out, err = cli(["done", f, "d1", "--pin", "commit=abc", "--pin", "ref=origin/main"], home)
+            expect(rc == 0 and out == {"recorded": True}, (rc, out, err))
+            _rc, o2, _e = disp(home, f, "d1", inp, afile=af)
+            expect(o2["action"] == "reuse" and o2["pins"] == {"commit": "abc", "ref": "origin/main"}, o2)
+            full(home, f, "d2", inp, af)
+            _rc, o3, _e = disp(home, f, "d2", inp, afile=af)
+            expect(o3["action"] == "reuse" and o3["pins"] == {}, o3)
+            rc, out, _e = cli(["done", f, "d1", "--pin", "novalue"], home)
+            expect(rc == 2, rc)
+
+        @case("redo-forces-dispatch")
+        def _():
+            home = newdir("home")
+            f, inp, af = nr(home), mkfile("hello"), mkfile("agent v")
+            o1 = full(home, f, "d1", inp, af)
+            rc, o2, err = cli(["dispatch", f, "d1", "--area", "main", "--agent", "v", "--agent-file", af,
+                               "--model", "m1", "--input", inp, "--redo"], home)
+            expect(rc == 0 and o2["action"] == "dispatch" and o2["result"] != o1["result"], (rc, o2, err))
+            expect(not os.path.exists(o1["result"]), "the old result file remains")
+            rc, r, _e = cli(["results", f], home)
+            expect(r["ids"] == [], r)
+            _rc, o3, _e = disp(home, f, "d1", inp, afile=af)
+            expect(o3["action"] == "dispatch", o3)
+
+        @case("open-keyless-others")
+        def _():
+            home, specs, wd = newdir("home"), repo("https://example.com/s.git"), repo()
+            _a, o1, _e = op(home, specs, key=None, args="CVE-1", extra=["--workdir", wd], session="A")
+            expect(o1["state"] == "new" and o1["others"] == [], o1)
+            _a, o2, _e = op(home, specs, key=None, args="CVE-2", extra=["--workdir", wd], session="B")
+            expect(o2["state"] == "new" and o2["folder"] != o1["folder"], o2)
+            expect(len(o2["others"]) == 1, o2["others"])
+            oth = o2["others"][0]
+            expect(oth["folder"] == o1["folder"] and oth["args"] == "CVE-1" and oth["owner"] == "A", oth)
+            for k in ("started", "updated", "last_phase", "results"):
+                expect(k in oth, (k, oth))
+            _a, o2b, _e = op(home, specs, key=None, args="CVE-2", extra=["--workdir", wd], session="B")
+            expect(o2b["state"] == "unfinished" and [x["args"] for x in o2b["others"]] == ["CVE-1"], o2b)
+            _a, k, _e = op(home, specs, key="K-1", args="CVE-3", extra=["--workdir", wd])
+            expect(k["others"] == [], k)
+            _a, nw, _e = op(home, specs, key=None, args="CVE-9", extra=[])
+            expect(nw["others"] == [], nw)
+            _a, other_wd, _e = op(home, specs, key=None, args="CVE-4", extra=["--workdir", repo()])
+            expect(other_wd["others"] == [], other_wd)
+            cli(["close", o1["folder"]], home, "A")
+            _a, o4, _e = op(home, specs, key=None, args="CVE-2", extra=["--workdir", wd], session="B")
+            expect([x["args"] for x in o4["others"]] == [], o4)
+            for i in range(4):
+                op(home, specs, key=None, args="X-%d" % i, extra=["--workdir", wd])
+            _a, o5, _e = op(home, specs, key=None, args="Y", extra=["--workdir", wd])
+            expect(len(o5["others"]) == 3, len(o5["others"]))
+            ups = [x["updated"] for x in o5["others"]]
+            expect(ups == sorted(ups, reverse=True), ups)
+
     for line in results:
         print(line)
     return 1 if failures else 0
@@ -1600,7 +1804,7 @@ def selftest():
 FREE_TEXT_OPTIONS = ("--args", "--set", "--answer")
 KNOWN_OPTIONS = FREE_TEXT_OPTIONS + (
     "--command", "--key", "--specs", "--workdir", "--shown", "--from", "--area", "--agent", "--agent-file",
-    "--model", "--input", "--attach", "--ids", "--match", "-h", "--help")
+    "--model", "--input", "--attach", "--ids", "--match", "--pin", "-h", "--help")
 
 
 def normalize_argv(argv):
@@ -1658,10 +1862,12 @@ def main(argv):
     d.add_argument("--model", required=True)
     d.add_argument("--input", required=True)
     d.add_argument("--attach", action="append")
+    d.add_argument("--redo", action="store_true")
     dn = sub.add_parser("done")
     dn.add_argument("folder")
     dn.add_argument("id")
     dn.add_argument("--from", dest="from_")
+    dn.add_argument("--pin", action="append")
     for name in ("gate", "gate-record"):
         g = sub.add_parser(name)
         g.add_argument("folder")
@@ -1669,6 +1875,14 @@ def main(argv):
         g.add_argument("--shown", required=True)
         if name == "gate-record":
             g.add_argument("--answer", required=True)
+            g.add_argument("--keep-shown", action="store_true")
+    an = sub.add_parser("answers")
+    an.add_argument("folder")
+    an.add_argument("--match")
+    pt = sub.add_parser("put")
+    pt.add_argument("folder")
+    pt.add_argument("rel")
+    pt.add_argument("--from", dest="from_", required=True)
     e = sub.add_parser("effect")
     e.add_argument("folder")
     e.add_argument("id")
