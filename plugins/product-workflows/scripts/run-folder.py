@@ -55,9 +55,10 @@ the side effects started or finished. `put` writes a file the command generated 
 under the lock) so a resumed run reads it back rather than generating it again; `done --pin` stores values a
 reuse reports back; `dispatch --redo` dispatches anew whatever the fingerprint says; a keyless `open` with
 --workdir also lists (`others`, at most 3) the unfinished runs of the same command and working directory
-whose arguments differ. A writer is a dispatch that edits files in a git work tree: `writer` fingerprints it as
-`dispatch` does and keeps its record under "writers", with a snapshot of the scope (the paths `git status`
-lists, each with a content hash) taken before it. It prints dispatch (new receipt path), interrupted (a started
+whose arguments differ. A writer is a dispatch that edits files in a git work tree: `writer` keeps its record
+under "writers", with a snapshot of the scope (the paths `git status` lists, each with a content hash) taken
+before it, and matches a record on its input and attachments alone, so a changed agent file or model never
+dispatches it again (`stale` and `keep` read results only). It prints dispatch (new receipt path), interrupted (a started
 record: the paths that differ from the snapshot), intact or changed (a done record: whether each path the writer
 changed still holds what the run last left there); `writer --redo` dispatches anew whatever the record says,
 from a new snapshot, removing the old receipt. `done` on a started writer takes the after-snapshot, records
@@ -815,7 +816,9 @@ def cmd_writer(a):
     rec = (run.get("writers") or {}).get(a.id)
     rec = rec if isinstance(rec, dict) else None
     receipt = recorded_result(folder, rec, a.id) if rec else None
-    if not a.redo and rec and rec.get("fingerprint") == fp and rec.get("tree") == real \
+    # A writer is matched on its input and attachments alone (D6b): a changed agent file or model neither
+    # dispatches a finished one again over its own work nor hides an interrupted one.
+    if not a.redo and rec and rec.get("content") == content and rec.get("tree") == real \
             and rec.get("scope") == scope and receipt is not None:
         before = rec.get("before") or {}
         if rec.get("state") == "started":
@@ -1013,20 +1016,12 @@ def current_state(a):
     return shas, name_map(a.model, "--model")
 
 
-def done_records(run):
-    """Every recorded result, and every writer whose work is done, by id."""
-    recs = dict(run.get("results") or {})
-    for wid, rec in (run.get("writers") or {}).items():
-        if isinstance(rec, dict) and rec.get("state") == "done":
-            recs.setdefault(wid, rec)
-    return recs
-
-
 def cmd_stale(a):
+    # Results only: a writer is matched on its input alone, so a changed agent or model never redoes one.
     run = load_run(a.folder)
     shas, models = current_state(a)
     changed = []
-    for rid, rec in sorted(done_records(run).items()):
+    for rid, rec in sorted((run.get("results") or {}).items()):
         agent = rec.get("agent")
         agent_changed = agent in shas and shas[agent] != rec.get("agent_sha")
         new_model = models.get(agent, rec.get("model"))
@@ -1040,7 +1035,7 @@ def cmd_stale(a):
 def cmd_keep(a):
     run = load_for_write(a.folder)
     shas, models = current_state(a)
-    results = done_records(run)
+    results = run.get("results") or {}
     for rid in a.ids:
         if rid not in results:
             raise CannotRun("no recorded result to keep: " + rid)
@@ -1532,8 +1527,10 @@ def selftest():
         def _():
             home = newdir("home")
             f = nr(home)
+            # a unit redone after a revert makes its effects again: start is taken over done
             for sub, want in (("state", "none"), ("start", "started"), ("state", "started"),
-                              ("done", "done"), ("state", "done")):
+                              ("done", "done"), ("state", "done"), ("start", "started"), ("state", "started"),
+                              ("done", "done")):
                 rc, out, _e = cli(["effect", f, "e1", sub], home)
                 expect(rc == 0 and out == {"state": want}, (sub, rc, out))
             rc, out, _e = cli(["effect", f, "e2", "state"], home)
@@ -2101,7 +2098,7 @@ def selftest():
             rc, o2, err = wr(home, f, "w1", tree, af, inp)
             expect(rc == 0 and o2 == {"action": "intact", "receipt": o["receipt"]}, (rc, o2, err))
             expect(read(o2["receipt"]) == "did it", o2)
-            rc, o3, _e = wr(home, f, "w1", tree, af, inp, model="m2")
+            rc, o3, _e = wr(home, f, "w1", tree, af, mkfile("brief changed"))
             expect(o3["action"] == "dispatch" and o3["receipt"] != o["receipt"], o3)
             expect(not os.path.exists(o["receipt"]), "old receipt kept")
 
@@ -2204,7 +2201,7 @@ def selftest():
             rc, o, err = cli(["tree-note", f, "--tree", tree], home, "B")
             expect(rc == 9, (rc, err))
 
-        @case("writer-rename-and-stale")
+        @case("writer-rename")
         def _():
             home, tree = newdir("home"), gitrepo()
             f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
@@ -2212,15 +2209,40 @@ def selftest():
             git(tree, "mv", "f", "h")
             cli(["done", f, "w1", "--from", "-"], home, stdin=b"r")
             expect(sorted(run_json(f)["writers"]["w1"]["wrote"]) == ["f", "h"], run_json(f)["writers"]["w1"])
-            af2 = mkfile("agent changed")
-            rc, s, _e = cli(["stale", f, "--agent", "w=" + af2], home)
-            expect(s["total"] == 1 and s["changed"][0]["id"] == "w1", s)
-            rc, k, err = cli(["keep", f, "--ids", "w1", "--agent", "w=" + af2], home)
-            expect(rc == 0, (rc, err))
-            rc, o, _e = wr(home, f, "w1", tree, af2, inp)
+            rc, o, _e = wr(home, f, "w1", tree, af, inp)
             expect(o["action"] == "intact", o)
-            rc, s, _e = cli(["stale", f, "--agent", "w=" + af2], home)
-            expect(s["total"] == 0, s)
+
+        @case("writer-agent-changed-still-intact")
+        def _():
+            # a writer is matched on its input alone: a changed agent file or model neither dispatches a
+            # finished one again over its own work nor hides an interrupted one
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            o = wdone(home, f, "w1", tree, af, inp, edits=(("f", "two\n"),))
+            af2 = mkfile("agent changed")
+            rc, o2, err = wr(home, f, "w1", tree, af2, inp, model="m2")
+            expect(rc == 0 and o2 == {"action": "intact", "receipt": o["receipt"]}, (rc, o2, err))
+            edit(tree, "f", "three\n")
+            rc, o3, _e = wr(home, f, "w1", tree, af2, inp, model="m2")
+            expect(o3["action"] == "changed" and o3["receipt"] == o["receipt"], o3)
+            inp2 = mkfile("brief two")
+            rc, o4, _e = wr(home, f, "w2", tree, af, inp2)
+            rc, o5, err = wr(home, f, "w2", tree, af2, inp2, model="m2")
+            expect(o5["action"] == "interrupted" and o5["receipt"] == o4["receipt"], (o5, err))
+            rc, o6, _e = wr(home, f, "w2", tree, af2, inp2, model="m2", redo=True)
+            expect(o6["action"] == "dispatch" and run_json(f)["writers"]["w2"]["model"] == "m2", o6)
+
+        @case("stale-ignores-writers")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            wdone(home, f, "w1", tree, af, inp, edits=(("f", "two\n"),))
+            full(home, f, "d1", mkfile("dispatch input"), af, agent="w")
+            af2 = mkfile("agent changed")
+            rc, s, err = cli(["stale", f, "--agent", "w=" + af2, "--model", "w=m2"], home)
+            expect(rc == 0 and s["total"] == 1 and [c["id"] for c in s["changed"]] == ["d1"], (s, err))
+            rc, k, err = cli(["keep", f, "--ids", "w1", "--agent", "w=" + af2], home)
+            expect(rc == 2, ("keep of a writer", rc, k, err))
 
         @case("writer-subdir-tree-shares-state")
         def _():
