@@ -809,9 +809,11 @@ behaviour, not the behaviour.
     `<id form>` being its slug's (below). Where that `git` call fails, the clone cannot be read at
     that path. A moved repository's findings are also in the input of every design pass that
     carries this run's `[CG#n]`, so count those too: the ids `results <folder> --match 'p5-dg-'` returns
-    that begin with it (`<d>`), and the ids that begin `p7-` and contain `-derive-dg-` or
-    `-compare-dg-` — the `[DG#n]` verification those passes feed, which `--match '-derive-dg-'`
-    and `--match '-compare-dg-'` return (`<v>`). Where any repository moved or cannot be read, this
+    that begin with it (`<d>`), and the ids that begin `p7-` and contain `derive-dg-` or
+    `compare-dg-` — the `[DG#n]` verification those passes feed, which `--match 'derive-dg-'`
+    and `--match 'compare-dg-'` return (`<v>`). A `--match` value never begins with `-`, which the
+    script would read as an option and refuse; no id form holds a `-`, so no repository's or frame
+    set's name can make an id match these. Where any repository moved or cannot be read, this
     line is the one the question takes from this command, each bracketed part printed only where
     it names a repository, and the third only where one moved and `<d>` is not 0:
     `[Moved since this run pinned it: <slug> (<pinned> → <HEAD>; its <n> saved result(s) are not reused)[, …].][ Not readable where this run pinned it: <slug> (<path>)[, …].][ Each design pass is done again too wherever those repositories' findings come back otherwise (up to <d> saved result(s)), and with it the [DG#n] verification it feeds wherever its own findings do (up to <v>).]`
@@ -1447,8 +1449,8 @@ be given one. The digest is consumed by this orchestrator alone, in exactly two 
    and joins the run's repository set. Then, before Phase 5: **re-print Phase 1's cost statement**
    with the new K, since the one printed first understates the run; where the set now holds more than one repository, apply Phase 2's SIGNIFICANT floor and update the `model_routing` block's `classification` and `reason` to say so; run Phase 3's steps 1–3 and the
    bullets that follow them on each added repository; **re-run *No two repositories share a pin*
-   over the whole set**, the added repositories with the rest; and take *This run's own pins* for
-   each added repository. Phase 4 is not re-run — it reads
+   over the whole set**, the added repositories with the rest; and take *This run's own pins* and
+   *Each repository's place* for each added repository, which takes the next free place. Phase 4 is not re-run — it reads
    prerequisites, not repositories — and this question is not asked again on this run. *Proceed on
    the record* goes on to Phase 5 with the set Phase 1 resolved. A lead is a question about
    coverage, never an answer about behaviour.
@@ -1521,11 +1523,13 @@ maintenance dispatch are not saved. For each saved dispatch this command names:
   stands for. **A `result_path` the agent could not write is no refusal**: a reply of
   `status: INPUT_MISSING` naming `result_path`, with no receipt, is met as `run-dispatch` step 4
   says — the agent dispatched once more without that line, and its inline return saved with
-  `done <folder> <id> --from -` and read as any return. Where that dispatch, or its `done`, fails
-  too, print the `NOTE:` `workflows-core:run-folder` §2 gives an exit 2, set
-  `run_folder: unavailable`, and go on with the inline return, unsaved. It never stops the run and
-  never fires `emit-block`: the statuses below that stop the run are an `INPUT_MISSING` that names
-  any other input.
+  `done <folder> <id> --from -` and read as any return. Where that `done` exits 2, the folder is
+  what failed: print the `NOTE:` `workflows-core:run-folder` §2 gives an exit 2, set
+  `run_folder: unavailable`, and go on with the inline return, unsaved. Where the second dispatch
+  itself fails, there is no return to go on with: that is the agent failing, handled as this
+  command handles that agent's failure, and the folder stays as it is. An unwritable `result_path`
+  never stops the run by itself and never fires `emit-block`: the statuses below that stop the run
+  are an `INPUT_MISSING` that names any other input.
 - **The input**: the block's text between its quotation marks, each line without its leading
   `> `, each bracketed placeholder replaced by its value and nothing else changed, as
   `run-dispatch` requires — a value as its source holds it, never quoted, wrapped, padded or
@@ -1764,17 +1768,23 @@ than left to look like nothing was checked.
 finding as an earlier one did rather than judging it again, which could come out otherwise and
 change which findings Phase 7 verifies, and under which numbers (`workflows-core:run-folder` §3).
 The record is `scratch/phase6.json`, named by fact `phase6` as a path relative to the run folder:
-one JSON object holding `decisions` — for each prerequisite with a frozen decision, by key, the blob
-of the `decisions.md` Phase 4 read, `git hash-object --no-filters -- "<its path>"` — and
+one JSON object holding `decisions` — for each prerequisite with a frozen decision, by key, every
+file Phase 4 read its frozen set from, which is its `decisions.md` and each file under its
+`interview/` (the round records that tell a torn write, Phase 4 step 3), each by its path relative
+to `$SPECS_PATH` and its blob, `git hash-object --no-filters -- "<its path>"` — and
 `findings`, one entry per finding judged: its stable number (Phase 5; a `[DG#n]`'s with its frame
 set), its `claim` as it stands, and what was settled, `current` or `will-change` with the
-`prerequisite` written. Before judging, read fact `phase6`; where it is set, its file reads as one
-JSON object, and its `decisions` equal what Phase 4 read this session, a finding whose stable
-number and `claim` both match an entry takes that entry's settlement and is not judged. Every other
-finding is judged as above, all of them where the record does not hold. Then write the object back
-— the entries it held, the ones added, and `decisions` as read this session — through a quoted
-here-document, `cat > "<folder>/scratch/phase6.json" <<'RUN_FOLDER_EOF'` (a delimiter the text does
-not contain, `mkdir -p "<folder>/scratch"` first), and `fact <folder> phase6 --set 'scratch/phase6.json'`.
+`prerequisite` written. Before judging, read fact `phase6`. **The record holds** where the fact is
+set, its file reads as one JSON object, and its `decisions` equal what Phase 4 read this session:
+then a finding whose stable number and `claim` both match an entry takes that entry's settlement and
+is not judged, and every other finding is judged as above. Where the record does not hold, every
+finding is judged. Then `log <folder> 'p6-record'` — an exit 9 stops the run (Phase 0 step 10,
+*Taken over*) before a session another one has taken over writes over the owner's record — and
+write the object back, `decisions` as read this session and, as `findings`, the entries the record
+held and the ones added where it held, and only this session's where it did not, so that no
+judgement made against other decisions stands under these: through a quoted here-document,
+`cat > "<folder>/scratch/phase6.json" <<'RUN_FOLDER_EOF'` (a delimiter the text does not contain,
+`mkdir -p "<folder>/scratch"` first); then `fact <folder> phase6 --set 'scratch/phase6.json'`.
 A class-4 `[DG#n]` is in no entry: it takes what its cited `[CG#n]` is settled at. Where no
 prerequisite has a frozen decision, there is nothing to judge and nothing to record.
 
