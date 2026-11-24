@@ -249,6 +249,8 @@ happened and why it was missed, Suggested improvement = its **Fix**); dedupe by 
 (§3); resolve the target (§2); write silently (§5). Return the persisted path,
 or "no plugin-facing signal — nothing persisted" when the slice is empty.
 
+**Guarded, on a run that keeps a run folder.** Where the calling run carries `run_folder: <path>` and has finished — the tail before `close-run`, never a stop's — this entry point is effect `tail-emit-auto` (`Skill(skill: "workflows-core:reference", args: "run-folder run-effect")`). `done` — skip it, and return the line fact `tail-emit-auto` holds. `none` — `effect <folder> tail-emit-auto start`; run it as above; `fact <folder> tail-emit-auto --set '<the line it returns>'`; `effect <folder> tail-emit-auto done`. `started` — an earlier session began it and never recorded its end: run it again, as above, where §3's dedupe by stable `id` skips each entry that session wrote, so none is logged twice; then the fact and `done`, as on `none`. Without a run folder, and on a stop, it runs as above, unguarded.
+
 ### `emit-manual` — `/feedback`
 
 Inputs: `command` (the exact name, or `n/a`), the user-authored **Friction** and
@@ -303,3 +305,5 @@ Inputs: the `defect-reporter` **Defects** list, `command` (the exact slash-comma
 Behavior: render one `origin: auto` entry per defect — Friction = the defect plus its evidence; Suggested improvement = the repro plus the location to fix; `impact` is `blocker | friction` only, never `polish` — `emit-bugs` drops any defect marked `polish` and writes no entry for it; `category` is drawn from §1's vocabulary — `environment-defect` for a container-environment location, else `wrong-output` / `missing-reference-doc` / `missing-capability` / `other` as fits; dedupe by the stable `id` (§3); resolve the target (§2); write silently (§5). Return the persisted path.
 
 `emit-bugs` replaces `emit-auto` for the duration of `--skip-feedback`, and is called only when `defect-reporter` returned at least one defect — the orchestrator dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and, only on a non-empty Defects list, calls `emit-bugs` on the result; when the list is empty, this reference is not loaded at all and the caller reports `— no defects` directly (`workflows-core:run-flags` §4).
+
+On a run that keeps a run folder, `emit-bugs` is guarded as `emit-auto` is, by the *Guarded* paragraph under `emit-auto` and with the same effect id, `tail-emit-auto`: it is that run's feedback step.
