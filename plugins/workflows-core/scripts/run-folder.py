@@ -46,7 +46,9 @@ Standard library only.
 """
 
 import argparse
+import contextlib
 import datetime
+import fcntl
 import hashlib
 import json
 import os
@@ -235,6 +237,30 @@ def load_run(folder):
     if not isinstance(run, dict):
         raise CannotRun("malformed run.json in " + folder)
     return run
+
+
+@contextlib.contextmanager
+def write_lock(folder):
+    """Hold an exclusive flock on <folder>/.lock for a whole load, modify and save of run.json, so parallel
+    writing calls (sibling agents' dispatch and done) cannot lose each other's update. No lock where the
+    folder is not a run folder: the call then fails or reports a takeover as it would anyway."""
+    try:
+        path = os.path.join(folder_path(folder), ".lock")
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT, 0o600)
+    except (CannotRun, OSError):
+        yield
+        return
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        os.close(fd)
+
+
+def needs_lock(args):
+    if args.cmd in ("resume", "close", "phase", "log", "dispatch", "done", "gate-record", "keep"):
+        return True
+    return (args.cmd == "fact" and args.set is not None) or (args.cmd == "effect" and args.action != "state")
 
 
 def load_for_write(folder):
@@ -945,6 +971,8 @@ def selftest():
             snap = {}
             for dp, _ds, fs in os.walk(folder):
                 for f in fs:
+                    if f == ".lock":
+                        continue  # the empty flock file is not run state
                     with open(os.path.join(dp, f), "rb") as fh:
                         snap[os.path.relpath(os.path.join(dp, f), folder)] = fh.read()
             return snap
@@ -1261,6 +1289,34 @@ def selftest():
                 states.append(json.loads(out)["state"])
             expect(sorted(states) == ["new"] + ["unfinished"] * 5, states)
 
+        @case("concurrent-writes")
+        def _():
+            home = newdir("home")
+            f, inp, af = nr(home), mkfile("hello"), mkfile("agent v")
+            ids = ["c%d" % i for i in range(12)]
+
+            def parallel(argvs):
+                ps = [subprocess.Popen([sys.executable, os.path.abspath(__file__), *a],
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env_for(home))
+                      for a in argvs]
+                return [(p_.wait(), p_.stderr.read().decode()) for p_ in ps]
+
+            outs = parallel([["dispatch", f, i, "--area", "main", "--agent", "v", "--agent-file", af,
+                              "--model", "m1", "--input", inp] for i in ids])
+            expect(all(rc == 0 for rc, _e in outs), outs)
+            expect(sorted(run_json(f)["dispatches"]) == sorted(ids), "a dispatch record was lost")
+            for i in ids:
+                os.makedirs(os.path.join(f, "main", "results"), exist_ok=True)
+                with open(os.path.join(f, "main", "results", i + ".md"), "w") as fh:
+                    fh.write("r")
+            outs = parallel([["done", f, i] for i in ids] + [["phase", f, "p%d" % k] for k in range(4)]
+                            + [["fact", f, "n%d" % k, "--set", "v"] for k in range(4)])
+            expect(all(rc == 0 for rc, _e in outs), outs)
+            run = run_json(f)
+            expect(sorted(run["results"]) == sorted(ids), sorted(run["results"]))
+            expect(sorted(run["facts"]) == ["n0", "n1", "n2", "n3"], run["facts"])
+            expect(".lock" not in run["results"] and ".lock" not in run["dispatches"], "lock counted")
+
     for line in results:
         print(line)
     return 1 if failures else 0
@@ -1352,6 +1408,9 @@ def main(argv):
     r.add_argument("--match")
     args = ap.parse_args(normalize_argv(argv))
     try:
+        if needs_lock(args):
+            with write_lock(args.folder):
+                return COMMANDS[args.cmd](args)
         return COMMANDS[args.cmd](args)
     except TakenOver as e:
         print("run-folder: " + str(e), file=sys.stderr)
