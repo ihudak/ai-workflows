@@ -56,8 +56,8 @@ without degrading. Apply when the plan/step list is large or the run is nearing 
   that made one, which takes it over with that run's state (`commands/implement.md`,
   `## Resuming a stopped run`) — a resume pointer names artifacts, never a handoff file
   (`workflows-core:session-hygiene` §1) — so one a run leaves behind stays until the host clears it,
-  or until such a resume removes it. **A file in the run folder is never removed on its own**, since a
-  resumed run reads it: the folder's removal — `close-run`, on a run that finishes — replaces the
+  or until such a resume removes it. **The command never removes a file in the run folder on its
+  own**, since a resumed run reads it: the folder's removal — `close-run`, on a run that finishes — replaces the
   removal of each, and a stop keeps the folder and every file in it for the resume, save a `scratch/`
   subtree of the command's own that a resume makes again rather than reads, which the stop may remove
   (`workflows-core:run-folder` `close-run`, `run-stop-line`, §5). Where a file must outlive its run, it

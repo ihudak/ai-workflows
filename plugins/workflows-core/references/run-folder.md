@@ -146,7 +146,7 @@ Around one Agent call whose agent edits files in a git work tree — a writer �
 1. `writer <folder> <id> --tree '<tree>' [--scope '<path>']… --agent <name> --agent-file <file> --model <model> --input - [--attach <path>]…`, the input on stdin. On a dispatch it snapshots the scope: each path `git status` lists, with its content hash.
 2. `action: intact` — finished in an earlier session, and every path it changed still holds what this run last left there: **do not dispatch.** Read the file at `receipt` wherever the command would have read the agent's return.
 3. `action: dispatch` — make the Agent call, adding `result_path: <receipt>` where the agent takes one, and record it as `run-dispatch` step 4 does, `receipt` standing for `result`. Call `done` before the command's own next edit, commit or revert in that tree: `done` snapshots the scope again, and what differs from step 1's snapshot is what the writer wrote. A writer the command dispatches again in the same session — a retry after its agent failed — is called with `--redo`.
-4. `action: changed` — finished earlier, but a path it changed holds something this run did not leave there (`changed` names each `path`). Ask through `AskUserQuestion`, never recorded, so a later session meeting a change asks again; then `log <folder> 'writer <id> changed: <the answer>'`:
+4. `action: changed` — finished earlier, but a path it changed holds something this run did not leave there (`changed` names each `path`). Where the command names its handling — a unit it reverts and redoes whole rather than dispatch one writer again over its own work (§7) — that decides. Otherwise ask through `AskUserQuestion`, never recorded, so a later session meeting a change asks again; then `log <folder> 'writer <id> changed: <the answer>'`:
 
    ```
    <agent> (<id>) finished in an earlier session, but <n> file(s) it wrote have changed since, not by this run: <changed.path>, …
@@ -158,7 +158,7 @@ Around one Agent call whose agent edits files in a git work tree — a writer �
    - **Dispatch it again** — step 1's call with `--redo` added, which snapshots the scope anew and returns `action: dispatch` with a new `receipt`; then step 3.
 
    A typed answer that is no choice is asked again.
-5. `action: interrupted` — dispatched in an earlier session and never recorded done, so it may have left part of its work (`left` names each path that differs from step 1's snapshot). The command's named handling decides. Where it reverts the unit's tree to its recorded start, the whole unit is redone from its first step (§7), never this writer alone: a writer of the unit that finished before it would read `intact` over the reverted files. Where it names none, ask through `AskUserQuestion`, never recorded:
+5. `action: interrupted` — dispatched in an earlier session and never recorded done, so it may have left part of its work (`left` names each path that differs from step 1's snapshot). The command's named handling decides. Where it reverts the unit's tree to its recorded start, the whole unit is redone from its first step (§7), never this writer alone: a writer of the unit that finished before it would read `intact` or `changed` over the reverted files. A unit's writer in flight is met here before the unit's writers are walked (§7). Where it names none, ask through `AskUserQuestion`, never recorded:
 
    ```
    <agent> (<id>) was dispatched in an earlier session and never finished. It left <n> changed file(s): <left.path>, … [or, where left is empty: It left no file changed.]
@@ -273,7 +273,7 @@ A command that keeps a run folder names, in its own text:
 - by heading, the checks and steps that stand after `open-run`, and what a resumed run reads for each; where another command runs it inline, how its caller hands it the folder, and its prefix;
 - the phases it logs with `phase`, the facts it records with `fact`, and the values it reads once (§3);
 - each dispatch it saves: its id scheme, its area (which use `blind`), its agent and that agent's file (through `agent-file` for another plugin's `workflows-core` agent), its model, which agents take `result_path`, its input's fixed text and the files, facts or folder files each value in it is taken from, and what the input names by version; each pin, where its value comes from and how a reuse checks it; and the dispatches it leaves unsaved;
-- each writer: its id, agent, tree and scope, its handling of `interrupted`, and every place it calls `tree-note`;
+- each writer: its id, agent, tree and scope, its handling of `interrupted`, and of `changed` where it names one, and every place it calls `tree-note`;
 - each file it `put`s, each copy it makes for a dispatch, each file it writes whole after an owner-checked call and the marker it records after that write, and any `scratch/` subtree a stop removes (§5);
 - each recorded question, its gate id, and its shown text built the same way; each interview's prefix, and each two-part answer's two gate ids;
 - each guarded side effect, its id, the facts recorded after it, and its handling of one found `started`;
@@ -285,10 +285,14 @@ A command that keeps a run folder names, in its own text:
 
 ## 7. Units in a loop
 
-A command that works through units one by one — components, CVEs, Epics, documentation units — gives each unit's dispatch, writer, gate and effect ids, and its `scratch/` paths, the unit's slug, in the id grammar (`comp-<slug>-plan`), and guards each unit as a `run-effect`, id `<kind>-<slug>` (`comp-<slug>`, `cve-<id>`): `start` before its first step, `done` after its last effect. A resumed run skips a unit found `done`, reading the facts recorded after it, and runs one found `none` as new. One found `started` is met with the command's handling. Where that handling reverts the unit's tree to its recorded start, `tree-note` follows, and the unit is redone from its first step:
+A command that works through units one by one — components, CVEs, Epics, documentation units — gives each unit's dispatch, writer, gate and effect ids, and its `scratch/` paths, the unit's slug, in the id grammar (`comp-<slug>-plan`), and guards each unit as a `run-effect`, id `<kind>-<slug>` (`comp-<slug>`, `cve-<id>`): `start` before its first step, `done` after its last effect. A resumed run skips a unit found `done`, reading the facts recorded after it, and runs one found `none` as new. One found `started` is met with the command's handling.
 
-- each of its writers is called with `--redo` — those that had finished would otherwise read `intact` over the reverted files;
-- its own `put` files and copies, those whose paths carry its slug, are made again, so its dispatches and questions see the redone work, not the first attempt's;
+**The writer in flight.** Before each writer of a unit is dispatched, `fact <folder> <unit>-inflight --set '<writer id>'`; after its `done`, `--set ''`. A resumed run that finds a `started` unit whose in-flight fact names a writer meets that writer's `interrupted` first, with the command's handling, before it walks the unit's writers: walked first, a writer that had finished would read `changed` over the cut-off one's edits. `done` comes before the clearing, so a fact left naming a writer that did finish is met the same way: where the handling reverts, that costs a redo and loses nothing.
+
+**A unit redone after a revert.** Where the command's handling reverts the unit's tree to its recorded start, it first raises the unit's attempt, a fact its writer ids and `scratch/` paths carry (`comp-<slug>-a2-…`); then the revert, which clears the in-flight fact, and `tree-note`; then the unit from its first step:
+
+- each of its writers, under a new id, is dispatched afresh: under its old one a writer that had finished would read `intact` or `changed` over the reverted files, and `--redo` would not reach a later session that resumes the redo;
+- its own `put` files and copies are made again at the new attempt's paths, so its dispatches and questions see the redone work, and no later session reads the first attempt's;
 - each effect the revert undid — the command names which, typically the unit's local edits and commits — is made again from `effect … start`, whatever `state` says (the script takes `start` over `done`). Every other effect of the unit — a push, a pull request, a write into the specs repository — keeps its own handling (`run-effect`), and where the revert cannot undo something the redo must make again, the command names its handling, or asks;
 - each dispatch is made as `run-dispatch` finds its input now.
 
