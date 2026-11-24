@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.99.1] — 2026-11-24
+
+The run folder's lock, made strict. **What changes for you.** Where a home cannot lock files — an NFS mount whose lock service is down — a command's run-folder calls now stop with a `NOTE:` and the run goes on without its folder, as for a full disk, instead of writing without the lock, where two agents finishing together could lose one's saved result. Nothing changes where locking works.
+
+### Fixed
+
+- **`scripts/run-folder.py` never writes unlocked.** A `flock` that fails ends the writing call with exit 2 before it writes anything; it ran the write without the lock. A `discard` that cannot lock no longer removes the folder.
+- **`scripts/run-folder.py`'s lock retry is bounded.** A call retries while the run's folder is replaced under it (a *Start over* in between), now at most five times, then exits 2; on a file system whose lock file never matched the one held it would have retried forever.
+- **`references/run-folder.md`** §1 (`.lock`) and §2 (exit 2) say so.
+
 ## [1.99.0] — 2026-11-24
 
 The run folder, part 1: the shared half. **What changes for you.** A command can now keep a **run folder** — its working state for one run, on the machine that runs it — so that a run stopped mid-way by a crash, a container restart or usage limits continues when you run the same command again there: every agent that finished keeps its result, every answer you gave stands while what you were shown is unchanged, and a write, commit or push the command guards is not made twice. In this release one command keeps one, `/product-workflows:prd-ground` (`product-workflows` 3.87.0). The folder lies under `$XDG_STATE_HOME`, or `~/.local/state` where that is unset, empty or not an absolute path, readable by you alone and outside every repository: in a container, keep that directory across restarts, or point the variable at one the container keeps. A run that cannot make or write its folder goes on exactly as before, after a one-line note, and cannot then be resumed. Install with `product-workflows` 3.87.0, whose `/prd-ground` follows this release's `run-folder` reference (`.claude/rules/plugin-updates-coupling.md`, its 1.99.0 bullet). The design is `docs/superpowers/specs/2026-11-24-run-folder-design.md`, built from `docs/superpowers/plans/2026-11-24-run-folder-part1.md`.
