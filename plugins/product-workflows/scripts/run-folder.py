@@ -72,6 +72,9 @@ NAME_RE = re.compile(r"^[A-Za-z0-9._-]+\Z")
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]*\Z")
 AREAS = ("main", "blind")
 GIT_TIMEOUT = 5
+# A writing call retries the lock only while the folder is replaced under it (a Start over in between);
+# past this many attempts it stops with exit 2 rather than spin.
+LOCK_ATTEMPTS = 5
 
 
 class CannotRun(Exception):
@@ -264,14 +267,20 @@ def write_lock(folder):
     writing calls (sibling agents' dispatch and done, a discard) cannot lose each other's update. The lock
     taken is the one standing at that path once it is held: where the folder was removed or replaced while
     this call waited, it locks what stands there now, and none where nothing does. No lock where the folder is
-    not a run folder: the call then fails or reports a takeover as it would anyway."""
+    not a run folder: the call then fails or reports a takeover as it would anyway. A lock that cannot be
+    taken (flock fails, as on a network home with no lock service) or whose file keeps being replaced while
+    the call waits is CannotRun (exit 2): the call never writes unlocked, and never spins."""
     lock = Lock()
     try:
         try:
             path = os.path.join(folder_path(folder), ".lock")
         except CannotRun:
             path = None
+        attempts = 0
         while path is not None:
+            attempts += 1
+            if attempts > LOCK_ATTEMPTS:
+                raise CannotRun("the lock file %s kept changing while this call waited for it" % path)
             try:
                 fd = os.open(path, os.O_WRONLY | os.O_CREAT, 0o600)
             except OSError:
@@ -279,9 +288,9 @@ def write_lock(folder):
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX)
                 held = os.fstat(fd)
-            except OSError:
+            except OSError as e:
                 os.close(fd)
-                break
+                raise CannotRun("could not lock %s: %s" % (path, e))
             try:
                 there = os.stat(path)
             except OSError:
@@ -1487,6 +1496,86 @@ def selftest():
             expect(len(seen) == 1 and seen[0][1] is False, ("the lock was held during the removal", seen))
             expect(seen[0][0] != f and not seen[0][2], ("not moved off the run's path first", seen))
             expect(not os.path.exists(f) and not os.path.exists(seen[0][0]), "something was left")
+
+        def call_patched(home, argv, patch, unpatch):
+            saved_env, out, err = dict(os.environ), io.StringIO(), io.StringIO()
+            try:
+                os.environ.clear()
+                os.environ.update(env_for(home))
+                patch()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    rc = main(argv)
+            finally:
+                unpatch()
+                os.environ.clear()
+                os.environ.update(saved_env)
+            return rc, err.getvalue()
+
+        def run_state(folder):
+            return {n: read(os.path.join(folder, n)) for n in ("run.json", "progress.md")
+                    if os.path.exists(os.path.join(folder, n))}
+
+        def failing_flock():
+            real = fcntl.flock
+
+            def bad(fd, op):
+                raise OSError(37, "No locks available")  # ENOLCK: an NFS home with no lock manager
+
+            def patch():
+                fcntl.flock = bad
+
+            def unpatch():
+                fcntl.flock = real
+            return patch, unpatch
+
+        @case("lock-failure-exits-2")
+        def _():
+            # A lock that cannot be taken must not let the write through unlocked.
+            home = newdir("home")
+            f = nr(home)
+            before = run_state(f)
+            patch, unpatch = failing_flock()
+            rc, err = call_patched(home, ["log", f, "x"], patch, unpatch)
+            expect(rc == 2 and "could not lock" in err, (rc, err))
+            expect(run_state(f) == before, "a write went through without the lock")
+
+        @case("lock-failure-keeps-folder")
+        def _():
+            # Start over must not remove a folder another writer may hold, when it cannot lock it.
+            home = newdir("home")
+            f = nr(home)
+            patch, unpatch = failing_flock()
+            rc, err = call_patched(home, ["discard", f], patch, unpatch)
+            expect(rc == 2 and "could not lock" in err, (rc, err))
+            expect(os.path.exists(os.path.join(f, "run.json")), "the folder was removed without the lock")
+
+        @case("lock-retry-bounded")
+        def _():
+            # A lock file that never matches the one held (its inode keeps changing) must fail, not spin.
+            home = newdir("home")
+            f = nr(home)
+            before = run_state(f)
+            real_stat, calls = os.stat, [0]
+
+            def moving(p, *pa, **kw):
+                r = real_stat(p, *pa, **kw)
+                if os.fspath(p).endswith(os.sep + ".lock"):
+                    calls[0] += 1
+                    if calls[0] > 50:
+                        raise RuntimeError("the retry loop did not stop")
+                    t = list(r[:10])
+                    t[1] = r.st_ino + 1
+                    return os.stat_result(t)
+                return r
+
+            def patch():
+                os.stat = moving
+
+            def unpatch():
+                os.stat = real_stat
+            rc, err = call_patched(home, ["log", f, "x"], patch, unpatch)
+            expect(rc == 2 and "kept changing" in err, (rc, err, calls[0]))
+            expect(run_state(f) == before, "a write went through without the lock")
 
         @case("resume-args")
         def _():

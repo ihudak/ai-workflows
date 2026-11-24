@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.87.1] — 2026-11-24
+
+**What changes for you.** `/prd-ground`'s copy of `scripts/run-folder.py` takes `workflows-core` 1.99.1's strict lock: on a home that cannot lock files the run says once that it cannot be resumed and goes on, instead of saving results without the lock.
+
+### Fixed
+
+- **`scripts/run-folder.py`**, the copy `workflows-core` 1.99.1 ships: a lock that cannot be taken, or keeps changing, is exit 2 before any write.
+
 ## [3.87.0] — 2026-11-24
 
 The run folder, part 1: a stopped `/prd-ground` resumes. **What changes for you.** A `/prd-ground` run cut off mid-way — a crash, usage limits, or a container restart where the container keeps its state directory (`workflows-core` 1.99.0 says which) — no longer loses its work. Once Phase 0 has passed, the run keeps its working state in a run folder on the machine that runs it, and running `/product-workflows:prd-ground <KEY>` again there asks whether to resume it or start over. A resumed run reuses every grounder and verifier result it saved while the dispatch it would make now is unchanged, takes the answers you gave while each question is shown the same, and makes Phase 8's writes and Phase 9's handoff once; a run that finishes removes its folder. A repository pulled between two sessions has its grounding and verification redone, and the design passes with it, while every other repository's results are reused; where more than 10 saved results were written under agent instructions or a model that changed since, the run asks whether to redo or keep them. `code-grounder` and `grounding-verifier` accept a `result_path` and write their return there. Install with `workflows-core` 1.99.0, whose `run-folder` reference this command follows (`.claude/rules/plugin-updates-coupling.md`, its 1.99.0 bullet). The design is `docs/superpowers/specs/2026-11-24-run-folder-design.md`, built from `docs/superpowers/plans/2026-11-24-run-folder-part1.md`.

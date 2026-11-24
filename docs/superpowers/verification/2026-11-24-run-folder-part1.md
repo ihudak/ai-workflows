@@ -69,7 +69,7 @@ From `plugins/product-workflows/CHANGELOG.md` 3.87.0:
 
 From `plugins/workflows-core/CHANGELOG.md` 1.99.0 (stated in its description, not a separate list): the folder lies under `$XDG_STATE_HOME` or `~/.local/state`, so in a container that directory must be kept across restarts or the run cannot be resumed; a run that cannot make or write its folder goes on without it after a one-line note and cannot then be resumed; `/dev-workflows:implement` keeps its own resume, untouched.
 
-Left open by design at the final review:
+Left open at the final review, and fixed the same day in `workflows-core` 1.99.1 and `product-workflows` 3.87.1 (self-test cases `lock-failure-exits-2`, `lock-failure-keeps-folder` and `lock-retry-bounded`, each seen failing before the fix):
 
-- `write_lock` in `plugins/workflows-core/scripts/run-folder.py` runs a write **unlocked** when `fcntl.flock` itself fails, for example an NFS home without a lock manager. The owner guard still applies; the serialisation between concurrent writers does not.
-- `write_lock`'s inode-recheck retry loop has no bound. It repeats while the lock file is replaced under it, which only a concurrent `discard` or `close` does; no cap was added.
+- `write_lock` in `plugins/workflows-core/scripts/run-folder.py` ran a write **unlocked** when `fcntl.flock` itself failed, for example an NFS home without a lock manager. It now ends the call with exit 2 before anything is written, which the run meets as the folder becoming unusable.
+- `write_lock`'s inode-recheck retry loop had no bound. It now stops after `LOCK_ATTEMPTS` (5) attempts with exit 2.
