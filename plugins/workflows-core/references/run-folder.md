@@ -14,13 +14,13 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/run-folder.py" <subcommand> <arguments…
 
 It is a script, called by its path like every other, so a run that never read this file runs the same thing. `${CLAUDE_PLUGIN_ROOT}` is the plugin whose file makes the call — a command's own plugin, and `workflows-core` for this reference — so every plugin whose commands call it ships the same `scripts/run-folder.py`, and CI fails a copy that differs from `workflows-core`'s, and a plugin whose commands, agents or references call it without shipping one. It needs `python3` 3.11, standard library only, and asks `git` for a repository's `origin` and root, taking the physical path where `git` cannot say. Every subcommand prints one JSON object on stdout; a failure, or a note, goes to stderr.
 
-**Values on its command line.** A value the run did not write itself — arguments as typed, an answer, a fact, a log text — goes in single quotes, each `'` inside it written `'\''`, so the shell expands nothing in it. A text passed on stdin (`--input -`, `--from -`) goes in a quoted here-document, `<<'RUN_FOLDER_EOF'`, whose delimiter line the text does not contain.
+**Values on its command line.** A value the run did not write itself — arguments as typed, an answer, a fact, a log text — goes in single quotes, each `'` inside it written `'\''`, so the shell expands nothing in it. A text passed on stdin (`--input -`, `--shown -`, `--from -`) goes in a quoted here-document, `<<'RUN_FOLDER_EOF'`, whose delimiter line the text does not contain.
 
 **Where.** `$XDG_STATE_HOME/ai-workflows/runs/<run-key>/`, or `~/.local/state/ai-workflows/runs/<run-key>/` where `XDG_STATE_HOME` is unset, empty or not an absolute path; mode `0700`, on the machine that runs the command, outside every repository, so nothing in it is ever committed. On a host it survives a reboot; in a container, it survives a restart where that directory is kept.
 
 **The run key** names the folder, and the same invocation in a new session computes the same key: `<plugin>.<command>-<KEY>-<h>` for a keyed run, one whose address resolved to a folder under `$SPECS_PATH/specifications/` — `<KEY>` being the key that resolution returned, never one parsed out of free text — and `<plugin>.<command>-<h>` for a keyless one. `<h>` is the first 8 hex digits of a SHA-256 over the run's identity: the specs repository's `origin` URL, or its physical path where it has none; the working directory's repository root, or its physical path outside a repository, only where the command passes `--workdir`; and, on a keyless run only, its arguments. So two specs repositories holding the same KEY — two projects that share one state directory, each with its own specs repository mounted at the same path — get two folders, and a keyless command run with other arguments opens a run of its own. The script computes the key from the parts a command passes to `open`.
 
-**The owner.** `run.json` records the session that owns the run — `CLAUDE_CODE_SESSION_ID`, null where it is unset or empty — and when it last wrote. `open` never takes ownership of an unfinished run; `resume` does. Every call that writes refuses, with exit 9, when the owner and the caller are both non-null and differ; a null on either side passes, since it cannot be told apart. So an older session still running after another resumed its run stops at its next write. A subagent it had already dispatched may keep working until then.
+**The owner.** `run.json` records the session that owns the run — `CLAUDE_CODE_SESSION_ID`, null where it is unset or empty — and when it last wrote. `open` never takes ownership of an unfinished run; `resume` does. Every call that writes into a run — `phase`, `log`, `fact --set`, `dispatch`, `done`, `gate-record`, `effect start` and `effect done`, `keep` and `close` — refuses, with exit 9 and nothing written, when the owner and the caller are both non-null and differ; a null on either side passes, since it cannot be told apart. Two calls that write are not checked, by design: `resume`, which is how a session takes a run over, and `discard`, which is how *Start over* removes it whoever owns it. `open` writes only a run it makes itself. So an older session still running after another resumed its run stops at its next write. A subagent it had already dispatched may keep working until then.
 
 **What the folder holds.**
 
@@ -61,7 +61,7 @@ Run once, at the step the command names: once its run key is known — after add
    - `new` — set `run_folder: <folder>`, and go on.
    - `unavailable` — set `run_folder: unavailable`, and go on as the command does without a folder; the `NOTE: no run folder (<reason>); continuing without one` step 2 printed is the one line that says so. An exit 2 is the same, the `NOTE:` printed with the script's stderr line as its reason.
    - `unfinished` — ask step 4's question, or, where the command asks a resume question of its own, step 5's.
-4. Ask, through `AskUserQuestion`, the question rules loaded first as before any question the command asks:
+4. Ask, through `AskUserQuestion`, with `escalation-rules` loaded as the command's **Load the question rules.** step loaded them:
 
    ```
    An unfinished run of <the command and its address> was found — started <summary.started>, last written <summary.updated>, last phase <summary.last_phase, or "none logged">, <summary.results> saved agent result(s).
@@ -88,7 +88,7 @@ Around one Agent call whose result the command saves. The command supplies, for 
 - **its area** — `main`, or `blind` for a dispatch whose agent must not see what other dispatches returned: its input and result live under `blind/`, apart from `main/`; the command hands that agent its own result path and nothing else of the folder, and its input names no file under `main/`;
 - **the agent** — its name and its definition file, `agents/<agent>.md` under the root of the plugin that ships it (`${CLAUDE_PLUGIN_ROOT}/agents/<agent>.md`, written in a command of that plugin); only an agent the calling command's own plugin ships is dispatched through this entry point, since its file must be named;
 - **the model** — the Agent call's `model`, as the command passes it;
-- **the input** — the prompt as the command composes it, without the `result_path:` line step 3 adds. **It names by version every external thing the agent reads** — a repository by its commit, a specs or docs file by its blob id or content hash, a diff by the run-folder file that holds it, attached with `--attach scratch/<file>` (a path relative to the folder) so that file's bytes count too — and the arguments and flags that change the agent's work. A change the input does not show leaves the fingerprint as it was, and a stale result is reused.
+- **the input** — the prompt, without the `result_path:` line step 3 adds, **built so that a later session builds the same bytes**: the command's own fixed prompt text, each value it fills in taken from a file, a fact (§3) or the folder — never from the conversation, which a later session does not hold — and written as it stands, in an order the command fixes, never paraphrased, reworded or reordered. A large or variable part — a list, a diff, a claims file — goes in a file under `scratch/`, built the same way, which the prompt names and `--attach scratch/<file>` passes (a path relative to the folder), so that its bytes count too. One byte that differs redoes the saved result, so an input rebuilt loosely redoes every saved result on a resume. **It names by version every external thing the agent reads** — a repository by its commit, a specs or docs file by its blob id or content hash, a diff by the run-folder file that holds it — and the arguments and flags that change the agent's work. A change the input does not show leaves the fingerprint as it was, and a stale result is reused.
 
 The **fingerprint** is a SHA-256 over the input's bytes, each attached file's bytes (sorted by path), the agent definition file's SHA-256 and the model. Nothing else counts: a plugin's version, or a change to a command, a skill, a reference or another agent, redoes nothing. A shared reference the agent reads while it works can so change its output unseen; that is a stated limit.
 
@@ -111,12 +111,13 @@ Where the run folder is unavailable: dispatch as before; nothing is saved.
 
 Around one question asked after `open-run` whose answer a later step acts on — an approval, a choice of repositories, a consent. The command names its recorded questions and their gate ids, which follow the dispatch-id grammar. The questions of `open-run` and `changed-agents` are never recorded: they decide the folder itself.
 
-1. Where `<folder>/run.json` is no longer there, another session started the run over: stop as on exit 9 (§2). Otherwise write what the user is shown — the question's text with its options exactly as presented, and the contents of any file it asks them to approve — to `<folder>/scratch/gate-<gate-id>.md`, making `scratch/` inside the folder where it is missing, never the folder itself.
-2. `gate <folder> <gate-id> --shown <folder>/scratch/gate-<gate-id>.md`.
-3. An `answer` that is not `null` — the same question, shown the same, was answered earlier in this run: **do not ask.** Print `Answer reused from earlier in this run — <the question's first line>: <answer>`, and act on it as though it had just been given.
-4. `null` — ask as the command does, then `gate-record <folder> <gate-id> --shown <folder>/scratch/gate-<gate-id>.md --answer '<the answer>'`, a free-text answer recorded verbatim. A question shown differently — a regenerated plan, a new finding — fingerprints differently and is asked again.
+**The shown text** — the question's text with its options exactly as presented, and the contents of any file it asks the user to approve — is built as a dispatch's input is (`run-dispatch`): the command's fixed text, each value taken from a file, a fact or the folder, in an order the command fixes, never reworded. Both calls below get the same bytes on stdin. A shown text built differently is not found and only asks the question again; a question that changed — a regenerated plan, a new finding — is asked again for the same reason. Nothing is written into the folder before an owner-checked call has passed.
 
-Where the run folder is unavailable, or the file cannot be written: ask as before.
+1. `gate <folder> <gate-id> --shown -`, the shown text on stdin. It writes nothing.
+2. An `answer` that is not `null` — the same question, shown the same, was answered earlier in this run: **do not ask.** First `log <folder> 'gate <gate-id> reused'`: an exit 9 there stops the run (§2) before it acts on an answer another session may have given. Then print `Answer reused from earlier in this run — <the question's first line>: <answer>`, and act on it as though it had just been given.
+3. `null` — `log <folder> 'gate <gate-id> asked'`, so that an exit 9 stops the run before the question; ask as the command does; then `gate-record <folder> <gate-id> --shown - --answer '<the answer>'`, the same shown text on stdin, a free-text answer recorded verbatim. An exit 9 from `gate-record` stops the run before it acts on the answer.
+
+Where the run folder is unavailable: ask as before.
 
 ### Entry point: `run-effect`
 
@@ -147,7 +148,7 @@ Run once, on a resumed run only, at the step the command names: where both are k
 
    A typed answer that is none of the three is asked again.
    - **Resume and redo them** — `log` the answer; each is redone when its dispatch comes.
-   - **Resume and keep them** — `keep <folder> --ids <every changed id but those the command always redoes> --agent … --model …`, the same pairs as step 1; those results are reused from now on.
+   - **Resume and keep them** — `keep <folder> --ids <every changed id but those the command always redoes> --agent … --model …`, the same pairs as step 1; those results are reused from now on. Where no id is left — every changed result is one the command always redoes — make no `keep` call (`--ids` with nothing after it is a usage error), and `log` the answer instead.
    - **Start over** — `discard <folder>`, then `open` as `open-run` step 2 does and read its `state` as its step 3 does; `run_resumed` is no longer true, and the command goes back to the step after `open-run` and runs as a new run, asking its questions again.
 
 **A command's own rule may withhold *keep*** for some results, which the command names — a result whose invariant forbids reusing it under another model, say. Those are left out of `--ids` and redone whatever the answer.
@@ -160,7 +161,7 @@ Where the run folder is unavailable, or the run did not resume: skip it.
 
 On every stop the command takes after `open-run` — a refusal, a `NEEDS HUMAN`, the user ending the run, a stop `run-effect` asked for — save the taken-over stop (§2):
 
-1. `log <folder> 'stop <CODE>'`, `<CODE>` being the stop's code.
+1. `log <folder> 'stop <CODE>'`, `<CODE>` being the stop's code. A stop with no code logs `stop: <the first line of its message>`, or `stop: ended by the user` where the user ended the run.
 2. After the command's own stop message, print `Run folder kept: <folder> — run <command> again to resume.`, `<command>` being the command and its address as the user types it (`/product-workflows:prd-ground MWC-001-01`).
 
 An exit 9 from step 1 makes this the taken-over stop: print that instead, and no line. The folder is kept, so running the same command again finds it and offers to resume. Where the run folder is unavailable: print nothing.
@@ -184,8 +185,8 @@ A command that keeps a run folder names, in its own text:
 
 - its `--command` value, `--key` or none, whether it passes `--workdir`, what `--args` carries, the step that runs `open-run`, and its own resume question where it has one;
 - the phases it logs with `phase`, and the facts it records with `fact`;
-- each dispatch it saves: its id scheme, its area (which use `blind`), its agent and that agent's file, its model, which agents take `result_path`, and what its input names by version;
-- each recorded question and its gate id;
+- each dispatch it saves: its id scheme, its area (which use `blind`), its agent and that agent's file, its model, which agents take `result_path`, its input's fixed text and the files, facts or folder files each value in it is taken from, and what the input names by version;
+- each recorded question, its gate id, and its shown text built the same way;
 - each guarded side effect, its id, the facts recorded after it, and its handling of one found `started`;
 - where `changed-agents` runs, its `--agent` and `--model` pairs, and the results its own rule always redoes;
 - its taken-over stop, and that every other stop after `open-run` runs `run-stop-line`;
