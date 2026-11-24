@@ -144,6 +144,12 @@ and keeps the system's temporary directory: the scratchpad is the session's own,
 still be there for the run that ends that process. A server's log is the case — the call that
 names one says so where it stands.
 
+**A file a later step of the same run reads is not a `mktemp` file either, in a command that keeps
+a run folder**: the command writes it into that folder, which a resumed run finds in a later
+session, while the scratchpad is the session's own and a later session's is another
+(`references/run-folder.md`, *Files a later step reads*). Where the run has no folder, the file is
+a `mktemp` file under this section's rule.
+
 **An agent's session names the same scratchpad, and an agent applies the same rule** — but no agent
 reads this section, so the rule is stated beside each `mktemp` recipe an agent runs: in the agent's
 own body, or in the reference that holds the recipe, once for every caller. The dispatch carries

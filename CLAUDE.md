@@ -102,7 +102,8 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `docs-grounding.md` | `workflows-core/`: `references/*-grounding.md`, `agents/*-grounder.md`; and 25 command files: the ten docs-grounding consumers, `/design` (architecture only) and fourteen that resolve none | docs/architecture grounding |
 | `workflows-core.md` | `workflows-core/**`, `*/commands/*.md`, `*/agents/*.md` | plugin facts, authorities, map |
 | `workflows-core-model-routing.md` | as `workflows-core.md` | the model-routing authority and its callers |
-| `workflows-core-bounded-run.md` | `*/scripts/bounded.py`, `*/scripts/tree-snapshot.py`, `*/commands/*.md`, `*/agents/*.md`, `*/references/**`; `.github/workflows/validate-catalog.yml` (repo root) | the bounded-run authority and the copied-scripts rule (`bounded.py`, `tree-snapshot.py`) |
+| `workflows-core-bounded-run.md` | `*/scripts/`: `bounded.py`, `tree-snapshot.py`, `run-folder.py`; `*/commands/*.md`, `*/agents/*.md`, `*/references/**`; `.github/workflows/validate-catalog.yml` (repo root) | the bounded-run authority and the copied-scripts rule (all three) |
+| `workflows-core-run-folder.md` | `*/scripts/run-folder.py`, `*/commands/*.md`, `*/agents/*.md`, `*/references/**` | the run-folder authority and its invariants |
 | `workflows-core-triage.md` | as `workflows-core.md` | the finding-triage authority |
 | `workflows-core-git.md` | `workflows-core/scripts/`: `session-branch.py`, `specs-git.py`, `specs_git_state.py`, `specs_git_lines.py`; `workflows-core/skills/specs-git/**`; `*/commands/*.md`, `*/references/**` (the git references among them), `*/agents/*.md` | git authorities and invariants |
 | `workflows-core-read-only.md` | as `workflows-core-git.md` | the read-only-repos authority |
