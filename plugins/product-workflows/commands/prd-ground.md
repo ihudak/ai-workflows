@@ -383,7 +383,10 @@ behaviour, not the behaviour.
    instead of printing it, and go on. Phase 8 rewrites the ledger's `evidence` column and leaves
    it uncommitted until Phase 9's handoff, so the edit may be an earlier session's of this same
    run, which only the run folder step 10 opens can tell. Step 10 prints the held stop or drops it
-   (its *A held ledger stop*).
+   (its *A held ledger stop*). While it is held, steps 6a to 9 run as on any run, and a stop of
+   theirs ends the run first: step 6a reads this slice's ledger only to find it in the folder and
+   readable, which an edit to its cells does not change. Step 7 alone asks nothing while it is held
+   (step 7).
 
    **`absent` (row F) — nothing for this BRD is on any ref — is split twice before it is reported.**
    Row F conflates three states: *never produced*, *lost after it was written* and *produced, handoff declined*. Reported as one,
@@ -651,6 +654,11 @@ behaviour, not the behaviour.
    choices: ["Set REPOS_PATH (you'll be prompted for the path)", "Cancel"]
    ```
    *Set REPOS_PATH* asks for the path in plain text, as that rule says; *Cancel* ends the run.
+   **While step 6 holds a ledger stop, this question waits too**: the held stop ends the run at
+   step 10 unless the run resumes one whose Phase 8 began, and of those only one that restores
+   its files reads a repository again. So where no entry resolves, go on, and step 10 asks this
+   question, exactly as worded here, before Phase 1 on a run that restored (*A run Phase 8 began*);
+   it is not recorded, and its *Cancel* ends the run as here.
 7a. **Record lineage, and on `route: idea` check it.** Before step 8 or 8i reads the claim list,
     execute `Skill(skill: "workflows-core:reference", args: "document-lineage record")` §5 step 1
     once for each grounding file this run may write, capturing `--from-disk` what it is built from
@@ -799,9 +807,14 @@ behaviour, not the behaviour.
     moved: count its saved results, the ids `results <folder> --match 'cg-<id form>'` returns in
     which `cg-<id form>` begins the id or follows a `-`, and ends the id or is followed by `-`,
     `<id form>` being its slug's (below). Where that `git` call fails, the clone cannot be read at
-    that path. Where any repository moved or cannot be read, this line is the one the question
-    takes from this command, each bracketed part printed only where it names a repository:
-    `[Moved since this run pinned it: <slug> (<pinned> → <HEAD>; its <n> saved result(s) are not reused)[, …].][ Not readable where this run pinned it: <slug> (<path>)[, …].]`
+    that path. A moved repository's findings are also in the input of every design pass that
+    carries this run's `[CG#n]`, so count those too: the ids `results <folder> --match 'p5-dg-'` returns
+    that begin with it (`<d>`), and the ids that begin `p7-` and contain `-derive-dg-` or
+    `-compare-dg-` — the `[DG#n]` verification those passes feed, which `--match '-derive-dg-'`
+    and `--match '-compare-dg-'` return (`<v>`). Where any repository moved or cannot be read, this
+    line is the one the question takes from this command, each bracketed part printed only where
+    it names a repository, and the third only where one moved and `<d>` is not 0:
+    `[Moved since this run pinned it: <slug> (<pinned> → <HEAD>; its <n> saved result(s) are not reused)[, …].][ Not readable where this run pinned it: <slug> (<path>)[, …].][ Each design pass is done again too wherever those repositories' findings come back otherwise (up to <d> saved result(s)), and with it the [DG#n] verification it feeds wherever its own findings do (up to <v>).]`
     On every `unfinished` run, the question also takes this line:
     `Resuming reuses each answer this run recorded while its question is unchanged; to answer one again, start over.`
     Where `effect <folder> p8-write state` reads `done`, it takes this line too:
@@ -813,6 +826,15 @@ behaviour, not the behaviour.
     name typed for it — or a frame set, by its directory's name, writes that name in its *id
     form*: lowercased, each character other than `a`–`z` and `0`–`9` written `_`. So every id
     matches the grammar `run-dispatch` fixes, and a name never runs into a `-` the id puts after it.
+    **Two names, one id form.** Where two different slugs of repositories this run resolved — at
+    this step, of the repositories its `pin:` facts name — or two frame sets' directory names
+    share an id form, each of them takes, after its id form, `_` and the first six hex digits of
+    the SHA-256 of the name as it stands:
+    `python3 -c 'import hashlib, sys; print(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:6])' '<the name>'`.
+    So the two never share a dispatch id, a result file or a frame set's listing, whichever comes
+    first and in every session; a name with no twin keeps its id form as it is. The count above and
+    every id below use the id form so settled. Two names typed for repositories with one id form
+    share a gate id, whose shown text holds each name as typed, so the second is only asked again.
 
     **Recorded questions.** From here on, each question a step names a gate id for — Phase 1 steps
     1, 3 and 4's, Phase 3's rename question, Phase 4.5's leads question and Phase 9's handoff
@@ -830,7 +852,8 @@ behaviour, not the behaviour.
     already — takes `-2` after its gate id the second time, `-3` the third, and so on, counted
     afresh each time the run walks its phases from the start, as a resumed run does: a repeat is
     never answered by the answer just acted on, and a resumed run replays each asking in turn. The
-    `$SPECS_PATH` and `$REPOS_PATH` questions above come before the folder opens, and Phase 10's
+    `$SPECS_PATH` and `$REPOS_PATH` questions above come before the folder opens — the second
+    waits until after it only as step 7 says, and is not recorded there either — and Phase 10's
     arrays end the run, so none of them is recorded.
 
     **Phases.** As the run reaches each phase below, in order — Phase 1 to Phase 11, Phase 4.5
@@ -864,7 +887,8 @@ behaviour, not the behaviour.
     - `none` — go on to Phase 1.
     - `done` — **Phases 1 to 8 do not run**: replayed, they would read the findings this run has
       already written as an earlier run's, verify them again as inherited, and write them a second
-      time. Read the record fact `phase8` names (Phase 8, *The record*), and go on at Phase 9 — or
+      time. Read the record fact `phase8` names — a path relative to the run folder,
+      `<folder>/scratch/phase8.json` (Phase 8, *The record*) — and go on at Phase 9 — or
       at Phase 10 where `effect <folder> p9-handoff state` reads `done`, Phase 9's `Phase handoff:`
       line read from fact `phase9`. Phases 9 to 11 and the Final report then take from that record
       every value they name from Phases 1 to 8. Where the record cannot be read — the fact unset,
@@ -882,8 +906,9 @@ behaviour, not the behaviour.
       - *Restore the files …* — first `log <folder> 'p8-write restore'`, so that an exit 9 stops
         the run (*Taken over*) before it writes anything. Then, for each file Phase 8 copies, copy
         `<folder>/scratch/p8-before/<its name>` over it where that copy exists, and remove the file
-        where no copy does. Go on to Phase 1: Phases 1 to 7 read the files as they stood before
-        that session's Phase 8 and reuse what they saved, and Phase 8 writes again.
+        where no copy does. Where step 7 left its `$REPOS_PATH` question waiting, ask it now
+        (step 7). Go on to Phase 1: Phases 1 to 7 read the files as they stood before that
+        session's Phase 8 and reuse what they saved, and Phase 8 writes again.
       - *Stop* — stop:
         `PRD_GROUND_WRITE_INTERRUPTED: an earlier session of this run stopped while writing <KEY>'s findings into <the files>, which are left as they are now. Run '/product-workflows:prd-ground <KEY>' again and resume it to put them back and write them again.`
         `run-stop-line` after it keeps the folder, and with it the copies.
@@ -1218,13 +1243,23 @@ passed the checks above, read for each the pin this run logged for it, if any:
 `grounding/baselines.md` records a pin for the repository, the bullets above have settled it, and
 nothing here adds to them. Where it records none, and this run logged a commit other than the
 one step 1 pinned today, step 1's stands — the repository moved since this run pinned it, Phase 5
-and Phase 7 dispatch it at the new commit, so exactly its grounding and verification are redone
-and every other repository's saved results are reused — and the Final report carries the line
+and Phase 7 dispatch it at the new commit, so its grounding and verification are redone, and so is
+every design pass, whose input carries every repository's findings, with the `[DG#n]` verification
+it feeds wherever those findings come back otherwise; every other repository's saved results are
+reused — and the Final report carries the line
 `<repo> moved since this run pinned it (<old> → <new>); its grounding is redone`. Then log each
 repository's pin in the run folder, `fact <folder> 'pin:<slug>' --set '<the commit step 1 pinned> <the clone's absolute path>'`,
 which Phase 0 step 10 reads when a later session finds this run unfinished. It is logged under
 `--no-code` too, and it is not the pin Phase 8 records: where this phase says below that it
 writes nothing, it means `grounding/baselines.md` and the findings, and the run folder is neither.
+
+**Each repository's place**, which Phase 5's stable numbers count from, is fixed the first time
+this run pins the repository: read fact `places`, a JSON object from slug to place; each
+repository it does not name takes the next free place — one more than the highest it holds, 0
+where it holds none — in repo-resolution order; then write it back, `fact <folder> places --set '<the object>'`.
+So a place never moves once given, whatever order a later session names the repositories in, and
+whichever it drops. Where the run folder is unavailable, a repository's place is its position in
+repo-resolution order, counted from 0.
 
 **Record the outcome as a `[CG#n]` finding** (`workflows-core:grounding-format` §4: "the outcome is recorded
 as a `[CG#n]` finding" — a verified fact about a code repository at a commit is exactly what that
@@ -1234,8 +1269,14 @@ claim-level findings — `CG#1..CG#R` on a first run for `R` resolved repositori
 whatever the highest `CG#n` already on file is on any later run. Each carries every field
 `workflows-core:grounding-format` §2 defines: `claim` — "baseline integrity: `<repo>` is pinned at a verified,
 unmodified commit"; `verdict: CONFIRMED` (a repository that failed this gate never reaches a
-finding — it stopped the run instead); `evidence` — the three command outputs (the pinned SHA, the
-empty `--stat` diff, and the `--porcelain`/line-count result); `commit` — the same pinned SHA;
+finding — it stopped the run instead); `evidence` — the three command outputs, as three entries
+with no `path`, in this order and in exactly these words, so that a later session builds the same
+finding from the same tree (Phase 5, *Saved dispatches*):
+`- note: git -C "<repo>" rev-parse HEAD printed <the pinned commit>`,
+`- note: git -C "<repo>" diff --ignore-cr-at-eol --stat printed nothing`, and
+`- note: git -C "<repo>" status --porcelain printed nothing` — or, where it listed entries,
+`- note: git -C "<repo>" status --porcelain listed <the paths step 3 read from its -z form, in that order, separated by ", ">, each absent at the pinned commit or holding as many lines as it holds there`
+— `"<repo>"` written so, as the commands above write it; `commit` — the same pinned SHA;
 `altitude: implementation`; `horizon: current`; `consumed_by: none` — which on a baseline finding is
 permanent and reports no gap, per `workflows-core:grounding-format` §4.1: there is nothing for a PRD, an ARD or a
 specification to draw from an assertion that a commit is identifiable, so every downstream
@@ -1477,7 +1518,14 @@ maintenance dispatch are not saved. For each saved dispatch this command names:
   agent's return, a reused one too, in the same place and the same order, so the renumbering, the
   frame set each `[DG#n]` came from (its dispatch's id names it) and every test after them run
   over it unchanged. A reused result counts in the Final report's figures as the dispatch it
-  stands for.
+  stands for. **A `result_path` the agent could not write is no refusal**: a reply of
+  `status: INPUT_MISSING` naming `result_path`, with no receipt, is met as `run-dispatch` step 4
+  says — the agent dispatched once more without that line, and its inline return saved with
+  `done <folder> <id> --from -` and read as any return. Where that dispatch, or its `done`, fails
+  too, print the `NOTE:` `workflows-core:run-folder` §2 gives an exit 2, set
+  `run_folder: unavailable`, and go on with the inline return, unsaved. It never stops the run and
+  never fires `emit-block`: the statuses below that stop the run are an `INPUT_MISSING` that names
+  any other input.
 - **The input**: the block's text between its quotation marks, each line without its leading
   `> `, each bracketed placeholder replaced by its value and nothing else changed, as
   `run-dispatch` requires — a value as its source holds it, never quoted, wrapped, padded or
@@ -1485,8 +1533,9 @@ maintenance dispatch are not saved. For each saved dispatch this command names:
   replaced by those entries, each in the block's shape; a line its bracket says to omit left out.
   `repo_path` and `commit` are the two halves of the repository's `pin:<slug>` fact (Phase 3); a
   claim list is Phase 0 step 8's (or 8i's), in its file's order; a finding's fields are as the
-  saved result, or the block on file, it was taken from holds them; and every finding the input
-  names is named by its stable number (below). A repository is named by version already, by its
+  saved result, or the block on file, it was taken from holds them — a baseline's as Phase 3
+  fixes them, word for word — and every finding the input names is named by its stable number
+  (below), the findings Phase 6 supersedes being the ones its record names (Phase 6). A repository is named by version already, by its
   commit. **A frame set is named by version** with `--attach scratch/frames/<frame set>.txt`, a
   listing of the blob of each file the directory holds, written before this session's first
   dispatch that names it:
@@ -1494,14 +1543,19 @@ maintenance dispatch are not saved. For each saved dispatch this command names:
   No prompt names that file: the agent reads the directory itself, and a derive dispatch reads
   nothing in the run folder but its own result. So a frame set that changed between two sessions
   redoes the dispatches that read it, and only those.
-- **What a reply carries besides its result**: each `Untrusted-content notice:` line a
-  `code-grounder` or `grounding-verifier` reply puts after its receipt is written, with the Write
-  tool, to `<folder>/scratch/notices/<id>.txt` before `done`, and a reused result's are read from
-  there; an inline return keeps its own.
+- **What a reply carries besides its result**: where `dispatch` returns `action: dispatch`,
+  first remove `<folder>/scratch/notices/<id>.txt` where it exists — a session that died between
+  writing it and `done` left notices of a result no longer saved — then, after the reply, write
+  each `Untrusted-content notice:` line a `code-grounder` or `grounding-verifier` reply puts after
+  its receipt to that file, before `done`, through a quoted here-document
+  (`cat > "<folder>/scratch/notices/<id>.txt" <<'RUN_FOLDER_EOF'`, `mkdir -p` of its directory
+  first, a delimiter the text does not contain). A reused result's notices are read from there; an
+  inline return keeps its own.
 - **What is never recorded.** `done` is made only for a return this command goes on with
   (`run-dispatch` step 4): never for one whose status stops the run — a `code-grounder`
-  `INPUT_MISSING`, `REPO_MISSING` or `COMMIT_MISMATCH`; a `design-grounder` `INPUT_MISSING` or
-  `FRAME_SET_MISSING`; any verifier batch status but `OK`, and a verifier return holding a finding
+  `INPUT_MISSING` naming an input other than `result_path`, `REPO_MISSING` or `COMMIT_MISMATCH`;
+  a `design-grounder` `INPUT_MISSING` or `FRAME_SET_MISSING`; any verifier batch status but `OK`
+  (an `INPUT_MISSING` naming `result_path` aside, above), and a verifier return holding a finding
   `INPUT_MISSING` — and never for the returns that leave a finding in the state
   `PRD_GROUND_VERIFY_INCOMPLETE` or `PRD_GROUND_DOC_EVIDENCE` then stops on: a retry's, in
   whichever unit, and Phase 4.5's re-dispatch's. So the re-run each of those stops names dispatches
@@ -1519,8 +1573,8 @@ repository after the one that changed. It names each finding by its **stable num
 nothing another repository or frame set returns can move:
 
 - a finding on file: its own id;
-- a `[CG#n]` of this run, of the repository at place `i` — counted from 0, in repo-resolution
-  order, a repository Phase 4.5 added after the rest: `CG#<H + 1 + i·P + o>`, where `H` is the
+- a `[CG#n]` of this run, of the repository whose place is `i` (Phase 3, *Each repository's
+  place*): `CG#<H + 1 + i·P + o>`, where `H` is the
   highest `[CG#n]` id on file (0 where none), `P` the smallest power of ten greater than twice the
   larger of `H` and the claim count, and `o` is 0 for its baseline, `2k − 1` for the finding its
   Phase 5 dispatch numbered `CG#k` (Phase 4.5's replacement taking that number over), and `2m`
@@ -1530,7 +1584,7 @@ nothing another repository or frame set returns can move:
   and `DG#<H′ + 2m>` for the successor Phase 6 appends to the on-file `[DG#m]` it places in that
   frame set, `H′` being the highest `[DG#n]` id on file (0 where none).
 
-With `CG#40` the highest on file and 30 claims, `P` is 100, so the second repository's baseline is
+With `CG#40` the highest on file and 30 claims, `P` is 100, so the baseline of the repository at place 1 is
 `CG#141`, the `CG#1` and `CG#2` its dispatch returned are `CG#142` and `CG#144`, and the successor
 of its on-file `CG#7` is `CG#155`. A successor Phase 7 appends is named in no input and has none.
 
@@ -1576,7 +1630,8 @@ puts none in it:
   >   pull: false"
 
 Handle `status`: `OK` → collect `findings` — each tested against Phase 4.5's rule on a repository's prose files before the design dispatch builds `cg_findings` — **and collect `notes`** — a claim that touched a false-friend name, a claim whose search budget was exhausted. Report them with the findings: without them a `NOT-PROVABLE` `[CG#n]` whose search ran out is indistinguishable from one the code genuinely refutes, and only the first is worth another pass. `INPUT_MISSING` / `REPO_MISSING` → should not occur
-(Phases 0/1/3 already checked); if it does, stop and name the gap. `COMMIT_MISMATCH` → the tree
+(Phases 0/1/3 already checked); if it does, stop and name the gap — save an `INPUT_MISSING` naming
+`result_path`, which is met as *Saved dispatches* says and never stops the run. `COMMIT_MISMATCH` → the tree
 moved between Phase 3 and this dispatch — stop and re-run from Phase 3 **with `--rebaseline`**, for
 the reason Phase 7's `PRD_GROUND_VERIFY_COMMIT_MISMATCH` row states: a pin recorded before this
 run still stands, `HEAD` has left it, and a plain re-run stops with `PRD_GROUND_NEEDS_REBASELINE`.
@@ -1627,8 +1682,10 @@ grounding at all:
   >     text: [requirement text]
   >   [… every claim from Phase 0 step 8]
   > cg_findings:
-  >   [… every merged [CG#n] finding from this phase, in the shape design-grounder's Inputs declare:
-  >      id, claim, verdict, evidence, commit — each id its stable number, in the order of those numbers]"
+  >   [… every [CG#n] claim finding this phase merged — never a Phase 3 baseline, which answers no
+  >      requirement and so settles no capture question; under --no-code, the set read from file above —
+  >      in the shape design-grounder's Inputs declare: id, claim, verdict, evidence, commit — each id
+  >      its stable number, in the order of those numbers]"
 
 Handle `status`: `OK` → collect `findings` (may be empty — agreement produces none). `INPUT_MISSING`
 / `FRAME_SET_MISSING` → should not occur; stop and name the gap if it does. `NO_INDEX` → this
@@ -1703,6 +1760,24 @@ and `prerequisite` the cited finding carries on file. Where no declared prerequi
 `status: decided` record at all, every finding stays `current`, and this is reported plainly rather
 than left to look like nothing was checked.
 
+**The judgement is recorded, where the run folder is open**, so that a resumed session settles each
+finding as an earlier one did rather than judging it again, which could come out otherwise and
+change which findings Phase 7 verifies, and under which numbers (`workflows-core:run-folder` §3).
+The record is `scratch/phase6.json`, named by fact `phase6` as a path relative to the run folder:
+one JSON object holding `decisions` — for each prerequisite with a frozen decision, by key, the blob
+of the `decisions.md` Phase 4 read, `git hash-object --no-filters -- "<its path>"` — and
+`findings`, one entry per finding judged: its stable number (Phase 5; a `[DG#n]`'s with its frame
+set), its `claim` as it stands, and what was settled, `current` or `will-change` with the
+`prerequisite` written. Before judging, read fact `phase6`; where it is set, its file reads as one
+JSON object, and its `decisions` equal what Phase 4 read this session, a finding whose stable
+number and `claim` both match an entry takes that entry's settlement and is not judged. Every other
+finding is judged as above, all of them where the record does not hold. Then write the object back
+— the entries it held, the ones added, and `decisions` as read this session — through a quoted
+here-document, `cat > "<folder>/scratch/phase6.json" <<'RUN_FOLDER_EOF'` (a delimiter the text does
+not contain, `mkdir -p "<folder>/scratch"` first), and `fact <folder> phase6 --set 'scratch/phase6.json'`.
+A class-4 `[DG#n]` is in no entry: it takes what its cited `[CG#n]` is settled at. Where no
+prerequisite has a frozen decision, there is nothing to judge and nothing to record.
+
 **That case is ordinary, and it is no longer the *only* case.** A prerequisite's `decisions.md` is
 written by `/product-workflows:brd-interview` (its register phase) and gains its `[CD#n]` records from
 `/product-workflows:brd-reconcile`, both of which ship — so a prerequisite that has been through the
@@ -1775,7 +1850,7 @@ holds now, Phase 6's successors among them, before any dispatch below.
 
 - A `[CG#n]` batches with the other `[CG#n]` of the same repository. A finding this run produced belongs to the repository it was produced for — a claim finding to its Phase 5 dispatch's, a baseline to the repository Phase 3 pinned it for. `grounding/code-grounding.md` records no repository for a claim finding — `workflows-core:grounding-format` §2 gives the record no such field, and Phase 8 writes no section per repository — so an on-file `[CG#n]`, or a Phase 6 successor of one, belongs to the repository Phase 3 found unmoved whose recorded pin equals its `commit`, of which there is exactly one (Phase 3, *No two repositories share a pin*); a class-4 `[DG#n]`'s repository pair is read the same way, from the `[CG#n]` it cites.
 - A `[DG#n]` batches with the other `[DG#n]` of the same frame set — the one Phase 5 recorded for it, or for a Phase 6 successor the frame set Phase 8's placement puts its superseded block in. A class-4 `[DG#n]` carries, beside its frame set, the repository and commit of the `[CG#n]` it cites, so one frame-set batch may hold several repository pairs.
-- Within a group, put a repository's baseline `[CG#n]` first, then order the `[CG#n]` by the requirement id each one's `claim` names, in the order the claim list (Phase 0 step 8, or 8i) gives those ids — one naming an id the list does not hold after the rest, and two naming one id by stable number (Phase 5) — and the `[DG#n]` by finding id. Cut each group into batches of at most **25** findings, the baseline counting toward its batch. **The cap is defined here, and five other sites quote it and must change with it**: Phase 1's cost statement, with the paragraph under it; this command's documentation page, `docs/commands/prd-ground.md`, twice — its agent list under *How it runs* and its Phase 7 gate; and, in the source repository, `.claude/rules/brd-route.md`'s `/prd-ground` map line and `docs/maintainers/rationale.md`'s *verifier-blind-batched* section, whose dispatch arithmetic moves with it. A `CHANGELOG.md` entry that quotes it is history and stays as written.
+- Within a group, put a repository's baseline `[CG#n]` first, then order the `[CG#n]` by the requirement id each one's `claim` names, in the order the claim list (Phase 0 step 8, or 8i) gives those ids — those naming an id the list does not hold after the rest, by stable number (Phase 5), and two naming one id by stable number too — and the `[DG#n]` by finding id. Cut each group into batches of at most **25** findings, the baseline counting toward its batch. **The cap is defined here, and five other sites quote it and must change with it**: Phase 1's cost statement, with the paragraph under it; this command's documentation page, `docs/commands/prd-ground.md`, twice — its agent list under *How it runs* and its Phase 7 gate; and, in the source repository, `.claude/rules/brd-route.md`'s `/prd-ground` map line and `docs/maintainers/rationale.md`'s *verifier-blind-batched* section, whose dispatch arithmetic moves with it. A `CHANGELOG.md` entry that quotes it is history and stays as written.
 - **Nothing about a finding's answer decides its batch** — not its `verdict`, `evidence`, `control` or `cites`. A batch made of "the `NOT-PROVABLE` ones" would tell the blind step what the original concluded.
 
 **Two dispatches per batch, in this order: `mode: derive`, then `mode: compare`** (`workflows-core:grounding-format` §8). At most four dispatches per Agent message — wait for a message's dispatches before sending the next — and a batch's compare dispatch may go in any message after its derive dispatch has returned. Both are pinned to the Opus chain (`review_model`, frontmatter-pinned, no override unless §10 enforces a model). Each is a saved dispatch (Phase 5, *Saved dispatches*) given `result_path`, the derive dispatch in the `blind` area, and names every finding by its stable number (Phase 5, *Stable numbers*), as do the retries, second opinions and sweep below:
@@ -1893,7 +1968,7 @@ finding exactly as hard as any other without being told which it is.
   The same repair as Phase 5's own `COMMIT_MISMATCH`: re-run from Phase 3, which re-pins and re-grounds. **`--rebaseline` is part of the remedy, not an optional extra**, and the message says so: where `grounding/baselines.md` recorded a pin for this repository when the run began, this run never replaced it — Phase 8 records a new pin, and this stop comes before it — and `HEAD` has moved off it, so the re-run stops with `PRD_GROUND_NEEDS_REBASELINE` unless the flag is given. "Re-run from a clean tree" on its own would send the operator straight into that second stop. Where no pin was recorded, the flag changes nothing and costs nothing.
 - **`INPUT_UNBLIND`** (derive only) — this command handed the blind step a finding's answer. Stop, and fire `emit-block` per Phase 11's capture-at-block invariant — a dispatch this command controls getting the contract wrong is a plugin gap:
   `PRD_GROUND_VERIFY_UNBLIND: the derive dispatch for <the batch's finding ids> carried <field> on <finding-id> — the blind step must never be handed the answer it re-derives. No finding was written.`
-- **`INPUT_MISSING`** — a batch anchor was absent, a `[CG#n]` batch named more than one commit, or `mode` was absent or unrecognised. Stop, quoting what the agent named, and fire `emit-block` as above (most often a `[DG#n]` batch sent without its `inventory` or its `frame_set_dir` — `inventory` first, because it is the newest requirement and the one whose omission made a class-1 finding permanently unverifiable).
+- **`INPUT_MISSING`** — a batch anchor was absent, a `[CG#n]` batch named more than one commit, or `mode` was absent or unrecognised. (One naming `result_path`, which the agent could not write, is none of these: it is met as Phase 5's *Saved dispatches* says, and stops nothing.) Stop, quoting what the agent named, and fire `emit-block` as above (most often a `[DG#n]` batch sent without its `inventory` or its `frame_set_dir` — `inventory` first, because it is the newest requirement and the one whose omission made a class-1 finding permanently unverifiable).
 - **`REPO_MISSING` / `FRAME_SET_MISSING` / `NO_INDEX` / `STALE_INDEX`** — the source this batch rests on is gone or unusable (a repository unmounted mid-run, a frame set removed or exported without an index since it was ground). Stop, naming the batch's findings and the path the agent reported — and the command that resolves it: on `NO_INDEX` that is `/workflows-core:frames <this run's KEY>`, then re-run this command. **On `STALE_INDEX` it is not** — the index is there and its descriptions are intact; the frames are gone. Re-running `/frames` on an empty directory writes nothing (`workflows-core:grounding-format` §6.2 step 6 forbids it), so naming it would send the operator to a no-op. Name the missing frames instead: restore them to the directory, then re-run this command — and `/frames` only if the set changed while they were away.
 
 **Finding statuses:**
@@ -2189,8 +2264,12 @@ first write, read `effect <folder> p8-write state`:
   files …*): write them again, the copies standing as they are, with no second `start`.
 
 The run never reaches this phase with the effect `done` (Phase 0 step 10, *A run Phase 8 began*).
-Once the stamp that ends the phase is written, the run writes *The record* (below) and then
-`effect <folder> p8-write done`. A stop between `start` and `done` — a lineage stamp's, say —
+**Each write is owner-checked**: before every step below that writes a file — each grounding file's
+findings and the blocks it edits in place, `grounding/baselines.md`'s entries, each section, the
+ledger script's run, each stamp — `log <folder> 'p8-write <the file>'`, so that a session another
+one has taken over stops (Phase 0 step 10, *Taken over*) before its next write rather than writing
+on beside the session that owns the run. Once the stamp that ends the phase is written, the run
+writes *The record* (below) and then `effect <folder> p8-write done`. A stop between `start` and `done` — a lineage stamp's, say —
 leaves the effect `started`, and the next session of the run asks whether to restore. Where the run
 folder is unavailable, the phase writes as before.
 
@@ -2626,9 +2705,11 @@ that check's file as the same step says. Nothing in this run writes either file 
 **The record**, where the run folder is open: after the stamp, and before
 `effect <folder> p8-write done`. A resumed run that finds that effect `done` runs none of Phases 1
 to 8 (Phase 0 step 10), so everything Phases 9 to 11 and the Final report take from those phases
-is written here, as one JSON object, to `<folder>/scratch/phase8.json` with the Write tool; then
-`fact <folder> phase8 --set 'scratch/phase8.json'`, then `effect <folder> p8-write done`. The fact
-names the file rather than holding the object because a fact is one command-line argument, whose
+is written here, as one JSON object, to `<folder>/scratch/phase8.json` through a quoted
+here-document, `cat > "<folder>/scratch/phase8.json" <<'RUN_FOLDER_EOF'`, its delimiter one the
+object does not contain; then `fact <folder> phase8 --set 'scratch/phase8.json'` — a path relative
+to the run folder, which a reader resolves against it — then `effect <folder> p8-write done`. The
+fact names the file rather than holding the object because a fact is one command-line argument, whose
 length Linux caps (at 128 KiB with the usual 4 KiB pages), and a large run's lists pass that; it is
 set only once the file is written whole.
 The object holds:

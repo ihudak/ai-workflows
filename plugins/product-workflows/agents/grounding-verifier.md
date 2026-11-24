@@ -223,7 +223,7 @@ none of your own return fields — `own_verdict`, `own_evidence`, `own_control`,
 `control_outcome`, `blind_disputed`: write *my independent result* and *its check* instead, and name
 an evidence entry by its path and line (*the entry at Order.java:11*), never by its position, which
 moves once your caller appends to the record's list. Name another finding by the id your caller
-handed you, written `[CG#n]` or `[DG#n]`: it is the id the record carries, so nothing renumbers it. Name no directory of this machine by its value
+handed you, written `[CG#n]` or `[DG#n]`, and by no other: your caller reads each id it handed you back to the id the record carries, so a number it did not hand you names nothing. Name no directory of this machine by its value
 — `repo_path`'s, `frame_set_dir`'s, or a scratch or home directory you worked in: write *the
 checkout* for `repo_path`, and *the frame set* for `frame_set_dir`, instead. A path or a route the repository's own code or configuration names is not one
 of those, whatever its shape (`/tmp/update.json` in a script it carries, `/api/v1/ratings`): it
