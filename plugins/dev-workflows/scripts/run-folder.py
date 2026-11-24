@@ -17,7 +17,7 @@ Usage:
   run-folder.py answers <folder> [--match <substring>]
   run-folder.py put <folder> scratch/<path> --from <file|->
   run-folder.py writer <folder> <id> --tree <dir> [--scope <rel>]... --agent <name> --agent-file <path>
-                --model <id> --input <file|-> [--attach <path relative to the folder>]...
+                --model <id> --input <file|-> [--attach <path relative to the folder>]... [--redo]
   run-folder.py tree-note <folder> --tree <dir> [--scope <rel>]...
   run-folder.py effect <folder> <effect-id> start|done|state
   run-folder.py stale <folder> [--agent <name>=<file>]... [--model <name>=<id>]...
@@ -59,7 +59,8 @@ whose arguments differ. A writer is a dispatch that edits files in a git work tr
 `dispatch` does and keeps its record under "writers", with a snapshot of the scope (the paths `git status`
 lists, each with a content hash) taken before it. It prints dispatch (new receipt path), interrupted (a started
 record: the paths that differ from the snapshot), intact or changed (a done record: whether each path the writer
-changed still holds what the run last left there). `done` on a started writer takes the after-snapshot, records
+changed still holds what the run last left there); `writer --redo` dispatches anew whatever the record says,
+from a new snapshot, removing the old receipt. `done` on a started writer takes the after-snapshot, records
 the paths it changed ("wrote") and merges them into the run's per-tree map "trees"; `tree-note` brings that map
 up to date after an edit or commit the command made itself. `writer` takes the lock, and the owner check only
 where it dispatches. --command and --key are limited to
@@ -814,8 +815,8 @@ def cmd_writer(a):
     rec = (run.get("writers") or {}).get(a.id)
     rec = rec if isinstance(rec, dict) else None
     receipt = recorded_result(folder, rec, a.id) if rec else None
-    if rec and rec.get("fingerprint") == fp and rec.get("tree") == real and rec.get("scope") == scope \
-            and receipt is not None:
+    if not a.redo and rec and rec.get("fingerprint") == fp and rec.get("tree") == real \
+            and rec.get("scope") == scope and receipt is not None:
         before = rec.get("before") or {}
         if rec.get("state") == "started":
             now = snapshot_scope(top, scope)
@@ -838,7 +839,8 @@ def cmd_writer(a):
             else:
                 emit({"action": "intact", "receipt": receipt})
             return 0
-    # a dispatch: the only branch that writes, so the only one the owner check guards
+    # a dispatch (also --redo's, whatever the record says): the only branch that writes, so the only one the
+    # owner check guards
     run = load_for_write(a.folder)
     before = snapshot_scope(top, scope)
     rel = "main/results/%s.%s.md" % (a.id, uuid.uuid4().hex[:NONCE_HEX])
@@ -2066,11 +2068,13 @@ def selftest():
             with open(os.path.join(tree, name), "w") as fh:
                 fh.write(body)
 
-        def wr(home, folder, wid, tree, afile, inp, scope=(), model="m1", session=None):
+        def wr(home, folder, wid, tree, afile, inp, scope=(), model="m1", session=None, redo=False):
             a = ["writer", folder, wid, "--tree", tree, "--agent", "w", "--agent-file", afile,
                  "--model", model, "--input", inp]
             for sc in scope:
                 a += ["--scope", sc]
+            if redo:
+                a.append("--redo")
             return cli(a, home, session)
 
         def wdone(home, folder, wid, tree, afile, inp, receipt="receipt", edits=(), session=None, scope=()):
@@ -2256,6 +2260,45 @@ def selftest():
             rc, d, err = cli(["done", f, "x1", "--from", "-"], home, stdin=b"r")
             expect(rc == 2, (rc, err))
 
+        @case("writer-redo")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            # changed -> --redo dispatches anew from the tree as it stands; its done is intact again
+            o = wdone(home, f, "w1", tree, af, inp, edits=(("f", "two\n"),))
+            edit(tree, "f", "three\n")
+            rc, o2, _e = wr(home, f, "w1", tree, af, inp)
+            expect(o2["action"] == "changed", o2)
+            rc, o3, err = wr(home, f, "w1", tree, af, inp, redo=True)
+            expect(rc == 0 and o3["action"] == "dispatch" and o3["receipt"] != o["receipt"], (rc, o3, err))
+            expect(not os.path.exists(o["receipt"]), "old receipt kept")
+            rec = run_json(f)["writers"]["w1"]
+            expect(rec["state"] == "started" and rec["before"] == {"f": sha256_bytes(b"three\n")}, rec)
+            edit(tree, "f", "four\n")
+            rc, d, err = cli(["done", f, "w1", "--from", "-"], home, stdin=b"again")
+            expect(rc == 0 and d == {"recorded": True}, (rc, d, err))
+            rc, o4, err = wr(home, f, "w1", tree, af, inp)
+            expect(rc == 0 and o4 == {"action": "intact", "receipt": o3["receipt"]}, (rc, o4, err))
+            expect(read(o4["receipt"]) == "again", o4)
+            # interrupted -> --redo dispatches anew over what it left
+            inp2 = mkfile("brief two")
+            rc, o5, _e = wr(home, f, "w2", tree, af, inp2)
+            edit(tree, "g", "half\n")
+            with open(o5["receipt"], "w") as fh:
+                fh.write("partial")
+            rc, o6, _e = wr(home, f, "w2", tree, af, inp2)
+            expect(o6["action"] == "interrupted", o6)
+            rc, o7, err = wr(home, f, "w2", tree, af, inp2, redo=True)
+            expect(rc == 0 and o7["action"] == "dispatch" and o7["receipt"] != o5["receipt"], (rc, o7, err))
+            expect(not os.path.exists(o5["receipt"]), "interrupted receipt kept")
+            expect(run_json(f)["writers"]["w2"]["before"]["g"] == sha256_bytes(b"half\n"), run_json(f)["writers"]["w2"])
+            # owner-checked, like the dispatch branch
+            fa = nr(home, session="A")
+            wdone(home, fa, "w3", tree, af, inp, session="A")
+            before = read(os.path.join(fa, "run.json"))
+            rc, o8, err = wr(home, fa, "w3", tree, af, inp, session="B", redo=True)
+            expect(rc == 9 and read(os.path.join(fa, "run.json")) == before, (rc, o8, err))
+
     for line in results:
         print(line)
     return 1 if failures else 0
@@ -2356,6 +2399,7 @@ def main(argv):
             w.add_argument("--model", required=True)
             w.add_argument("--input", required=True)
             w.add_argument("--attach", action="append")
+            w.add_argument("--redo", action="store_true")
     e = sub.add_parser("effect")
     e.add_argument("folder")
     e.add_argument("id")
