@@ -867,8 +867,14 @@ behaviour, not the behaviour.
     save in `close-run`, just before Phase 11 step 5, where Phase 11 says what the run does:
     `PRD_GROUND_RUN_TAKEN_OVER: another session (<id>) took this run over — stopping without writing.`
     `<id>` is the session the script's stderr line names (`owned by session <id>`); where that line
-    says the folder was removed instead, print
-    `PRD_GROUND_RUN_TAKEN_OVER: another session started this run over — stopping without writing.`
+    says the folder was removed, or no longer exists, instead, print
+    `PRD_GROUND_RUN_TAKEN_OVER: another session started this run over or finished it — stopping without writing.`
+    What the script does decides which line comes: after another session's *Start over*, the
+    folder stands again at the same path, a new run that session owns, so a read there succeeds on
+    that run and the next write exits 9 naming the session; a read exits 2 with
+    `run folder no longer exists`, and a write's line says the folder was removed, only while no
+    folder stands there — before that session's new `open`, where it made none, or once a run
+    another session owns has finished and removed it.
     Like `PRD_GROUND_TYPED_ONLY`, this stop takes no tail at all: no maintenance, feedback, cost
     entry or `commit-artifacts` (Phase 11), no `emit-block`, no `Run folder kept:` line, and no
     Final report.

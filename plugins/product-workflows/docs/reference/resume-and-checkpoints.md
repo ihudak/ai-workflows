@@ -104,7 +104,7 @@ The commands that print a suggested `/rename <KEY>-<slug>-<role>` line are the P
 
 ## Mid-phase checkpoints
 
-None of `product-workflows`'s seventeen commands carries a mid-phase checkpoint — each authoring or grounding run reaches the end-of-run write described above only once it finishes. A run of [`/prd-ground`](../commands/prd-ground.md#stopping-and-resuming) that stops, or is cut off, once it has opened its run folder at the end of its Phase 0 keeps its working state there, outside the specs repository, and running the same command again on the same machine offers to continue it; that folder is not `resume.md`, and the run writes no pointer when it stops.
+None of `product-workflows`'s seventeen commands carries a mid-phase `resume.md` checkpoint — each authoring or grounding run reaches the end-of-run write described above only once it finishes. A run of [`/prd-ground`](../commands/prd-ground.md#stopping-and-resuming) that stops, or is cut off, once it has opened its run folder at the end of its Phase 0 keeps its working state there, outside the specs repository, and running the same command again on the same machine offers to continue it; that folder is not `resume.md`, and the run writes no pointer when it stops.
 
 ## The contract
 
