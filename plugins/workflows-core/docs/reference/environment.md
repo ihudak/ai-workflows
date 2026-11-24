@@ -1,8 +1,8 @@
 # Environment reference
 
-[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first use of this plugin. This page says what each variable **is** — its default, what happens when it is unset, and what happens when it points somewhere unreadable. The plugin documents ten user-settable variables.
+[Getting started](../getting-started.md) says what each variable is *for* and what to export before your first use of this plugin. This page says what each variable **is** — its default, what happens when it is unset, and what happens when it points somewhere unreadable. The plugin documents 11 user-settable variables.
 
-The ten are what the whole family needs. Nine are read by a reference this plugin ships, inside whichever plugin's command is running, and `/frames` also checks `$SPECS_PATH` itself and stops on an unset one; the tenth, `$WORKFLOWS_FABLE_ESCALATION`, is documented here and read by `/dev-workflows:implement` alone. Four of the ten are the price-table override and the three run-flag defaults; of the other six, `$WORKFLOWS_FABLE_ESCALATION` among them, the sibling plugins' own commands use these:
+The eleven are what the whole family needs. Nine are read by a reference this plugin ships, inside whichever plugin's command is running, and `/frames` also checks `$SPECS_PATH` itself and stops on an unset one; the tenth, `$WORKFLOWS_FABLE_ESCALATION`, is documented here and read by `/dev-workflows:implement` alone; and the eleventh, `$XDG_STATE_HOME`, is read by `scripts/run-folder.py`, which every plugin whose commands keep a run folder ships. Four of the eleven are the price-table override and the three run-flag defaults, and `$XDG_STATE_HOME` says where a command keeps a run folder, in whichever plugin it runs; of the other six, `$WORKFLOWS_FABLE_ESCALATION` among them, the sibling plugins' own commands use these:
 
 - `dev-workflows` uses `$SPECS_PATH`, `$REPOS_PATH`, `$GIT_USER_INITIALS`, since it branches a code repository, `$ARCHITECTURE_REPO_PATH`, through `/design`'s architecture grounding, and `$WORKFLOWS_FABLE_ESCALATION`, through `/implement`'s HIGH-RISK coding — not `$DOCS_PATH`, since it grounds nothing in documentation.
 - `product-workflows` uses `$SPECS_PATH`, `$REPOS_PATH`, `$DOCS_PATH` and `$ARCHITECTURE_REPO_PATH`, through `/create-ard`, `/specify`, `/update-spec` and `/promote-decisions`, and `$GIT_USER_INITIALS`, since `/promote-decisions` branches the architecture repository.
@@ -96,7 +96,7 @@ Until that pull request merges, your specs checkout shows those files as modifie
 
 **Resolution.** First-found-wins, three tiers: `$DEV_WORKFLOWS_COST_PRICES` (a path) → a repo-local `cost-prices.yaml` → the bundled `${CLAUDE_PLUGIN_ROOT}/references/cost-prices.yaml`. Whichever file resolves must carry a top-level `models:` map keyed by model id — a file missing that wrapper, override or default, prices every model as `cost_usd: null` rather than raising an error.
 
-**When unset.** Resolution falls straight through to the repo-local file, then the bundled default. Of the ten variables, this is the one most users never touch.
+**When unset.** Resolution falls straight through to the repo-local file, then the bundled default. Of the variables the family itself defines, this is the one most users never touch.
 
 **When it points somewhere unreadable.** Treated the same as "not set at this tier" — resolution continues down the same chain rather than failing the run.
 
@@ -124,6 +124,18 @@ A stopped run you resume on a session on Fable or Mythos, or under `--enforce-mo
 **When it points somewhere unreadable.** Not applicable — this variable holds a literal value, not a path.
 
 **A one-run route to Fable**, whatever the variable says, is `--enforce-model=fable` (Run flags, below). It runs every subagent the run dispatches on Fable — the planner, the reviewer and the scanners too, not only the steps that write code — and asks nothing.
+
+## `$XDG_STATE_HOME`
+
+- **`$XDG_STATE_HOME`** — where programs keep state that should outlive a session, from the XDG Base Directory specification; not a variable of this family's own. A command that keeps a **run folder** — its working state for one run, so that a run stopped mid-way (a crash, a container restart, usage limits) continues when you run the same command again on the same machine — keeps it under this directory. A command's own page says whether it keeps one.
+
+**Resolution.** Where it is set to an absolute path, runs keep their state in one directory under it, a folder per run, readable by you alone; a run that stops names its folder. The family writes nothing else under it.
+
+**When unset.** The specification's default, `~/.local/state`, takes its place. A value that is empty reads the same, and so does a relative path, which the specification says to ignore.
+
+**When it points somewhere unwritable.** The run goes on exactly as it would without a run folder, after one line, `NOTE: no run folder (<reason>); continuing without one`, and cannot then be resumed. A command never fails because of its run folder, and the same holds for a folder that stops being writable mid-run.
+
+**Where to point it.** At a directory that survives what you want a run to survive: on a host, the default survives a reboot; in a container, the default survives a restart only where the container keeps `~/.local/state`, so point this variable at a directory it keeps, or keep that one. A run folder may hold what the run handed its agents — code and diffs among them. One that finishes is removed at its end; one that stops is kept, so that running the same command again can resume it, and is removed by a later run of any command that keeps one once no session has written it for 30 days.
 
 ## Run flags
 

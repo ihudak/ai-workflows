@@ -79,7 +79,9 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   comma-separated token — a slug, or an absolute path to a clone — so the run asks nothing about
   them; without it the run lists the clones under `$REPOS_PATH` as candidates and asks — all but
   the specs repository and the documentation root, which are no code, though either may still be
-  named. It asks on every run not given this flag, a re-run included; where the folder's
+  named. It asks on every run not given this flag, a re-run included — save a run that resumes,
+  which takes the answer it recorded itself while the question it would ask, with its list of
+  clones, is unchanged ([Stopping and resuming](#stopping-and-resuming)); where the folder's
   `grounding/baselines.md` records some of the clones listed, but not all, it offers those first, as
   recommended, and you still confirm.
 - **`--repos-path <dir>[:<dir>…]`** (optional) — the `$REPOS_PATH` this run uses in place of the
@@ -158,8 +160,9 @@ flowchart TD
 ```
 
 The phases are the same shape on either route — only Phase 0's gate and claim-list source fork, per
-"Which route" above. Five subagents are dispatched, and all five are read-only — the first four
-against every repository or root they touch: `workflows-core:docs-grounder` (Phase 4.5, read-only grounding on the shipped product
+"Which route" above. Five subagents are dispatched, and all five are read-only toward every
+repository and root they touch, `code-grounder` and `grounding-verifier` writing only their own
+result file, into the run's folder ([Stopping and resuming](#stopping-and-resuming)): `workflows-core:docs-grounder` (Phase 4.5, read-only grounding on the shipped product
 docs — default ON when `$DOCS_PATH` resolves, advisory, never a gate), `code-grounder` (Phase 5, one
 per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), `design-grounder` (Phase 5, one per exported frame set, after every
 `code-grounder` instance has returned — its fourth reconciliation class cites a `[CG#n]` — frontmatter-pinned to Opus, no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one), and
@@ -191,11 +194,13 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   unreadable, or carrying no markdown file is a silent, non-blocking skip. Turned off with
   `--no-docs`, and also off under `--no-code` — a divergence is written into `code-grounding.md`,
   which that mode does not write. **A document is never evidence for a `[CG#n]`** — see the Phase 4.5 gate below.
-- **`python3`** — for two bundled scripts, standard library only: `scripts/bounded.py`, which caps
-  the `git remote` call Phase 1 makes in each clone it lists, and, on the BRD route,
+- **`python3`** — for three bundled scripts, standard library only: `scripts/bounded.py`, which caps
+  the `git remote` call Phase 1 makes in each clone it lists; `scripts/run-folder.py`, which keeps
+  the run's folder ([Stopping and resuming](#stopping-and-resuming)); and, on the BRD route,
   `scripts/ledger-evidence.py`, which writes the coverage ledger's `evidence` column in Phase 8.
-  Without it Phase 1 skips every clone whose call fails, and the ledger's column is left as it stood,
-  the final report saying so.
+  Without it Phase 1 skips every clone whose call fails, the run goes on without a folder after one
+  `NOTE:` line and cannot be resumed, and the ledger's column is left as it stood, the final report
+  saying so.
 - **A clean working tree per resolved repository.** The Phase 3 baseline-integrity gate runs
   `rev-parse HEAD`, a `diff --ignore-cr-at-eol --stat`, and a line-count check on anything
   `status --porcelain` reports, **before any finding is written**. Any non-empty content diff stops
@@ -470,6 +475,17 @@ ever proceeds once `/create-prd`'s own `prd/<KEY>-<slug>` branch has merged.
   On the idea route, `prd.md` itself — a claim list read off an unmerged artifact would ground a
   document `/create-ard`, `/specify` and [`/epics`](epics.md) cannot yet see. See "What it needs" above for the exact stop
   conditions on each route.
+- **Phase 0's last step, and every phase after it — the run's folder.** Three stops are the run
+  folder's own ([Stopping and resuming](#stopping-and-resuming)). `PRD_GROUND_RUN_TAKEN_OVER`, in
+  whichever phase: another session has resumed this run, or started it over, so this one stops at
+  once and writes nothing more — no cost entry, no terminal commit, no `Run folder kept:` line and no
+  Final report. `PRD_GROUND_WRITE_INTERRUPTED`, on a resumed run whose earlier session stopped
+  part-way through Phase 8's writes, where you answer *Stop* rather than restore the files: they are
+  left as they are now, and the folder keeps the copies a restore needs, so running the command again
+  and resuming asks once more, and restoring puts them back and writes them again. `PRD_GROUND_WRITE_RECORD_LOST`, on a resumed run
+  whose earlier session finished Phase 8's writes, where the record of what that session settled
+  cannot be read: the run cannot hand the findings off or report on them, and the stop says to review
+  the files under `grounding/` and hand them off yourself, or to run the command again and start over.
 - **Phase 3 — baseline integrity, run by the orchestrator itself, not delegated to an agent.**
   Every repository is pinned and proven clean in content — not merely in `git status` — before
   Phase 5 dispatches a single agent. `code-grounder` and `grounding-verifier` each separately
@@ -644,7 +660,7 @@ baseline finding the run writes per repository is `CONFIRMED` too, and is not on
 
 ## What it offers next
 
-Phase 10's offer depends on the route, and nothing is run for you. An offer marked *after the merge* says what has to reach the specs repo's default branch first, worded for how this run's handoff ended. A run that stops before it writes findings makes no offer beyond the stop's own remedy. A stop or *Cancel* still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no resume pointer — and with no session maintenance or feedback either, save after a stop in Phase 3, 5 or 7, which runs both; the one stop that runs none of this is `PRD_GROUND_TYPED_ONLY`, where the model started the command and nobody elected a run. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
+Phase 10's offer depends on the route, and nothing is run for you. An offer marked *after the merge* says what has to reach the specs repo's default branch first, worded for how this run's handoff ended. A run that stops before it writes findings makes no offer beyond the stop's own remedy. A stop or *Cancel* still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no resume pointer — and with no session maintenance or feedback either, save after a stop in Phase 3, 5 or 7, which runs both. Two stops run none of this: `PRD_GROUND_TYPED_ONLY`, where the model started the command and nobody elected a run, and `PRD_GROUND_RUN_TAKEN_OVER`, where another session has taken the run over ([Stopping and resuming](#stopping-and-resuming)). A stop taken once the run's folder is open also prints, after its own message, a `Run folder kept:` line, save the two that section names. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
 
 **On the idea route:**
 
@@ -659,6 +675,37 @@ Phase 10's offer depends on the route, and nothing is run for you. An offer mark
 - **A declared prerequisite slice whose decisions are not frozen yet** → *Decide a prerequisite first* beside the options above. It prints `/brd-interview <PREREQ-KEY>` for each such slice and a re-run of this command once its decisions are frozen, and runs nothing.
 
 Above any of these lists, the run names every customer image a row of this slice cites that no frame set holds — a report only.
+
+## Stopping and resuming
+
+A session can end in the middle of a run — a crash, a container restart, usage limits that stop you for hours. So the run keeps its working state in a **run folder**, which it opens at the end of Phase 0, once every Phase 0 refusal has had its chance, and running `/product-workflows:prd-ground <KEY>` again on the same machine offers to continue it. The folder lies outside every repository and is readable by you alone, so nothing in it is ever committed; where it lives, and how to keep it across a container restart, is on `workflows-core`'s own environment page. It is named after this command, the key and the specs repository — by its `origin` — and not after the directory you start in, so a run started from another directory finds it, and another project whose own specs repository holds the same key gets a folder of its own. Where no folder can be made or written — a full disk, a directory you cannot write — the run prints one `NOTE:` line and goes on exactly as it would without one, and cannot then be resumed; a folder that stops being usable mid-run is met the same way.
+
+**What a resume reuses.**
+
+- **Agent results.** Every result of `code-grounder`, `design-grounder` and `grounding-verifier`, and of Phase 4.5's one-claim re-dispatch, is saved once the run has gone on with it. A return that stops the run is never saved, so the run that resumes after that stop dispatches it again rather than meeting the same stop on a saved result. A resumed run reuses a saved result only while the dispatch it would make now is the same — the same clone at the same commit, the same claims and findings, the same frame-set files — and the agent's instructions and its model are unchanged, save a result you choose to keep (below); it dispatches the rest. An agent cut off mid-flight is dispatched again. Phase 4.5's `docs-grounder` and Phase 11's maintenance dispatch are not saved, and run again. The Final report of a resumed run says what it reused, on one line — `Resumed: <r> saved agent result(s) reused, <d> dispatched (…)`, in all and for each agent — or, where it went on from the handoff, that it reused and dispatched nothing; a resume that redid work you expected it to reuse shows there.
+- **Your answers.** Phase 1's repository questions, Phase 3's rename question, Phase 4.5's leads question and Phase 9's handoff choice are recorded with what you were shown. A resumed run reuses each while the question it would ask is shown the same, printing `Answer reused from earlier in this run — …`, and asks again where it is not: Phase 4.5's documentation pass runs again, so its leads question is asked again wherever it returns other leads. An answer that ends the run — a *Cancel* in Phase 1, Phase 3's typed *cancel* — and *I'll clone it — wait* are never recorded, so a resume asks again rather than stopping, or waiting, on the same answer; Phase 9's *Cancel* only declines the handoff, and is recorded like any other answer. Every other question is asked again. To answer a recorded question again, start over.
+- **What the run settled.** Each repository's pin and its place in the numbering are recorded, and so is the horizon Phase 6 settled each finding at, which a resumed run takes while the prerequisites' frozen decisions it was settled against are unchanged — so, where nothing they rest on has changed, findings are numbered and settled as the earlier session did.
+- **Phase 8's writes and Phase 9's handoff, each made once.** Before Phase 8 first writes, the run copies into the folder each file it may write that exists — `grounding/code-grounding.md`, `grounding/design-grounding.md`, `grounding/baselines.md` and, on the BRD route, `coverage-ledger.md`. A resumed run whose earlier session finished Phase 8 runs none of Phases 1 to 8: it goes on at Phase 9, or at Phase 10 where the handoff was made too, from the record that session saved, and grounds nothing again. One whose earlier session stopped part-way through Phase 8's writes first asks whether to restore those files to how they stood before that session began writing and write them again — recommended — or to stop. A handoff an earlier session began and never recorded as finished is made again on the branch that session made or found, so nothing is committed twice. On the BRD route, where an earlier session's Phase 8 left `coverage-ledger.md` changed and uncommitted on your default branch, Phase 0's ledger gate does not stop the resumed run on that change, which is the run's own.
+
+**The question it asks.** On a start that finds this run unfinished, the run asks whether to resume it — recommended — or start over, showing when it started, when it was last written, the last phase it logged and how many agent results it holds, and also:
+
+- where another session owns the run, that the session may still be running in another terminal or container, and that resuming takes it over;
+- where the arguments you typed differ from those it ran with, both: resuming goes on with the arguments typed now and redoes the saved results they change, so a stop that names a flag to add — `PRD_GROUND_NEEDS_REBASELINE`'s `--rebaseline` — is resumed by typing the command with it; the run then records them in place of the earlier ones, and a later start compares with these;
+- unless an earlier session finished Phase 8's writes, each repository that has moved since this run pinned it, with how many saved results that leaves unused, and each it can no longer read where it pinned it — and, where a moved repository's findings fed a design pass, that each design pass is done again too wherever those findings come back otherwise, and with it the `[DG#n]` verification it feeds wherever its own findings do;
+- that resuming reuses each answer the run recorded while its question is unchanged;
+- where an earlier session finished Phase 8's writes, that resuming goes on from the handoff and grounds nothing again, or, where it stopped part-way through them, that resuming first asks whether to put the files back, and starting over leaves them as they are now.
+
+*Start over* deletes the folder, its saved results and recorded answers with it, and the run goes on as a new one.
+
+**Moved repositories.** A resumed run that reaches Phase 3 pins each repository again there. A pin `grounding/baselines.md` already records decides first, as on any run: a repository that has moved off it stops the run with `PRD_GROUND_NEEDS_REBASELINE` unless `--rebaseline` is given. Otherwise a repository whose `HEAD` has left the pin this run logged is pinned at its new `HEAD`, and its grounding and verification are redone, and so is every design pass — whose input carries every repository's code findings — with the `[DG#n]` verification it feeds wherever those findings come back otherwise; every other repository's saved results are reused. The Final report says `<repo> moved since this run pinned it (<old> → <new>); its grounding is redone`.
+
+**Changed instructions or models.** A saved result is also tied to its agent's own instructions — the `code-grounder`, `design-grounder` or `grounding-verifier` file — and to the model it ran on, so a plugin update that changes one of those three agents, or a session that resolves another model for them, makes it stale. A shared reference an agent reads while it works does not count: a change to one between two sessions — to `grounding-verifier`'s `grounding-format` reference, say — leaves the saved results reused, as written under the reference before it. A resumed run counts the stale results at the end of Phase 2, once it knows the model: ten or fewer are redone without asking, one line saying how many and why; more than ten, and it asks *Resume and redo them*, *Resume and keep them* or *Start over*, recommending none, where *Start over* begins a new run at Phase 1. Of those, a `grounding-verifier` result written below Opus is redone whatever you answer, since every verification is an Opus re-derivation. The Final report names each result kept, on a `Kept from earlier agent instructions or models:` line.
+
+**One session per run.** Resuming takes the run over, and so does *Start over*, whose new run stands at the same place: where Claude Code names each session, a session still running the run, in another terminal or container, stops with `PRD_GROUND_RUN_TAKEN_OVER` the next time it writes to the folder, writing nothing more. An agent that session had already dispatched may keep working until then. Where a session has no name from Claude Code, nothing tells the two apart, and neither stops.
+
+**Blind verification.** Each blind `mode: derive` result is saved apart from every grounder's result, and in that mode the verifier reads nothing else in the folder. A resumed run reuses this run's own verification and never an earlier run's: *Start over* deletes the folder, and a run that finishes removes it.
+
+**When it stops, and when it finishes.** A stop the run takes once its folder is open keeps the folder and prints, after its own message, `Run folder kept: <folder> — run /product-workflows:prd-ground <KEY> again to resume.` — save `PRD_GROUND_RUN_TAKEN_OVER`, and Phase 0's held ledger stop (an uncommitted change to `coverage-ledger.md` on your default branch) on a run that has only just made its folder, which removes the folder, since it holds nothing yet. After `PRD_GROUND_WRITE_RECORD_LOST`, which resuming would only meet again, the line says so and names *Start over* instead. A stop earlier in Phase 0 prints no such line: the run has not opened its folder yet, and one an earlier session kept stays as it was. A run that finishes removes its folder just before its terminal commit, or says in a `NOTE:` why it could not, in which case a later run removes it with the other old folders below; where another session took the run over at that point, it prints a `NOTE:` and ends there, with no terminal commit and no Final report. A folder no session has written for 30 days is removed by the next run of any command that keeps one.
 
 ## See also
 
@@ -683,6 +730,8 @@ Above any of these lists, the run names every customer image a row of this slice
   command's Phase 4.5 applies.
 - The `read-only-repos` reference (shipped in `workflows-core`, listed on its References page) — the read-only posture this command
   holds toward every repository it resolves.
+- The `run-folder` reference (shipped in `workflows-core`, listed on its References page) — the run folder this command keeps, which
+  [Stopping and resuming](#stopping-and-resuming) describes; `workflows-core`'s own environment page says where it lives.
 - [Agents](../reference/agents.md) — the full contracts for `docs-grounder`, `code-grounder`,
   `design-grounder`, and `grounding-verifier`.
 - [Session cost](../reference/session-cost.md), [Session feedback](../reference/session-feedback.md),
