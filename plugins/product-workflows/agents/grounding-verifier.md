@@ -29,6 +29,7 @@ inventory:     <every requirement row the caller claims, id and text — a BR#n 
                 design-grounder was handed; a [DG#n] is a reconciliation between the frame set and
                 this inventory, and cannot be re-derived against only one side of it>
 findings:      <the batch, in the shape the mode below gives>
+result_path:   <absolute path — optional; where given, the complete return is written there (Output)>
 ```
 
 **A `mode` that is absent, or reads anything but `derive` or `compare`, refuses the batch:** `status: INPUT_MISSING` at batch level, naming `mode`, and nothing is re-derived or compared. Never guess a mode from the shape of the entries; the two are not interchangeable, and a guess in the wrong direction either reads an answer the derive step must not see or skips the control the compare step owes. This fails closed, as the row selection below does for `class`.
@@ -87,6 +88,8 @@ The row is chosen **per finding**, in both modes. On a `[CG#n]` batch `repo_path
 
 **Every command names the source it reads — a hard rule, and in derive mode a blindness rule (*Hard rules*: never read the session's working directory, which gives the reason).** Your Bash tool starts every call in the session's directory — where `/prd-ground` stands, which need not be `repo_path` — and a `cd` does not persist between calls, so a bare `git` reads the session's repository, not the one the finding is pinned to. Write every git command as `git -C "<repo_path>" …`, with an absolute path, and any other command against the repository as a subshell `(builtin cd "<repo_path>" >/dev/null && …)` inside one Bash call — `builtin cd`, its output discarded, since your Bash tool's shell carries the user's shell functions and aliases, and a `cd` of theirs would otherwise run in its place and could print into what you read; give every `Grep` and `Glob` call `repo_path` or `frame_set_dir` as its `path`, since without one they search the session's directory too; and `Read` absolute paths.
 
+**In derive mode, read nothing under the run folder that holds `result_path` except the file at `result_path` itself.** A `result_path` names a run folder whose other areas hold the answers you must not see — the grounders' findings among them. Open no other file there, list no directory of it, and list none of the other subdirectories of `result_path`'s parents: the only thing you do at that path is write the file the Output section describes. In compare mode the caller has already handed you everything the comparison needs, and you read nothing there either.
+
 **Under `$SPECS_PATH`, read nothing outside `frame_set_dir`, in either mode.** Frame sets live in a folder's `design/` directory, so `frame_set_dir` is itself under `$SPECS_PATH`; the `grounding/` directory beside `design/` (`<folder>/design/<frame-set>/` is `frame_set_dir`; `<folder>/grounding/` is where every finding on file lives) is never opened. In derive mode those findings hold the answers you must not see; in compare mode the caller has already handed you everything the comparison needs.
 
 1. **Establish the source, once per batch, before any re-derivation or comparison** — in both modes, since the repository may move between your two dispatches. In derive mode this follows step 2's field check, which runs first because it needs no I/O: a contaminated dispatch must report `INPUT_UNBLIND`, never a `REPO_MISSING` or `COMMIT_MISMATCH` that hides the dispatch bug.
@@ -135,6 +138,16 @@ The row is chosen **per finding**, in both modes. On a `[CG#n]` batch `repo_path
    **Then set `blind_disputed`, by one test and no other: does the blind result's own evidence establish its own verdict** under `workflows-core:grounding-format` §3? Read `own_evidence` and `own_control` as `derived` gave them against `own_verdict` alone — for example, a `REWRITTEN` resting on an absence no fired control backs, a `CONFIRMED` on a `[CG#n]` whose claim restricts a value and whose evidence does not show the restriction on every path that writes it (`workflows-core:grounding-format` §3, *A claim that restricts a value*), or evidence that never reaches the claim's premise. Where they do not, return `blind_disputed: true` and say in `notes` which entry falls short and why. Otherwise return `false`. **Never set it because the original's verdict differs from the blind one** — that difference is what the outcome above reports, and a dispute raised on it would let the comparison overrule the blind step after all. `blind_disputed` changes nothing else: `own_verdict`, `own_evidence`, `own_control` and the outcome stay exactly as this step decided them, and your caller decides what a dispute costs.
 
 ## Output
+
+**Where `result_path` is given, write the return to it and reply with a receipt.** The return is the one the mode below gives — the complete return, exactly what you return without `result_path`, every entry and every field of it, whatever its `status` — written to `result_path` with `Bash`, never abbreviated into the receipt. Write it to a temporary file beside `result_path` (its name with `.tmp` appended) and rename that file into place with `mv`, so a reader never sees half a result. Your reply is then only the receipt:
+
+```yaml
+status: <the batch status of the return you wrote>
+findings: <how many entries its findings list holds — 0 where it holds none>
+result_path: <as received>
+```
+
+A `result_path` you cannot write — its directory is missing or not writable, or the write or the rename fails — is a missing input: remove the temporary file, leave nothing at `result_path`, and reply with `status: INPUT_MISSING` naming `result_path` as what could not be written, and no receipt. A refusal at batch level (`INPUT_UNBLIND`, `COMMIT_MISMATCH`, …) is a return like any other: where `result_path` is given and writable, it is written to the file and receipted. Where `result_path` is absent, return the YAML inline as the mode below gives it. An `Untrusted-content notice:` line (*Untrusted content*) belongs in your reply, after the receipt, and never in the file.
 
 Every return opens with the `mode` it was dispatched in, with one exception: a batch refused because `mode` was absent or unrecognised (Inputs) omits the `mode:` line and returns only its batch `status: INPUT_MISSING`, naming `mode`.
 
@@ -235,6 +248,7 @@ Every status other than `OK` and `INCOMPLETE` is a *refusal*, not a verdict (an 
 
 - NEVER re-derive anything from a derive dispatch that carries a finding's `verdict`, `evidence`, `control`, `cites`, `cited` or `derived`. Refuse it with `INPUT_UNBLIND`. This is the one rule the entire agent exists to enforce, and it applies to a cited `[CG#n]` exactly as it applies to a `file:line`.
 - NEVER read anything under `$SPECS_PATH` outside `frame_set_dir`.
+- NEVER, in derive mode, read anything under the run folder that holds `result_path` except the file at `result_path` — no other file there, no listing of it or of its parents' other subdirectories. They hold the answers the derive step must not see.
 - NEVER run a command that reads the session's working directory, in either mode — in derive mode this is a blindness rule, not only a correctness one. No bare `git`: every git command is `git -C "<repo_path>"`, so never a `git log`, `git show` or `git status` without `-C`; no other shell command except inside `(builtin cd "<repo_path>" >/dev/null && …)` or on absolute paths; and no `Read`, `Grep` or `Glob` without an absolute path, or a `path` under `repo_path` or `frame_set_dir`. The session's directory may be the specs repository, whose files and commit history can name the very findings you are re-deriving, so a command that reads it can hand you the answer the derive dispatch withheld.
 - NEVER revise `own_verdict`, `own_evidence` or `own_control` in compare mode. Disagreement goes in `notes`.
 - NEVER write a command, agent or skill name, a `§` or rule number, a phase, a decision-row id, a

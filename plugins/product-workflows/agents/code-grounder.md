@@ -36,11 +36,13 @@ claims:
 refresh:
   pull: false   # default false — grounding checks a pinned commit, not the tip; a caller that
                 # wants a fresher pin re-supplies `commit` rather than asking this agent to move it.
+result_path: <absolute path — optional; where given, the complete return is written there (Output)>
 ```
 
 **Refuse to run without `repo_path`, `commit`, and at least one entry in `claims`.** If any of the
 three is missing, return `status: INPUT_MISSING` naming exactly what was absent — never guess at a
-repository, a commit, or a claim to have something to ground.
+repository, a commit, or a claim to have something to ground. `result_path` is optional, and its absence
+is not a missing input.
 
 ## Process
 
@@ -136,6 +138,24 @@ of theirs would otherwise run in its place and could print into what you read; g
    maps them into its own sequence (Output, *A reference to a finding*).
 
 ## Output
+
+**Where `result_path` is given, write the return to it and reply with a receipt.** The return is the YAML
+below — the complete return, exactly what you return without `result_path`, every finding and every field
+of it, whatever its `status` — written to `result_path` with `Bash`, never abbreviated into the receipt. Write
+it to a temporary file beside `result_path` (its name with `.tmp` appended) and rename that file into
+place with `mv`, so a reader never sees half a result. Your reply is then only the receipt:
+
+```yaml
+status: <the status of the return you wrote>
+findings: <how many entries its findings list holds — 0 where it holds none>
+result_path: <as received>
+```
+
+A `result_path` you cannot write — its directory is missing or not writable, or the write or the rename
+fails — is a missing input: remove the temporary file, leave nothing at `result_path`, and reply with
+`status: INPUT_MISSING` naming `result_path` as what could not be written, and no receipt. Where `result_path` is absent, return
+the YAML inline as written below. An `Untrusted-content notice:` line (*Untrusted content*) belongs in your
+reply, after the receipt, and never in the file.
 
 ```yaml
 status: OK | INPUT_MISSING | REPO_MISSING | COMMIT_MISMATCH
