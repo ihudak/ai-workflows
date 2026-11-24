@@ -198,7 +198,7 @@ Each command names these checks and steps.
 - `emit-cost` with its chained checkpoint;
 - the resume pointer.
 
-A command without a run folder runs them as before.
+A command without a run folder runs them as before. *(Amended 2026-11-24 while building Part 2a: the guard covers the tail of a run that finishes, the one `close-run` follows, and never the tail a stop takes. A stop keeps the folder, and the session that later resumes and finishes the run runs the tail again for its own work. Had the stop's tail marked those effects done, that session would skip them: it would measure none of its spend, persist none of its feedback and emit none of its new follow-ups. Tasks 6–11 keep each command's stop tails unguarded.)*
 
 **D29 — Shared references that dispatch.** A shared reference that dispatches agents on a command's behalf (`docs-grounding`, `architecture-grounding`, `architecture-promotion`) takes the calling run's folder, a dispatch-id prefix and the area, and saves its dispatches through `run-dispatch`. Without them it runs as before.
 
