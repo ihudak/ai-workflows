@@ -362,7 +362,7 @@ def last_written(path):
             stamp = json.load(fh)["updated"]
         return datetime.datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ").replace(
             tzinfo=datetime.timezone.utc).timestamp()
-    except (OSError, ValueError, KeyError, TypeError):
+    except (OSError, ValueError, KeyError, TypeError, RecursionError):
         return os.stat(path).st_mtime
 
 
@@ -396,10 +396,11 @@ def summarize(run):
 OTHERS_MAX = 3
 
 
-def other_runs(root, command, workdir, own_folder):
+def other_runs(root, command, workdir, own_folder, own_args):
     """Unfinished keyless runs of this command in this working directory (a finished run's folder is gone)
     whose arguments differ, newest first: read from each run.json, which records the identity in clear."""
     wd = workdir_identity(workdir)
+    mine = " ".join(own_args.split())
     found = []
     for name in sorted(os.listdir(root)):
         path = os.path.join(root, name)
@@ -411,13 +412,19 @@ def other_runs(root, command, workdir, own_folder):
             if run.get("command") != command or run.get("key") or run["identity"].get("workdir") != wd:
                 continue
             results = run.get("results")
-            found.append({"folder": path, "args": run.get("args"), "started": run.get("started"),
-                          "updated": run.get("updated"), "last_phase": run.get("last_phase"),
+            args, updated = run.get("args"), run.get("updated")
+            if (not isinstance(args, str) or not isinstance(updated, str) or " ".join(args.split()) == mine
+                    or not isinstance(run.get("started"), (str, type(None)))
+                    or not isinstance(run.get("last_phase"), (str, type(None)))
+                    or not isinstance(run.get("owner"), (str, type(None)))):
+                continue
+            found.append({"folder": path, "args": args, "started": run.get("started"),
+                          "updated": updated, "last_phase": run.get("last_phase"),
                           "results": len(results) if isinstance(results, (dict, list)) else 0,
                           "owner": run.get("owner")})
-        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        except (OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError):
             continue
-    found.sort(key=lambda r: r["updated"] or "", reverse=True)
+    found.sort(key=lambda r: r["updated"], reverse=True)
     return found[:OTHERS_MAX]
 
 
@@ -443,8 +450,9 @@ def cmd_open(a):
         rj = os.path.join(folder, "run.json")
         if keyless and a.workdir:
             try:
-                others = other_runs(root, a.command, a.workdir, folder)
-            except OSError:
+                others = other_runs(root, a.command, a.workdir, folder, a.args)
+            except Exception as e:  # another run's folder never fails this open
+                print("NOTE: other runs not listed (%s: %s)" % (type(e).__name__, e), file=sys.stderr)
                 others = []
         for _attempt in range(2):
             run = None
@@ -1765,6 +1773,37 @@ def selftest():
             expect(r["ids"] == [], r)
             _rc, o3, _e = disp(home, f, "d1", inp, afile=af)
             expect(o3["action"] == "dispatch", o3)
+
+        @case("open-others-same-args-other-specs")
+        def _():
+            home, wd = newdir("home"), repo()
+            _a, o1, _e = op(home, repo("https://example.com/a.git"), key=None, args="CVE-1  x", extra=["--workdir", wd])
+            _a, o2, _e = op(home, repo("https://example.com/b.git"), key=None, args="CVE-1 x", extra=["--workdir", wd])
+            expect(o2["folder"] != o1["folder"] and o2["others"] == [], o2["others"])
+            _a, o3, _e = op(home, repo("https://example.com/b.git"), key=None, args="CVE-2", extra=["--workdir", wd])
+            expect(len(o3["others"]) == 2, o3["others"])
+
+        @case("open-others-corrupt-neighbour")
+        def _():
+            home, specs, wd = newdir("home"), repo("https://example.com/s.git"), repo()
+            _a, o1, _e = op(home, specs, key=None, args="A", extra=["--workdir", wd])
+            _a, o2, _e = op(home, specs, key=None, args="B", extra=["--workdir", wd])
+            for folder, mut in ((o1["folder"], lambda r: r.update(updated=5)),):
+                r = run_json(folder)
+                mut(r)
+                with open(os.path.join(folder, "run.json"), "w") as fh:
+                    json.dump(r, fh)
+            bad = os.path.join(os.path.dirname(o1["folder"]), "garbage")
+            os.makedirs(bad)
+            with open(os.path.join(bad, "run.json"), "w") as fh:
+                fh.write("{not json")
+            deep = os.path.join(os.path.dirname(o1["folder"]), "deep")
+            os.makedirs(deep)
+            with open(os.path.join(deep, "run.json"), "w") as fh:
+                fh.write("[" * 100000)
+            rc, o3, err = op(home, specs, key=None, args="C", extra=["--workdir", wd])
+            expect(rc == 0 and o3["state"] == "new" and o3["others"] == [x for x in o3["others"]], (rc, err))
+            expect(all(isinstance(x["updated"], str) for x in o3["others"]), o3["others"])
 
         @case("open-keyless-others")
         def _():
