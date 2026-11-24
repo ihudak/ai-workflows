@@ -36,7 +36,7 @@ behaviour, not the behaviour.
 
 **`--no-code` is a run mode, not a step skip.** It exists so a BRD whose code grounding is already verified can gain the design grounding it is missing — the state `/brd-split`'s design-presence gate reports — without re-deriving what is already on file. Under it, **`<BRD-dir>/grounding/code-grounding.md` is read-only for the whole run**: this invocation produces no `[CG#n]` at all, its finding set is the new `[DG#n]` only, and every `[CG#n]` already on file keeps the verdict, evidence and verifier outcome it carries — never renumbered by Phase 5, never re-dispatched by Phase 7, never rewritten by Phase 8. Phases 1 and 3 still run in full, because a class-4 `[DG#n]` is pinned to the commit of the `[CG#n]` it cites and Phase 7 re-derives it against that repository. Documentation grounding is off for this run, and so is the derivation matrix: Phase 8 appends both into that same read-only file. Four flag states are refused rather than reconciled, all in Phase 0 step 2.
 
-**Ending early.** Every stop this run takes once it has started — each Phase 0 stop but `PRD_GROUND_TYPED_ONLY` (its `PRD_GROUND_*` stops, step 7a's lineage stops among them, a `RUN_FLAGS_*` stop, and every stop a shared reference's return leads it to take — an address stop, `branch-check`'s, a `require-on-main` gate's), the `$SPECS_PATH` and `$REPOS_PATH` *Cancel*s, Phase 1's *Cancel*s, Phase 3's typed *cancel* (an answer, not one of that phase's stops), and any other answer that ends the run — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 11's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. Two routes stand where a stop's own text names them: `PRD_GROUND_TYPED_ONLY` and `PRD_GROUND_RUN_TAKEN_OVER` take no tail at all (Phase 0 steps 0 and 10), the second in whichever phase it is taken, and any other stop in Phase 3, 5 or 7 comes to Phase 11, which states its members — `PRD_GROUND_DOC_EVIDENCE` among Phase 5's, taken where Phase 5 applies Phase 4.5's rule before its design pass. `emit-block` still fires wherever a stop's own text calls it, at the halt. Where a stop says nothing is written, that means the run's own work: the cost entry is bookkeeping and is written all the same — save on `PRD_GROUND_RUN_TAKEN_OVER`, which writes not even that. **Every stop taken once Phase 0 step 10 has opened the run folder** — Phase 1's *Cancel*s and every later stop, `PRD_GROUND_RUN_TAKEN_OVER` aside — runs `run-stop-line` (`Skill(skill: "workflows-core:reference", args: "run-folder run-stop-line")`) right after its own message: it logs the stop, by its code where it has one, and prints the `Run folder kept:` line, `<command>` there being `/product-workflows:prd-ground <KEY>`. A stop before step 10 prints no such line: there is no folder yet. The stop message, the `Run folder kept:` line where one prints, then the cost and `Specs repo:` lines, end the run; the Final report is not printed. Phase 9's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the files stay written, and the run goes on through Phases 10 and 11.
+**Ending early.** Every stop this run takes once it has started — each Phase 0 stop but `PRD_GROUND_TYPED_ONLY` (its `PRD_GROUND_*` stops, step 7a's lineage stops among them, a `RUN_FLAGS_*` stop, and every stop a shared reference's return leads it to take — an address stop, `branch-check`'s, a `require-on-main` gate's), the `$SPECS_PATH` and `$REPOS_PATH` *Cancel*s, Phase 1's *Cancel*s, Phase 3's typed *cancel* (an answer, not one of that phase's stops), and any other answer that ends the run — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 11's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. Two routes stand where a stop's own text names them: `PRD_GROUND_TYPED_ONLY` and `PRD_GROUND_RUN_TAKEN_OVER` take no tail at all (Phase 0 steps 0 and 10), the second in whichever phase it is taken, and any other stop in Phase 3, 5 or 7 comes to Phase 11, which states its members — `PRD_GROUND_DOC_EVIDENCE` among Phase 5's, taken where Phase 5 applies Phase 4.5's rule before its design pass. `emit-block` still fires wherever a stop's own text calls it, at the halt. Where a stop says nothing is written, that means the run's own work: the cost entry is bookkeeping and is written all the same — save on `PRD_GROUND_RUN_TAKEN_OVER`, which writes not even that. **Every stop taken once Phase 0 step 10 has opened the run folder** — Phase 1's *Cancel*s and every later stop, `PRD_GROUND_RUN_TAKEN_OVER` aside — runs `run-stop-line` (`Skill(skill: "workflows-core:reference", args: "run-folder run-stop-line")`) right after its own message: it logs the stop, by its code where it has one, and prints the `Run folder kept:` line, `<command>` there being `/product-workflows:prd-ground <KEY>` — its start-over form on `PRD_GROUND_WRITE_RECORD_LOST`, which a resume meets again (Phase 0 step 10). A stop before step 10 prints no such line: there is no folder yet. The stop message, the `Run folder kept:` line where one prints, then the cost and `Specs repo:` lines, end the run; the Final report is not printed. Phase 9's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the files stay written, and the run goes on through Phases 10 and 11.
 
 ---
 
@@ -902,6 +902,8 @@ behaviour, not the behaviour.
       every value they name from Phases 1 to 8. Where the record cannot be read — the fact unset,
       or the file it names missing or not one JSON object — stop:
       `PRD_GROUND_WRITE_RECORD_LOST: an earlier session of this run wrote <KEY>'s findings, and the record of what it settled, <path>, cannot be read (<reason>), so this run cannot hand them off or report on them. Review the files under <BRD-dir>/grounding/ and hand them off yourself, or re-run '/product-workflows:prd-ground <KEY>' and start over.`
+      A resume finds the record as unreadable and meets this stop again, so `run-stop-line` prints
+      its start-over `Run folder kept:` line after it (`workflows-core:run-folder`, `run-stop-line`).
     - `started` — an earlier session began Phase 8's writes and stopped before their end, so each
       file may hold part of them. Ask, through `AskUserQuestion`, and record nothing, since
       restoring is the same however often it is asked:
@@ -922,7 +924,11 @@ behaviour, not the behaviour.
         `run-stop-line` after it keeps the folder, and with it the copies.
 
     Where `run_folder` is `unavailable`, every step below that names the folder acts as it did
-    before this command kept one (`workflows-core:run-folder` §2).
+    before this command kept one (`workflows-core:run-folder` §2). A write this command makes into
+    the folder itself — `scratch/phase6.json`, `scratch/phase8.json`, a notices file, a frame set's
+    listing, Phase 8's copies — that fails is met as a call's exit 2 (`workflows-core:run-folder`
+    §2): its `NOTE:` printed with the shell's error line, `run_folder` and `lost_folder` set as
+    that section says, and the step goes on as it would without the folder.
 
 ---
 
@@ -1526,10 +1532,12 @@ maintenance dispatch are not saved. For each saved dispatch this command names:
   agent's return, a reused one too, in the same place and the same order, so the renumbering, the
   frame set each `[DG#n]` came from (its dispatch's id names it) and every test after them run
   over it unchanged. A reused result counts in the Final report's figures as the dispatch it
-  stands for. **A `result_path` the agent could not write is no refusal**: a reply of
+  stands for. On a run that resumed, each `dispatch` call's `action` is also counted by agent as
+  it returns, as `run-dispatch` says, for the Final report's `Resumed:` line — Phase 4.5's
+  re-dispatch under `code-grounder`. **A `result_path` the agent could not write is no refusal**: a reply of
   `status: INPUT_MISSING` naming `result_path`, with no receipt, is met as `run-dispatch` step 4
-  says — the agent dispatched once more without that line, and its inline return saved with
-  `done <folder> <id> --from -` and read as any return. Where that `done` exits 2, the folder is
+  says — the agent dispatched once more without that line, and its inline return read as any
+  return and saved with `done <folder> <id> --from -`. Where that `done` exits 2, the folder is
   what failed: print the `NOTE:` `workflows-core:run-folder` §2 gives an exit 2, set
   `run_folder: unavailable`, and go on with the inline return, unsaved. Where the second dispatch
   itself fails, there is no return to go on with: that is the agent failing, handled as this
@@ -1553,14 +1561,16 @@ maintenance dispatch are not saved. For each saved dispatch this command names:
   No prompt names that file: the agent reads the directory itself, and a derive dispatch reads
   nothing in the run folder but its own result. So a frame set that changed between two sessions
   redoes the dispatches that read it, and only those.
-- **What a reply carries besides its result**: where `dispatch` returns `action: dispatch`,
-  first remove `<folder>/scratch/notices/<id>.txt` where it exists — a session that died between
-  writing it and `done` left notices of a result no longer saved — then, after the reply, write
-  each `Untrusted-content notice:` line a `code-grounder` or `grounding-verifier` reply puts after
-  its receipt to that file, before `done`, through a quoted here-document
-  (`cat > "<folder>/scratch/notices/<id>.txt" <<'RUN_FOLDER_EOF'`, `mkdir -p` of its directory
-  first, a delimiter the text does not contain). A reused result's notices are read from there; an
-  inline return keeps its own.
+- **What a reply carries besides its result**: after the reply, write each
+  `Untrusted-content notice:` line a `code-grounder` or `grounding-verifier` reply puts after its
+  receipt to `<folder>/scratch/notices/<name>.txt`, before `done`, `<name>` being the name of the
+  file `dispatch` returned as `result` without its `.md` — `<id>.<nonce>`, which no other dispatch
+  takes — through a quoted here-document
+  (`cat > "<folder>/scratch/notices/<name>.txt" <<'RUN_FOLDER_EOF'`, `mkdir -p` of its directory
+  first, a delimiter the text does not contain). A reused result's notices are read from the file
+  so named after the `result` its `dispatch` returned, so notices written for another dispatch of
+  the id — by a session that died before its `done`, or that another session took over — are never
+  read. An inline return keeps its own.
 - **What is never recorded.** `done` is made only for a return this command goes on with
   (`run-dispatch` step 4): never for one whose status stops the run — a `code-grounder`
   `INPUT_MISSING` naming an input other than `result_path`, `REPO_MISSING` or `COMMIT_MISMATCH`;
@@ -2746,7 +2756,8 @@ The object holds:
 - `report` — every line the Final report takes from Phases 1 to 8, as text, in its order and
   wording: from the folder and its repositories, each `moved since this run pinned it` line among
   them, through every customer image no frame set holds — save the `Kept …` line, which Phase 11
-  reads from the folder — then the `evidence` column's figures or the line its script printed, and
+  reads from the folder, and the `Resumed:` line, each session's own (Phase 5, *Saved
+  dispatches*) — then the `evidence` column's figures or the line its script printed, and
   whether a refused map was rebuilt, the greenfield headline where `route: idea` has one, and each
   `notes` entry Phase 5 collected from a `code-grounder` return.
 - `notices` — each `Untrusted-content notice:` line relayed so far.
@@ -3070,7 +3081,10 @@ fire `emit-block`. The one exception is a halt on a tool the ai-containers image
    **Then close the run folder, just before step 5** — on a run that finished, never on a stop. On
    a run that resumed, first read `kept <folder>` and hold the Final report's `Kept from earlier
    agent instructions or models:` line where it returns any id (`workflows-core:run-folder`,
-   `changed-agents`): nothing else the report prints comes from the folder. Then execute
+   `changed-agents`): nothing else the report prints is read from the folder from here on. The
+   `Resumed:` line's counts were held as each `dispatch` call returned (Phase 5, *Saved
+   dispatches*), and on a run that went on at Phase 9 or 10 the `phase8` record, and fact `phase9`
+   where it went on at Phase 10, were read at Phase 0 step 10 and are held. Then execute
    `close-run` (`Skill(skill: "workflows-core:reference", args: "run-folder close-run")`). Where its
    `close` exits 9 — another session took the run over at its end — print the `NOTE:` the entry
    point names and end the run there: no step 5, since nothing more is written once another
@@ -3095,6 +3109,10 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 
 Report: the BRD or PRD folder + resolved repositories (with each one's pinned commit), and each
 `moved since this run pinned it` line Phase 3 (*This run's own pins*) held; on a run that resumed,
+the `Resumed:` line (`workflows-core:run-folder`, `run-dispatch`) from the counts held as each
+`dispatch` call returned (Phase 5, *Saved dispatches*) — on a run that went on at Phase 9 or 10
+from Phase 0 step 10, which makes no `dispatch` call, `Resumed: at Phase <9|10>, from the findings
+an earlier session of this run wrote; no agent result reused or dispatched.` in its place — and
 the `Kept from earlier agent instructions or models:` line Phase 11 held before it closed the run
 folder, where it held one; the
 `Lineage:` line (`workflows-core:document-lineage` §7) — on `route: brd`, where Phase 0 step 7a

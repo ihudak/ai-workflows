@@ -3,7 +3,7 @@
 
 Usage:
   run-folder.py open --command <plugin>.<command> [--key <KEY>] --specs <dir> [--workdir <dir>] --args <string>
-  run-folder.py resume <folder>
+  run-folder.py resume <folder> [--args <string>]
   run-folder.py discard <folder>
   run-folder.py close <folder>
   run-folder.py phase <folder> <name>
@@ -32,12 +32,17 @@ Every subcommand prints one JSON object on stdout. open reports state "new" (fol
 earlier run's folder; ownership is not taken) or "unavailable" (the folder cannot be made or written; exit 0,
 the caller goes on without a run folder). Each open first removes run folders no session wrote for 30 days.
 The owner is CLAUDE_CODE_SESSION_ID (null where unset or empty); a writing call from another session, both
-non-null, exits 9 and writes nothing. discard and close refuse a path that is not a direct child of the runs
-root holding a run.json. Exit codes: 0 done; 2 usage or could not run; 3 done found no result file; 9 taken
-over (another session owns the run, or its folder was removed by a Start over).
+non-null, exits 9 and writes nothing. resume --args records the arguments given now in place of the run's.
+discard and close refuse a path that is not a direct child of the runs root holding a run.json; both wait for
+the write lock, move the folder off its path, release the lock and then remove it. Exit codes: 0 done; 2
+usage or could not run; 3 done found no result file; 9 taken over (another session owns the run, or its
+folder was removed by a Start over).
 
-A dispatch is saved before the agent runs (inputs/<id>.md) and its result is reused only once `done` has
-recorded it and its fingerprint still matches: SHA-256 over the input's bytes, each attached run-folder file's
+A dispatch is saved before the agent runs (inputs/<id>.md) and names its result file, results/<id>.<nonce>.md,
+a nonce drawn anew by each dispatch and recorded with it, so that an agent of an earlier dispatch of the same
+id writes a file no record names; a re-dispatch removes the result files the earlier records named. A result
+is reused only once `done` has recorded it, from the file its record names, and its fingerprint still matches:
+SHA-256 over the input's bytes, each attached run-folder file's
 bytes (sorted by path), the agent definition file's SHA-256 and the model id. `done` records, in run.json
 "results", what `results`, `stale` and `keep` read; "dispatches" holds what was handed out, "gates" the
 answers to questions, "effects" the side effects started or finished. --command and --key are limited to
@@ -50,6 +55,7 @@ import contextlib
 import datetime
 import fcntl
 import hashlib
+import io
 import json
 import os
 import re
@@ -58,6 +64,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 
 STALE_DAYS = 30
@@ -239,26 +246,57 @@ def load_run(folder):
     return run
 
 
+class Lock:
+    """The write lock a call holds, which close and discard release before they remove the folder."""
+
+    def __init__(self):
+        self.fd = None
+
+    def release(self):
+        if self.fd is not None:
+            fd, self.fd = self.fd, None
+            os.close(fd)
+
+
 @contextlib.contextmanager
 def write_lock(folder):
     """Hold an exclusive flock on <folder>/.lock for a whole load, modify and save of run.json, so parallel
-    writing calls (sibling agents' dispatch and done) cannot lose each other's update. No lock where the
-    folder is not a run folder: the call then fails or reports a takeover as it would anyway."""
+    writing calls (sibling agents' dispatch and done, a discard) cannot lose each other's update. The lock
+    taken is the one standing at that path once it is held: where the folder was removed or replaced while
+    this call waited, it locks what stands there now, and none where nothing does. No lock where the folder is
+    not a run folder: the call then fails or reports a takeover as it would anyway."""
+    lock = Lock()
     try:
-        path = os.path.join(folder_path(folder), ".lock")
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT, 0o600)
-    except (CannotRun, OSError):
-        yield
-        return
-    try:
-        fcntl.flock(fd, fcntl.LOCK_EX)
-        yield
+        try:
+            path = os.path.join(folder_path(folder), ".lock")
+        except CannotRun:
+            path = None
+        while path is not None:
+            try:
+                fd = os.open(path, os.O_WRONLY | os.O_CREAT, 0o600)
+            except OSError:
+                break  # no folder stands at that path now
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+                held = os.fstat(fd)
+            except OSError:
+                os.close(fd)
+                break
+            try:
+                there = os.stat(path)
+            except OSError:
+                there = None
+            if there is not None and (held.st_dev, held.st_ino) == (there.st_dev, there.st_ino):
+                lock.fd = fd
+                break
+            os.close(fd)
+        yield lock
     finally:
-        os.close(fd)
+        lock.release()
 
 
 def needs_lock(args):
-    if args.cmd in ("resume", "close", "phase", "log", "dispatch", "done", "gate-record", "keep"):
+    if args.cmd in ("resume", "discard", "close", "phase", "log", "dispatch", "done", "gate-record", "keep"):
         return True
     return (args.cmd == "fact" and args.set is not None) or (args.cmd == "effect" and args.action != "state")
 
@@ -395,28 +433,46 @@ def cmd_open(a):
 def cmd_resume(a):
     run = load_run(a.folder)
     run["owner"] = session_id()
+    if a.args is not None:
+        run["args"] = a.args
     save_run(a.folder, run)
     append_progress(a.folder, "resumed")
     emit({"owner": run["owner"]})
     return 0
 
 
-def remove_folder(folder):
+def remove_folder(folder, lock):
+    """Move the folder off its path while the write lock is held, so no writer that waited for the lock finds
+    it there, then release the lock and remove it: a file still open in a directory (the lock) keeps an NFS
+    server from removing that directory. What cannot be removed of the moved folder is left to the 30-day
+    pruning, the run's own path being free already."""
     path = folder_path(folder)
-    shutil.rmtree(path)
+    aside = os.path.join(os.path.dirname(path),
+                         ".removed-%s-%s" % (os.path.basename(path), uuid.uuid4().hex[:8]))
+    try:
+        os.rename(path, aside)
+    except OSError:
+        aside = None
+    if lock is not None:
+        lock.release()
+    if aside is None:
+        shutil.rmtree(path)
+    else:
+        shutil.rmtree(aside, ignore_errors=True)
     emit({"removed": True})
     return 0
 
 
 def cmd_discard(a):
-    # Not owner-checked: starting over is the user's answer to "another session owns this run".
+    # Not owner-checked: starting over is the user's answer to "another session owns this run". Under the
+    # write lock all the same, so a writer in flight saves before the folder goes, never over the new run.
     load_run(a.folder)
-    return remove_folder(a.folder)
+    return remove_folder(a.folder, getattr(a, "lock", None))
 
 
 def cmd_close(a):
     load_for_write(a.folder)
-    return remove_folder(a.folder)
+    return remove_folder(a.folder, getattr(a, "lock", None))
 
 
 def cmd_phase(a):
@@ -500,6 +556,20 @@ def area_path(folder, area, kind, did):
     return os.path.join(folder_path(folder), area, kind, did + ".md")
 
 
+NONCE_HEX = 12
+RESULT_REL_RE = re.compile(r"^(main|blind)/results/(.+)\.[0-9a-f]{%d}\.md\Z" % NONCE_HEX)
+
+
+def recorded_result(folder, rec, did):
+    """The result file a dispatch or result record names, as an absolute path, or None where the record names
+    none, or one not of this id's shape under its area (`<area>/results/<id>.<nonce>.md`)."""
+    rel = rec.get("result") if isinstance(rec, dict) else None
+    m = RESULT_REL_RE.match(rel) if isinstance(rel, str) else None
+    if not m or m.group(1) != rec.get("area") or m.group(2) != did:
+        return None
+    return os.path.join(folder_path(folder), *rel.split("/"))
+
+
 def cmd_dispatch(a):
     check_id(a.id, "dispatch id")
     check_name(a.agent, "--agent")
@@ -512,30 +582,38 @@ def cmd_dispatch(a):
     content = content_digest(input_bytes, attached)
     fp = make_fingerprint(content, agent_sha, a.model)
     input_path = area_path(folder, a.area, "inputs", a.id)
-    result_path = area_path(folder, a.area, "results", a.id)
     results = run.setdefault("results", {})
     rec = results.get(a.id)
-    reusable = (isinstance(rec, dict) and rec.get("fingerprint") == fp and rec.get("area") == a.area
-                and os.path.isfile(result_path) and os.path.getsize(result_path) > 0)
+    recorded = recorded_result(folder, rec, a.id)
+    reusable = (recorded is not None and rec.get("fingerprint") == fp and rec.get("area") == a.area
+                and os.path.isfile(recorded) and os.path.getsize(recorded) > 0)
     if reusable:
         save_run(folder, run)
         append_progress(folder, "dispatch %s reuse" % a.id)
-        emit({"action": "reuse", "input": input_path, "result": result_path, "fingerprint": fp})
+        emit({"action": "reuse", "input": input_path, "result": recorded, "fingerprint": fp})
         return 0
+    # Each dispatch names a result file of its own, so an agent of an earlier dispatch of this id — a
+    # superseded session's, still running — writes a file no record names, which is never read.
+    rel = "%s/results/%s.%s.md" % (a.area, a.id, uuid.uuid4().hex[:NONCE_HEX])
+    result_path = os.path.join(folder, *rel.split("/"))
     for d in (os.path.dirname(input_path), os.path.dirname(result_path)):
         os.makedirs(d, mode=0o700, exist_ok=True)
     write_bytes_atomic(input_path, input_bytes)
-    # A result redone is a result no longer recorded: drop the old one before the agent writes the new.
+    # A result redone is a result no longer recorded: drop the record, and the files the earlier
+    # dispatch and result of this id named.
+    replaced = (recorded, recorded_result(folder, run.get("dispatches", {}).get(a.id), a.id))
     results.pop(a.id, None)
     if a.id in run.get("kept", []):
         run["kept"] = [k for k in run["kept"] if k != a.id]
-    try:
-        os.unlink(result_path)
-    except FileNotFoundError:
-        pass
+    for old in replaced:
+        if old is not None:
+            try:
+                os.unlink(old)
+            except FileNotFoundError:
+                pass
     run.setdefault("dispatches", {})[a.id] = {
         "fingerprint": fp, "content": content, "agent": a.agent, "agent_sha": agent_sha,
-        "model": a.model, "area": a.area}
+        "model": a.model, "area": a.area, "result": rel}
     save_run(folder, run)
     append_progress(folder, "dispatch %s made" % a.id)
     emit({"action": "dispatch", "input": input_path, "result": result_path, "fingerprint": fp})
@@ -549,7 +627,9 @@ def cmd_done(a):
     rec = run.get("dispatches", {}).get(a.id)
     if not isinstance(rec, dict):
         raise CannotRun("no dispatch recorded for " + a.id)
-    result_path = area_path(folder, rec["area"], "results", a.id)
+    result_path = recorded_result(folder, rec, a.id)
+    if result_path is None:
+        raise CannotRun("the dispatch of %s names no result file; dispatch it again" % a.id)
     if a.from_ is not None:
         data = read_input(a.from_)
         os.makedirs(os.path.dirname(result_path), mode=0o700, exist_ok=True)
@@ -985,7 +1065,10 @@ def selftest():
             expect(rc == 0 and o["action"] == "dispatch", (rc, o, err))
             expect(read(o["input"]) == "hello", o)
             expect(o["input"] == os.path.join(f, "main", "inputs", "d1.md"), o["input"])
-            expect(o["result"] == os.path.join(f, "main", "results", "d1.md"), o["result"])
+            expect(os.path.dirname(o["result"]) == os.path.join(f, "main", "results")
+                   and re.match(r"^d1\.[0-9a-f]{12}\.md$", os.path.basename(o["result"])), o["result"])
+            expect(run_json(f)["dispatches"]["d1"]["result"] == "main/results/" + os.path.basename(o["result"]),
+                   run_json(f)["dispatches"]["d1"])
             expect(re.match(r"^[0-9a-f]{64}$", o["fingerprint"]), o)
 
         @case("reuse-after-done")
@@ -1087,7 +1170,7 @@ def selftest():
             f, inp, af = nr(home), mkfile("hello"), mkfile("agent v")
             rc, o, _e = disp(home, f, "d1", inp, area="blind", afile=af)
             expect(o["input"] == os.path.join(f, "blind", "inputs", "d1.md") and os.path.isfile(o["input"]), o)
-            expect(o["result"] == os.path.join(f, "blind", "results", "d1.md"), o)
+            expect(os.path.dirname(o["result"]) == os.path.join(f, "blind", "results"), o)
             expect(not os.path.exists(os.path.join(f, "main")), "something under main/")
 
         @case("bad-id")
@@ -1304,10 +1387,10 @@ def selftest():
             outs = parallel([["dispatch", f, i, "--area", "main", "--agent", "v", "--agent-file", af,
                               "--model", "m1", "--input", inp] for i in ids])
             expect(all(rc == 0 for rc, _e in outs), outs)
-            expect(sorted(run_json(f)["dispatches"]) == sorted(ids), "a dispatch record was lost")
+            dispatches = run_json(f)["dispatches"]
+            expect(sorted(dispatches) == sorted(ids), "a dispatch record was lost")
             for i in ids:
-                os.makedirs(os.path.join(f, "main", "results"), exist_ok=True)
-                with open(os.path.join(f, "main", "results", i + ".md"), "w") as fh:
+                with open(os.path.join(f, *dispatches[i]["result"].split("/")), "w") as fh:
                     fh.write("r")
             outs = parallel([["done", f, i] for i in ids] + [["phase", f, "p%d" % k] for k in range(4)]
                             + [["fact", f, "n%d" % k, "--set", "v"] for k in range(4)])
@@ -1316,6 +1399,109 @@ def selftest():
             expect(sorted(run["results"]) == sorted(ids), sorted(run["results"]))
             expect(sorted(run["facts"]) == ["n0", "n1", "n2", "n3"], run["facts"])
             expect(".lock" not in run["results"] and ".lock" not in run["dispatches"], "lock counted")
+
+        @case("result-nonce-old-agent")
+        def _():
+            # A superseded session's agent, still running, writes the result path its own dispatch named;
+            # the new owner's dispatch of the same id names another path, so that write is never recorded.
+            home = newdir("home")
+            f, af = nr(home), mkfile("agent v")
+            before, after = mkfile("repository before the pull"), mkfile("repository after the pull")
+            _rc, o1, _e = disp(home, f, "d1", before, afile=af)
+            _rc, o2, _e = disp(home, f, "d1", after, afile=af)
+            expect(o2["action"] == "dispatch" and o2["result"] != o1["result"], (o1["result"], o2["result"]))
+            expect(re.match(r"^d1\.[0-9a-f]{12}\.md$", os.path.basename(o2["result"])), o2["result"])
+            os.makedirs(os.path.dirname(o1["result"]), exist_ok=True)
+            with open(o1["result"], "w") as fh:
+                fh.write("stale")
+            rc, out, _e = cli(["done", f, "d1"], home)
+            expect(rc == 3 and out is None, ("the old agent's file was recorded", rc, out))
+            with open(o2["result"], "w") as fh:
+                fh.write("fresh")
+            with open(o1["result"], "w") as fh:
+                fh.write("stale, written after the new agent")
+            rc, out, _e = cli(["done", f, "d1"], home)
+            expect(rc == 0 and out == {"recorded": True}, (rc, out))
+            _rc, o3, _e = disp(home, f, "d1", after, afile=af)
+            expect(o3["action"] == "reuse" and o3["result"] == o2["result"] and read(o3["result"]) == "fresh", o3)
+            _rc, o4, _e = disp(home, f, "d1", before, afile=af)
+            expect(o4["action"] == "dispatch" and not os.path.exists(o2["result"]),
+                   "a re-dispatch left the result it replaced")
+
+        @case("discard-waits-for-writer")
+        def _():
+            home = newdir("home")
+            f = nr(home)
+            fd = os.open(os.path.join(f, ".lock"), os.O_WRONLY | os.O_CREAT, 0o600)
+            p_ = None
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX)  # a writer in flight: it loaded run.json and has yet to save it
+                p_ = subprocess.Popen([sys.executable, os.path.abspath(__file__), "discard", f],
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env_for(home))
+                deadline = time.monotonic() + 1.5
+                while time.monotonic() < deadline and p_.poll() is None:
+                    time.sleep(0.05)
+                waited = p_.poll() is None and os.path.isfile(os.path.join(f, "run.json"))
+            finally:
+                os.close(fd)
+                if p_ is not None:
+                    out, err = p_.communicate(timeout=60)
+            expect(waited, "discard removed the folder while a writer held the lock")
+            expect(p_.returncode == 0 and json.loads(out) == {"removed": True} and not os.path.exists(f),
+                   (p_.returncode, out, err))
+
+        @case("close-unlocks-before-removing")
+        def _():
+            # On an NFS home a file still open in a directory is renamed rather than removed, so the
+            # directory cannot be: close must not hold its .lock open while the folder is removed.
+            home = newdir("home")
+            f = nr(home)
+            seen, real_rmtree, saved_env, out = [], shutil.rmtree, dict(os.environ), io.StringIO()
+
+            def probe(path, *pa, **kw):
+                held = None
+                lock_file = os.path.join(path, ".lock")
+                if os.path.exists(lock_file):
+                    pfd = os.open(lock_file, os.O_RDONLY)
+                    try:
+                        fcntl.flock(pfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        held = False
+                    except OSError:
+                        held = True
+                    finally:
+                        os.close(pfd)
+                seen.append((path, held, os.path.exists(f)))
+                return real_rmtree(path, *pa, **kw)
+
+            try:
+                os.environ.clear()
+                os.environ.update(env_for(home))
+                shutil.rmtree = probe
+                with contextlib.redirect_stdout(out):
+                    rc = main(["close", f])
+            finally:
+                shutil.rmtree = real_rmtree
+                os.environ.clear()
+                os.environ.update(saved_env)
+            expect(rc == 0 and json.loads(out.getvalue()) == {"removed": True}, (rc, out.getvalue()))
+            expect(len(seen) == 1 and seen[0][1] is False, ("the lock was held during the removal", seen))
+            expect(seen[0][0] != f and not seen[0][2], ("not moved off the run's path first", seen))
+            expect(not os.path.exists(f) and not os.path.exists(seen[0][0]), "something was left")
+
+        @case("resume-args")
+        def _():
+            home, specs = newdir("home"), repo()
+            _a, o1, _e = op(home, specs, session="A", args="--repos a")
+            folder = o1["folder"]
+            rc, r, err = cli(["resume", folder, "--args", "--repos a --rebaseline"], home, "B")
+            expect(rc == 0 and r == {"owner": "B"}, (rc, r, err))
+            expect(run_json(folder)["args"] == "--repos a --rebaseline", run_json(folder))
+            _a, o3, _e = op(home, specs, session="C", args="--repos a")
+            expect(o3["summary"]["args"] == "--repos a --rebaseline", o3["summary"])
+            rc, r, _e = cli(["resume", folder], home, "C")
+            expect(rc == 0 and run_json(folder)["args"] == "--repos a --rebaseline", "resume with no --args changed them")
+            rc, r, err = cli(["resume", folder, "--args", "--no-design"], home, "C")
+            expect(rc == 0 and run_json(folder)["args"] == "--no-design", (rc, err, run_json(folder)))
 
     for line in results:
         print(line)
@@ -1360,7 +1546,10 @@ def main(argv):
     o.add_argument("--workdir")
     o.add_argument("--args", required=True)
     for name in ("resume", "discard", "close"):
-        sub.add_parser(name).add_argument("folder")
+        rs = sub.add_parser(name)
+        rs.add_argument("folder")
+        if name == "resume":
+            rs.add_argument("--args")
     p = sub.add_parser("phase")
     p.add_argument("folder")
     p.add_argument("name")
@@ -1409,7 +1598,8 @@ def main(argv):
     args = ap.parse_args(normalize_argv(argv))
     try:
         if needs_lock(args):
-            with write_lock(args.folder):
+            with write_lock(args.folder) as lock:
+                args.lock = lock
                 return COMMANDS[args.cmd](args)
         return COMMANDS[args.cmd](args)
     except TakenOver as e:
