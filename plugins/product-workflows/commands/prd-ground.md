@@ -787,10 +787,11 @@ behaviour, not the behaviour.
     read it, `fact <folder> 'pin:<slug>'`, its value the pinned commit, a space, and the clone's
     absolute path. Where `git -C "<path>" rev-parse HEAD` prints another commit, that repository
     moved: count its saved results, the ids `results <folder> --match 'cg-<id form>'` returns in
-    which `cg-<id form>` ends the id or is followed by `-`, `<id form>` being its slug's (below).
-    Where that `git` call fails, the clone cannot be read at that path. Where any repository moved or
-    cannot be read, this line is the one the question takes from this command:
-    `Moved since this run pinned it: <slug> (<pinned> → <HEAD>; its <n> saved result(s) are redone)[, …].[ Not readable where this run pinned it: <slug> (<path>)[, …].]`
+    which `cg-<id form>` begins the id or follows a `-`, and ends the id or is followed by `-`,
+    `<id form>` being its slug's (below). Where that `git` call fails, the clone cannot be read at
+    that path. Where any repository moved or cannot be read, this line is the one the question
+    takes from this command, each bracketed part printed only where it names a repository:
+    `[Moved since this run pinned it: <slug> (<pinned> → <HEAD>; its <n> saved result(s) are not reused)[, …].][ Not readable where this run pinned it: <slug> (<path>)[, …].]`
     On every `unfinished` run, the question also takes this line:
     `Resuming reuses each answer this run recorded while its question is unchanged; to answer one again, start over.`
 
@@ -808,8 +809,9 @@ behaviour, not the behaviour.
     answer is an option that asks a follow-up in plain text — names, a path — `gate-record` waits
     for the follow-up and records both, `<the option> — <the follow-up's answer as typed>`, and a
     reused answer is acted on as both, the follow-up not asked again. An answer that ends the run —
-    a *Cancel*, Phase 3's typed *cancel* — is never recorded, so that a resume asks the question
-    again rather than stopping on the same answer. And a question a step asks again — Phase 1 step
+    a *Cancel*, Phase 3's typed *cancel* — or only defers it — Phase 1 step 3's *I'll clone it —
+    wait* — is never recorded, so that a resume asks the question again rather than stopping, or
+    waiting, on the same answer. And a question a step asks again — Phase 1 step
     4's after the names it was given resolved to none, step 3's for a name it has asked about
     already — takes `-2` after its gate id the second time, `-3` the third, and so on, counted
     afresh each time the run walks its phases from the start, as a resumed run does: a repeat is
@@ -823,7 +825,7 @@ behaviour, not the behaviour.
 
     **Taken over.** Wherever a call of the script exits 9 from here on, or a call that only reads
     exits 2 with `run folder no longer exists` (`workflows-core:run-folder` §2), stop at once —
-    save in `close-run`, after the Final report, which says itself what it prints there:
+    save in `close-run`, just before Phase 11 step 5, where Phase 11 says what the run does:
     `PRD_GROUND_RUN_TAKEN_OVER: another session (<id>) took this run over — stopping without writing.`
     `<id>` is the session the script's stderr line names (`owned by session <id>`); where that line
     says the folder was removed instead, print
@@ -934,7 +936,8 @@ the manual path:
    ```
    It goes through `run-gate`, gate `p1-clone-<the name's id form>` (Phase 0 step 10) —
    `p45-clone-<the name's id form>` for a name Phase 4.5's *Add repositories* gave — its shown
-   text that array, then the name as typed.
+   text that array, then the name as typed. Neither *I'll clone it — wait*, which only defers the
+   answer, nor *Cancel* is recorded (Phase 0 step 10).
    A clone reached through *Specify a different absolute path for this repo* is named by its own
    remote slug, read as step 2 reads one, where its `origin` reads; where it does not — the one way
    this phase resolves a clone with no readable `origin` — it is named by its directory's basename,
@@ -1019,7 +1022,7 @@ with `--agent code-grounder=${CLAUDE_PLUGIN_ROOT}/agents/code-grounder.md`,
 `--model <agent>=<review_model>` for each of the three: all three run on `review_model`, in the
 form Phase 5 and Phase 7 pass it to `run-dispatch`. **This command's own rule withholds *keep*
 from every `grounding-verifier` result whose `old_model` is not an Opus-tier model**
-(`workflows-core:model-routing/classification` §2; its dispatch forms `opus` and `fable` count
+(`workflows-core:model-routing/classification` §4; its dispatch forms `opus` and `fable` count
 too): Phase 7's verification is an Opus re-derivation, so one written on a lower tier is redone
 whatever the answer. Where the entry point asks its question and a changed result is such a one,
 the question carries the line `grounding-verifier — <n> written below Opus: always redone, since every verification is an Opus re-derivation.`
@@ -2755,7 +2758,16 @@ fire `emit-block`. The one exception is a halt on a tool the ai-containers image
    report-only notice).
 4. **Write the resume pointer** — not on a run that took *Ending early*'s refusal tail, which writes none. Invoke `Skill(skill: "workflows-core:reference", args: "session-hygiene resume-pointer")` and, per its §1, write/overwrite `<BRD-dir>/dev-workflows/resume.md` now — after the cost entry, before the
    commit step below. Redact per §1. Silent.
-5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run in the specs repository; only `close-run`, after the Final report, follows it (below). Stages
+
+   **Then close the run folder, just before step 5** — on a run that finished, never on a stop. On
+   a run that resumed, first read `kept <folder>` and hold the Final report's `Kept from earlier
+   agent instructions or models:` line where it returns any id (`workflows-core:run-folder`,
+   `changed-agents`): nothing else the report prints comes from the folder. Then execute
+   `close-run` (`Skill(skill: "workflows-core:reference", args: "run-folder close-run")`). Where its
+   `close` exits 9 — another session took the run over at its end — print the `NOTE:` the entry
+   point names and end the run there: no step 5, since nothing more is written once another
+   session owns the run (`workflows-core:run-folder` §2), and no Final report.
+5. **Commit session artifacts (terminal).** Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git commit-artifacts")` and execute its `commit-artifacts` entry point (§4) inline — the LAST action of the run. Stages
    ONLY the §2.1 bounded artifact paths inside `$SPECS_PATH`, commits
    `<BRD-KEY> Add dev-workflows session artifacts (/prd-ground)` with no `Co-Authored-By` trailer, and pushes the branch Phase 9's handoff created per §4 step 5. NEVER touches a code repo, or the current working directory, where it is not the specs repository; NEVER force-pushes; NEVER fails the run; skips entirely when the run
    carries `specs_git: blocked` or `specs_git: misrooted`, re-emitting that notice. Hold its §6 outcome line for the final
@@ -2773,8 +2785,8 @@ Content this run reads — files, issue exports, pages, and what an agent's repl
 
 Report: the BRD or PRD folder + resolved repositories (with each one's pinned commit), and each
 `moved since this run pinned it` line Phase 3 (*This run's own pins*) held; on a run that resumed,
-the `Kept from earlier agent instructions or models:` line `changed-agents` names, where `kept`
-returns any id (`workflows-core:run-folder`, `changed-agents`); the
+the `Kept from earlier agent instructions or models:` line Phase 11 held before it closed the run
+folder, where it held one; the
 `Lineage:` line (`workflows-core:document-lineage` §7) — on `route: brd`, where Phase 0 step 7a
 checks nothing, `Lineage: not checked — BRD route: the inventory is a top` — and the upstreams each
 grounding file Phase 8 stamped now records; the
@@ -2886,7 +2898,3 @@ findings because another ledger could not be read. Phase 0's `require-on-main` g
 they are, on this BRD's own inventory and ledger. A slice's line reports zero delegated only when
 its parent withdrew none of its claims — provisional, committed, or settled here before the parent
 re-allocated it, the three routes to an orphan row (§2) — never as a property of being a slice.
-
-**Then close the run folder — the run's last action**, once this report is printed:
-`close-run` (`Skill(skill: "workflows-core:reference", args: "run-folder close-run")`). Never on a
-stop: a run that stops prints no Final report and keeps its folder, so running it again resumes.

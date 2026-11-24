@@ -153,7 +153,7 @@ Run once, on a resumed run only, at the step the command names: where both are k
 
 **A command's own rule may withhold *keep*** for some results, which the command names — a result whose invariant forbids reusing it under another model, say. Those are left out of `--ids` and redone whatever the answer.
 
-**The final report names the results kept.** A resumed run calls `kept <folder>` before it writes its final report, and where `kept` is not empty the report carries the line `Kept from earlier agent instructions or models: <the ids>`.
+**The final report names the results kept.** A resumed run calls `kept <folder>` before `close-run` removes the folder and holds what it returns, and where that is not empty its final report carries the line `Kept from earlier agent instructions or models: <the ids>`.
 
 Where the run folder is unavailable, or the run did not resume: skip it.
 
@@ -168,10 +168,10 @@ An exit 9 from step 1 makes this the taken-over stop: print that instead, and no
 
 ### Entry point: `close-run`
 
-The run's very last action, on a run that finished — after its final report and its terminal specs-repository commit — and never on a stop:
+On a run that finished, and never on a stop: once every other step that reads the folder has read it — the `kept` read its final report needs among them — and just before its terminal specs-repository commit, which stays the run's last action:
 
 1. `close <folder>`: the folder is removed. Everything the run produced is in the specs repository or on a branch by now.
-2. Exit 9 — another session took the run over at its end: print `NOTE: another session took this run over; its run folder is left to it.` Exit 2 — print `NOTE: run folder not removed (<the script's stderr line>); a later run of any command removes it 30 days after its last write.`
+2. Exit 9 — another session took the run over at its end: print `NOTE: another session took this run over; its run folder is left to it.`, and make no terminal specs-repository commit: nothing more is written once another session owns the run (§2). Exit 2 — print `NOTE: run folder not removed (<the script's stderr line>); a later run of any command removes it 30 days after its last write.`, and go on to the terminal commit.
 
 Where the run folder is unavailable: nothing, save on a run that lost it mid-way (§2), which calls `close <lost_folder>` once and says nothing more, whatever it exits.
 
