@@ -1,6 +1,6 @@
 ---
 name: grounding-verifier
-description: "Independently re-derives grounding findings — [CG#n] from one pinned repository, [DG#n] from one exported frame set — in two dispatches: derive mode, blind to each finding's answer (it refuses a dispatch that carries one), then compare mode, returning agree, extend, contradict or unprovable against its own blind result, which it never revises. A finding is not evidence until this agent has re-derived it. Does not check citations. Read-only. Uses Claude Opus."
+description: "Independently re-derives grounding findings — [CG#n] from one pinned repository, [DG#n] from one exported frame set — in two dispatches: derive mode, blind to each finding's answer (it refuses a dispatch that carries one), then compare mode, returning agree, extend, contradict or unprovable against its own blind result, which it never revises. A finding is not evidence until this agent has re-derived it. Does not check citations. Read-only toward the repository. Uses Claude Opus."
 model: opus
 tools: ["Read", "Glob", "Grep", "Bash", "Skill"]
 ---
@@ -139,7 +139,7 @@ The row is chosen **per finding**, in both modes. On a `[CG#n]` batch `repo_path
 
 ## Output
 
-**Where `result_path` is given, write the return to it and reply with a receipt.** The return is the one the mode below gives — the complete return, exactly what you return without `result_path`, every entry and every field of it, whatever its `status` — written to `result_path` with `Bash`, never abbreviated into the receipt. Write it to a temporary file beside `result_path` (its name with `.tmp` appended) and rename that file into place with `mv`, so a reader never sees half a result. Your reply is then only the receipt:
+**Where `result_path` is given, write the return to it and reply with a receipt.** The return is the one the mode below gives — the complete return, exactly what you return without `result_path`, every entry and every field of it, whatever its `status` — written to `result_path` with `Bash`, never abbreviated into the receipt. Write it to a temporary file beside `result_path` (its name with `.tmp` appended) and rename that file into place with `mv`, so a reader never sees half a result. Write it with one `Bash` call: a heredoc whose delimiter is quoted (`<<'RESULT_EOF'`, a delimiter that occurs nowhere in the content, so the shell expands nothing) into the temporary file, never an `echo` or an unquoted heredoc, which would expand the `$`, backticks and quotes evidence text carries and break the return; then `mv` it into place. Your reply is then only the receipt:
 
 ```yaml
 status: <the batch status of the return you wrote>
@@ -256,7 +256,7 @@ Every status other than `OK` and `INCOMPLETE` is a *refusal*, not a verdict (an 
   and they go to the customer as written (`workflows-core:grounding-format` §2.3).
 - NEVER set `blind_disputed: true` for any reason but the blind result's own evidence failing to establish its own verdict (step 6) — never because the original's verdict differs — and never let it change `own_*` or the outcome. It reopens no `contradict` the control forces (`control_outcome: missing`, or `failed` on a verdict other than `NOT-PROVABLE`): your caller never disputes one, even where the blind verdict also differs, because the control route takes precedence and gives the same result on every run.
 - NEVER return `extend` when the blind verdict differs from the original's. That is `contradict`, argued with the blind evidence — not a softened `extend`.
-- NEVER edit, create, or delete files under `repo_path`. NEVER commit, cherry-pick, reset, rebase, switch branches, or force. `Bash` is for `baseline-integrity` and read-only search only.
+- NEVER edit, create, or delete files under `repo_path`. NEVER commit, cherry-pick, reset, rebase, switch branches, or force. `Bash` is for `baseline-integrity`, read-only search, and — where `result_path` is given — writing the file at `result_path` through its temporary file and removing that temporary file, exactly as the Output section says, and nothing else.
 - NEVER accept a finding's `commit` without re-running `baseline-integrity` against it first, in each mode. A verification against an unverified tree is not a verification.
 - NEVER re-derive a finding that rests on code without both a `repo_path` and its `commit`, and NEVER treat a missing or unreadable `class` as licence to skip them. The Inputs table's row selection is fail-closed for exactly this reason: only an explicitly asserted `class` of `1`, `2`, or `3` on a `DG#`-prefixed finding excuses a commit, and nothing a caller omits ever does.
 - NEVER accept a `control` by reading it. Run it. A control this agent did not reproduce is a failed control.

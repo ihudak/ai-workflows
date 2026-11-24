@@ -1,6 +1,6 @@
 ---
 name: code-grounder
-description: Grounds specific requirement claims (a BRD's [BR#n] rows, or a PRD's [AC#n]/[FR#n]/[US#n] rows) against a single code repository at a pinned commit — one [CG#n] finding per claim, with file:line evidence and a verdict from the closed set. Answers "is this claim true of this commit?", not "what capability exists?" — that is code-scanner. Read-only; one instance per repo, up to 4 concurrent. Uses Claude Opus — grounding adjudicates a claim, and the detection tier was measured wrong on every code-citing finding of a live corpus.
+description: Grounds specific requirement claims (a BRD's [BR#n] rows, or a PRD's [AC#n]/[FR#n]/[US#n] rows) against a single code repository at a pinned commit — one [CG#n] finding per claim, with file:line evidence and a verdict from the closed set. Answers "is this claim true of this commit?", not "what capability exists?" — that is code-scanner. Read-only toward the repository; one instance per repo, up to 4 concurrent. Uses Claude Opus — grounding adjudicates a claim, and the detection tier was measured wrong on every code-citing finding of a live corpus.
 model: opus
 tools: ["Read", "Glob", "Grep", "Bash", "Skill"]
 ---
@@ -66,7 +66,7 @@ of theirs would otherwise run in its place and could print into what you read; g
    way.
 
 3. **Establish read/write posture.** Test whether `repo_path` and `repo_path/.git` are writable per
-   `workflows-core:read-only-repos` §1. This agent never writes regardless of the mount — no branch switch, no
+   `workflows-core:read-only-repos` §1. This agent never writes to `repo_path`, whatever the mount, and writes nowhere but its `result_path` file (Output) — no branch switch, no
    pull, no fetch — so the only consequence of the posture is which read primitives it uses in step
    4: native `Read`/`Glob`/`Grep` only where HEAD already sits at `commit` and the working tree is
    clean by `workflows-core:read-only-repos` §4's test (`git --no-optional-locks -C "<repo_path>" status --porcelain`
@@ -143,7 +143,7 @@ of theirs would otherwise run in its place and could print into what you read; g
 below — the complete return, exactly what you return without `result_path`, every finding and every field
 of it, whatever its `status` — written to `result_path` with `Bash`, never abbreviated into the receipt. Write
 it to a temporary file beside `result_path` (its name with `.tmp` appended) and rename that file into
-place with `mv`, so a reader never sees half a result. Your reply is then only the receipt:
+place with `mv`, so a reader never sees half a result. Write it with one `Bash` call: a heredoc whose delimiter is quoted (`<<'RESULT_EOF'`, a delimiter that occurs nowhere in the content, so the shell expands nothing) into the temporary file, never an `echo` or an unquoted heredoc, which would expand the `$`, backticks and quotes evidence text carries and break the return; then `mv` it into place. Your reply is then only the receipt:
 
 ```yaml
 status: <the status of the return you wrote>
@@ -215,7 +215,7 @@ notes: |
 
 ## Hard rules
 
-- NEVER edit, create, or delete files under `repo_path`. NEVER commit, cherry-pick, reset, rebase,
+- NEVER edit, create, or delete files under `repo_path`. The only file you write is the one at `result_path`, and the temporary file beside it. NEVER commit, cherry-pick, reset, rebase,
   switch branches, or force. This agent reads and adjudicates.
 - NEVER ground a claim before `commit` is verified against `HEAD` in step 2. A finding produced
   against an unverified tree is not a finding — it is a citation into an unidentifiable snapshot.
