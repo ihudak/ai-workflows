@@ -57,8 +57,8 @@ reuse reports back; `dispatch --redo` dispatches anew whatever the fingerprint s
 --workdir also lists (`others`, at most 3) the unfinished runs of the same command and working directory
 whose arguments differ. A writer is a dispatch that edits files in a git work tree: `writer` keeps its record
 under "writers", with a snapshot of the scope (the paths `git status` lists, each with a content hash) taken
-before it, and matches a record on its input and attachments alone, so a changed agent file or model never
-dispatches it again (`stale` and `keep` read results only). It prints dispatch (new receipt path), interrupted (a started
+before it, and matches a record on its input and attachments, tree, scope and receipt, never its agent file or
+model, so a change to either never dispatches it again (`stale` and `keep` read results only). It prints dispatch (new receipt path), interrupted (a started
 record: the paths that differ from the snapshot), intact or changed (a done record: whether each path the writer
 changed still holds what the run last left there); `writer --redo` dispatches anew whatever the record says,
 from a new snapshot, removing the old receipt. `done` on a started writer takes the after-snapshot, records
@@ -816,7 +816,8 @@ def cmd_writer(a):
     rec = (run.get("writers") or {}).get(a.id)
     rec = rec if isinstance(rec, dict) else None
     receipt = recorded_result(folder, rec, a.id) if rec else None
-    # A writer is matched on its input and attachments alone (D6b): a changed agent file or model neither
+    # A writer is matched on its input and attachments, tree, scope and receipt (D6b), never its agent file or
+    # model: a changed agent file or model neither
     # dispatches a finished one again over its own work nor hides an interrupted one.
     if not a.redo and rec and rec.get("content") == content and rec.get("tree") == real \
             and rec.get("scope") == scope and receipt is not None:
@@ -1017,7 +1018,7 @@ def current_state(a):
 
 
 def cmd_stale(a):
-    # Results only: a writer is matched on its input alone, so a changed agent or model never redoes one.
+    # Results only: a writer is never matched on its agent or model, so a changed one never redoes it.
     run = load_run(a.folder)
     shas, models = current_state(a)
     changed = []
@@ -2214,7 +2215,7 @@ def selftest():
 
         @case("writer-agent-changed-still-intact")
         def _():
-            # a writer is matched on its input alone: a changed agent file or model neither dispatches a
+            # a writer is never matched on its agent file or model: a changed one neither dispatches a
             # finished one again over its own work nor hides an interrupted one
             home, tree = newdir("home"), gitrepo()
             f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
