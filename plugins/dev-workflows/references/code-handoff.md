@@ -376,7 +376,7 @@ Six obligations. Omitting any one is a defect, not a style choice.
 
 Immediately before a unit's first dispatch, record the whole working tree as a git tree, untracked files included and the index untouched:
 
-    ( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -- "$(git -C "<repo>" rev-parse --absolute-git-dir)/index" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git -C "<repo>" add -A -- ':/' && git -C "<repo>" write-tree )
+    ( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -p -- "$(git -C "<repo>" rev-parse --absolute-git-dir)/index" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git -C "<repo>" add -A -- ':/' && git -C "<repo>" write-tree )
 
 It prints one tree id. Record it as `pre_edit_tree` and pass the same value on every dispatch of that unit. The `add` runs against a temporary copy of the index, so what the user has staged stays as it was. In a run that keeps a run folder it is taken once per unit and recorded there, and a resumed run reads it back rather than taking it again (§7.3).
 
@@ -395,7 +395,7 @@ Wherever the agent's own text says to revert, run this script once, with `bash`,
     repo='<repo>' pre='<pre_edit_tree>'
     fail() { printf 'REVERT-FAILED: %s\n' "$*"; }
     git -C "$repo" cat-file -e "$pre^{tree}" 2>/dev/null || { fail "pre_edit_tree $pre is not a tree in $repo; nothing reverted"; exit 1; }
-    now=$( ( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -- "$(git -C "$repo" rev-parse --absolute-git-dir)/index" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git -C "$repo" add -A -- ':/' && git -C "$repo" write-tree ) ) || { fail "could not record the tree as it stands now (git's error above); nothing reverted"; exit 1; }
+    now=$( ( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -p -- "$(git -C "$repo" rev-parse --absolute-git-dir)/index" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git -C "$repo" add -A -- ':/' && git -C "$repo" write-tree ) ) || { fail "could not record the tree as it stands now (git's error above); nothing reverted"; exit 1; }
     printf 'reverted_from: %s\n' "$now"
     for pass in ignore-files other; do
       rm_list=(); rs_list=()

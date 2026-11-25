@@ -24,6 +24,10 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`scripts/run-folder.py`** is the copy of `workflows-core` 1.100.0's.
 - **Pages.** The five commands' pages say what a resume reuses, redoes and asks, the resume and checkpoints page names the run folder, and the getting-started page gives the skill listing's current size.
 
+### Fixed
+
+- **`references/code-handoff.md` §6.1 and §6.2 copy git's index with its modification time** (`cp -p`). The snapshot taken before a unit's first dispatch (§6.1) and the revert's record of the tree as it stands (§6.2) each work on a copy of the index, and a plain `cp` gave the copy the time it was made. Git's check for a file changed in the same second as the index was written reads the index file's own time, so on that copy an edit that kept the file's size, made in that second, could be taken for no change: §6.1 then recorded the file's earlier content as the unit's start, and the revert of `/upgrade` and `/vuln` (§6.2, which §7.4 step 3 also runs) could put that content back over the edit.
+
 ### Known limits
 
 - **`/ready`:** the specs-repo preflight, which runs before the folder opens, may name the run's own uncommitted `_readiness.md` and maintenance edits in its dirty-tree notice. A change outside the PRD folder since the reading is neither named nor read again; *Start over* reads it.
