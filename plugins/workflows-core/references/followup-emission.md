@@ -167,3 +167,20 @@ into a docs/code repo or the current working directory, where it is not the spec
 into `$SPECS_PATH` are committed later, once, by the run's terminal
 `commit-artifacts` step (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md`
 §4).
+
+**Guarded, on a run that keeps a run folder.** Where the calling run carries `run_folder: <path>`
+and has finished — the tail before `close-run`, never a stop's — and §6 leaves at least one item,
+everything after §6 is effect `tail-followups`
+(`Skill(skill: "workflows-core:reference", args: "run-folder run-effect")`). Its outcome is recorded
+as fact `tail-followups`, before `done`, for the line the caller's report prints about the write:
+`<N> follow-up(s) written to <file>` for each file it wrote into, joined by `; `; or `none written`,
+followed by §2's report-only notice where §2 gave one, or by `— the preview was cancelled` where §7's
+answer was *cancel*. `done` — skip it, and take the fact's value as the phase's outcome; the
+follow-ups stay in the Final Report, as on every run. `none` —
+`effect <folder> tail-followups start`, then §2 through the write, then
+`fact <folder> tail-followups --set '<the outcome>'` and `effect <folder> tail-followups done`.
+`started` — an earlier session began it and never recorded its end: run it again from §2, where §5
+skips each line that session wrote, so none is written twice, and the outcome counts what this run
+wrote; then the fact and `done`, as on `none`. §7's question is not recorded: a run that finds the
+effect `started` asks it again. Without a run folder, and on a stop, the phase runs as above,
+unguarded.

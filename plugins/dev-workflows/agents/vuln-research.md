@@ -26,6 +26,7 @@ For each CVE in the input handoff:
 1. **Filter** — Skip non-CVE IDs (CWE-*, OWASP patterns). Record `status: SKIP_NON_CVE`.
 
 2. **NVD Lookup** — Fetch CVE details from the NVD API (see `${CLAUDE_PLUGIN_ROOT}/references/fix-vuln/nvd-api.md`).
+   Where the request gives the CVE an `advisory_file:`, the orchestrator has fetched its record once for the run: read it from that file in place of the fetch, and fetch nothing for this CVE from NVD; a file you cannot read is a `LOOKUP_FAILED` naming its path.
    Extract: description, affected package name, ecosystem, vulnerable version range.
    On failure: record `status: LOOKUP_FAILED` with the error, continue to next CVE.
 

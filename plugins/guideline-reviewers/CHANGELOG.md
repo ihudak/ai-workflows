@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.2.11] — 2026-11-25
+
+Docs only: the skill-listing figure counts workflows-core 1.100.0's new skill. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **Getting started.** The page now gives the skill listing's current size: "about 4,100" characters for every plugin of the marketplace installed together, where it said "about 3,900". That is 3,918 plus 182 for `workflows-core`'s new `agent-file` skill (25 for `workflows-core:agent-file`, 152 for its description and 5), re-derived by the recipe in the repository's `docs/maintainers/rationale.md`, section `skill-listing-figure`.
+
 ## [1.2.10] — 2026-11-14
 
 Docs only: SEC-G1. The skill-listing figure counts `workflows-core` 1.87.0's new skill. Needs nothing from the other plugins' releases.

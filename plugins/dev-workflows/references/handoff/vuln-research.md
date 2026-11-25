@@ -10,6 +10,7 @@ repo: /absolute/path/to/repo
 cves:
   - id: CVE-2023-46604
     address: ACME-77-01     # optional folder key; omit when the token carried none
+    advisory_file: /abs/path/advisory.md   # optional; the CVE's NVD record /vuln fetched once for its run, read in place of the lookup
   - id: CVE-2024-12345    # bare CVE, no address
 ecosystem_hint: java      # optional; helps when auto-detection is ambiguous
 dependency_tree_files:    # optional; on every dispatch after a NEEDS_TREE, for those CVEs: each ecosystem's

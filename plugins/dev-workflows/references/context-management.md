@@ -17,15 +17,33 @@ without degrading. Apply when the plan/step list is large or the run is nearing 
 - **Hand off by file, not paste** — when dispatching a subagent, write the context it needs (task brief,
   diff, review package, prior-phase summary) to a file and hand the subagent the *path*, not the pasted
   content. Pasted dispatch content stays resident in the orchestrator's context and is re-read on every
-  later turn; a file path costs one line. Always `command mktemp` the handoff file — **never inside a repo working
-  tree** (and never in the specs tree) — so a later `( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -- "$(git rev-parse --git-path index)" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git add -N --ignore-removal :/ && git -c diff.relative=false diff --no-ext-diff --no-color "$(git rev-parse -q --verify HEAD || git hash-object -t tree /dev/null)" )` never picks it up; `command`
-  for the reason the removal below gives, since an alias or a shell function of that name would print its
-  own text into the path the run then writes to and hands on. That diff capture runs its `git add -N`
+  later turn; a file path costs one line. **Where the file goes depends on whether the run keeps a run
+  folder** (`workflows-core:run-folder`), and the same rule holds for every other file a later step of
+  the run reads — a plan, a claims file, a review package, a diff capture handed to an agent:
+  - **In a run that keeps one** — `run_folder` names a folder — the file goes in that folder: under its
+    `scratch/`, or as a dispatch's input or result there. `workflows-core:run-folder` §5 says which
+    are written with its `put` and read back by a resumed run, never made again, and which may be
+    written directly. A file made once the folder is unavailable goes where the next item says.
+  - **In a run that keeps none** — a command that keeps no run folder, `/implement` among them, which
+    resumes through its own `run-state.py` instead; a run whose `open-run` found none; a run that has
+    lost its folder — `command mktemp` the file, `command` for the reason the removal below gives,
+    since an alias or a shell function of that name would print its own text into the path the run
+    then writes to and hands on.
+  - **A file made and read within one step stays a `mktemp` file in either run**: one a single shell
+    command makes and removes under its own `trap`, as the diff capture below does with its index
+    copy, and one removed right after the one command that reads it, as
+    `${CLAUDE_PLUGIN_ROOT}/references/code-handoff.md` §2.3 removes its commit message. So does a file
+    that must outlive the run (**Remove every file so handed off**, below).
+
+  **Either way, never inside a repo working tree** (and never in the specs tree): the run folder lies
+  outside every repository (`workflows-core:run-folder` §1), and a `mktemp` file lies where
+  **Remove every file so handed off** says — so a later `( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -- "$(git rev-parse --git-path index)" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git add -N --ignore-removal :/ && git -c diff.relative=false diff --no-ext-diff --no-color "$(git rev-parse -q --verify HEAD || git hash-object -t tree /dev/null)" )` never picks it up. That diff capture runs its `git add -N`
   against a copy of the index (`GIT_INDEX_FILE`), removed when the subshell exits: the intent-to-add
   marks it needs to list new files would otherwise stay in the real index on the user's own untracked
   files after the run, and a later `git commit -a` of theirs would commit those files.
-- **Remove every file so handed off, once no later step reads it** — and at the latest before the run
-  ends, whichever way it ends: its final report, or any stop taken after the file was made. Remove it as
+- **Remove every file so handed off** — a `mktemp` one once no later step reads it, and at the latest
+  before the run ends, whichever way it ends: its final report, or any stop taken after the file was
+  made. Remove it as
   `command rm -f -- "<path>"`: `command` because the Bash tool's shell carries the user's aliases and
   shell functions, and an `rm -i` or `rm -I` of theirs would ask before removing the file, be answered
   no from that shell's empty standard input, and leave it behind; `--` ends `rm`'s options. **Nothing
@@ -38,8 +56,13 @@ without degrading. Apply when the plan/step list is large or the run is nearing 
   that made one, which takes it over with that run's state (`commands/implement.md`,
   `## Resuming a stopped run`) — a resume pointer names artifacts, never a handoff file
   (`workflows-core:session-hygiene` §1) — so one a run leaves behind stays until the host clears it,
-  or until such a resume removes it. Where a file must outlive its run, the step that
-  keeps it says why and names it to the user. **A file a stop names to the user because it could not
+  or until such a resume removes it. **The command never removes a file in the run folder on its
+  own**, since a resumed run reads it: the folder's removal — `close-run`, on a run that finishes — replaces the
+  removal of each, and a stop keeps the folder and every file in it for the resume, save a `scratch/`
+  subtree of the command's own that a resume makes again rather than reads, which the stop may remove
+  (`workflows-core:run-folder` `close-run`, `run-stop-line`, §5). Where a file must outlive its run, it
+  is a `mktemp` file, never one in the run folder, which that removal would take with it, and the step
+  that keeps it says why and names it to the user. **A file a stop names to the user because it could not
   be read stays where it is**: the run has just told them where to look, and a path reported and
   then removed is worse than either.
 

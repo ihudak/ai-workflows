@@ -2,7 +2,7 @@
 
 # Phase handoff — Shared Reference — entry point branch-check
 
-This file holds entry point `branch-check` of `phase-handoff`: §1, §2.2 and §6, and in part §3.3 ("Row B′'s remedy"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. This file is 106 lines long.
+This file holds entry point `branch-check` of `phase-handoff`: §1 and §6, and in part §2.2 ("Intended name", "The keyless form", "rule 1", "rule 2", "rule 3", "rule 4", "Where a new branch is cut" and "In session-branch mode") and §3.3 ("Row B′'s remedy"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. This file is 106 lines long.
 
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 

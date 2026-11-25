@@ -147,6 +147,78 @@ The threshold, 10, is the user's ruling in substance ("a small re-do is fine, hu
 
 Each part releases on its own, with the usual version bumps and dated `CHANGELOG.md` sections.
 
+### Part 2 additions
+
+*(Added 2026-11-24 after a survey of today's tree for Part 2: `.superpowers/survey/run-folder-part2/`, git-ignored working notes, seven files. It found that Part 1's protocol cannot express what most other commands need: agents another plugin ships, writers, content the orchestrator writes itself, adaptive interviews, and checks that a run's own earlier output trips. It also corrected the Background: `/brd-interview` writes nothing to the specs repository until its Phase 9, so a crash loses every answer, and `/brd-split` writes its rationales only at the end. Each addition below is the builder's call within this design's intent. None widens the run folder beyond one run of one command on one machine.)*
+
+**D19 — Agents another plugin ships.** A `workflows-core` agent dispatched from another plugin's command (`code-scanner`, `docs-grounder`, `architecture-grounder`, `overlap-reader`, `promotion-scout`, `doc-fixer`, `adr-drafter`) is saved like the command's own. Its definition file is named by a `workflows-core` skill, `workflows-core:agent-file <agent>`, which prints the file's absolute path under `workflows-core`'s root (`${CLAUDE_PLUGIN_ROOT}` in a skill is the skill's own plugin), so no path crosses plugins by guesswork. Three kinds of dispatch are not saved; each runs as before:
+- an agent of a plugin with no such skill (`prose-style`);
+- a `general-purpose` dispatch, which has no definition file;
+- the end-of-run maintenance and defect dispatches, whose step D28 guards whole.
+
+A dispatch an agent makes inside its own run is not seen by the orchestrator (`docs-style-checker` → `prose-style-checker`). It counts only through the outer agent's file. That is a stated limit, like D7a's shared references.
+
+**D20 — Writers, made concrete (D6b).** A writer is dispatched through a new entry point, `run-writer`, whose scope is a git work tree and, optionally, paths in it:
+- **Before.** The script records the scope's uncommitted paths and a content hash of each.
+- **After.** It records the paths the writer changed and their hashes. The run also keeps, per tree, the state it last left each path in: every writer's completion updates it, and so does a `tree-note` call the command makes after its own edit, commit or revert in that tree.
+- **On resume, completed with the same input.** If every path it changed is still in the state the run last left it in, the dispatch is skipped and its saved receipt read (`intact`). Otherwise the paths are named and the user asked (`changed`). The run's own later writes never read as a change. *(Amended 2026-11-24 while building Part 2a: the first wording said "the same fingerprint", which covers the agent file and the model, so an agent or model change dispatched a finished writer again over its own work, against D6b. A writer is matched on its stored input and attachments, with its tree, scope and receipt, never on its agent or model, and `stale` counts no writer, so D7a's question never redoes one.)*
+- **On resume, dispatched but never completed (`interrupted`).** The command names its handling:
+  - a revert where it has a revert contract (`/upgrade`'s and `/vuln`'s `pre_edit_tree`);
+  - otherwise the question *Dispatch it again over what it left (Recommended)* / *Stop*.
+
+A writer that writes exactly one file outside every repository (`conformance-tracer`'s output file) is not a writer here: its file is its result, and it goes through `run-dispatch` with `result_path`.
+
+**D21 — What the orchestrator writes itself.** Any content the orchestrator generates that a later step, a dispatch input or a recorded question reads is written into the run folder (`scratch/`) when it is generated. Examples: a plan, a generated question set, a slice proposal, a reviewer brief, a summary handed to an agent, a draft. It is written atomically, through the script, owner-checked. From then on it is read from there. A resumed run reads it and never generates it again. This is what makes such inputs and shown texts byte-stable across sessions (D7, D8). Large values a later phase needs (a question set, a membership list) live in such files, not in `fact`.
+
+**D22 — Interviews.** A question generated from the previous answer (a grill or an intake) is recorded as a gate whose shown text is the question as asked. Its id is the interview's prefix plus a three-digit sequence number (`grill-001`). A resumed run:
+- reads the recorded answers in order as the interview so far;
+- asks none of them again;
+- continues from the next question.
+
+A command whose interview already persists in a session file of its own (`/specify`'s `_session.md`, `/design`'s `_design-session.md`) keeps it.
+
+**D23 — Files the run itself rewrites.** A file a dispatch reads that this run changes later — a draft the orchestrator edits between two reviews, a register a later phase rewrites — is copied into `scratch/` at the dispatch and attached. The input then names the bytes the agent read. A result whose input names a mutable path without its bytes is unsafe to reuse (D7).
+
+**D24 — Checks a run's own output trips.** `open-run` stands after address resolution and after the refusals that do not depend on what this run writes. Two kinds of step come after it and, on a resumed run, read the run's own effects and facts:
+- **Checks the run's own earlier write would trip.** An existing output (`create-prd`'s "existing PRD", `/docs-init`'s existing docs repository), a pending branch, a dirty tree holding the run's own edits, a revision anchor that is this run's half-written file. Such a check treats the run's own output as its own.
+- **Steps that move a tree.** A step that stashes, switches or cuts a branch (`/upgrade` Phase 0.5, `/vuln`'s switch to the base) is skipped on resume. The facts the first session recorded (stash ref, base, branch) stand in for it.
+
+Each command names these checks and steps.
+
+**D25 — Values read once.** A value the run took from a clock, the web or a mutable selector — `started_at`, the run's date, a `latest` version, the units `--next` chose, a CVE's data — is a fact the first session sets and every later session reads (D9).
+
+**D26 — Keyless runs and their directory.** `--workdir` is the directory the run works on — the repository root it resolved, the docs repository — not the directory it was started in. A keyless command's `open` also returns its other unfinished runs on the same directory, with other arguments. Where it finds any, the open question lists them, so a user who does not remember the exact arguments can resume one (D5's third bullet).
+
+**D27 — A command run inline by another** (`/docs-profile --inline` under `/document`, `/docs-brand --inline` under `/docs-init`) opens no run folder of its own. It uses its caller's, its dispatch, question and effect ids prefixed by its own name.
+
+**D28 — The shared tail.** Five tail steps are side effects a replay would repeat. Each is guarded as a `run-effect` with a fixed id where it is defined, so a run resumed after its tail began does not emit twice. Four are defined in shared references (`feedback-emission`, `followup-emission`, `cost-emission`, `session-hygiene`), where the guard is written once; the maintenance step is defined by each command, which guards it:
+- the end-of-run maintenance step;
+- `emit-auto`;
+- the follow-ups;
+- `emit-cost` with its chained checkpoint;
+- the resume pointer.
+
+A command without a run folder runs them as before. *(Amended 2026-11-24 while building Part 2a: the guard covers the tail of a run that finishes, the one `close-run` follows, and never the tail a stop takes. A stop keeps the folder, and the session that later resumes and finishes the run runs the tail again for its own work. Had the stop's tail marked those effects done, that session would skip them: it would measure none of its spend, persist none of its feedback and emit none of its new follow-ups. Tasks 6–11 keep each command's stop tails unguarded.)*
+
+**D29 — Shared references that dispatch.** A shared reference that dispatches agents on a command's behalf (`docs-grounding`, `architecture-grounding`, `architecture-promotion`) takes the calling run's folder, a dispatch-id prefix and the area, and saves its dispatches through `run-dispatch`. Without them it runs as before.
+
+`code-scanner`'s refresh moves the clone it reads, so its input cannot name the commit it will read. Its saved result records the ref it read and that ref's commit as a **pin**, and a resume reuses it only while the ref still names that commit. In the script:
+- `done` takes `--pin <name>=<value>`;
+- `dispatch` returns the recorded pins with a reuse;
+- `dispatch --redo` dispatches anew where the command finds a pin that no longer holds.
+
+**D30 — Answers in two parts.** An option followed by a typed reason (a disposition and its why) is two recorded questions. The second's shown text names the first answer.
+
+**D31 — Units in a loop** — components, CVEs, Epics, documentation units. Each dispatch, question and effect id carries the unit. A unit's completion is an effect. A resume skips each done unit and meets a `started` one with the command's handling (D20's `interrupted`). `close-run` comes after the last unit's last effect.
+
+**D17, amended.** `/harvest-decisions` is not covered. It dispatches no agent, and its two approvals are guarded by its own checks of the tree and of a pending branch. `/brd-interview` and `/brd-split` are covered although they dispatch no work agent: what they lose is answers and generated content (D21, D22).
+
+**D18, amended — Part 2 releases in four.** Each is planned once the one before it has shipped, so that each plan builds on the interface actually released:
+- **2a:** D19–D31's mechanism in `workflows-core` (script, reference, the `agent-file` skill, the shared references of D28 and D29, D13's rewrite of `context-management.md`), and the commands of `dev-workflows` (`/conformance`, `/design`, `/ready`, `/upgrade`, `/vuln`) and `security-workflows` (`/scan`).
+- **2b:** `docs-workflows`.
+- **2c:** `product-workflows`, with the two dispatches Part 1 left unsaved in `/prd-ground`.
+- **2d:** `workflows-core`'s own commands (`/frames`, `/diagnose-session`) and D17's coverage check.
+
 ## Risks
 
 - **A reused result that should not have been.** Mitigated by D7's rule that inputs name external state by version, and by the builder's per-dispatch audit. A missed version is the most likely defect; review should look for it first.

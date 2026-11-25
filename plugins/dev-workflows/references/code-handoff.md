@@ -2,7 +2,7 @@
 
 **Core references.** A citation of the form `workflows-core:<name>` names a shared reference in the `workflows-core` plugin. Load it with `Skill(skill: "workflows-core:reference", args: "<name>")` — never by path: `${CLAUDE_PLUGIN_ROOT}` resolves to this plugin, which does not carry it.
 
-Single source of truth for the step that turns finished work in a **code repository** into a commit on its own branch, pushes that branch, and opens a pull request where the host allows one: the `finish-code-branch` entry point (§2). Consumed by `/implement`, `/vuln`, and `/upgrade` — the three commands that create a branch in a code repo and write into it. It also owns how a caller moves onto the base before it cuts that branch (§2.8.1), and how one unit of that work is undone before it is committed (§6): the snapshot `/vuln` and `/upgrade` take before each unit's first edit, and the revert `vuln-fixer` and `upgrade-executor` run from it.
+Single source of truth for the step that turns finished work in a **code repository** into a commit on its own branch, pushes that branch, and opens a pull request where the host allows one: the `finish-code-branch` entry point (§2). Consumed by `/implement`, `/vuln`, and `/upgrade` — the three commands that create a branch in a code repo and write into it. It also owns how a caller moves onto the base before it cuts that branch (§2.8.1), how one unit of that work is undone before it is committed (§6): the snapshot `/vuln` and `/upgrade` take before each unit's first edit, and the revert `vuln-fixer` and `upgrade-executor` run from it — and how that machinery keeps to a run folder, where the caller keeps one (§7).
 
 **The principle.** Work that exists only in a working tree is one `git checkout` away from gone, and a command that created the branch it was written on owns getting it committed before the run ends. Committing is local and reversible, so it is not the user's to approve. Pushing and opening a pull request leave the machine, so they are.
 
@@ -76,11 +76,11 @@ Three carve-outs:
 
 2. **A stash the caller pushed.** Never restored here and never dropped. It stays where it is and §3.1's line names it, because a stash nobody mentions is a stash nobody remembers.
 
-3. **Temp files are already out of reach.** Every caller writes its diffs, claims files, and scan summaries to `mktemp -t …` outside any repo tree specifically so `add -A` cannot pick them up. This step does not re-verify that; a caller that writes a temp file inside the tree breaks this step's staging, which is why the rule sits in the callers.
+3. **Temp files are already out of reach.** Every caller writes its diffs, claims files, and scan summaries outside any repo tree — to `mktemp -t …` files, or into its run folder where it keeps one (§7.7; `${CLAUDE_PLUGIN_ROOT}/references/context-management.md`, **Hand off by file, not paste**) — specifically so `add -A` cannot pick them up. This step does not re-verify that; a caller that writes a temp file inside the tree breaks this step's staging, which is why the rule sits in the callers.
 
 **A `git add` git refuses** (a held `index.lock`, a full disk) is a unit that did not land too: what §2.3 and §2.12 say of a rejected commit holds for it, save that its changes are in the working tree, perhaps partly staged, rather than staged, as after an `add -A`.
 
-**Nothing to commit** — on the `add -A` path, the index holds nothing to commit after it (`git -C "<repo>" diff --cached --quiet` exits 0), a change the run staged itself with `git mv` or `git rm` included; under carve-out 1, the run set is empty. Never run §2.3 with an empty `--` list: `git commit --` with no path commits whatever the index holds, somebody else's staged change included, or fails with `no changes added to commit`. Do **not** emit a line here — §3.1 allows exactly one per call, and this path continues. If the branch carries commits this run made earlier — the §2.12 split form, or, on `/implement`'s resume, the commit the run it resumes made, which `/implement` has proved that run's own and its Phase 4.6 adopts as this run's — proceed to §2.4 and report the run's outcome from the pushing rows. If it carries none, the call ends and §3.1's `no changes to commit` row is the line. An `/upgrade` component already at its target version, or a re-run that changed nothing, both land here legitimately.
+**Nothing to commit** — on the `add -A` path, the index holds nothing to commit after it (`git -C "<repo>" diff --cached --quiet` exits 0), a change the run staged itself with `git mv` or `git rm` included; under carve-out 1, the run set is empty. Never run §2.3 with an empty `--` list: `git commit --` with no path commits whatever the index holds, somebody else's staged change included, or fails with `no changes added to commit`. Do **not** emit a line here — §3.1 allows exactly one per call, and this path continues. If the branch carries commits this run made earlier — the §2.12 split form; on `/implement`'s resume, the commit the run it resumes made, which `/implement` has proved that run's own and its Phase 4.6 adopts as this run's; or, where the caller keeps a run folder, the commit an earlier session's attempt at this same call made (§7.6) — proceed to §2.4 and report the run's outcome from the pushing rows. If it carries none, the call ends and §3.1's `no changes to commit` row is the line. An `/upgrade` component already at its target version, or a re-run that changed nothing, both land here legitimately.
 
 **The secret scan — last, just before §2.3.** Once the call has something to commit, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/secret-scan.py" --repo "<repo>"` on the `add -A` path, which reads the staged diff, or, under carve-out 1, the same with `-- <path> …` appended, one argument per enumerated path, after the `add -N` above, which reads those paths against `HEAD`. It reads only the lines the commit adds and the names of the files it adds or changes, so a secret already in the history is not reported again. Each possible secret prints as path, line, rule and a masked preview — a token's first four characters, its public format prefix, and its length; a password's or a URL's credentials' length alone; never the value — after it has dismissed and counted placeholders, environment-variable references and lines carrying a `gitleaks:allow` or `pragma: allowlist secret` marker. It looks for private-key blocks, cloud and SaaS token formats, three-part JWTs, credentials inside a URL, a credential-named key assigned a literal, and an added `.env`, keystore or credentials file.
 
@@ -241,6 +241,7 @@ A caller that cuts its branch from the base §2.8 resolved — `/implement`'s fr
   **That second exclusion is the operator's answer, never the bare token.** `test_decision: skip` has a *second* provenance: `/implement` records it **itself** after two `command_hint` attempts that also failed to capture (Pre-Phase 3.5's *"Ask at most twice in a run; after that record `test_decision: skip`"*). Nothing was typed and nothing was declined there — the operator asked twice for a working command and the run gave up — so that state matches this bullet's own predicate word for word and **does** flip the flag. A caller must therefore pass which provenance it holds and never the token alone; `/implement` does, in its Phase 4.6 `clean_finish` list. The distinction is worth stating because the token is what a reader reaches for: the exclusion above was written as "a typed decision", and the run can type nothing and record the same value.
 
 - a §2.12 unit-level commit that did not land — the pull request carries fewer units than the run was asked for, and that unit's changes sit uncommitted in the local repository, staged or in the working tree.
+- a unit redone, at the user's choice, from a tree §7.4 could not put back to where the unit began — its commit may carry what the writer cut off in an earlier session left behind.
 
 **The commit runs exactly as it would on a clean finish, and the push is still *offered* under §2.4's choice.** Unreviewed work that exists is recoverable; work that was never committed is not, and a failed gate is the case where losing it hurts most. *Offered* rather than guaranteed, because this flag is §2.4's own first re-ask trigger: where it differs from the flag the recorded answer was given under, that choice is put again and can be answered *"Neither"*. What the flag itself changes is only the pull request:
 
@@ -350,13 +351,14 @@ For a GitHub remote where `gh` is merely absent, append the command the user may
 
 ## 4. Caller contract
 
-Five obligations. Omitting any one is a defect, not a style choice.
+Six obligations. Omitting any one is a defect, not a style choice.
 
 1. **Call it after the last in-repo write, not before.** Post-implementation maintenance edits files inside the repo; a call placed ahead of them commits a partial run.
 2. **Record `pre_existing_dirty`, each path with its §2.2 fingerprint, and `stash_ref` before the first edit.** A caller that does not cannot honour §2.2's first two carve-outs, and will either sweep up somebody else's work or forget a stash.
 3. **Emit §3.1's line exactly once per *full* call**, in the run's own report. A §2.12 unit-level call emits none — it returns its outcome to the caller instead (§2.12), which records it in that command's own results table.
 4. **Never restate this reference's rules** — cite the section number. A rule copied into a command is a rule that goes stale.
 5. **Take §6.1's snapshot before each unit's first edit wherever an agent of that unit may revert it**, pass it on every dispatch of that unit — `/vuln` per CVE, `/upgrade` per component — and do what §6.3 says with every revert. `/implement` dispatches no agent that reverts. An agent dispatched without the snapshot returns `BLOCKED` rather than revert to `HEAD`, which would take the user's own changes with it.
+6. **Where it keeps a run folder, keep the machinery to it as §7 says**: its writers through `run-writer`, its `test-baseliner` and `code-review` dispatches through `run-dispatch`, each unit's snapshot recorded once, a writer cut off mid-edit met by §7.4, its files in the folder, and a `tree-note` after each change of its own in the repository. A caller that keeps none — `/implement` keeps none — runs everything above as written.
 
 ## 5. What this entry point never does
 
@@ -374,9 +376,9 @@ Five obligations. Omitting any one is a defect, not a style choice.
 
 Immediately before a unit's first dispatch, record the whole working tree as a git tree, untracked files included and the index untouched:
 
-    ( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -- "$(git -C "<repo>" rev-parse --absolute-git-dir)/index" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git -C "<repo>" add -A -- ':/' && git -C "<repo>" write-tree )
+    ( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -p -- "$(git -C "<repo>" rev-parse --absolute-git-dir)/index" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git -C "<repo>" add -A -- ':/' && git -C "<repo>" write-tree )
 
-It prints one tree id. Record it as `pre_edit_tree` and pass the same value on every dispatch of that unit. The `add` runs against a temporary copy of the index, so what the user has staged stays as it was.
+It prints one tree id. Record it as `pre_edit_tree` and pass the same value on every dispatch of that unit. The `add` runs against a temporary copy of the index, so what the user has staged stays as it was. In a run that keeps a run folder it is taken once per unit and recorded there, and a resumed run reads it back rather than taking it again (§7.3).
 
 **What it holds, and what it does not.** Every tracked and untracked file git does not ignore. Three things are outside it: an ignored file, which §6.2 leaves in place; a submodule's contents and the commit checked out in it; and a path marked skip-worktree or assume-unchanged (`git ls-files -v` tags it `S` or with a lowercase letter), which `add` does not look at.
 
@@ -393,7 +395,7 @@ Wherever the agent's own text says to revert, run this script once, with `bash`,
     repo='<repo>' pre='<pre_edit_tree>'
     fail() { printf 'REVERT-FAILED: %s\n' "$*"; }
     git -C "$repo" cat-file -e "$pre^{tree}" 2>/dev/null || { fail "pre_edit_tree $pre is not a tree in $repo; nothing reverted"; exit 1; }
-    now=$( ( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -- "$(git -C "$repo" rev-parse --absolute-git-dir)/index" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git -C "$repo" add -A -- ':/' && git -C "$repo" write-tree ) ) || { fail "could not record the tree as it stands now (git's error above); nothing reverted"; exit 1; }
+    now=$( ( i=$(command mktemp -t dw-index-XXXXXX) && trap 'command rm -f -- "$i"' EXIT && { command cp -p -- "$(git -C "$repo" rev-parse --absolute-git-dir)/index" "$i" 2>/dev/null || command rm -f -- "$i"; } && export GIT_INDEX_FILE="$i" && git -C "$repo" add -A -- ':/' && git -C "$repo" write-tree ) ) || { fail "could not record the tree as it stands now (git's error above); nothing reverted"; exit 1; }
     printf 'reverted_from: %s\n' "$now"
     for pass in ignore-files other; do
       rm_list=(); rs_list=()
@@ -443,3 +445,145 @@ What it does, in order:
 - **Re-take each fingerprint the revert touched.** For every `pre_existing_dirty` path the return names in `reverted:`, take its §2.2 fingerprint again and use the new one from then on. What the revert left there is the user's file, and a line-ending conversion (§6.2) must not make §2.2's run set count it as the run's work.
 - **A revert that failed finishes unclean.** A `REVERT-FAILED: ` line in the `notes` of any return the unit made means part of the unit is still in the tree, and the caller's commit then carries it. Set `clean_finish: false` for that unit, as for a `NEW-FAILURE: ` line, so a pull request is a draft whose banner names the line. Test the prefix, not the prose.
 - **A revert decision the agent could not carry out is the caller's.** Where the `regression-resume` call that carried `regression_decision: revert` returns `BLOCKED` instead, the user's choice has not happened: run §6.2's script yourself from this unit's `pre_edit_tree`, then handle the return as the command says. Never let the caller's commit take a change the user chose to revert.
+
+## 7. A caller that keeps a run folder
+
+A caller that keeps a run folder (`workflows-core:run-folder`) — its run carrying `run_folder: <path>` — keeps this file's machinery to it as this section says: its writers, its `test-baseliner` and `code-review` dispatches, §6's revert where a writer was cut off mid-edit, the files it hands on, and its own edits in the repository. It is written for `/vuln` and `/upgrade`, the callers that work in units. `/implement` keeps no run folder — it resumes through its own `run-state.py` — and a caller whose run carries `run_folder: unavailable`, from the start or from a call that exited 2, runs everything above as written, and none of this section, from then on. Each call below is `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/run-folder.py" <subcommand> …`, its values quoted as `workflows-core:run-folder` §1 says, and each exit is met as its §2 says: exit 9 stops the run at once, writing nothing more, and exit 2, or any exit §2 reads as one, leaves the run without its folder, the step going on as it does without one.
+
+### 7.1 Units, attempts and ids
+
+A **unit** is §6's — one CVE in `/vuln`, one component in `/upgrade` — and `<unit>` below is its id, the caller's (`workflows-core:run-folder` §7: `cve-<id>`, `comp-<slug>`). Every writer, fact and file of a unit this section names carries it.
+
+**A unit's writer ids, and the paths of the `scratch/` files its steps make, also carry its attempt**, `a<n>` — `<unit>-a<n>-…` and `scratch/<unit>-a<n>/…`: `<n>` is the value of `fact <folder> <unit>-attempt`, `1` where it is `null`, and only §7.4 raises it. So once a revert has put the tree back, every writer of the unit is a new id, dispatched as `--redo` would dispatch it, and every file of the unit a new path, made again — in the session that reverted and in any later one that resumes the redone unit. `--redo` alone would not reach that later session: a writer the redo had not reached yet would read `intact` from its earlier record, the revert having put back the files it wrote, and a file the redo had not made again yet would be read as the earlier attempt left it. A dispatch's id needs none: `run-dispatch` reuses its result only where its input and its attachments, the attempt's files among them, come back the same. A gate's needs none either: a question shown the same is answered the same.
+
+### 7.2 Writers
+
+`upgrade-executor`, `vuln-fixer` and `review-fixer` edit the repository, so each dispatch of theirs — every phase of `upgrade-executor` and `vuln-fixer`, `full`, `verify-resume` and `regression-resume` alike — goes through `run-writer` (`Skill(skill: "workflows-core:reference", args: "run-folder run-writer")`), never `run-dispatch`, with:
+
+- **its id** — the caller's, `<unit>-a<n>-…`, one per dispatch the unit makes;
+- **its tree** — `<repo>`, the repository's top level (§2.11) — and **no scope**: a unit's build, package manager and tests write where no scope could name in advance;
+- **its agent** — the agent's name and its file, `${CLAUDE_PLUGIN_ROOT}/agents/<agent>.md` — and **the model** the dispatch passes;
+- **its return inline**, recorded with `done <folder> <id> --from -`, the whole return on stdin, before the caller's own next edit, commit or revert in the tree, wherever the caller goes on with it — a `BLOCKED` among them, which ends the unit and is no failure of the dispatch;
+- **the writer in flight** — where `writer` returns `dispatch`, before the Agent call, `fact <folder> <unit>-inflight --set '<writer id>'`, and after its `done`, `fact <folder> <unit>-inflight --set ''` (`workflows-core:run-folder` §7), so a resumed run finds a writer cut off before it walks the unit's earlier writers, which would read `changed` over its edits (§7.4);
+- **its request, built once per attempt.** The first time the caller builds a writer's request in an attempt, it writes the request's variable block — every value it fills into the request's fixed text, on the lines it fills them into, in their order — with `put <folder> 'scratch/<unit>-a<n>/<writer id>-request.md' --from -`, and builds the input from that file. Every build of that writer's input, the first and every later one, a resumed run's among them, takes the block from that file and fills nothing in again, so all of them reach the same bytes by one path: built again in another session, the values drift — the session's own model lines in `model_routing`, `current_model` among them, the classification, `/vuln`'s `branch:` and `no_address_placeholder:`, the `baseline:` lines re-keyed from the baseline block, and every other. A value a recorded question answered — `command_hint:`, `regression_decision:` — is taken from that question's recorded gate answer (`run-gate`) when the block is first built. `pre_edit_tree` comes from §7.3's fact, and every file a request names is named by its path in the folder and attached: the plan or research file (§7.7), the baseline as `test-baseliner`'s saved result (§7.8), and the triaged survivor list `review-fixer` takes, written with `put` when the triage makes it. A writer whose input comes back one byte different matches no record and is dispatched afresh, over the work it did before.
+
+`intact` reads the receipt wherever the caller would read the agent's return; `interrupted` and `changed` are §7.4's.
+
+### 7.3 The unit's snapshot, recorded once
+
+§6.1's `pre_edit_tree` is taken once per unit and recorded, and a resumed run reads it back and never takes it again: by then the tree may hold the unit's own edits, and a snapshot taken over them would make the revert keep them. Before the unit's first writer call, read `fact <folder> <unit>-pre-edit`. Where its `value` is `null` — no writer of the unit has been dispatched, since the fact is recorded before the first — take §6.1's snapshot and record it with the commit HEAD stands on, in one value, `fact <folder> <unit>-pre-edit --set '<tree id> <commit>'`, `<commit>` being what `git -C "<repo>" rev-parse -q --verify HEAD` prints, or `none` where it prints nothing. Every dispatch of the unit passes that tree id as `pre_edit_tree:`, on every attempt: a revert puts the tree back to it, so it stands — save where §7.4's question has the user redo the unit from a tree it could not put back, which records the snapshot again.
+
+### 7.4 A writer cut off mid-edit, or changed since
+
+`interrupted`, from any writer of a unit, means the tree holds part of that writer's work, and perhaps the unit's earlier writers' too. The caller's handling is §6's revert and the whole unit again (`workflows-core:run-folder` §7), never that writer alone. Below, `<n>` is the unit's attempt now (§7.1) and `<m>` the attempt the revert belongs to: `<n>` plus one where step 2 raises it, and `<n>` itself where a resumed run comes back to an attempt whose revert is still open (the first bullet below).
+
+**A resumed run meets a `started` unit in this order, before it walks the unit's writers:**
+
+- where `<unit>-attempt` is above `1` and `effect <folder> <unit>-a<n>-revert state` is not `done`: step 5's question where `fact <folder> <unit>-a<n>-revert-failed` holds lines, and otherwise steps 1 and 3 again, then step 4, `<m>` being `<n>` throughout;
+- otherwise, where `fact <folder> <unit>-inflight` names a writer: call `writer` for it as §7.2 calls it, its input built from its request file — a probe the `Resumed:` line does not count — which writes nothing where it returns `interrupted`, `intact` or `changed`: `interrupted` goes to step 1; `intact` or `changed` means it finished and only the clearing was lost, so `fact <folder> <unit>-inflight --set ''`, and the walk below goes on; and `dispatch`, a record its input no longer matches, goes to step 1 too, the record it made never used, since the redo's writers carry the next attempt;
+- otherwise it walks the unit's writers, and one found `interrupted` goes to step 1.
+
+**While a unit is `started`, every step before its first writer reads facts, effects and the folder's files, never the tree** — the dirty-tree check (from the `pre_existing_dirty` file, §7.7), the stash, the branch cut, the switch to the base, and `/vuln`'s residue check before the next CVE among them. The tree holds the unit's partial work, which only this section's revert puts back: a step that read it would stash that work, cut a second branch, or stop on it as residue.
+
+1. **HEAD must be where the unit began.** `git -C "<repo>" rev-parse -q --verify HEAD` prints the commit `<unit>-pre-edit` holds, or nothing where it holds `none`. Every writer of a unit runs before the unit's commit — §2.12's unit-level call, or the full one — and a branch a writer cuts at HEAD moves no commit, so a HEAD still there means the unit has committed nothing, and its working-tree edits are all the revert has to undo. Where HEAD is anywhere else — a commit made on the branch since, another branch or commit checked out — go to step 5.
+2. **Record the next attempt**: `fact <folder> <unit>-attempt --set '<m>'`.
+3. **Revert, as the effect `<unit>-a<m>-revert`** (`run-effect`). `effect … start`; then, in one shell command, run §6.2's script yourself, as §6.3's last bullet runs it, from the tree id `<unit>-pre-edit` holds, and keep its report — every line it prints, its `reverted_from:` among them — before anything else runs, appended to the report an earlier run of this step kept, never replacing it:
+
+   ```
+   ( t=$(command mktemp -t dw-revert-XXXXXX) && o=$(command mktemp -t dw-revert-XXXXXX) || exit 5
+     trap 'command rm -f -- "$t" "$o"' EXIT
+     bash > "$o" <<'REVERT_EOF'
+   <§6.2's script, its two values replaced as §6.2 says>
+   REVERT_EOF
+     command cat -- "$o"
+     { command cat -- '<folder>/scratch/<unit>-a<m>/revert.md' 2>/dev/null; command cat -- "$o"; } > "$t" || exit 5
+     python3 "${CLAUDE_PLUGIN_ROOT}/scripts/run-folder.py" put <folder> 'scratch/<unit>-a<m>/revert.md' --from "$t" )
+   ```
+
+   It prints this run's lines, and any exit but `0` or `5` is the `put`'s, met as `workflows-core:run-folder` §2 says. So the first run's `reverted_from:` line — the tree that holds every change the revert took, an outside edit among them — survives a death in what follows and a re-run that finds nothing left to revert, whose own `reverted_from:` names the tree already reverted. **Exit `5`** means a temp file could not be made or written. Where the command printed this run's lines before it, the revert ran and only their keeping failed: keep them yourself, before anything else — the kept report's content, then those lines as printed — with `put <folder> 'scratch/<unit>-a<m>/revert.md' --from -`. Where it printed none, the revert did not run: run the command once more, which is safe, since §6.2 touches only what differs from the snapshot and the kept report is appended to; where it exits `5` again with no lines, treat it as a failed revert (below), its line `the revert could not run: <the shell's error>`. Then, in a Node project, restore `node_modules` as `${CLAUDE_PLUGIN_ROOT}/references/install-time-code.md`'s "After a revert" says; `tree-note <folder> --tree '<repo>'`, no scope; and re-take the fingerprint of each `pre_existing_dirty` path the kept report names, its earlier runs' lines with this one's, writing the set again (§7.7). The unit's row reports it from that file, in whichever session writes the row (*The unit's row*, below). **Where this run printed a `REVERT-FAILED: ` line, or no `reverted_from:` line** — the tree id gone from git's object store (`git gc` prunes an unreferenced tree once it is old enough, two weeks by default), a submodule's path, a file the script could not remove; or a script that never ran, which prints neither — part of the earlier work may still be in the tree: record them, `fact <folder> <unit>-a<m>-revert-failed --set '<its REVERT-FAILED lines, joined by "; ", or "no reverted_from: line — the revert did not run" where it printed none, or exit 5's line>'`, leave the effect not `done`, and go to step 5. Otherwise `fact <folder> <unit>-inflight --set ''`, then `effect … done`. §6.2 touches only what differs from the snapshot, so running it again finishes what an earlier run of it began.
+4. **Redo the unit from its first step**, under attempt `<m>`: its writers are new ids and its `scratch/` files new paths (§7.1), each made again where the unit makes it; each dispatch is made as `run-dispatch` finds its input now; and no step that moved the tree before the unit's first writer — a switch to the base, a branch cut — is made again, whatever the caller's walk would otherwise do: HEAD stands where step 1 found it. Where `vuln-fixer`'s earlier attempt cut the CVE's branch, its branch step finds that branch at HEAD and switches to it, as its rerun exception says.
+5. **Where the tree cannot be put back** — HEAD elsewhere (step 1), or a `REVERT-FAILED: ` line (step 3) — do not redo on a guess. Ask, through `AskUserQuestion`, never recorded, so a later session that meets the same tree asks again:
+
+   ```
+   <the unit> cannot be put back to where it began: <reason>.
+   Stop the run, or redo <the unit> from the tree as it stands?
+   choices: ["Stop the run (Recommended)", "Redo <the unit> from the tree as it stands"]
+   ```
+
+   `<reason>` is `HEAD is at <the commit it is at>, not at <the commit <unit>-pre-edit holds>` where step 1 sent it, each commit by its short id, or `the revert reported: <the lines <unit>-a<m>-revert-failed holds>` where step 3 did.
+
+   - **Stop the run** — the caller's stop for the user ending the run, through `run-stop-line`; its message names the unit, the reason, and the tree id and commit `<unit>-pre-edit` holds, where the unit began.
+   - **Redo the unit from the tree as it stands** — where step 1 sent it here, step 2 first, since step 1 runs before step 2 raises the attempt; where step 3 did, step 2 has already raised it. Then record `fact <folder> <unit>-unclean --set 'redone from a tree that could not be put back to where it began'`, before anything else, so a session that dies after it still finishes the unit unclean; then take §6.1's snapshot again and record it, with HEAD's commit, as `<unit>-pre-edit` (§7.3's `--set`), so a later revert in the unit comes back to this tree and not to one HEAD no longer holds; then, where `<unit>-a<m>-revert` is not `done`, `fact <folder> <unit>-inflight --set ''` and `effect <folder> <unit>-a<m>-revert done`, with no revert, the tree as it stands being the unit's start now; then step 4. The unit's commit may carry what the earlier work left behind, so the unit finishes unclean (*The unit's row*, below).
+
+   A typed answer that is no choice is asked again.
+
+**A writer found `changed`.** `changed` from any of the three writers — a file it wrote now holds what this run did not leave there — is met here, in place of `run-writer`'s own question, whose *Dispatch it again* would send one writer over its own finished work: `upgrade-executor` would apply its plan again over its own upgrade, or refuse it as no longer describing the tree; `vuln-fixer` would refuse the same way, leaving the unit's commit to take the first attempt's work; and `review-fixer` would apply its fixes a second time. A writer cut off is met before the walk reaches the writers before it (above), so a change found here is not the run's own. Ask, through `AskUserQuestion`, never recorded, then `log <folder> 'writer <id> changed: <the answer>'`:
+
+```
+<agent> (<writer id>) finished in an earlier session, but <n> file(s) it wrote have changed since, not by this run: <changed.path>, …
+Keep them and go on from its saved receipt, redo <the unit> from its starting tree, or stop the run? Redoing reverts every change made in the tree since <the unit> began — these, the unit's own work, and any other edit made meanwhile; the first reverted_from: tree the revert reports holds them all, to bring back by hand.
+choices: ["Keep what is there and go on (Recommended)", "Redo <the unit> from its starting tree", "Stop the run"]
+```
+
+- **Keep what is there and go on** — read the receipt as `intact` is read.
+- **Redo the unit from its starting tree** — steps 1 to 4: HEAD's check, a raised attempt, the revert, the whole unit again; never that writer alone with `--redo`. Where step 1 finds HEAD elsewhere, nothing is reverted: say so, naming both commits, and ask this question again without its *Redo* choice; a `REVERT-FAILED: ` line goes to step 5, as for a writer cut off. The changed files are in the tree the kept report's **first** `reverted_from:` line names (step 3) — a later line, from a re-run, names the tree already reverted — and `git -C "<repo>" restore --source=<that tree> --worktree -- ':(literal)<path>'` brings one back while git still holds that tree (§6.2).
+- **Stop the run** — the caller's stop for the user ending the run, through `run-stop-line`.
+
+A typed answer that is no choice is asked again.
+
+**The unit's row.** Whichever session writes a unit's row in the caller's results — the one that finishes the unit, often not the one that reverted it — builds it from the unit's facts and folder files, never from what it remembers. It reports every revert the unit kept, each `scratch/<unit>-a<k>/revert.md` the folder holds, as §6.3's first bullet says: a revert of the unit to where it began, made because a writer was cut off or because the user chose to redo the unit, with the paths it names and the tree its **first** `reverted_from:` line names. And it reads `<unit>-unclean`: where that holds a value, it sets the unit's `clean_finish: false` (§2.9) and says why.
+
+### 7.5 What the revert undoes, and what it leaves
+
+- **Undone: the unit's working-tree edits** — every path §6.2 finds changed since `pre_edit_tree`: what the unit's writers, or the caller itself, created, changed or deleted, and any edit somebody else made in the tree meanwhile, which §6.2 cannot tell from the unit's. None is an effect the run guards; the redo makes the unit's again through its writers' new attempt.
+- **Never undone, and never needing to be: a commit.** §6.2 restores files and moves no ref, and the `reset` that would undo a commit is what §1 rule 3 forbids. §7.4 reverts only while HEAD is still the commit the unit began on, which a commit of the unit would have moved, so no revert stands behind a commit of its own unit, and the redo's commit is that unit's first.
+- **Never undone, and never needing to be: a push or a pull request.** Each follows a commit — its own unit's on `/vuln`, every unit's on `/upgrade`, whose one push comes after the loop (§2.12) — so none exists for a unit §7.4 reverts, and no redo needs a branch already pushed to take commits that replace the ones pushed. This file never force-pushes (§1 rule 3), and such a branch is the one place it would have had to. Where HEAD has moved — the one way a revert could meet a pushed branch of its own unit — §7.4 asks instead, at its step 5. A push or a pull request an earlier session began keeps its own handling, §7.6's.
+- **Left standing: every step that moved the tree before the unit's first writer** — a stash, a switch to the base, a branch cut — which §7.4's step 4 makes none of again.
+- **Left standing: an install into an ignored directory** (`node_modules`, `.venv`), which §6.2 never touches: in a Node project §7.4's step 3 restores `node_modules` to the lockfile, and the redo's own install makes again what it needs.
+- **Left standing: the earlier attempt's files and saved results**, which the new attempt's paths and ids never read, and which `close-run` removes with the folder.
+
+### 7.6 A call of §2 begun in an earlier session
+
+The caller guards each call of §2 it makes — §2.12's unit-level call and the full one — as a `run-effect`, its id the caller's, carrying the unit where the call belongs to one, and records as facts after it what a later step reads of it — the commit's sha, its §3.1 line — as `run-effect` says. Where the call retired a path from `pre_existing_dirty` (§2.2), the caller writes the set again (§7.7) after those facts and before `effect … done`, so a session that finds the call `done` also finds the set it left. One found `started` is made again, whole: each of its steps is safe to repeat.
+
+- §2.1's gate only reads.
+- Where the earlier attempt's commit landed — on a unit's call, HEAD has moved past the commit `<unit>-pre-edit` holds (`git -C "<repo>" rev-list --count <that commit>..HEAD` prints more than `0`, or, where it holds `none`, HEAD now names a commit); a call that belongs to no unit, `/upgrade`'s terminal one, commits nothing of its own (§2.12) — §2.2 finds nothing of it left to commit, and that commit is this call's: a unit-level call returns its sha (§2.12), a full call goes on to §2.4 as §2.2's *Nothing to commit* says for a branch carrying a commit this run made, and every path it carried is retired from `pre_existing_dirty` (§2.2). Where it did not land, the commit is made as on a first call, its secret scan asking again where it finds a hit.
+- §2.4's choice is asked only as §2.4 asks it, from the answer the fact below holds.
+- §2.5's push of a branch already pushed moves nothing, and is never forced.
+- §2.6's probe finds the pull request an earlier attempt opened, and the call reports it as §2.6 reports one already open; only a blocked run's DO-NOT-MERGE comment may be posted on it a second time.
+
+**§2.4's answer is a fact.** It is recorded as soon as it is given, with the `clean_finish` it was given under, `fact <folder> handoff-choice --set '<true or false> <the answer>'`, and a resumed run takes `code_handoff_choice` and its flag from that fact where it holds none of its own — so the choice stays asked once per run and re-asked only on §2.4's triggers, save where a session ended between the answer and the fact, which asks it once more. §2.2's secret-scan question is acted on at once, by the commit it decides, so it is not recorded: a commit that did not land asks it again.
+
+### 7.7 Files
+
+The files this machinery hands on lie in the run folder (`${CLAUDE_PLUGIN_ROOT}/references/context-management.md`, **Hand off by file, not paste**), each kept as `workflows-core:run-folder` §5 says. **A capture a resumed run reads back** — a review's diff and its tree id (§7.8), the tree read of `pre_existing_dirty` — is made and kept in one shell command, which exits `5` where the capture fails, before anything is kept:
+
+    ( t=$(command mktemp -t dw-capture-XXXXXX) || exit 5; trap 'command rm -f -- "$t"' EXIT; <the capture> > "$t" || exit 5; python3 "${CLAUDE_PLUGIN_ROOT}/scripts/run-folder.py" put <folder> 'scratch/<path>' --from "$t" )
+
+`run-folder.py` never exits `5`, so the two failures stay apart. Exit `5` is the capture's, met as the caller meets that capture failing — a tree read that read nothing as the caller's own text says, taken once more and then a stop; a diff that could not be captured as the caller meets an unreadable `review_diff_file`, stopping that unit — and nothing was kept, so no half-written or failed capture is ever found and read. Any other exit but `0` is the `put`'s, met as `workflows-core:run-folder` §2 says.
+
+- **The plan or research file** — `/upgrade`'s `plan_file`, `/vuln`'s `research_file` — is written with `put` where the caller first writes it, from the saved result it holds, and a resumed run reads it back; every dispatch that names it attaches it. It belongs to no attempt, so its path carries none: a revert does not touch it, and the saved result it holds does not change, so a redone unit reads it as it stands, or, where its step comes round again, makes it again from that result, the same bytes either way.
+- **The claims file** is the writer's receipt — the `main/results/` file `run-writer` named for the dispatch whose return the review checks, which holds that whole return. The review names it and attaches it by that path; nothing is copied.
+- **Each review's diff** is `scratch/<unit>-a<n>/review-<k>.diff`, `<k>` counting the attempt's reviews from `1`, so a re-review's capture never overwrites the one the first review read. A resumed run that finds it reads it and captures nothing again: by then the tree may hold `review-fixer`'s edits, which the capture predates.
+- **The tree read that records `pre_existing_dirty`** (§2.2), taken before the first edit, is kept once, and a resumed run reads it back and never reads the tree for it again: the tree then holds the run's own work. As the caller changes the set — a path a commit retires (§2.2), a fingerprint a revert re-takes (§6.3) — it writes the set as it then stands with `put`, to one path of its own, and a resumed run reads it from there. A later tree read — before the next unit, or a test of the tree — is taken where it is read, and may be written directly under `scratch/`.
+- **A file made and read within one step stays a `mktemp` file** — the diff capture's index copy, §6.1's and §6.2's, §2.3's commit message, §2.7's pull-request body — and is removed as those sections say.
+
+### 7.8 `test-baseliner` and `code-review`
+
+Neither edits the repository — `test-baseliner` runs its tests, `code-review` reads — so each goes through `run-dispatch` (`Skill(skill: "workflows-core:reference", args: "run-folder run-dispatch")`), never `run-writer`: area `main`; the agent's file, `${CLAUDE_PLUGIN_ROOT}/agents/<agent>.md`; the model the dispatch passes; an inline return, recorded with `done <folder> <id> --from -`; and every file the input names attached. **Each input names the tree it ran on**, on a line of its own, `Tree: <tree id>` — the id §6.1's command prints for the tree as it stood just before the dispatch, naming by version the code the agent reads — so a later session reuses the result only for the tree it was taken on. The id is taken once and kept, since by the time a resumed run reaches the dispatch again a later step may have changed the tree:
+
+- **`test-baseliner`'s capture**, made once per run before the first unit: the fact `baseline-tree`, taken where its `value` is `null`, and named by every capture dispatch of the run, a re-dispatch carrying `command_hint:` among them.
+- **A unit's `<k>`-th `code-review`**: the file `scratch/<unit>-a<n>/review-<k>.tree`, the id §6.1's command printed written into it with `put` before the review's diff is captured, and attached beside the diff.
+
+The `test-baseliner` calls `upgrade-executor` and `vuln-fixer` make themselves, for their verify, are part of that writer's dispatch, and nothing saves them apart from it.
+
+### 7.9 The run's own edits
+
+After each change the caller itself makes in the repository once a writer of the run has run there, call `tree-note <folder> --tree '<repo>'`, no scope, so the change never reads as `changed` when a resumed run meets a writer that ran before it (`workflows-core:run-folder` `run-writer`, *The run's own edits*):
+
+- after each call of §2, unit-level or full, once it returns, whatever it committed — a commit hook may have rewritten a file it committed;
+- after each revert the caller runs itself — §6.3's last bullet, and §7.4's step 3 — with the `node_modules` restore after it;
+- after each move of the tree it makes once a unit has run: a §2.8.1 move or a switch back before a later unit (`/vuln`'s before each later CVE);
+- after any other edit of its own there.
+
+A writer's own edits, an agent's own revert among them, need none: `done` records what its dispatch changed.

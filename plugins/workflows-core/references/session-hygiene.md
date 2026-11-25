@@ -59,6 +59,8 @@ printed suggestion.
 
 **Not written on a run that carries `specs_git: misrooted`** (`specs-repo-git.md` §3.1): where `$SPECS_PATH` is misplaced, the pointer would land where the next run, with the variable corrected, never looks; where this reference's §6 *Stop* or §7's `env-check` set the flag, the run is no longer in the environment it recorded or started in, and writes nothing more.
 
+**Guarded, on a run that keeps a run folder.** Where the calling run carries `run_folder: <path>` and has finished — the tail before `close-run`, never a stop's — writing the pointer is effect `tail-resume-pointer` (`Skill(skill: "workflows-core:reference", args: "run-folder run-effect")`). `done` — skip it. `none` — `effect <folder> tail-resume-pointer start`, write it as this section says, `effect <folder> tail-resume-pointer done`. `started` — an earlier session began it and never recorded its end: write it again, as this section says — the pointer is overwritten, never appended to, and the pointer this write reads first is the one that session wrote where it got that far, so this run's position stands in it once — then `done`. Without a run folder, and on a stop that writes one, it is written as this section says, unguarded.
+
 **Skipped**: `/idea` (its brief is the anchor, and it is written and handed off in the same run), `/implement`
 **direct** mode, `/document` **doc-edit** mode (Mode B), `/vuln`, `/upgrade`, `/frames`. There the
 durable state is the artifact / branch / PR already on disk; no resume pointer is written.

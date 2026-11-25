@@ -1,12 +1,14 @@
 # Phase handoff — Shared Reference
 
 <!-- reference-entry-files
-entry require-on-main holds=1,2.2,2.6.1,3,4.4
-entry branch-check holds=1,2.2,6
+entry require-on-main holds=1,2.6.1,3,4.4
+entry branch-check holds=1,6
 entry handoff-to-main holds=1,2,4.1,4.2,4.3
 partial require-on-main 4.0 "never infer"
 partial require-on-main 5 "rule 2" "rule 3"
 partial branch-check 3.3 "Row B′'s remedy"
+partial require-on-main 2.2 "Intended name" "The keyless form" "rule 1" "rule 2" "rule 3" "rule 4" "Where a new branch is cut" "In session-branch mode"
+partial branch-check 2.2 "Intended name" "The keyless form" "rule 1" "rule 2" "rule 3" "rule 4" "Where a new branch is cut" "In session-branch mode"
 partial handoff-to-main 4.0 "What declining costs" "takes the strongest class" "Classify by naming the reader"
 -->
 
@@ -80,6 +82,8 @@ Collision is normal, not exceptional: `_readiness.md` is overwritten on every `/
 <!-- /entry -->
 
 <!-- entry: handoff-to-main -->
+**The branch an earlier session cut, on a resumed run.** Only for a caller that keeps a run folder (`run-folder.md`) and guards this handoff as an effect: it carries `run_folder: <path>` and passes `branch_fact` (§2.9). **The branch this section settles is recorded**: once rules 1–4 have settled it and the switch onto it — reusing it or creating it — has been made, and before §2.3 stages anything, so before any commit or push, `fact <folder> <branch_fact> --set '<branch>'` (`run-folder.md` §3). **A resumed run reuses the branch recorded**, where the caller found that effect `started` — an earlier session acted on the same consent choice and never recorded its end: before rule 1, read `fact <folder> <branch_fact>`. Where its value is a branch other than `<name>` — a suffix rule 4 gave that session, the intended name being taken — rules 1 and 3 test that branch first, as they are written for `<name>`: where it exists, is this run's own and is not merged, it is reused, switched to as rule 3 switches, and the outcome line carries §4.1's *Branch name substituted* clause, as rule 4's would have; otherwise the rules run on `<name>` as ever. Where the value is `null` or `<name>`, they run as ever. Rule 3 alone tests `<name>`, which it finds merged — the reason that session took a suffix — so rule 4 would cut the next suffix beside the branch that session pushed, and that push would never get a pull request. An exit 9 from either call stops the run (`run-folder.md` §2); a call that leaves the run without its folder, as that section says, leaves this section as it runs with none.
+
 ### 2.3 Staging the deliverable
 
 Staging is by enumeration, never by glob — the same discipline as `specs-repo-git.md` §2.1, applied to a different path set:
@@ -106,7 +110,7 @@ it lands there pointing at a path on no ref.
 **Nothing staged → no commit**, and what follows turns on the branch §2.2 settled:
 
 - **A branch §2.2 created in this run** (rule 2 or rule 4) holds no commit of its own, so it is removed rather than left empty: switch back to the branch §2.2 noted before cutting it — in session-branch mode wrapped in `specs-repo-git.md` §8.3's `lift` and `put-back`, as §2.2's switch is — and run `git -C "$SPECS_PATH" branch -d <branch>`, never `-D` (§1 rule 4), so the run's session files land where they would have without a handoff. Where `.git/config` cannot be written — a container that mounts it read-only — `-d` still deletes the branch and exits 0, then prints a config error and `warning: update of config-file failed`: the branch is gone, and that is no refusal. Where git refuses the switch, or the `-d` — a branch cut at `<default-ref>` that the branch the run returns to does not hold reads as not fully merged — keep the branch, stay where git left the run, and the line names it: one the `-d` left holds no commit of its own, and a later run's preflight standing on `<default>` deletes it (`specs-repo-git.md` §3.4); on one the switch back left, the run's session files land on the cut branch (`specs-repo-git.md` §4.1). §2.5 and §2.6 are skipped.
-- **A reused branch** (§2.2 rule 3) is re-published where `remote: origin` holds and the branch carries a commit that `<default-ref>` lacks, that `origin`'s copy of the branch lacks too, and that is not a session-file commit as `specs-repo-git.md` §4 step 5's `push-scope` tests one — a deliverable an earlier handoff committed and could not push, or a merge of the default branch the operator made on row B′'s remedy. `git -C "$SPECS_PATH" rev-list refs/heads/<branch> --not <default-ref> refs/remotes/origin/<branch>` lists the candidates, the last ref named only where §2.2 rule 1 counted it. §2.5 and §2.6 then run as after a commit, and their §4.1 row is the line. Otherwise both are skipped, and a branch already on `origin` keeps the pull request it has.
+- **A reused branch** (§2.2 rule 3) is re-published where `remote: origin` holds and the branch carries a commit that `<default-ref>` lacks, that `origin`'s copy of the branch lacks too, and that is not a session-file commit as `specs-repo-git.md` §4 step 5's `push-scope` tests one — a deliverable an earlier handoff committed and could not push, or a merge of the default branch the operator made on row B′'s remedy. `git -C "$SPECS_PATH" rev-list refs/heads/<branch> --not <default-ref> refs/remotes/origin/<branch>` lists the candidates, the last ref named only where §2.2 rule 1 counted it. §2.5 and §2.6 then run as after a commit, and their §4.1 row is the line. Otherwise both are skipped, and a branch already on `origin` keeps the pull request it has — save on a resumed run that §2.6's *An earlier session's push* names, where §2.6 runs for the push an earlier session made.
 
 Where §2.5 does not run, emit §4.1's *Nothing to commit* line. It says where the deliverable is, which is what the next phase's gate tests (§3), by two tests over the declared paths on the branch the run now stands on: **already on `<default>`** where `git -C "$SPECS_PATH" diff --quiet <default-ref> -- <the declared paths>` exits 0; **on that branch, unmerged**, where `git -C "$SPECS_PATH" diff --quiet <default-ref>...HEAD -- <the declared paths>` exits 1, the branch having changed them; and otherwise **changed on `<default>` after that branch was cut**, which the branch has not taken in — row B′'s first finding (§3.3) — save where that branch is the default branch itself (`git -C "$SPECS_PATH" symbolic-ref --short HEAD` prints `<default>`), whose local copy is then **behind `<default-ref>`**, as where the catch-up (`specs-repo-git.md` §3.4) could not run. This is not an error: a re-run that changed nothing is a legitimate outcome.
 
@@ -118,7 +122,7 @@ Message `<KEY> <summary>`, matching the specs repo's own `<KEY|NOISSUE> <summary
 
 ### 2.5 Push
 
-**This step runs only where §2.4 made the commit, or §2.3 found a reused branch's commit to re-publish.** The push is a shell command of its own, run once the commit's exit status has been read — never chained after the commit in one command line, and never after a construct that swallows the commit's failure (`rc=$?`, `|| true`, `;`). A live `/specify` handoff ran the switch, the add, the commit and the push as one command that kept the commit's status in `rc=$?`, so when a `pre-commit` hook refused the commit, it still pushed an empty `spec/` branch at the default branch's tip. Where neither holds — nothing to commit and nothing to re-publish (§2.3), or a commit git refused (§4.1's *Commit failed*) — nothing is pushed, and §2.6 is skipped with it: a pull request needs a pushed head.
+**This step runs only where §2.4 made the commit, or §2.3 found a reused branch's commit to re-publish.** The push is a shell command of its own, run once the commit's exit status has been read — never chained after the commit in one command line, and never after a construct that swallows the commit's failure (`rc=$?`, `|| true`, `;`). A live `/specify` handoff ran the switch, the add, the commit and the push as one command that kept the commit's status in `rc=$?`, so when a `pre-commit` hook refused the commit, it still pushed an empty `spec/` branch at the default branch's tip. Where neither holds — nothing to commit and nothing to re-publish (§2.3), or a commit git refused (§4.1's *Commit failed*) — nothing is pushed, and §2.6 is skipped with it: a pull request needs a pushed head — save where an earlier session of a resumed run already pushed one (§2.6, *An earlier session's push*).
 
 `git -C "$SPECS_PATH" push -u origin <branch>`. Never force. A non-fast-forward rejection is reported, never resolved by rebasing or forcing mid-run.
 
@@ -130,7 +134,7 @@ Message `<KEY> <summary>`, matching the specs repo's own `<KEY|NOISSUE> <summary
 
 ### 2.6 Open the pull request
 
-Not reached where §2.1 set `remote: none` — §2.5 pushed nothing, and `gh` has no head branch to open a pull request from — nor where §2.5 did not run for want of a commit to push (§2.5): this run pushed nothing, and a reused branch already on `origin` keeps the pull request it has (§2.3).
+Not reached where §2.1 set `remote: none` — §2.5 pushed nothing, and `gh` has no head branch to open a pull request from — nor where §2.5 did not run for want of a commit to push (§2.5): this run pushed nothing, and a reused branch already on `origin` keeps the pull request it has (§2.3) — save the one case *An earlier session's push*, below, names.
 
 **First, derive `$OWNER_REPO`**, by §2.6.1's `owner-repo`; where it finds the remote no `gh` target, skip to §4.2 without calling `gh`.
 
@@ -150,6 +154,16 @@ Otherwise: run a cheap `gh auth status` pre-check purely to avoid a confusing ra
 **Capability probe, not host classification.** Try the call; on any failure fall back to §4.2's instruction. Push authority and pull-request authority are independent — push runs over SSH with a per-repo key, `gh` runs over the API with a token, and the same account can have write access to one repository and read access to another. No hostname or host-type test can detect that mismatch, so a run can push successfully and still be unable to open the pull request. This is why `docs-workflows:finish-and-handoff` §4's host classification is right for choosing *instructions* and insufficient here.
 
 `gh` wraps the API rather than calling it over HTTPS, which is what the zero-direct-API rule permits — the same allowance `/document` already relies on.
+
+**An earlier session's push, on a resumed run.** One case reaches this section with nothing pushed by this run, and only for a caller that keeps a run folder (`run-folder.md`): the effect it guards this handoff with is found `started` — an earlier session of the same run acted on the same consent choice and never recorded its end — so that session may have pushed the branch and been cut off before this section opened its pull request. It applies where all of these hold: §2.2 rule 3 reused the branch — the intended name, or the branch §2.2's *The branch an earlier session cut, on a resumed run* read from the caller's fact; `remote: origin` holds; `refs/remotes/origin/<branch>` names a commit; and §2.3 found nothing to commit and nothing to re-publish, so §2.5 did not run. `origin` then holds a push no later step would open a pull request for, so take this section for it: derive `$OWNER_REPO` as above, then probe every pull request with that head, whatever its state:
+
+    gh pr list -R "$OWNER_REPO" --head <branch> --state all --json number,state,url,headRefOid
+
+- **One is open** ⇒ §4.1's *already existed* row, and `gh pr create` is not called, as above.
+- **None is open.** A pull request counts as this push's only where its `headRefOid` is the commit `refs/remotes/origin/<branch>` names. One that does — opened for this push, and closed or merged since — is left as it is: the line is the §4.1 *Nothing to commit* line §2.3 emitted, with `; its pull request #<n> is <closed | merged>` appended. Where none does, open one as above — `gh auth status`, then `gh pr create`, with §2.7's title and body — and the line is §4.1's row for what that did, *Committed, pushed, PR opened* or *PR not opened*. A pull request the probe lists with another head commit (`headRefOid`), closed or merged, is never taken as this push's: it is named on the line, `; pull request #<n>, opened for another commit of <branch>, is <closed | merged>`.
+- **The probe cannot answer** — `owner-repo` finds no `gh` target, or the call fails — ⇒ §4.2's instruction, as above, and the line is §4.1's *PR not opened* row, its `<reason>` that the probe could not answer: `no gh target for origin`, or the call's first error line. That is the outcome a caller that records its handoff's outcome as a fact records.
+
+None of this applies with no run folder, or on a handoff no earlier session began. Nor does it apply where §2.2 rule 3's `branch-merged` reads the branch merged: rule 3 then does not reuse it, and §2.2 cuts one of its own — under the same name where rule 1 finds neither ref left, the preflight's B2 having deleted the local branch and the host the remote one, or else under rule 4's suffix — on which §2.3 commits only what differs from what merged, and removes that branch where nothing does.
 
 <!-- /entry -->
 
@@ -222,6 +236,7 @@ Every failure is reported and the phase is described as **not handed off**. The 
 | `title` | the commit subject and pull-request title |
 | `body_facts` | what §2.7 renders |
 | `inputs_read` | every file under `$SPECS_PATH` outside `specs-repo-git.md` §2.1's session-file shapes that this run or an agent it dispatched read — §2.2's stack test reads it beside `deliverable_paths`. Derived by the run from its own reads rather than declared ahead, and recorded as it reads, so a compacted context still holds it |
+| `branch_fact` | optional, and only from a caller that keeps a run folder and guards this handoff as an effect (`run-folder.md`, `run-effect`): the name of the fact in that folder that records the branch §2.2 settles, from which a resumed run whose effect was found `started` takes the branch an earlier session settled (§2.2, *The branch an earlier session cut, on a resumed run*). Without it §2.2 records nothing, and tests the intended name alone |
 
 <!-- /entry -->
 

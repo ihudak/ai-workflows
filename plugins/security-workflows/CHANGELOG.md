@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.13.0] — 2026-11-25
+
+`/scan` resumes a stopped run. **What changes for you.** `/scan` keeps its working state in a run folder outside every repository, and running it again on the same machine offers to continue it or start over. A resumed run records a scan report already written without scanning again, reuses your triage answers, and makes each later step once: the copy into the register, the patch request, the register commit, the unit note, the maintenance proposals, the follow-ups, the cost entry and the resume pointer. Needs `workflows-core` 1.100.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet). The page has a *Stopping and resuming* section.
+
+### Added
+
+- **Resuming.** The run writes down the commit, the effort and the moment the scan started before it calls Claude Security, and the report directory once it finds it; a resumed run that finds the report records it, whatever `--effort` you type then, and asks before scanning again where the scan left none. A change or codebase scan, `--verify-fixes`, a triage and an `--import` are each their own run, named by `--command`, so one key scanned in two modes resumes each separately.
+- **`scripts/run-folder.py`**, the copy of `workflows-core` 1.100.0's, held byte-identical by CI.
+
+### Changed
+
+- **`/scan`'s *Start over*** removes the run's copy of its report in the register only where every run record in the register reads and none names that copy, and a resume stops where the report and the register copy are both gone. The command's prerequisites are checked before the run folder opens, and a stop keeps the scan folder its resume records.
+- **`.claude/rules/security-workflows.md`** lists the third script and the command's order.
+- **Pages.** The scan page says what a resume reuses, redoes and asks.
+
+### Known limits
+
+- Claude Security's scan and its patches are its own runs, which no session resumes: work cut off inside either is done again.
+- A run you never resume keeps its copy of the report in the register, since the 30-day removal of old run folders never touches the specs repository; it stays there, unrecorded, until an `--import` of the same report records it, or you remove it.
+- On a resumed run the specs-repo preflight may name a maintenance proposal an earlier session applied in its dirty-tree notice, an advisory.
+- The command saves no agent result, its plugin shipping no agent.
+
 ## [0.12.8] — 2026-11-18
 
 A page LADDER-ORDER batch 4 left open, and a slice whose `brd-link.md` names no `parent:`. **What changes for you.** On such a slice — one on which `product-workflows` 3.86.0 stops every command that would read through that line — `/scan` no longer writes the architect's `/product-workflows:create-ard` follow-up into the slice, or names a run beside the report's sentence: it prints the line `workflows-core` 1.98.1's `phase-handoff` §4.4 prints there, saying the line is missing and to restore it or report it. Update with `workflows-core` 1.98.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.98.1 bullet).

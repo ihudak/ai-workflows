@@ -10,10 +10,15 @@ Usage:
   run-folder.py log <folder> <text>
   run-folder.py fact <folder> <name> [--set <value>]
   run-folder.py dispatch <folder> <id> --area main|blind --agent <name> --agent-file <path> --model <id>
-                --input <file|-> [--attach <path relative to the folder>]...
-  run-folder.py done <folder> <id> [--from <file|->]
+                --input <file|-> [--attach <path relative to the folder>]... [--redo]
+  run-folder.py done <folder> <id> [--from <file|->] [--pin <name>=<value>]...
   run-folder.py gate <folder> <gate-id> --shown <file|->
-  run-folder.py gate-record <folder> <gate-id> --shown <file|-> --answer <text>
+  run-folder.py gate-record <folder> <gate-id> --shown <file|-> --answer <text> [--keep-shown]
+  run-folder.py answers <folder> [--match <substring>]
+  run-folder.py put <folder> scratch/<path> --from <file|->
+  run-folder.py writer <folder> <id> --tree <dir> [--scope <rel>]... --agent <name> --agent-file <path>
+                --model <id> --input <file|-> [--attach <path relative to the folder>]... [--redo]
+  run-folder.py tree-note <folder> --tree <dir> [--scope <rel>]...
   run-folder.py effect <folder> <effect-id> start|done|state
   run-folder.py stale <folder> [--agent <name>=<file>]... [--model <name>=<id>]...
   run-folder.py keep <folder> --ids <id>... [--agent <name>=<file>]... [--model <name>=<id>]...
@@ -45,7 +50,21 @@ is reused only once `done` has recorded it, from the file its record names, and 
 SHA-256 over the input's bytes, each attached run-folder file's
 bytes (sorted by path), the agent definition file's SHA-256 and the model id. `done` records, in run.json
 "results", what `results`, `stale` and `keep` read; "dispatches" holds what was handed out, "gates" the
-answers to questions, "effects" the side effects started or finished. --command and --key are limited to
+answers to questions (each with a sequence number, kept by a re-record, that `answers` lists them by), "effects"
+the side effects started or finished. `put` writes a file the command generated under scratch/ (atomically,
+under the lock) so a resumed run reads it back rather than generating it again; `done --pin` stores values a
+reuse reports back; `dispatch --redo` dispatches anew whatever the fingerprint says; a keyless `open` with
+--workdir also lists (`others`, at most 3) the unfinished runs of the same command and working directory
+whose arguments differ. A writer is a dispatch that edits files in a git work tree: `writer` keeps its record
+under "writers", with a snapshot of the scope (the paths `git status` lists, each with a content hash) taken
+before it, and matches a record on its input and attachments, tree, scope and receipt, never its agent file or
+model, so a change to either never dispatches it again (`stale` and `keep` read results only). It prints dispatch (new receipt path), interrupted (a started
+record: the paths that differ from the snapshot), intact or changed (a done record: whether each path the writer
+changed still holds what the run last left there); `writer --redo` dispatches anew whatever the record says,
+from a new snapshot, removing the old receipt. `done` on a started writer takes the after-snapshot, records
+the paths it changed ("wrote") and merges them into the run's per-tree map "trees"; `tree-note` brings that map
+up to date after an edit or commit the command made itself. `writer` takes the lock, and the owner check only
+where it dispatches. --command and --key are limited to
 [A-Za-z0-9._-]. A value of --args, --set or --answer, and a log text, may be one flag-shaped token.
 Standard library only.
 """
@@ -305,7 +324,7 @@ def write_lock(folder):
 
 
 def needs_lock(args):
-    if args.cmd in ("resume", "discard", "close", "phase", "log", "dispatch", "done", "gate-record", "keep"):
+    if args.cmd in ("resume", "discard", "close", "phase", "log", "dispatch", "done", "gate-record", "keep", "put", "writer", "tree-note"):
         return True
     return (args.cmd == "fact" and args.set is not None) or (args.cmd == "effect" and args.action != "state")
 
@@ -355,7 +374,7 @@ def last_written(path):
             stamp = json.load(fh)["updated"]
         return datetime.datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ").replace(
             tzinfo=datetime.timezone.utc).timestamp()
-    except (OSError, ValueError, KeyError, TypeError):
+    except (OSError, ValueError, KeyError, TypeError, RecursionError):
         return os.stat(path).st_mtime
 
 
@@ -386,6 +405,41 @@ def summarize(run):
             "facts": sorted(facts) if isinstance(facts, dict) else []}
 
 
+OTHERS_MAX = 3
+
+
+def other_runs(root, command, workdir, own_folder, own_args):
+    """Unfinished keyless runs of this command in this working directory (a finished run's folder is gone)
+    whose arguments differ, newest first: read from each run.json, which records the identity in clear."""
+    wd = workdir_identity(workdir)
+    mine = " ".join(own_args.split())
+    found = []
+    for name in sorted(os.listdir(root)):
+        path = os.path.join(root, name)
+        if path == own_folder or os.path.islink(path) or not os.path.isdir(path):
+            continue
+        try:
+            with open(os.path.join(path, "run.json"), encoding="utf-8") as fh:
+                run = json.load(fh)
+            if run.get("command") != command or run.get("key") or run["identity"].get("workdir") != wd:
+                continue
+            results = run.get("results")
+            args, updated = run.get("args"), run.get("updated")
+            if (not isinstance(args, str) or not isinstance(updated, str) or " ".join(args.split()) == mine
+                    or not isinstance(run.get("started"), (str, type(None)))
+                    or not isinstance(run.get("last_phase"), (str, type(None)))
+                    or not isinstance(run.get("owner"), (str, type(None)))):
+                continue
+            found.append({"folder": path, "args": args, "started": run.get("started"),
+                          "updated": updated, "last_phase": run.get("last_phase"),
+                          "results": len(results) if isinstance(results, (dict, list)) else 0,
+                          "owner": run.get("owner")})
+        except (OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError):
+            continue
+    found.sort(key=lambda r: r["updated"], reverse=True)
+    return found[:OTHERS_MAX]
+
+
 def cmd_open(a):
     for label, value in (("--command", a.command), ("--key", a.key)):
         if value is not None and value != "" and not NAME_RE.match(value):
@@ -396,6 +450,7 @@ def cmd_open(a):
     identity = make_identity(a.specs, a.workdir, a.args, keyless)
     run_key = make_run_key(a.command, a.key, identity)
     pruned = {"count": 0, "bytes": 0}
+    others = []
     try:
         root = runs_root()
         os.makedirs(root, mode=0o700, exist_ok=True)
@@ -405,6 +460,12 @@ def cmd_open(a):
                   % (pruned["count"], STALE_DAYS, pruned["bytes"]), file=sys.stderr)
         folder = os.path.join(root, run_key)
         rj = os.path.join(folder, "run.json")
+        if keyless and a.workdir:
+            try:
+                others = other_runs(root, a.command, a.workdir, folder, a.args)
+            except Exception as e:  # another run's folder never fails this open
+                print("NOTE: other runs not listed (%s: %s)" % (type(e).__name__, e), file=sys.stderr)
+                others = []
         for _attempt in range(2):
             run = None
             if os.path.lexists(rj):
@@ -416,7 +477,7 @@ def cmd_open(a):
                     os.unlink(rj)
             if run is not None:
                 emit({"state": "unfinished", "folder": folder, "run_key": run_key, "reason": "",
-                      "pruned": pruned, "summary": summarize(run)})
+                      "pruned": pruned, "others": others, "summary": summarize(run)})
                 return 0
             os.makedirs(folder, mode=0o700, exist_ok=True)
             os.chmod(folder, 0o700)
@@ -427,7 +488,7 @@ def cmd_open(a):
             if create_json_exclusive(rj, run):
                 append_progress(folder, "opened %s" % run_key)
                 emit({"state": "new", "folder": folder, "run_key": run_key, "reason": "",
-                      "pruned": pruned, "summary": summarize(run)})
+                      "pruned": pruned, "others": others, "summary": summarize(run)})
                 return 0
             # another open made this run's run.json first: read theirs on the next pass
         raise OSError("run.json could not be created: " + rj)
@@ -435,7 +496,7 @@ def cmd_open(a):
         reason = "%s: %s" % (type(e).__name__, e)
         print("NOTE: no run folder (%s); continuing without one" % reason, file=sys.stderr)
         emit({"state": "unavailable", "folder": None, "run_key": run_key, "reason": reason,
-              "pruned": pruned, "summary": None})
+              "pruned": pruned, "others": [], "summary": None})
     return 0
 
 
@@ -594,12 +655,13 @@ def cmd_dispatch(a):
     results = run.setdefault("results", {})
     rec = results.get(a.id)
     recorded = recorded_result(folder, rec, a.id)
-    reusable = (recorded is not None and rec.get("fingerprint") == fp and rec.get("area") == a.area
+    reusable = (not a.redo and recorded is not None and rec.get("fingerprint") == fp and rec.get("area") == a.area
                 and os.path.isfile(recorded) and os.path.getsize(recorded) > 0)
     if reusable:
         save_run(folder, run)
         append_progress(folder, "dispatch %s reuse" % a.id)
-        emit({"action": "reuse", "input": input_path, "result": recorded, "fingerprint": fp})
+        emit({"action": "reuse", "input": input_path, "result": recorded, "fingerprint": fp,
+              "pins": dict(rec.get("pins") or {})})
         return 0
     # Each dispatch names a result file of its own, so an agent of an earlier dispatch of this id — a
     # superseded session's, still running — writes a file no record names, which is never read.
@@ -634,8 +696,16 @@ def cmd_done(a):
     run = load_for_write(a.folder)
     folder = folder_path(a.folder)
     rec = run.get("dispatches", {}).get(a.id)
+    wrec = (run.get("writers") or {}).get(a.id)
+    if isinstance(rec, dict) and isinstance(wrec, dict):
+        raise CannotRun("%s has both a dispatch and a writer record" % a.id)
+    if isinstance(wrec, dict):
+        if wrec.get("state") != "started":
+            raise CannotRun("the writer %s is not started" % a.id)
+        return finish_writer(a, run, wrec)
     if not isinstance(rec, dict):
         raise CannotRun("no dispatch recorded for " + a.id)
+    pins = name_map(a.pin, "--pin")
     result_path = recorded_result(folder, rec, a.id)
     if result_path is None:
         raise CannotRun("the dispatch of %s names no result file; dispatch it again" % a.id)
@@ -645,10 +715,206 @@ def cmd_done(a):
         write_bytes_atomic(result_path, data)
     if not os.path.isfile(result_path) or os.path.getsize(result_path) == 0:
         raise MissingResult("no result file (or an empty one) for %s: %s" % (a.id, result_path))
-    run.setdefault("results", {})[a.id] = dict(rec, done=now_iso())
+    run.setdefault("results", {})[a.id] = dict(rec, done=now_iso(), pins=pins)
     save_run(folder, run)
     append_progress(folder, "done %s" % a.id)
     emit({"recorded": True})
+    return 0
+
+
+def git_run(tree, *args):
+    r = subprocess.run(["git", "-C", tree, *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                       timeout=GIT_TIMEOUT * 6)
+    if r.returncode != 0:
+        raise CannotRun("git %s failed in %s: %s" % (" ".join(args[:2]), tree,
+                                                     r.stderr.decode("utf-8", "replace").strip()))
+    return r.stdout
+
+
+def tree_root(tree):
+    """(physical path of tree, its work tree's top level; trees are keyed by the top level) for a directory inside a git work tree, else exit 2."""
+    if not tree or not os.path.isdir(tree):
+        raise CannotRun("--tree is not a directory: %r" % tree)
+    real = os.path.realpath(tree)
+    try:
+        inside = git_run(real, "rev-parse", "--is-inside-work-tree").decode().strip()
+        top = git_run(real, "rev-parse", "--show-toplevel").decode("utf-8", "surrogateescape").strip()
+    except (CannotRun, OSError, subprocess.SubprocessError):
+        raise CannotRun("--tree is not a git work tree: " + tree)
+    if inside != "true":
+        raise CannotRun("--tree is not a git work tree: " + tree)
+    return real, os.path.realpath(top)
+
+
+def hash_path(top, rel):
+    """SHA-256 of a file's bytes, of a symlink's text, "dir" for a directory, "-" where absent."""
+    full = os.path.join(top, rel)
+    try:
+        if os.path.islink(full):
+            return sha256_bytes(os.readlink(full).encode("utf-8", "surrogateescape"))
+        if os.path.isdir(full):
+            return "dir"
+        h = hashlib.sha256()
+        with open(full, "rb") as fh:
+            for chunk in iter(lambda: fh.read(1 << 20), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except OSError:
+        return "-"
+
+
+def scope_args(real, top, scope):
+    """Pathspecs relative to the work tree's top level, for --scope values given relative to the tree."""
+    out = []
+    for sc in scope or []:
+        full = os.path.normpath(os.path.join(real, sc))
+        rel = os.path.relpath(full, top)
+        if os.path.isabs(sc) or rel == ".." or rel.startswith(".." + os.sep):
+            raise CannotRun("--scope must be a path inside the tree: " + sc)
+        out.append(rel)
+    return sorted(set(out))
+
+
+def snapshot_scope(top, scope):
+    """{path: hash} of the paths `git status` lists under scope (the whole tree for none); a path not listed is
+    clean. Both paths of a rename or copy count."""
+    args = ["status", "--porcelain=v1", "-z", "--untracked-files=all"]
+    if scope:
+        args += ["--", *scope]
+    fields = git_run(top, *args).split(b"\0")
+    paths, i = [], 0
+    while i < len(fields):
+        rec = fields[i]
+        i += 1
+        if len(rec) < 4:
+            continue
+        paths.append(rec[3:].decode("utf-8", "surrogateescape"))
+        if rec[:1] in (b"R", b"C") or rec[1:2] in (b"R", b"C"):
+            if i < len(fields) and fields[i]:
+                paths.append(fields[i].decode("utf-8", "surrogateescape"))
+            i += 1
+    return {p: hash_path(top, p) for p in sorted(set(paths))}
+
+
+def writer_states(run, tree_key):
+    return run.setdefault("trees", {}).setdefault(tree_key, {})
+
+
+def cmd_writer(a):
+    check_id(a.id, "writer id")
+    check_name(a.agent, "--agent")
+    check_name(a.model, "--model")
+    real, top = tree_root(a.tree)
+    scope = scope_args(real, top, a.scope)
+    # A call that may write: a folder another session removed is a takeover (exit 9) on every branch, as
+    # load_for_write has it, never exit 2, which the command would meet by going on without its folder.
+    try:
+        run = load_run(a.folder)
+    except FolderGone:
+        raise TakenOver("run taken over: its folder was removed (another session chose Start over): " + a.folder)
+    folder = folder_path(a.folder)
+    input_bytes = read_input(a.input)
+    attached = attach_files(folder, a.attach or [])
+    agent_sha = sha256_bytes(read_input(a.agent_file))
+    content = content_digest(input_bytes, attached)
+    fp = make_fingerprint(content, agent_sha, a.model)
+    rec = (run.get("writers") or {}).get(a.id)
+    rec = rec if isinstance(rec, dict) else None
+    receipt = recorded_result(folder, rec, a.id) if rec else None
+    # A writer is matched on its input and attachments, tree, scope and receipt (D6b), never its agent file or
+    # model: a changed agent file or model neither
+    # dispatches a finished one again over its own work nor hides an interrupted one.
+    if not a.redo and rec and rec.get("content") == content and rec.get("tree") == real \
+            and rec.get("scope") == scope and receipt is not None:
+        before = rec.get("before") or {}
+        if rec.get("state") == "started":
+            now = snapshot_scope(top, scope)
+            left = []
+            for path in sorted(set(before) | set(now)):
+                b, n = before.get(path, "clean"), now.get(path, "clean")
+                if b != n:
+                    left.append({"path": path, "before": b, "now": n})
+            emit({"action": "interrupted", "receipt": receipt, "left": left})
+            return 0
+        if rec.get("state") == "done" and os.path.isfile(receipt) and os.path.getsize(receipt) > 0:
+            trees = (run.get("trees") or {}).get(top) or {}
+            changed = []
+            for path in sorted(rec.get("wrote") or {}):
+                now, expected = hash_path(top, path), trees.get(path)
+                if now != expected:
+                    changed.append({"path": path, "expected": expected, "now": now})
+            if changed:
+                emit({"action": "changed", "receipt": receipt, "changed": changed})
+            else:
+                emit({"action": "intact", "receipt": receipt})
+            return 0
+    # a dispatch (also --redo's, whatever the record says): the only branch that writes, so the only one the
+    # owner check guards
+    run = load_for_write(a.folder)
+    before = snapshot_scope(top, scope)
+    rel = "main/results/%s.%s.md" % (a.id, uuid.uuid4().hex[:NONCE_HEX])
+    path = os.path.join(folder, *rel.split("/"))
+    os.makedirs(os.path.dirname(path), mode=0o700, exist_ok=True)
+    if receipt is not None:
+        try:
+            os.unlink(receipt)
+        except FileNotFoundError:
+            pass
+    if a.id in run.get("kept", []):
+        run["kept"] = [k for k in run["kept"] if k != a.id]
+    run.setdefault("writers", {})[a.id] = {
+        "fingerprint": fp, "content": content, "agent": a.agent, "agent_sha": agent_sha, "model": a.model,
+        "area": "main", "result": rel, "tree": real, "scope": scope, "before": before, "state": "started",
+        "at": now_iso()}
+    save_run(folder, run)
+    append_progress(folder, "writer %s made" % a.id)
+    emit({"action": "dispatch", "receipt": path})
+    return 0
+
+
+def finish_writer(a, run, rec):
+    folder = folder_path(a.folder)
+    receipt = recorded_result(folder, rec, a.id)
+    if receipt is None:
+        raise CannotRun("the writer %s names no receipt file; dispatch it again" % a.id)
+    real, top = tree_root(rec.get("tree"))
+    if a.pin:
+        raise CannotRun("--pin is for a dispatch's result, not a writer's")
+    if a.from_ is not None:
+        data = read_input(a.from_)
+        os.makedirs(os.path.dirname(receipt), mode=0o700, exist_ok=True)
+        write_bytes_atomic(receipt, data)
+    if not os.path.isfile(receipt) or os.path.getsize(receipt) == 0:
+        raise MissingResult("no receipt file (or an empty one) for %s: %s" % (a.id, receipt))
+    before = rec.get("before") or {}
+    after = snapshot_scope(top, rec.get("scope") or [])
+    wrote = {}
+    for path in sorted(set(before) | set(after)):
+        if before.get(path, "clean") != after.get(path, "clean"):
+            wrote[path] = hash_path(top, path)
+    writer_states(run, top).update(wrote)
+    rec.update(state="done", wrote=wrote, done=now_iso())
+    save_run(folder, run)
+    append_progress(folder, "done %s (writer)" % a.id)
+    emit({"recorded": True})
+    return 0
+
+
+def cmd_tree_note(a):
+    real, top = tree_root(a.tree)
+    scope = scope_args(real, top, a.scope)
+    run = load_for_write(a.folder)
+    states = writer_states(run, top)
+
+    def under(path):
+        return not scope or any(path == sc or path.startswith(sc.rstrip("/") + "/") or sc == "." for sc in scope)
+
+    paths = {p for p in states if under(p)} | set(snapshot_scope(top, scope))
+    for path in paths:
+        states[path] = hash_path(top, path)
+    save_run(a.folder, run)
+    append_progress(a.folder, "tree-note %d" % len(paths))
+    emit({"noted": len(paths)})
     return 0
 
 
@@ -664,11 +930,63 @@ def cmd_gate(a):
 def cmd_gate_record(a):
     check_name(a.id, "gate id")
     run = load_for_write(a.folder)
-    shown = sha256_bytes(read_input(a.shown))
-    run.setdefault("gates", {})[a.id] = {"shown": shown, "answer": a.answer, "at": now_iso()}
+    shown_bytes = read_input(a.shown)
+    gates = run.setdefault("gates", {})
+    prior = gates.get(a.id)
+    seq = prior.get("seq") if isinstance(prior, dict) and isinstance(prior.get("seq"), int) else None
+    if seq is None:
+        seq = 1 + max([g["seq"] for g in gates.values()
+                       if isinstance(g, dict) and isinstance(g.get("seq"), int)] or [0])
+    if a.keep_shown:
+        folder = folder_path(a.folder)
+        os.makedirs(os.path.join(folder, "gates"), mode=0o700, exist_ok=True)
+        write_bytes_atomic(os.path.join(folder, "gates", a.id + ".md"), shown_bytes)
+    gates[a.id] = {"shown": sha256_bytes(shown_bytes), "answer": a.answer, "at": now_iso(), "seq": seq,
+                   "kept": bool(a.keep_shown)}
     save_run(a.folder, run)
     append_progress(a.folder, "gate %s answered" % a.id)
     emit({})
+    return 0
+
+
+def cmd_answers(a):
+    run = load_run(a.folder)
+    folder = folder_path(a.folder)
+    rows = []
+    for gid, rec in (run.get("gates") or {}).items():
+        if not isinstance(rec, dict) or (a.match and a.match not in gid):
+            continue
+        shown = os.path.join(folder, "gates", gid + ".md")
+        seq = rec.get("seq") if isinstance(rec.get("seq"), int) else 0
+        rows.append((seq, rec.get("at") or "", gid,
+                     {"id": gid, "answer": rec.get("answer"), "at": rec.get("at"),
+                      "shown": shown if rec.get("kept") is True and os.path.isfile(shown) else None}))
+    emit({"answers": [r[3] for r in sorted(rows, key=lambda r: r[:3])]})
+    return 0
+
+
+def cmd_put(a):
+    rel = a.rel
+    parts = rel.split("/")
+    if (os.path.isabs(rel) or "\\" in rel or parts[0] != "scratch" or len(parts) < 2
+            or any(p in ("", ".", "..") for p in parts)):
+        raise CannotRun("put needs a file path under scratch/ with no '..': %r" % rel)
+    load_for_write(a.folder)
+    folder = folder_path(a.folder)
+    data = read_input(a.from_)
+    cur = folder
+    for part in parts[:-1]:
+        cur = os.path.join(cur, part)
+        if os.path.islink(cur):
+            raise CannotRun("put refuses a link on the way: " + rel)
+        os.makedirs(cur, mode=0o700, exist_ok=True)
+        os.chmod(cur, 0o700)
+    target = os.path.join(folder, *parts)
+    if os.path.islink(target) or os.path.isdir(target):
+        raise CannotRun("put cannot replace " + rel)
+    write_bytes_atomic(target, data)
+    append_progress(folder, "put %s" % rel)
+    emit({"path": target, "sha256": sha256_bytes(data)})
     return 0
 
 
@@ -705,6 +1023,7 @@ def current_state(a):
 
 
 def cmd_stale(a):
+    # Results only: a writer is never matched on its agent or model, so a changed one never redoes it.
     run = load_run(a.folder)
     shas, models = current_state(a)
     changed = []
@@ -753,7 +1072,7 @@ def cmd_results(a):
 
 COMMANDS = {"open": cmd_open, "resume": cmd_resume, "discard": cmd_discard, "close": cmd_close,
             "phase": cmd_phase, "log": cmd_log, "fact": cmd_fact, "dispatch": cmd_dispatch,
-            "done": cmd_done, "gate": cmd_gate, "gate-record": cmd_gate_record, "effect": cmd_effect,
+            "done": cmd_done, "gate": cmd_gate, "gate-record": cmd_gate_record, "answers": cmd_answers, "put": cmd_put, "writer": cmd_writer, "tree-note": cmd_tree_note, "effect": cmd_effect,
             "stale": cmd_stale, "keep": cmd_keep, "kept": cmd_kept, "results": cmd_results}
 
 
@@ -1214,8 +1533,10 @@ def selftest():
         def _():
             home = newdir("home")
             f = nr(home)
+            # a unit redone after a revert makes its effects again: start is taken over done
             for sub, want in (("state", "none"), ("start", "started"), ("state", "started"),
-                              ("done", "done"), ("state", "done")):
+                              ("done", "done"), ("state", "done"), ("start", "started"), ("state", "started"),
+                              ("done", "done")):
                 rc, out, _e = cli(["effect", f, "e1", sub], home)
                 expect(rc == 0 and out == {"state": want}, (sub, rc, out))
             rc, out, _e = cli(["effect", f, "e2", "state"], home)
@@ -1312,12 +1633,21 @@ def selftest():
         def _():
             home = newdir("home")
             f, inp, af = nr(home, "A"), mkfile("hello"), mkfile("agent v")
+            tree = newdir("tree")
+            git(tree, "init", "-q")
+            writer = ["writer", f, "w1", "--tree", tree, "--agent", "w", "--agent-file", af, "--model", "m",
+                      "--input", inp]
+            rc, o, err = cli(writer, home, "A")
+            expect(rc == 0 and o["action"] == "dispatch", (rc, o, err))
             expect(cli(["discard", f], home, "B")[0] == 0, "discard")
+            # writer: its recorded w1 (a read branch) and a new w2 (a dispatch); done on a writer; put; tree-note
             calls = [["log", f, "x"], ["phase", f, "p1"], ["fact", f, "n", "--set", "v"],
                      ["dispatch", f, "d1", "--area", "main", "--agent", "v", "--agent-file", af,
                       "--model", "m", "--input", inp],
                      ["done", f, "d1"], ["gate-record", f, "g", "--shown", inp, "--answer", "a"],
-                     ["effect", f, "e", "start"], ["keep", f, "--ids", "d1"], ["close", f]]
+                     ["effect", f, "e", "start"], ["keep", f, "--ids", "d1"], writer,
+                     writer[:2] + ["w2"] + writer[3:], ["done", f, "w1"],
+                     ["put", f, "scratch/x.md", "--from", inp], ["tree-note", f, "--tree", tree], ["close", f]]
             for c in calls:
                 rc, out, err = cli(c, home, "A")
                 expect(rc == 9 and out is None and "run-folder:" in err, (c[0], rc, out, err))
@@ -1592,6 +1922,420 @@ def selftest():
             rc, r, err = cli(["resume", folder, "--args", "--no-design"], home, "C")
             expect(rc == 0 and run_json(folder)["args"] == "--no-design", (rc, err, run_json(folder)))
 
+        # ---- Part 2a: put, answers, pins, redo, keyless others
+
+        @case("put-atomic-owner-checked")
+        def _():
+            home = newdir("home")
+            f = nr(home, "A")
+            rc, o, err = cli(["put", f, "scratch/brief.md", "--from", "-"], home, "A", stdin=b"first")
+            expect(rc == 0 and o["path"] == os.path.join(f, "scratch", "brief.md"), (rc, o, err))
+            expect(o["sha256"] == hashlib.sha256(b"first").hexdigest() and read(o["path"]) == "first", o)
+            expect(stat.S_IMODE(os.stat(os.path.join(f, "scratch")).st_mode) == 0o700, "scratch not 0700")
+            rc, o, _e = cli(["put", f, "scratch/sub/deep.md", "--from", "-"], home, "A", stdin=b"x")
+            expect(rc == 0 and stat.S_IMODE(os.stat(os.path.join(f, "scratch", "sub")).st_mode) == 0o700, (rc, o))
+            rc, o, _e = cli(["put", f, "scratch/brief.md", "--from", "-"], home, "A", stdin=b"second")
+            expect(rc == 0 and read(o["path"]) == "second", (rc, o))
+            rc, o, _e = cli(["put", f, "scratch/brief.md", "--from", "-"], home, "B", stdin=b"stolen")
+            expect(rc == 9 and o is None and read(os.path.join(f, "scratch", "brief.md")) == "second", (rc, o))
+            before = snapshot(f)
+            for bad in ("inputs/x", "../x", "/abs", "scratch/../x", "scratch", "scratch/"):
+                rc, o, _e = cli(["put", f, bad, "--from", "-"], home, "A", stdin=b"x")
+                expect(rc == 2 and o is None, (bad, rc))
+            expect(snapshot(f) == before, "a refused put wrote something")
+
+        @case("answers-in-first-order")
+        def _():
+            home = newdir("home")
+            f = nr(home)
+            shown = [mkfile("shown %d" % i) for i in range(3)]
+            cli(["gate-record", f, "g-002", "--shown", shown[0], "--answer", "one"], home)
+            cli(["gate-record", f, "g-001", "--shown", shown[1], "--answer", "two", "--keep-shown"], home)
+            cli(["gate-record", f, "g-002", "--shown", shown[2], "--answer", "three"], home)
+            rc, o, err = cli(["answers", f], home)
+            expect(rc == 0 and [x["id"] for x in o["answers"]] == ["g-002", "g-001"], (rc, o, err))
+            by = {x["id"]: x for x in o["answers"]}
+            expect(by["g-002"]["answer"] == "three" and by["g-001"]["answer"] == "two", o)
+            expect(by["g-002"]["shown"] is None and by["g-001"]["shown"] == os.path.join(f, "gates", "g-001.md"), o)
+            expect(read(by["g-001"]["shown"]) == "shown 1" and re.match(r"^\d{4}-", by["g-001"]["at"]), o)
+            rc, o, _e = cli(["answers", f, "--match", "g-00"], home)
+            expect(len(o["answers"]) == 2, o)
+            rc, o, _e = cli(["answers", f, "--match", "g-001"], home)
+            expect([x["id"] for x in o["answers"]] == ["g-001"], o)
+            rc, o, _e = cli(["answers", f, "--match", "zzz"], home)
+            expect(o == {"answers": []}, o)
+            owned = nr(home, "A")
+            rc, _o, _e = cli(["gate-record", owned, "g-010", "--shown", shown[0], "--answer", "x", "--keep-shown"],
+                             home, "B")
+            expect(rc == 9 and not os.path.exists(os.path.join(owned, "gates")), rc)
+
+        @case("pin-recorded-and-returned")
+        def _():
+            home = newdir("home")
+            f, inp, af = nr(home), mkfile("hello"), mkfile("agent v")
+            _rc, o, _e = disp(home, f, "d1", inp, afile=af)
+            os.makedirs(os.path.dirname(o["result"]), exist_ok=True)
+            with open(o["result"], "w") as fh:
+                fh.write("r")
+            rc, out, err = cli(["done", f, "d1", "--pin", "commit=abc", "--pin", "ref=origin/main"], home)
+            expect(rc == 0 and out == {"recorded": True}, (rc, out, err))
+            _rc, o2, _e = disp(home, f, "d1", inp, afile=af)
+            expect(o2["action"] == "reuse" and o2["pins"] == {"commit": "abc", "ref": "origin/main"}, o2)
+            full(home, f, "d2", inp, af)
+            _rc, o3, _e = disp(home, f, "d2", inp, afile=af)
+            expect(o3["action"] == "reuse" and o3["pins"] == {}, o3)
+            rc, out, _e = cli(["done", f, "d1", "--pin", "novalue"], home)
+            expect(rc == 2, rc)
+
+        @case("redo-forces-dispatch")
+        def _():
+            home = newdir("home")
+            f, inp, af = nr(home), mkfile("hello"), mkfile("agent v")
+            o1 = full(home, f, "d1", inp, af)
+            rc, o2, err = cli(["dispatch", f, "d1", "--area", "main", "--agent", "v", "--agent-file", af,
+                               "--model", "m1", "--input", inp, "--redo"], home)
+            expect(rc == 0 and o2["action"] == "dispatch" and o2["result"] != o1["result"], (rc, o2, err))
+            expect(not os.path.exists(o1["result"]), "the old result file remains")
+            rc, r, _e = cli(["results", f], home)
+            expect(r["ids"] == [], r)
+            _rc, o3, _e = disp(home, f, "d1", inp, afile=af)
+            expect(o3["action"] == "dispatch", o3)
+
+        @case("open-others-same-args-other-specs")
+        def _():
+            home, wd = newdir("home"), repo()
+            _a, o1, _e = op(home, repo("https://example.com/a.git"), key=None, args="CVE-1  x", extra=["--workdir", wd])
+            _a, o2, _e = op(home, repo("https://example.com/b.git"), key=None, args="CVE-1 x", extra=["--workdir", wd])
+            expect(o2["folder"] != o1["folder"] and o2["others"] == [], o2["others"])
+            _a, o3, _e = op(home, repo("https://example.com/b.git"), key=None, args="CVE-2", extra=["--workdir", wd])
+            expect(len(o3["others"]) == 2, o3["others"])
+
+        @case("open-others-corrupt-neighbour")
+        def _():
+            home, specs, wd = newdir("home"), repo("https://example.com/s.git"), repo()
+            _a, o1, _e = op(home, specs, key=None, args="A", extra=["--workdir", wd])
+            _a, o2, _e = op(home, specs, key=None, args="B", extra=["--workdir", wd])
+            for folder, mut in ((o1["folder"], lambda r: r.update(updated=5)),):
+                r = run_json(folder)
+                mut(r)
+                with open(os.path.join(folder, "run.json"), "w") as fh:
+                    json.dump(r, fh)
+            bad = os.path.join(os.path.dirname(o1["folder"]), "garbage")
+            os.makedirs(bad)
+            with open(os.path.join(bad, "run.json"), "w") as fh:
+                fh.write("{not json")
+            deep = os.path.join(os.path.dirname(o1["folder"]), "deep")
+            os.makedirs(deep)
+            with open(os.path.join(deep, "run.json"), "w") as fh:
+                fh.write("[" * 100000)
+            rc, o3, err = op(home, specs, key=None, args="C", extra=["--workdir", wd])
+            expect(rc == 0 and o3["state"] == "new"
+                   and [x["args"] for x in o3["others"]] == ["B"], (rc, o3, err))
+            expect(all(isinstance(x["updated"], str) for x in o3["others"]), o3["others"])
+
+        @case("open-keyless-others")
+        def _():
+            home, specs, wd = newdir("home"), repo("https://example.com/s.git"), repo()
+            _a, o1, _e = op(home, specs, key=None, args="CVE-1", extra=["--workdir", wd], session="A")
+            expect(o1["state"] == "new" and o1["others"] == [], o1)
+            _a, o2, _e = op(home, specs, key=None, args="CVE-2", extra=["--workdir", wd], session="B")
+            expect(o2["state"] == "new" and o2["folder"] != o1["folder"], o2)
+            expect(len(o2["others"]) == 1, o2["others"])
+            oth = o2["others"][0]
+            expect(oth["folder"] == o1["folder"] and oth["args"] == "CVE-1" and oth["owner"] == "A", oth)
+            for k in ("started", "updated", "last_phase", "results"):
+                expect(k in oth, (k, oth))
+            _a, o2b, _e = op(home, specs, key=None, args="CVE-2", extra=["--workdir", wd], session="B")
+            expect(o2b["state"] == "unfinished" and [x["args"] for x in o2b["others"]] == ["CVE-1"], o2b)
+            _a, k, _e = op(home, specs, key="K-1", args="CVE-3", extra=["--workdir", wd])
+            expect(k["others"] == [], k)
+            _a, nw, _e = op(home, specs, key=None, args="CVE-9", extra=[])
+            expect(nw["others"] == [], nw)
+            _a, other_wd, _e = op(home, specs, key=None, args="CVE-4", extra=["--workdir", repo()])
+            expect(other_wd["others"] == [], other_wd)
+            cli(["close", o1["folder"]], home, "A")
+            _a, o4, _e = op(home, specs, key=None, args="CVE-2", extra=["--workdir", wd], session="B")
+            expect([x["args"] for x in o4["others"]] == [], o4)
+            for i in range(4):
+                op(home, specs, key=None, args="X-%d" % i, extra=["--workdir", wd])
+            _a, o5, _e = op(home, specs, key=None, args="Y", extra=["--workdir", wd])
+            expect(len(o5["others"]) == 3, len(o5["others"]))
+            ups = [x["updated"] for x in o5["others"]]
+            expect(ups == sorted(ups, reverse=True), ups)
+
+
+        # ---- Task 2 (Part 2a): writers
+
+        def gitrepo():
+            p = newdir("tree")
+            git(p, "init", "-q")
+            for name, body in (("f", "one\n"), ("g", "two\n")):
+                with open(os.path.join(p, name), "w") as fh:
+                    fh.write(body)
+            git(p, "add", "-A")
+            git(p, "commit", "-q", "-m", "init")
+            return p
+
+        def edit(tree, name, body):
+            with open(os.path.join(tree, name), "w") as fh:
+                fh.write(body)
+
+        def wr(home, folder, wid, tree, afile, inp, scope=(), model="m1", session=None, redo=False):
+            a = ["writer", folder, wid, "--tree", tree, "--agent", "w", "--agent-file", afile,
+                 "--model", model, "--input", inp]
+            for sc in scope:
+                a += ["--scope", sc]
+            if redo:
+                a.append("--redo")
+            return cli(a, home, session)
+
+        def wdone(home, folder, wid, tree, afile, inp, receipt="receipt", edits=(), session=None, scope=()):
+            rc, o, err = wr(home, folder, wid, tree, afile, inp, scope=scope, session=session)
+            expect(rc == 0 and o["action"] == "dispatch", (rc, o, err))
+            for name, body in edits:
+                edit(tree, name, body)
+            rc, d, err = cli(["done", folder, wid, "--from", "-"], home, session, stdin=receipt.encode())
+            expect(rc == 0 and d == {"recorded": True}, (rc, d, err))
+            return o
+
+        @case("writer-dispatch-then-intact")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            o = wdone(home, f, "w1", tree, af, inp, receipt="did it", edits=(("f", "two\n"),))
+            expect(re.match(r"^w1\.[0-9a-f]{12}\.md$", os.path.basename(o["receipt"]))
+                   and os.path.dirname(o["receipt"]) == os.path.join(f, "main", "results"), o)
+            rec = run_json(f)["writers"]["w1"]
+            expect(rec["state"] == "done" and rec["wrote"] == {"f": sha256_bytes(b"two\n")}
+                   and rec["tree"] == tree and "content" in rec, rec)
+            expect(run_json(f)["trees"][tree] == {"f": sha256_bytes(b"two\n")}, run_json(f).get("trees"))
+            expect("w1" not in run_json(f).get("dispatches", {}), "writer kept apart from dispatches")
+            rc, o2, err = wr(home, f, "w1", tree, af, inp)
+            expect(rc == 0 and o2 == {"action": "intact", "receipt": o["receipt"]}, (rc, o2, err))
+            expect(read(o2["receipt"]) == "did it", o2)
+            rc, o3, _e = wr(home, f, "w1", tree, af, mkfile("brief changed"))
+            expect(o3["action"] == "dispatch" and o3["receipt"] != o["receipt"], o3)
+            expect(not os.path.exists(o["receipt"]), "old receipt kept")
+
+        @case("writer-outside-change")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            o = wdone(home, f, "w1", tree, af, inp, edits=(("f", "two\n"),))
+            edit(tree, "f", "three\n")
+            rc, o2, err = wr(home, f, "w1", tree, af, inp)
+            expect(rc == 0 and o2["action"] == "changed" and o2["receipt"] == o["receipt"], (rc, o2, err))
+            expect(o2["changed"] == [{"path": "f", "expected": sha256_bytes(b"two\n"),
+                                      "now": sha256_bytes(b"three\n")}], o2)
+
+        @case("writer-later-own-write-intact")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            wdone(home, f, "wa", tree, af, inp, edits=(("f", "A\n"),))
+            inp2 = mkfile("brief two")
+            wdone(home, f, "wb", tree, af, inp2, edits=(("f", "B\n"),))
+            rc, o, err = wr(home, f, "wa", tree, af, inp)
+            expect(rc == 0 and o["action"] == "intact", (rc, o, err))
+            edit(tree, "f", "C\n")
+            rc, o, _e = wr(home, f, "wa", tree, af, inp)
+            expect(o["action"] == "changed", o)
+
+        @case("tree-note-commit-intact")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            wdone(home, f, "wa", tree, af, inp, edits=(("f", "A\n"),))
+            # the command itself edits and commits, then notes the tree
+            edit(tree, "f", "fixed\n")
+            git(tree, "commit", "-q", "-am", "fix")
+            rc, o, _e = wr(home, f, "wa", tree, af, inp)
+            expect(o["action"] == "changed", ("no tree-note", o))
+            rc, n, err = cli(["tree-note", f, "--tree", tree], home)
+            expect(rc == 0 and n == {"noted": 1}, (rc, n, err))
+            rc, o, _e = wr(home, f, "wa", tree, af, inp)
+            expect(o["action"] == "intact", o)
+            edit(tree, "f", "later\n")
+            rc, o, _e = wr(home, f, "wa", tree, af, inp)
+            expect(o["action"] == "changed", o)
+            rc, n, _e = cli(["tree-note", f, "--tree", tree, "--scope", "g"], home)
+            expect(n == {"noted": 0}, n)
+            rc, o, _e = wr(home, f, "wa", tree, af, inp)
+            expect(o["action"] == "changed", ("scope g does not cover f", o))
+
+        @case("writer-interrupted")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            edit(tree, "g", "dirty before\n")
+            rc, o, err = wr(home, f, "w1", tree, af, inp)
+            expect(o["action"] == "dispatch", (rc, o, err))
+            expect(run_json(f)["writers"]["w1"]["before"] == {"g": sha256_bytes(b"dirty before\n")}, run_json(f))
+            edit(tree, "f", "half\n")
+            rc, o2, err = wr(home, f, "w1", tree, af, inp)
+            expect(rc == 0 and o2["action"] == "interrupted" and o2["receipt"] == o["receipt"], (rc, o2, err))
+            expect(o2["left"] == [{"path": "f", "before": "clean", "now": sha256_bytes(b"half\n")}], o2)
+            expect(run_json(f)["writers"]["w1"]["state"] == "started", "interrupted must write nothing")
+            before = read(os.path.join(f, "run.json"))
+            wr(home, f, "w1", tree, af, inp)
+            expect(read(os.path.join(f, "run.json")) == before, "a read rewrote run.json")
+
+        @case("writer-deleted-path")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            rc, o, _e = wr(home, f, "w1", tree, af, inp)
+            os.unlink(os.path.join(tree, "g"))
+            cli(["done", f, "w1", "--from", "-"], home, stdin=b"r")
+            expect(run_json(f)["writers"]["w1"]["wrote"] == {"g": "-"}, run_json(f)["writers"]["w1"])
+            rc, o, _e = wr(home, f, "w1", tree, af, inp)
+            expect(o["action"] == "intact", o)
+            edit(tree, "g", "two\n")
+            rc, o, _e = wr(home, f, "w1", tree, af, inp)
+            expect(o["action"] == "changed" and o["changed"][0]["expected"] == "-"
+                   and o["changed"][0]["now"] == sha256_bytes(b"two\n"), o)
+
+        @case("writer-not-a-git-tree")
+        def _():
+            home = newdir("home")
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            plain = newdir("plain")
+            rc, o, err = wr(home, f, "w1", plain, af, inp)
+            expect(rc == 2 and "writers" not in run_json(f), (rc, o, err))
+            rc, o, err = cli(["tree-note", f, "--tree", plain], home)
+            expect(rc == 2, (rc, err))
+
+        @case("writer-owner-guard")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home, session="A"), mkfile("brief"), mkfile("agent")
+            before = read(os.path.join(f, "run.json"))
+            rc, o, err = wr(home, f, "w1", tree, af, inp, session="B")
+            expect(rc == 9, (rc, o, err))
+            expect(read(os.path.join(f, "run.json")) == before, "a taken-over writer wrote")
+            rc, o, err = cli(["tree-note", f, "--tree", tree], home, "B")
+            expect(rc == 9, (rc, err))
+
+        @case("writer-rename")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            rc, o, _e = wr(home, f, "w1", tree, af, inp)
+            git(tree, "mv", "f", "h")
+            cli(["done", f, "w1", "--from", "-"], home, stdin=b"r")
+            expect(sorted(run_json(f)["writers"]["w1"]["wrote"]) == ["f", "h"], run_json(f)["writers"]["w1"])
+            rc, o, _e = wr(home, f, "w1", tree, af, inp)
+            expect(o["action"] == "intact", o)
+
+        @case("writer-agent-changed-still-intact")
+        def _():
+            # a writer is never matched on its agent file or model: a changed one neither dispatches a
+            # finished one again over its own work nor hides an interrupted one
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            o = wdone(home, f, "w1", tree, af, inp, edits=(("f", "two\n"),))
+            af2 = mkfile("agent changed")
+            rc, o2, err = wr(home, f, "w1", tree, af2, inp, model="m2")
+            expect(rc == 0 and o2 == {"action": "intact", "receipt": o["receipt"]}, (rc, o2, err))
+            edit(tree, "f", "three\n")
+            rc, o3, _e = wr(home, f, "w1", tree, af2, inp, model="m2")
+            expect(o3["action"] == "changed" and o3["receipt"] == o["receipt"], o3)
+            inp2 = mkfile("brief two")
+            rc, o4, _e = wr(home, f, "w2", tree, af, inp2)
+            rc, o5, err = wr(home, f, "w2", tree, af2, inp2, model="m2")
+            expect(o5["action"] == "interrupted" and o5["receipt"] == o4["receipt"], (o5, err))
+            rc, o6, _e = wr(home, f, "w2", tree, af2, inp2, model="m2", redo=True)
+            expect(o6["action"] == "dispatch" and run_json(f)["writers"]["w2"]["model"] == "m2", o6)
+
+        @case("stale-ignores-writers")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            wdone(home, f, "w1", tree, af, inp, edits=(("f", "two\n"),))
+            full(home, f, "d1", mkfile("dispatch input"), af, agent="w")
+            af2 = mkfile("agent changed")
+            rc, s, err = cli(["stale", f, "--agent", "w=" + af2, "--model", "w=m2"], home)
+            expect(rc == 0 and s["total"] == 1 and [c["id"] for c in s["changed"]] == ["d1"], (s, err))
+            rc, k, err = cli(["keep", f, "--ids", "w1", "--agent", "w=" + af2], home)
+            expect(rc == 2, ("keep of a writer", rc, k, err))
+
+        @case("writer-subdir-tree-shares-state")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            os.makedirs(os.path.join(tree, "sub"))
+            edit(tree, "sub/x", "0\n")
+            git(tree, "add", "-A")
+            git(tree, "commit", "-q", "-m", "sub")
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            wdone(home, f, "wa", tree, af, inp, edits=(("sub/x", "A\n"),))
+            sub = os.path.join(tree, "sub")
+            wdone(home, f, "wb", sub, af, mkfile("brief two"), edits=(("x", "B\n"),))
+            expect(list(run_json(f)["trees"]) == [tree], run_json(f)["trees"])
+            rc, o, err = wr(home, f, "wa", tree, af, inp)
+            expect(o["action"] == "intact", (rc, o, err))
+            edit(tree, "sub/x", "C\n")
+            git(tree, "commit", "-q", "-am", "c")
+            rc, n, err = cli(["tree-note", f, "--tree", sub], home)
+            expect(rc == 0 and n == {"noted": 1}, (rc, n, err))
+            rc, o, _e = wr(home, f, "wa", tree, af, inp)
+            expect(o["action"] == "intact", o)
+
+        @case("writer-scope-order-insensitive")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            wdone(home, f, "w1", tree, af, inp, scope=("f", "g"), edits=(("f", "z\n"),))
+            rc, o, err = wr(home, f, "w1", tree, af, inp, scope=("g", "f", "f"))
+            expect(o["action"] == "intact", (rc, o, err))
+
+        @case("writer-and-dispatch-id-clash")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            disp(home, f, "x1", inp, afile=af)
+            wr(home, f, "x1", tree, af, inp)
+            rc, d, err = cli(["done", f, "x1", "--from", "-"], home, stdin=b"r")
+            expect(rc == 2, (rc, err))
+
+        @case("writer-redo")
+        def _():
+            home, tree = newdir("home"), gitrepo()
+            f, inp, af = nr(home), mkfile("brief"), mkfile("agent")
+            # changed -> --redo dispatches anew from the tree as it stands; its done is intact again
+            o = wdone(home, f, "w1", tree, af, inp, edits=(("f", "two\n"),))
+            edit(tree, "f", "three\n")
+            rc, o2, _e = wr(home, f, "w1", tree, af, inp)
+            expect(o2["action"] == "changed", o2)
+            rc, o3, err = wr(home, f, "w1", tree, af, inp, redo=True)
+            expect(rc == 0 and o3["action"] == "dispatch" and o3["receipt"] != o["receipt"], (rc, o3, err))
+            expect(not os.path.exists(o["receipt"]), "old receipt kept")
+            rec = run_json(f)["writers"]["w1"]
+            expect(rec["state"] == "started" and rec["before"] == {"f": sha256_bytes(b"three\n")}, rec)
+            edit(tree, "f", "four\n")
+            rc, d, err = cli(["done", f, "w1", "--from", "-"], home, stdin=b"again")
+            expect(rc == 0 and d == {"recorded": True}, (rc, d, err))
+            rc, o4, err = wr(home, f, "w1", tree, af, inp)
+            expect(rc == 0 and o4 == {"action": "intact", "receipt": o3["receipt"]}, (rc, o4, err))
+            expect(read(o4["receipt"]) == "again", o4)
+            # interrupted -> --redo dispatches anew over what it left
+            inp2 = mkfile("brief two")
+            rc, o5, _e = wr(home, f, "w2", tree, af, inp2)
+            edit(tree, "g", "half\n")
+            with open(o5["receipt"], "w") as fh:
+                fh.write("partial")
+            rc, o6, _e = wr(home, f, "w2", tree, af, inp2)
+            expect(o6["action"] == "interrupted", o6)
+            rc, o7, err = wr(home, f, "w2", tree, af, inp2, redo=True)
+            expect(rc == 0 and o7["action"] == "dispatch" and o7["receipt"] != o5["receipt"], (rc, o7, err))
+            expect(not os.path.exists(o5["receipt"]), "interrupted receipt kept")
+            expect(run_json(f)["writers"]["w2"]["before"]["g"] == sha256_bytes(b"half\n"), run_json(f)["writers"]["w2"])
+            # owner-checked, like the dispatch branch
+            fa = nr(home, session="A")
+            wdone(home, fa, "w3", tree, af, inp, session="A")
+            before = read(os.path.join(fa, "run.json"))
+            rc, o8, err = wr(home, fa, "w3", tree, af, inp, session="B", redo=True)
+            expect(rc == 9 and read(os.path.join(fa, "run.json")) == before, (rc, o8, err))
+
     for line in results:
         print(line)
     return 1 if failures else 0
@@ -1600,7 +2344,7 @@ def selftest():
 FREE_TEXT_OPTIONS = ("--args", "--set", "--answer")
 KNOWN_OPTIONS = FREE_TEXT_OPTIONS + (
     "--command", "--key", "--specs", "--workdir", "--shown", "--from", "--area", "--agent", "--agent-file",
-    "--model", "--input", "--attach", "--ids", "--match", "-h", "--help")
+    "--model", "--input", "--attach", "--ids", "--match", "--pin", "--tree", "--scope", "-h", "--help")
 
 
 def normalize_argv(argv):
@@ -1658,10 +2402,12 @@ def main(argv):
     d.add_argument("--model", required=True)
     d.add_argument("--input", required=True)
     d.add_argument("--attach", action="append")
+    d.add_argument("--redo", action="store_true")
     dn = sub.add_parser("done")
     dn.add_argument("folder")
     dn.add_argument("id")
     dn.add_argument("--from", dest="from_")
+    dn.add_argument("--pin", action="append")
     for name in ("gate", "gate-record"):
         g = sub.add_parser(name)
         g.add_argument("folder")
@@ -1669,6 +2415,28 @@ def main(argv):
         g.add_argument("--shown", required=True)
         if name == "gate-record":
             g.add_argument("--answer", required=True)
+            g.add_argument("--keep-shown", action="store_true")
+    an = sub.add_parser("answers")
+    an.add_argument("folder")
+    an.add_argument("--match")
+    pt = sub.add_parser("put")
+    pt.add_argument("folder")
+    pt.add_argument("rel")
+    pt.add_argument("--from", dest="from_", required=True)
+    for name in ("writer", "tree-note"):
+        w = sub.add_parser(name)
+        w.add_argument("folder")
+        if name == "writer":
+            w.add_argument("id")
+        w.add_argument("--tree", required=True)
+        w.add_argument("--scope", action="append")
+        if name == "writer":
+            w.add_argument("--agent", required=True)
+            w.add_argument("--agent-file", required=True)
+            w.add_argument("--model", required=True)
+            w.add_argument("--input", required=True)
+            w.add_argument("--attach", action="append")
+            w.add_argument("--redo", action="store_true")
     e = sub.add_parser("effect")
     e.add_argument("folder")
     e.add_argument("id")

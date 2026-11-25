@@ -33,6 +33,8 @@ None of this touches git directly — the entry is committed later, once, by the
 
 **A run that ends early still writes its entry.** A command's named stop, a *Cancel*, or any other answer that ends the run takes a short tail: the cost entry, unless `--skip-costs`, then the terminal commit of the specs repository. It writes no resume pointer and runs no session maintenance. Each command's own page names its exceptions.
 
+**A resumed run writes its entry once.** A [`/prd-ground`](../commands/prd-ground.md#stopping-and-resuming) run that is stopped and resumed skips the cost entry, the feedback and the resume pointer an earlier session finished, so none is written twice. Its maintenance step is not guarded yet: on a resume it runs again.
+
 ## How cost is computed and what a figure covers
 
 The script reads the assistant-turn `usage` and `model` fields already present in the session's main transcript, plus every subagent transcript dispatched during the window being measured, sums token counts per model, and multiplies by the price table in effect. Claude Code's own running dollar total reaches the transcript only now and then — a `cost-state` record between sessions, never at a command's edges — so cost is always **computed** rather than read. It drifts from Claude Code's own accounting by the accuracy of that table, and by every compaction in the window, which Claude Code bills but records no token usage for: the entry's `compactions:` field counts those the computed figure leaves out. Override the bundled table with `$DEV_WORKFLOWS_COST_PRICES`, a variable the companion `workflows-core` plugin reads and documents — the name is the same family-wide constant as the cost folder itself, not a `product-workflows`-specific setting.

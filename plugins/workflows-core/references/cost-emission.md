@@ -52,7 +52,7 @@ worked by 23 teams) and **no dedup / no prose** (pure measurement, append-only).
 No dedup or cross-reference between the three. This subsystem does NOT use the
 `impl-maintenance` agent.
 
-**Cost runs unless the user skipped it.** Unlike feedback (which writes nothing when there is no plugin signal), the cost phase always computes and always advances the checkpoint (§3) — even when it can only report-only — except where §1 finds no transcript holding this run's invocation, which it names in one line and measures nothing, except under `--skip-costs`, where `workflows-core:run-flags` `skip-cost` advances the checkpoint without loading this file and writes no entry, and except where no run started at all — `/product-workflows:prd-ground`'s `PRD_GROUND_TYPED_ONLY`, the one such stop (`workflows-core:specs-repo-git` §4). A silent write with no interaction is the norm; the sole interactive moment is pending reconciliation (§9), and only when pending files exist.
+**Cost runs unless the user skipped it.** Unlike feedback (which writes nothing when there is no plugin signal), the cost phase always computes and always advances the checkpoint (§3) — even when it can only report-only — except where §1 finds no transcript holding this run's invocation, which it names in one line and measures nothing, except under `--skip-costs`, where `workflows-core:run-flags` `skip-cost` advances the checkpoint without loading this file and writes no entry, except on a run resumed through its run folder that finds its cost step begun or made by an earlier session (§11, *Guarded*), and except where no run started at all — `/product-workflows:prd-ground`'s `PRD_GROUND_TYPED_ONLY`, the one such stop (`workflows-core:specs-repo-git` §4). A silent write with no interaction is the norm; the sole interactive moment is pending reconciliation (§9), and only when pending files exist.
 
 ## 1. Session-artifact resolution
 
@@ -695,7 +695,13 @@ and `/prompt-grill-me` through the §13 record a replay reads it from — and `/
 into a docs/code repo or the current working directory, where it is not the specs repository, and NEVER fails the
 run. The cost entry is committed later, once, by the run's terminal
 `commit-artifacts` step (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md`
-§4). Cost runs unless the user skipped it — under `--skip-costs` the calling command runs `workflows-core:run-flags`' `skip-cost` in place of this entry point, and `emit-cost` is never called at all — or no run started (`/product-workflows:prd-ground`'s `PRD_GROUND_TYPED_ONLY`, `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4).
+§4). Cost runs unless the user skipped it — under `--skip-costs` the calling command runs `workflows-core:run-flags`' `skip-cost` in place of this entry point, and `emit-cost` is never called at all — or no run started (`/product-workflows:prd-ground`'s `PRD_GROUND_TYPED_ONLY`, `${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4), or an earlier session of a run that keeps a run folder already began it (*Guarded*, below).
+
+**Guarded, on a run that keeps a run folder.** Where the calling run carries `run_folder: <path>` and has finished — the tail before `close-run`, never a stop's — `emit-cost` is effect `tail-cost` (`Skill(skill: "workflows-core:reference", args: "run-folder run-effect")`), read before step 1. `done` — run no step below, and return the line fact `tail-cost` holds. `none` — `effect <folder> tail-cost start`; steps 1–8; `fact <folder> tail-cost --set '<step 8's return, or step 1's line where it stops there>'`; `effect <folder> tail-cost done`. `started` — an earlier session began it and never recorded its end, and nothing here is idempotent: the entry is appended, never deduped (§6), and whether that session moved the checkpoint (§3) is unknown, so measuring again could count the same spend twice. Run no step below; return this one line, and record it as fact `tail-cost` before `effect <folder> tail-cost done`:
+
+`NOTE: cost not measured — an earlier session of this run began its cost entry and never recorded its end, and measuring again could count the same spend twice. That entry may be missing. This session's cost checkpoint is not advanced either, so the next command's cost entry in this session also counts this run's spend since the last checkpoint.`
+
+Without a run folder, and on a stop, `emit-cost` runs as below, unguarded: a stopped run keeps its folder, and the session that resumes it measures its own spend at its own end.
 
 Inputs:
 - `command` — the exact slash-command name (e.g. `/implement`,

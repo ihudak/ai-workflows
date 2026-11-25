@@ -2,7 +2,7 @@
 
 # Phase handoff — Shared Reference — entry point require-on-main
 
-This file holds entry point `require-on-main` of `phase-handoff`: §1, §2.2, §2.6.1, §3 and §4.4, and in part §4.0 ("never infer") and §5 ("rule 2" and "rule 3"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. This file is 256 lines long.
+This file holds entry point `require-on-main` of `phase-handoff`: §1, §2.6.1, §3 and §4.4, and in part §2.2 ("Intended name", "The keyless form", "rule 1", "rule 2", "rule 3", "rule 4", "Where a new branch is cut" and "In session-branch mode"), §4.0 ("never infer") and §5 ("rule 2" and "rule 3"). Any other section is in the whole reference: `Skill(skill: "workflows-core:reference", args: "phase-handoff")`. This file is 256 lines long.
 
 `${CLAUDE_PLUGIN_ROOT}` in this file is `workflows-core`'s root, whichever plugin's run reads it.
 

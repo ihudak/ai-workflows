@@ -16,7 +16,7 @@ say, was false of four of the five. The distinction is the
 verdict, not the reading list; `dev-workflows/docs/commands/ready.md`'s Phase 4 paragraph states it the
 same way. What is joint here: it checks whether the PRD/Epic/ARD/spec/design artifacts, taken
 together, actually justify the phase the caller derived from them and the next transition — against the
-rubric in `${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`. A `--claimed` status, where the operator
+rubric the brief's `workflow_states_rubric` names, or, where it names none, `${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`. A `--claimed` status, where the operator
 passed one, is a human claim compared against that derived phase as a secondary check, never the object
 of the review. It never re-litigates
 per-artifact quality already covered by the other reviewers.
@@ -36,7 +36,7 @@ The caller passes a structured brief:
 - **`claimed_status`** (optional) — a phase the operator declared with `--claimed`. Present, compare it against the derived phase: a claim **above** the derived phase caps the verdict, a claim below is reported and does not cap. It arrives verbatim. On a PRD-level run, a claim of the PRD ladder's optional rung may come with or without its `(optional)` suffix: `Delivery verified` names the rung the derived phase calls `Delivery verified (optional)`, and sits *at* it, never above or below. The caller accepts neither spelling on an Epic-level run, whose claim is on the Epic ladder, which has no such rung. No other name is read more loosely. Absent, there is nothing to diverge from and the review judges the artifacts alone.
 - **`applicable_ard`** (optional) — the resolved ARD `AD#N` invariants. When omitted, dimension 4
   (ARD conformance) is skipped entirely (no-regression).
-- **The rubric** (`${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`) — the status↔command↔role↔artifact ladder this reviewer applies.
+- **The rubric** — the status↔command↔role↔artifact ladder this reviewer applies: the file the brief's `workflow_states_rubric` names — on a run that keeps a run folder, a copy the caller made beside its brief, so a resumed run is reviewed against the rubric its brief was built against — or, where the brief names none, `${CLAUDE_PLUGIN_ROOT}/references/workflow-states.md`. Read that one file, never both.
 
 Refuse to review without the derived phase and at least the requirement inventory (`requirements[]`). These are the review ground truth — without them there is nothing to verify the artifacts against.
 
