@@ -154,7 +154,8 @@ mount / permission) drops to the next tier with the same notice.
 - **Auto entries dedupe:** before appending an `origin: auto` entry, read the
   existing `id:` values in the file and **skip** any that already exist (report
   `SKIP — already logged`). Because `id = <KEY>-<command>-<short-slug>` is
-  stable, re-running a pipeline never double-logs.
+  stable, re-running a pipeline never double-logs an entry whose slug comes
+  out the same.
 - **Manual (`/feedback`) and prompt (`/prompt*`) entries are intentional** and
   are **never silently skipped.** On an `id` collision, append a numeric suffix
   (`-2`, `-3`, …) and warn if one looks near-identical.

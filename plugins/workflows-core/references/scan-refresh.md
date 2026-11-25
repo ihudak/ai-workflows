@@ -100,11 +100,11 @@ Where the caller carries `run_folder: <path>` (`workflows-core:run-folder`), two
 - **Recording.** With each return the caller records (that entry point's step 4), once the scan has returned, `done <folder> <id> --from -` takes these pins:
   - `--pin ref='<prep.scanned_ref>'`;
   - after a scan that read the working tree, `--pin head='<head>'`, `<head>` being what `git -C '<repo_path>' rev-parse --verify --quiet HEAD` prints;
-  - `--pin commit='<sha>'`, `<sha>` being what `git -C '<repo_path>' rev-parse --verify --quiet '<prep.scanned_ref>^{commit}'` prints. After a scan that read the working tree, it is recorded only where `head` has a value and `git --no-optional-locks -C '<repo_path>' status --porcelain` printed nothing and exited 0: a working tree with uncommitted changes holds what no commit names.
+  - `--pin commit='<sha>'`, `<sha>` being what `git -C '<repo_path>' rev-parse --verify --quiet '<prep.scanned_ref>^{commit}'` prints. After a scan that read the working tree, it is recorded only where `head` has a value and `git --no-optional-locks -C '<repo_path>' status --porcelain --untracked-files=normal` printed nothing and exited 0: a working tree with uncommitted changes holds what no commit names, and the flag lists untracked files that a `status.showUntrackedFiles=no` in the repository's config would hide.
 
   A pin with no value is left out, never passed empty: `done` refuses a `--pin` with nothing after its `=`, and that exit 2 would cost the run its folder (`workflows-core:run-folder` §2). A scan saved without its `ref` or its `commit` pin is redone at its next reuse.
 - **On a reuse,** the saved scan stands only where every check holds:
   - `pins` holds both `ref` and `commit`, and that `rev-parse` of the `ref` pin prints the `commit` pin now;
-  - where `pins` holds `head`, `git -C '<repo_path>' rev-parse --verify --quiet HEAD` prints it now, and the `status` call prints nothing and exits 0.
+  - where `pins` holds `head`, `git -C '<repo_path>' rev-parse --verify --quiet HEAD` prints it now, and `git --no-optional-locks -C '<repo_path>' status --porcelain --untracked-files=normal` prints nothing and exits 0.
 
   Otherwise call `dispatch` again with `--redo`. The ref has moved since the scan — the clone was pulled between two sessions, say — or the checkout the scan read has left that commit or holds uncommitted changes, and the result no longer describes what is there.

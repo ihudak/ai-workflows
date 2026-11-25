@@ -19,7 +19,7 @@ The run folder, Part 2a: the mechanism a command needs to resume a run that edit
   - `dispatch --redo`, which dispatches anew whatever the fingerprint says;
   - `writer`, for a dispatch that edits files in a git work tree: it records the paths the writer changed and a hash of each one's content, and finds them on a resume as unchanged, changed or cut off; `writer --redo` dispatches anew;
   - `tree-note`, which tells the run that a command's own edit, commit or revert in a writer's tree is the run's, so a resume does not take it for a change made between sessions;
-  - and in `open`, the list of the command's other runs, a keyless command's included, without another run's folder able to fail it.
+  - and in `open`, the list of a keyless command's other unfinished runs on the same working directory, without another run's folder able to fail it.
 
   A writer is matched on its input alone, not on its agent or model, and `stale` counts no writer. `--selftest` covers each.
 - **The `agent-file` skill.** `workflows-core:agent-file <agent>` prints the absolute path of one of this plugin's agents, so a command in another plugin can save that agent's dispatch in its run folder: that plugin's own `${CLAUDE_PLUGIN_ROOT}` names itself, not this one. It prints nothing for a name that is no agent here, and the dispatch then runs unsaved, as before. The skill listing grows by it: about 4,100 characters for every plugin of the marketplace installed together, from about 3,900.
