@@ -806,7 +806,12 @@ def cmd_writer(a):
     check_name(a.model, "--model")
     real, top = tree_root(a.tree)
     scope = scope_args(real, top, a.scope)
-    run = load_run(a.folder)
+    # A call that may write: a folder another session removed is a takeover (exit 9) on every branch, as
+    # load_for_write has it, never exit 2, which the command would meet by going on without its folder.
+    try:
+        run = load_run(a.folder)
+    except FolderGone:
+        raise TakenOver("run taken over: its folder was removed (another session chose Start over): " + a.folder)
     folder = folder_path(a.folder)
     input_bytes = read_input(a.input)
     attached = attach_files(folder, a.attach or [])
@@ -1628,12 +1633,21 @@ def selftest():
         def _():
             home = newdir("home")
             f, inp, af = nr(home, "A"), mkfile("hello"), mkfile("agent v")
+            tree = newdir("tree")
+            git(tree, "init", "-q")
+            writer = ["writer", f, "w1", "--tree", tree, "--agent", "w", "--agent-file", af, "--model", "m",
+                      "--input", inp]
+            rc, o, err = cli(writer, home, "A")
+            expect(rc == 0 and o["action"] == "dispatch", (rc, o, err))
             expect(cli(["discard", f], home, "B")[0] == 0, "discard")
+            # writer: its recorded w1 (a read branch) and a new w2 (a dispatch); done on a writer; put; tree-note
             calls = [["log", f, "x"], ["phase", f, "p1"], ["fact", f, "n", "--set", "v"],
                      ["dispatch", f, "d1", "--area", "main", "--agent", "v", "--agent-file", af,
                       "--model", "m", "--input", inp],
                      ["done", f, "d1"], ["gate-record", f, "g", "--shown", inp, "--answer", "a"],
-                     ["effect", f, "e", "start"], ["keep", f, "--ids", "d1"], ["close", f]]
+                     ["effect", f, "e", "start"], ["keep", f, "--ids", "d1"], writer,
+                     writer[:2] + ["w2"] + writer[3:], ["done", f, "w1"],
+                     ["put", f, "scratch/x.md", "--from", inp], ["tree-note", f, "--tree", tree], ["close", f]]
             for c in calls:
                 rc, out, err = cli(c, home, "A")
                 expect(rc == 9 and out is None and "run-folder:" in err, (c[0], rc, out, err))
