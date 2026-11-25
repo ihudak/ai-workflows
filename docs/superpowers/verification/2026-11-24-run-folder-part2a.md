@@ -9,7 +9,7 @@
 Each line names the self-test cases in `plugins/workflows-core/scripts/run-folder.py --selftest` that pin the mechanism, and the text that makes the commands use it. Commands and references are cited by heading and a short quoted snippet.
 
 1. **The run's own later edit reads as an outside change** (`/upgrade`'s `review-fixer` after `upgrade-executor`; the orchestrator commits between them).
-   - Cases `writer-later-own-write-intact` and `tree-note-commit-intact`: a later write or commit the run announced with `tree-note` leaves the earlier writer `intact`. Companions: `writer-outside-change`, `writer-dispatch-then-intact`, `writer-agent-changed-still-intact`, `writer-subdir-tree-shares-state`.
+   - Cases `writer-later-own-write-intact` (a later writer's own write leaves the earlier writer `intact`; it does not call `tree-note`) and `tree-note-commit-intact` (a commit the run announced with `tree-note` leaves the writer `intact`). Companions: `writer-outside-change`, `writer-dispatch-then-intact`, `writer-agent-changed-still-intact`, `writer-subdir-tree-shares-state`.
    - Text: `plugins/dev-workflows/references/code-handoff.md`, *7.9 The run's own edits*: "call `tree-note <folder> --tree '<repo>'`, no scope, so the change never reads as `changed` when a resumed run meets a writer that ran before it". `commands/upgrade.md`, *Phase 2* step 7.5 and the commit step: "`tree-note` comes where §7.9 says".
 2. **An executor killed mid-edit** (resumed `/upgrade` or `/vuln` meets `interrupted`: revert to `pre_edit_tree`, redo the component, no Phase 0.5 stash, no second branch).
    - Case `writer-interrupted`: a writer started and never finished reads `interrupted`. Companions: `writer-redo`, `writer-deleted-path`, `writer-not-a-git-tree`, `writer-rename`.
@@ -18,7 +18,7 @@ Each line names the self-test cases in `plugins/workflows-core/scripts/run-folde
    - Cases `pin-recorded-and-returned` (a pin recorded with `done` comes back on the probe) and `redo-forces-dispatch` (a result whose pin the caller finds broken is dispatched anew).
    - Text: `plugins/workflows-core/references/scan-refresh.md`, *8. A run that keeps a run folder*: "**A saved scan is pinned.**", its *Recording* list "`--pin ref='<prep.scanned_ref>'`", and the rule that a scan whose pin moved is dispatched with `--redo`. `commands/design.md`, "**Saved, where the run folder is open** (Phase 0, *Saved dispatches*): id `<u>-scan-<repo id>`".
 4. **A brief regenerated on resume** (`/ready`'s reviewer brief, `/conformance`'s requirement list, `/design`'s interface frame are written with `put` once and read back).
-   - Case `put-atomic-owner-checked`: `put` writes atomically, under the lock and owner-checked, so a second session's `put` after a takeover exits 9 and the file read back is the one written. Companion: `answers-in-first-order`.
+   - Case `put-atomic-owner-checked`: `put` writes atomically, under the lock and owner-checked: a session that is not the owner writing into another session's folder exits 9.
    - Text: `commands/ready.md`, *The reading — where the run folder is open*: "each with `put` (`workflows-core:run-folder` §5), in this order, `brief.md` last". `commands/conformance.md`, *Phase 3*, "**The verdicts — where the run folder is open**" (`put <folder> 'scratch/p3/verdicts.md' --from -`). `commands/design.md`, "written with `put <folder> 'scratch/<id>/brief.md' --from -` once built, and from then on read from that file, never built again", and the take frame, "`put <folder> 'scratch/<u>-take-<i>/frame.md' --from -`".
    - The self-test pins only the primitive; that each command builds its input from the saved file was checked by each command task's reviewer against the input-building rule.
 5. **A keyless `/vuln` started again in the same repository with other CVE tokens** offers the other unfinished run.
@@ -34,10 +34,10 @@ Each line names the self-test cases in `plugins/workflows-core/scripts/run-folde
 | `./scripts/check-docs.sh --root .` | `PASS: docs are consistent with the plugin(s) under plugins/dev-workflows plugins/guideline-reviewers plugins/workflows-core plugins/docs-workflows plugins/product-workflows plugins/security-workflows plugins/prose-style`, exit 0 |
 | `./scripts/check-id-grammar.sh --root .` | `PASS: no dash-form requirement IDs under .` |
 | `python3 scripts/validate-catalog.py` | `0 error(s), 0 warning(s) across 1 repo(s).` |
-| `python3 scripts/reference-parts.py check-parts` | `PASS -- 4 split reference(s), 3 entry file(s), 36 generated file(s) fresh` |
-| `python3 scripts/reference-parts.py check-citations` | `PASS -- 4 split reference(s)` |
-| `python3 scripts/reference-parts.py check-questions` | `PASS -- 38 command(s) load the question rules before their first question` |
-| `python3 scripts/reference-parts.py check-branch-check` | `PASS -- 24 command(s) run branch-check` |
+| `python3 scripts/reference-parts.py check-parts` | `reference-parts check-parts: PASS -- 4 split reference(s), 3 entry file(s), 36 generated file(s) fresh` |
+| `python3 scripts/reference-parts.py check-citations` | `reference-parts check-citations: PASS -- 4 split reference(s)` |
+| `python3 scripts/reference-parts.py check-questions` | `reference-parts check-questions: PASS -- 38 command(s) load the question rules before their first question` |
+| `python3 scripts/reference-parts.py check-branch-check` | `reference-parts check-branch-check: PASS -- 24 command(s) run branch-check` |
 
 **Not run here: `node scripts/mermaid/check-mermaid.mjs --root .`.** It needs its parser installed with `npm ci --prefix scripts/mermaid --ignore-scripts --no-audit --no-fund`, and `scripts/mermaid/node_modules` does not exist on this machine; it was not installed. CI runs the check on the pull request.
 
