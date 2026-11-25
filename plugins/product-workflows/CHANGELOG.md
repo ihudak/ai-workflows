@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.88.0] — 2026-11-25
+
+`/prd-ground` no longer does its closing steps twice on a resumed run. **What changes for you.** A resumed run skips the cost entry, session feedback, follow-ups and resume pointer an earlier session finished, where it wrote them again. Its handoff names the branch it settled, so a resumed handoff goes on on the branch an earlier session cut, and opens the pull request that session was cut off before opening. Needs `workflows-core` 1.100.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet).
+
+### Changed
+
+- **`/prd-ground`** passes `branch_fact: p9-handoff-branch` to `handoff-to-main` and reads the branch from that fact on a resumed handoff; its closing steps are guarded through `workflows-core`'s references.
+- **`/brd-package` and `/update-spec`** cite `phase-handoff` §2.2 by rule 3 and *Where a new branch is cut*, the names the shortened §2.2 now gives them.
+- **`scripts/run-folder.py`** is the copy of `workflows-core` 1.100.0's.
+- **Pages.** The `/prd-ground` page, the session cost and feedback pages and the resume and checkpoints page say a resumed run skips the closing steps already done, and the getting-started page gives the skill listing's current size.
+
+### Known limits
+
+- `/prd-ground`'s maintenance step stays unguarded until Part 2c: on a resumed run it runs again, and an `emit-auto` it had started may log a signal a second time under a new slug.
+
 ## [3.87.1] — 2026-11-24
 
 **What changes for you.** `/prd-ground`'s copy of `scripts/run-folder.py` takes `workflows-core` 1.99.1's strict lock: on a home that cannot lock files the run says once that it cannot be resumed and goes on, instead of saving results without the lock.

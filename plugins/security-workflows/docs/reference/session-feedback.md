@@ -21,6 +21,8 @@ A run that found `$SPECS_PATH` misplaced, or its environment changed since its p
 
 What you lose is the in-session Lessons Learned report, so the run's advice about the repository it scanned — a `CLAUDE.md` rule, a hook — is not produced either. Nothing else in the tail changes: the other three maintenance agents run where they would, and every later step runs as before.
 
+A [`/scan`](../commands/scan.md#stopping-and-resuming) run that is stopped and resumed writes its feedback, its follow-ups and its resume pointer once: it skips each an earlier session finished.
+
 ## Follow-ups
 
 `register.py commit` builds one line for each finding marked fix, from structured fields only — its `[SEC#n]`, a CWE number, a `path:line`, and the patch recorded for the finding, where there is one — never from a finding's text, which is scan output.

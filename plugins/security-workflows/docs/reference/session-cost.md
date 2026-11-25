@@ -28,6 +28,8 @@ Cost writes to a `cost/` subdirectory with one file per session, named after the
 
 **A run that stops still records its cost.** Each `SECURITY_*` stop, the address and `$SPECS_PATH` stops, a `register.py` refusal before the run's record is written, and each answer that ends the run take the refusal tail: the cost entry, unless `--skip-costs`, and the terminal commit, with no resume pointer and no maintenance phase ([`/security-workflows:scan`](../commands/scan.md), *Stops*).
 
+**A resumed run writes its entry once.** A [`/scan`](../commands/scan.md#stopping-and-resuming) run that is stopped and resumed skips the cost entry an earlier session finished, so it is not written twice; a stop's own cost entry is not recorded as made, so the session that finishes the run measures its own spend.
+
 None of this touches git directly. The entry is committed later, once, by the run's terminal `commit-artifacts` step, bounded to the session-artifact paths inside `$SPECS_PATH`, and pushed by it under the same conditions as every session file. On a specs repository whose default branch takes no push, it goes to a session branch of your own instead, and you merge its pull request.
 
 ## How cost is computed and what a figure covers

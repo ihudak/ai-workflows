@@ -5,6 +5,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.100.0] — 2026-11-25
+
+The run folder, Part 2a: the mechanism a command needs to resume a run that edits files, interviews you or dispatches another plugin's agents, and the shared references that keep a resumed run from doing its closing steps twice. **What changes for you.** Nothing changes in a command of this plugin. `dev-workflows` 4.71.0's `/ready`, `/conformance`, `/design`, `/upgrade` and `/vuln`, `security-workflows` 0.13.0's `/scan` and `product-workflows` 3.88.0's `/prd-ground` stop and resume through it, and need this release (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet). A resumed `/prd-ground` no longer writes its cost entry, feedback, follow-ups or resume pointer a second time.
+
+### Added
+
+- **`scripts/run-folder.py`** gains:
+  - `put`, which writes a file the orchestrator generated into the run's folder under the lock and refuses a path outside it, so a resumed run reads a plan or a brief back and does not generate it again;
+  - `answers`, which lists the answers a run recorded, optionally by gate-id prefix (`--match`);
+  - `gate-record --keep-shown`, which keeps the question's shown text beside the answer;
+  - `done --pin <name>=<value>`, which stores values a reuse reports back, such as the commit a scan read;
+  - `dispatch --redo`, which dispatches anew whatever the fingerprint says;
+  - `writer`, for a dispatch that edits files in a git work tree: it records the paths the writer changed and a hash of each one's content, and finds them on a resume as unchanged, changed or cut off; `writer --redo` dispatches anew;
+  - `tree-note`, which tells the run that a command's own edit, commit or revert in a writer's tree is the run's, so a resume does not take it for a change made between sessions;
+  - and in `open`, the list of the command's other runs, a keyless command's included, without another run's folder able to fail it.
+
+  A writer is matched on its input alone, not on its agent or model, and `stale` counts no writer. `--selftest` covers each.
+- **The `agent-file` skill.** `workflows-core:agent-file <agent>` prints the absolute path of one of this plugin's agents, so a command in another plugin can save that agent's dispatch in its run folder: that plugin's own `${CLAUDE_PLUGIN_ROOT}` names itself, not this one. It prints nothing for a name that is no agent here, and the dispatch then runs unsaved, as before. The skill listing grows by it: about 4,100 characters for every plugin of the marketplace installed together, from about 3,900.
+
+### Changed
+
+- **`references/run-folder.md`** covers what the script now does: the run's writers (`run-writer`) and what they wrote, other plugins' agents, interviews and their two-part answers, pins, a keyless run's other runs, commands that run inline, values read once, §5's rule for what is `put` and when a marker is recorded, and §7's units in a loop, with their attempts and the writer that was in flight when the session ended.
+- **The shared tail guards its steps on a finished run.** `feedback-emission` (`emit-auto`, `emit-bugs`), `followup-emission`, `cost-emission` and `session-hygiene`'s resume pointer are each an effect where the caller keeps a run folder and the run has finished — never on a stop — so a resumed run skips those an earlier session finished. Without a run folder, and on a stop, they run as before.
+- **`docs-grounding`, `architecture-grounding` and `architecture-promotion`** take the run folder, an id prefix and the area a calling run passes, and save their dispatches through it: `docs-grounder`, `architecture-grounder` and `promotion-scout` as saved results, `adr-drafter` as a writer.
+- **`scan-refresh`** gains §8: where the caller keeps a run folder, its refresh question and the late-join question are recorded in fixed text, and a saved `code-scanner` result carries three pins — the ref, the commit and, for a scan that read the working tree, the HEAD — and is redone where the ref has moved, the checkout has left that commit or the working tree holds uncommitted changes. Its refresh text is fixed to match.
+- **`phase-handoff`** §2.2 takes an optional `branch_fact`: a caller that keeps a run folder has the branch it settled recorded before anything is committed or pushed, so a resumed handoff goes on on the branch an earlier session cut, a suffixed one included. §2.6 opens the pull request for a push that session made and was cut off before opening one for, and names a closed or merged pull request for the same `headRefOid` instead of opening another. The `require-on-main` and `branch-check` entry-point files hold the §2.2 sentences they need, declared in `entry-files.md` and the reference-parts declarations.
+- **`.claude/rules/`** describe the run folder's writers, the `agent-file` skill and the copies of `run-folder.py`.
+- **Pages.** The References page and the README describe the new skill, and the getting-started page gives the skill listing's current size.
+
+### Known limits
+
+- A dispatch another plugin's command makes that this plugin cannot name stays unsaved and runs as before: an agent of a plugin with no `agent-file` skill (`prose-style`), a `general-purpose` dispatch, and the end-of-run maintenance and defect dispatches.
+- A dispatch an agent makes inside its own run is not seen by the command's run folder (`docs-style-checker` → `prose-style-checker`): it counts only through the outer agent's file.
+
 ## [1.99.1] — 2026-11-24
 
 The run folder's lock, made strict. **What changes for you.** Where a home cannot lock files — an NFS mount whose lock service is down — a command's run-folder calls now stop with a `NOTE:` and the run goes on without its folder, as for a full disk, instead of writing without the lock, where two agents finishing together could lose one's saved result. Nothing changes where locking works.
