@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [3.88.0] — 2026-11-25
 
-`/prd-ground` no longer does its closing steps twice on a resumed run. **What changes for you.** A resumed run skips the cost entry, session feedback, follow-ups and resume pointer an earlier session finished, where it wrote them again. Its handoff names the branch it settled, so a resumed handoff goes on on the branch an earlier session cut, and opens the pull request that session was cut off before opening. Needs `workflows-core` 1.100.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet).
+`/prd-ground` no longer does its closing steps twice on a resumed run. **What changes for you.** A resumed run skips the cost entry, session feedback and resume pointer an earlier session finished, where it wrote them again. Its handoff names the branch it settled, so a resumed handoff goes on on the branch an earlier session cut, and opens the pull request that session was cut off before opening. Needs `workflows-core` 1.100.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet).
 
 ### Changed
 

@@ -33,7 +33,7 @@ None of this touches git directly — the entry is committed later, once, by the
 
 **A run that ends early still writes its entry.** A command's named stop, a *Cancel*, or any other answer that ends the run takes a short tail: the cost entry, unless `--skip-costs`, then the terminal commit of the specs repository. It writes no resume pointer and runs no session maintenance. Each command's own page names its exceptions.
 
-**A resumed run writes its entry once.** A [`/prd-ground`](../commands/prd-ground.md#stopping-and-resuming) run that is stopped and resumed skips the cost entry, the feedback, the follow-ups and the resume pointer an earlier session finished, so none is written twice. Its maintenance step is not guarded yet: on a resume it runs again.
+**A resumed run writes its entry once.** A [`/prd-ground`](../commands/prd-ground.md#stopping-and-resuming) run that is stopped and resumed skips the cost entry, the feedback and the resume pointer an earlier session finished, so none is written twice. Its maintenance step is not guarded yet: on a resume it runs again.
 
 ## How cost is computed and what a figure covers
 

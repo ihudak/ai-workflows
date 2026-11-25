@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.43.3] — 2026-11-25
+
+Docs only: the skill-listing figure counts workflows-core 1.100.0's new skill. Needs nothing from the other plugins' releases.
+
+### Fixed
+
+- **Getting started.** The page now gives the skill listing's current size: "about 4,100" characters for every plugin of the marketplace installed together, where it said "about 3,900". That is 3,918 plus 182 for `workflows-core`'s new `agent-file` skill (25 for `workflows-core:agent-file`, 152 for its description and 5), re-derived by the recipe in the repository's `docs/maintainers/rationale.md`, section `skill-listing-figure`.
+
 ## [1.43.2] — 2026-11-18
 
 A pointer LADDER-ORDER batch 4 left open, and one line on a hand-damaged slice. **What changes for you.** On a slice whose `brd-link.md` a hand edit left with no `parent:`, `/document` and `/release-notes` say the line is missing and name no run, whatever the slice claims, where they printed `/brd-split` with no key or named a run that stops on such a slice; nothing else a run does changes. Update with `workflows-core` 1.98.1, whose rung holds the line these commands print (`.claude/rules/plugin-updates-coupling.md`, its 1.98.1 bullet).

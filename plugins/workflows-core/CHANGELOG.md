@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.100.0] — 2026-11-25
 
-The run folder, Part 2a: the mechanism a command needs to resume a run that edits files, interviews you or dispatches another plugin's agents, and the shared references that keep a resumed run from doing its closing steps twice. **What changes for you.** Nothing changes in a command of this plugin. `dev-workflows` 4.71.0's `/ready`, `/conformance`, `/design`, `/upgrade` and `/vuln`, `security-workflows` 0.13.0's `/scan` and `product-workflows` 3.88.0's `/prd-ground` stop and resume through it, and need this release (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet). A resumed `/prd-ground` no longer writes its cost entry, feedback, follow-ups or resume pointer a second time.
+The run folder, Part 2a: the mechanism a command needs to resume a run that edits files, interviews you or dispatches another plugin's agents, and the shared references that keep a resumed run from doing its closing steps twice. **What changes for you.** Nothing changes in a command of this plugin. `dev-workflows` 4.71.0's `/ready`, `/conformance`, `/design`, `/upgrade` and `/vuln`, `security-workflows` 0.13.0's `/scan` and `product-workflows` 3.88.0's `/prd-ground` stop and resume through it, and need this release (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet). A resumed `/prd-ground` no longer writes its cost entry, feedback or resume pointer a second time.
 
 ### Added
 
@@ -32,7 +32,7 @@ The run folder, Part 2a: the mechanism a command needs to resume a run that edit
 - **`scan-refresh`** gains §8: where the caller keeps a run folder, its refresh question and the late-join question are recorded in fixed text, and a saved `code-scanner` result carries three pins — the ref, the commit and, for a scan that read the working tree, the HEAD — and is redone where the ref has moved, the checkout has left that commit or the working tree holds uncommitted changes. Its refresh text is fixed to match.
 - **`phase-handoff`** §2.2 takes an optional `branch_fact`: a caller that keeps a run folder has the branch it settled recorded before anything is committed or pushed, so a resumed handoff goes on on the branch an earlier session cut, a suffixed one included. §2.6 opens the pull request for a push that session made and was cut off before opening one for, and names a closed or merged pull request for the same `headRefOid` instead of opening another. The `require-on-main` and `branch-check` entry-point files hold the §2.2 sentences they need, declared in `entry-files.md` and the reference-parts declarations.
 - **`.claude/rules/`** describe the run folder's writers, the `agent-file` skill and the copies of `run-folder.py`.
-- **Pages.** The References page and the README describe the new skill, and the getting-started page gives the skill listing's current size.
+- **Pages.** The References page and the plugin's docs README describe the new skill, and the getting-started page gives the skill listing's current size.
 
 ### Known limits
 

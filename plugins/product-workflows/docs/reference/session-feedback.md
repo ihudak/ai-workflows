@@ -13,7 +13,7 @@ Two capture paths feed the same file, distinguished by their `origin`:
 
 None of this pauses the run for approval. Capture is silent and high-recall by design — curation is the maintainer's job centrally, at analysis time, not something to ask a non-expert engineer to triage mid-run.
 
-A [`/prd-ground`](../commands/prd-ground.md#stopping-and-resuming) run that is stopped and resumed writes its feedback, follow-ups and resume pointer once: the closing steps an earlier session finished are skipped. Its maintenance step, which produces the automatic entries, is not guarded yet and runs again on a resume, so a signal it had started to log may be logged a second time under a new slug.
+A [`/prd-ground`](../commands/prd-ground.md#stopping-and-resuming) run that is stopped and resumed writes its feedback and resume pointer once: the closing steps an earlier session finished are skipped. Its maintenance step, which produces the automatic entries, is not guarded yet and runs again on a resume, so a signal it had started to log may be logged a second time under a new slug.
 
 ## Bugs only (`--skip-feedback`)
 

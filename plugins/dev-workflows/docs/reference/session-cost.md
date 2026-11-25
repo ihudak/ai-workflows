@@ -23,7 +23,7 @@ None of this touches git — the cost entry is committed later, once, by the run
 
 **A run that ends early still writes its entry.** A command's named stop, a *Cancel*, or any other answer that ends the run takes a short tail: the cost entry, unless `--skip-costs`, then the terminal commit of the specs repository. It writes no resume pointer and runs no session maintenance. Each command's own page names its exceptions.
 
-**A resumed run writes its entry once.** A run of `/ready`, `/conformance` or `/design` that is stopped and resumed (see [Resume and checkpoints](resume-and-checkpoints.md#run-folders-stopping-and-resuming-a-run)) skips the cost entry, the follow-ups and the resume pointer an earlier session finished, so the entry is not written twice; a stop's own cost entry is not recorded as made, so the session that finishes the run measures its own spend.
+**A resumed run writes its entry once.** A run of `/ready`, `/conformance` or `/design` that is stopped and resumed (see [Resume and checkpoints](resume-and-checkpoints.md#run-folders-stopping-and-resuming-a-run)) skips the closing steps an earlier session finished — the cost entry and the resume pointer, and for `/ready` and `/conformance` the follow-ups — so the entry is not written twice; a stop's own cost entry is not recorded as made, so the session that finishes the run measures its own spend.
 
 ## How cost is computed
 
