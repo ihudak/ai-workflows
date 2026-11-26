@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.88.1] — 2026-11-26
+
+**What changes for you.** The slug→clone maps of `/epics`, `/prd-ground` and `/specify`, and the repository discovery of `/idea` and `/create-ard`, take a directory under `$REPOS_PATH` only where it holds a `.git` of its own, tested before any git call names it, and read its slug with `git -c safe.bareRepository=explicit`: a directory laid out as a git directory and committed into a repository is never taken for a clone, and `/idea` and `/create-ard` no longer propose a directory that is not one. Update with `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).
+
+### Fixed
+
+- **`commands/epics.md`, `commands/prd-ground.md`, `commands/specify.md`, `commands/idea.md` and `commands/create-ard.md`** test `test -e '<dir>/.git'` before their slug read, citing `workflows-core:read-only-repos` §0, and write the read with the setting.
+- **Pages.** The resume-and-checkpoints page restates the resume pointer's scan item to match.
+
 ## [3.88.0] — 2026-11-25
 
 `/prd-ground` no longer does its closing steps twice on a resumed run. **What changes for you.** A resumed run skips the cost entry, session feedback and resume pointer an earlier session finished, where it wrote them again. Its handoff names the branch it settled, so a resumed handoff goes on on the branch an earlier session cut, and opens the pull request that session was cut off before opening. Needs `workflows-core` 1.100.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet).
