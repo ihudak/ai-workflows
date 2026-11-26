@@ -21,7 +21,7 @@ It classifies each unit as **MODERATE** — one drafted page, its claims read in
 Name exactly one unit, once:
 
 - **`<unit-id>`** — that unit, matched against the backlog's unit ids as written. A unit it cannot verify stops the run, with a line naming the one thing to change.
-- **`--next`** — the first actionable unit, lowest priority number first, then file order. A unit an unmerged branch has itself moved is passed over, and so is a unit whose repository you skip.
+- **`--next`** — the first actionable unit, lowest priority number first, then file order. A unit an unmerged branch has itself moved, or the default branch has moved since your branch left it, is passed over, and so is a unit whose repository you skip.
 
 `--docs-repo <path>` names the documentation repository. Without it the run looks in the working directory, then `$DOCS_PATH`, then one level under `$REPOS_PATH`, where only a directory holding a `.git` of its own counts, and asks where none of them is one; the unit selector is never read as a path. Every recognised flag is stripped, `--docs-repo` with the value after it, before the unit id is read, and any other token beginning `--` stops the run.
 
@@ -79,10 +79,10 @@ flowchart TD
 |---|---|
 | 0 — Resolve | Strip the flags; resolve the repository's git top level; run the specs-repo preflight; read the profile; check the backlog and the profile are committed; read the backlog's shape. |
 | 0 — continued | Name any directory an earlier run left under `.dev-workflows/unfinished/`; run the toolchain check; read the not-yet-verified marker the page must open with; classify the run. |
-| 1 — Select | Take the named unit, or the next actionable one; check its page; pass over a unit an unmerged branch has itself moved. |
+| 1 — Select | Take the named unit, or the next actionable one; check its page; pass over a unit an unmerged branch has itself moved, or the default branch since yours left it. |
 | 2 — Evidence | Resolve each entry of the page's `evidence:` to a code repository or a decision record. |
 | 3 — Consent | Ask once, showing what the run will read, export and execute, and the branch. |
-| 4 — Branch | Continue on your branch or cut a new one; re-read the unit, its page and the profile there. |
+| 4 — Branch | Continue on your branch or cut a new one, told how far it is behind and of a unit the default branch moved; re-read the unit, its page and the profile there. |
 | 5 — Read | Scan and export each repository at today's commit; `claim-reader` grades every claim; you settle each disagreement and take the readings. |
 | 6 — Apply | `doc-writer` applies the readings; the frontmatter is held; the not-yet-verified marker is removed. |
 | 7 — Style | Run the style check over the page, fix its violations once, and re-run it. |
@@ -95,6 +95,8 @@ flowchart TD
 ## Gates
 
 **The consent.** Nothing is scanned, exported or written until you have seen, in one question: the unit and its page; each code repository the run will read, one outside `$REPOS_PATH` marked as admitted only by this answer; each decision record, read at the specs default branch; that each repository's commit is exported into a scratch directory and read there by an agent that holds no shell, and the export's limits; the branch, and when cutting a new one fails; each build config; every build and lint command the run will execute, verbatim; and that the unit takes three Opus dispatches.
+
+**The branch question.** Where you stand on a branch other than the default, the run asks whether to continue on it or cut a new one. Where your branch lacks commits of the default branch — `origin`'s, as last fetched, for the run fetches nothing first, or the local one where `origin` has none — it says how many; where it lacks none, it says nothing of it. Where the default branch moved the unit after your branch left it — only a unit you named can be one, since `--next` passes such a unit over — it names the unit and says continuing verifies it a second time; where the run could not tell — in a shallow clone, on an orphan branch, or where a backlog could not be read — it says continuing may. Either way it recommends neither answer: cutting a new branch, or merging the default branch into yours first, reads the move. It also names the two cases in which cutting a new branch fails.
 
 **The reading.** Each repository is scanned at its default branch, and that commit — today's — is exported, with the commits the page's evidence recorded, into a scratch directory as plain files. `claim-reader` reads the page's claims there with searches and reads alone: it can run nothing and write nothing. Before it grades anything it, and the run where the session has the same search tools, look for two canary files the run planted in the export — one in a hidden directory, one where ordinary ignore rules point. A search that cannot see both would miss a file a claim rests on, so the run stops rather than grade on a partial view. Each reading's line, quote and source file is then checked against the page and the export's own file list before you see it.
 
@@ -121,7 +123,7 @@ flowchart TD
 - `DOCS_VERIFY_NO_BACKLOG` / `DOCS_VERIFY_UNCOMMITTED` — no backlog, or the backlog or the profile not committed as it stands.
 - `DOCS_VERIFY_BACKLOG_UNREADABLE` / `DOCS_VERIFY_BACKLOG_SHAPE` / `DOCS_VERIFY_UNKNOWN_SCHEMA` / `DOCS_VERIFY_DUPLICATE_ID` — the backlog's reader could not run, a line is outside the shape it reads, its schema version is not one this release reads, or two units share an id.
 - `DOCS_VERIFY_NO_MARKER` — the plugin's own files are out of step: the not-yet-verified marker could not be read from them. Update the plugin.
-- `DOCS_VERIFY_NO_UNIT`, `DOCS_VERIFY_STATUS`, `DOCS_VERIFY_BLOCKED`, `DOCS_VERIFY_SURFACE`, `DOCS_VERIFY_RELEASE_UNIT`, `DOCS_VERIFY_TYPE` — the named unit cannot be verified, and the line says what to change. A `missing` unit's line names any unmerged branch that drafted it.
+- `DOCS_VERIFY_NO_UNIT`, `DOCS_VERIFY_STATUS`, `DOCS_VERIFY_BLOCKED`, `DOCS_VERIFY_SURFACE`, `DOCS_VERIFY_RELEASE_UNIT`, `DOCS_VERIFY_TYPE` — the named unit cannot be verified, and the line says what to change. A `missing` unit's line names any unmerged branch that drafted it, and the default branch where it moved the unit after your branch left it.
 - `DOCS_VERIFY_PAGE`, `DOCS_VERIFY_PAGE_TAGGED`, `DOCS_VERIFY_NO_PAGE_MARKER` — the unit's page is not set, not a plain file, not tagged with the unit's id, not committed as it stands, or carried by a second page too — or git could not read a file or directory under the content root, which the line names, to tell; or it no longer opens with the not-yet-verified marker, because a person may already have verified it or it was edited since its drafting — only where a person did verify every claim, move that unit to `verified` by hand; otherwise put the marker back as the first line of its body, commit it and run again, as step 8 of [The documentation route](../docs-workflow.md) says for a page you rewrote.
 - `DOCS_VERIFY_USER_UNIT` — a user page, which this release does not walk: verify it by hand as [The documentation route](../docs-workflow.md) says, or wait for the next release.
 - `DOCS_VERIFY_EVIDENCE` / `DOCS_VERIFY_ARTIFACT` — an entry of the page's `evidence:` is outside its form, names a repository the backlog does not record or one that is not a clone, or rests on a decision record the run cannot read at the specs default branch.
@@ -151,7 +153,7 @@ flowchart TD
 /docs-workflows:docs-verify --next
 ```
 
-Resolves the documentation repository, takes the highest-priority drafted engineering unit no other branch has already moved, resolves its page's evidence, and asks once. Then it continues on the drafting branch or cuts a new one, scans and exports each repository, has `claim-reader` read every claim, and shows you the claims the code or the decision record states otherwise. Once you take the readings, it applies them, removes the marker, style-checks, builds and reviews the page, and commits the page and the unit's move to `verified` in one commit — and offers to push.
+Resolves the documentation repository, takes the highest-priority drafted engineering unit that no unmerged branch has itself moved, nor the default branch since yours left it, resolves its page's evidence, and asks once. Then it continues on the drafting branch or cuts a new one, scans and exports each repository, has `claim-reader` read every claim, and shows you the claims the code or the decision record states otherwise. Once you take the readings, it applies them, removes the marker, style-checks, builds and reviews the page, and commits the page and the unit's move to `verified` in one commit — and offers to push.
 
 ```
 /docs-workflows:docs-verify AUTH-REF-3 --docs-repo /workspace/docs
