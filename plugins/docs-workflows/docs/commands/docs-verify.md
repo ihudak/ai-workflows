@@ -23,7 +23,7 @@ Name exactly one unit, once:
 - **`<unit-id>`** — that unit, matched against the backlog's unit ids as written. A unit it cannot verify stops the run, with a line naming the one thing to change.
 - **`--next`** — the first actionable unit, lowest priority number first, then file order. A unit an unmerged branch has itself moved is passed over, and so is a unit whose repository you skip.
 
-`--docs-repo <path>` names the documentation repository. Without it the run looks in the working directory, then `$DOCS_PATH`, then one level under `$REPOS_PATH`, and asks where none of them is one; the unit selector is never read as a path. Every recognised flag is stripped, `--docs-repo` with the value after it, before the unit id is read, and any other token beginning `--` stops the run.
+`--docs-repo <path>` names the documentation repository. Without it the run looks in the working directory, then `$DOCS_PATH`, then one level under `$REPOS_PATH`, where only a directory holding a `.git` of its own counts, and asks where none of them is one; the unit selector is never read as a path. Every recognised flag is stripped, `--docs-repo` with the value after it, before the unit id is read, and any other token beginning `--` stops the run.
 
 All three run flags apply. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips the session-cost entry while still advancing the checkpoint — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows the maintenance step to bugs-only — see [Session feedback](../reference/session-feedback.md#bugs-only---skip-feedback). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every agent the run dispatches to one model, the Opus reader, writer and reviewer included.
 
