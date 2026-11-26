@@ -81,30 +81,36 @@ claim reader, which reads them with Read, Grep and Glob and runs nothing. --repo
 <repo>/.git exists -- tested before any git call, since a directory laid out as a git directory can be committed into
 any repository, and git run in it would run the commands its config names -- and `git -c safe.bareRepository=explicit -C
 <repo> rev-parse --show-toplevel` prints <repo>'s resolved path. Every git call export makes takes that form. It
-refuses, exit 3, commit-absent, where `cat-file -e <oid>^{commit}` fails. It lists `ls-tree -r -z -l --full-tree <oid>`,
-each --path a pathspec `:(literal)<p>` where --whole is absent, and leaves out, counting each and printing none: a
-symbolic link (link); a submodule (submodule); any other mode but 100644 and 100755 (other); a name not strict UTF-8,
-holding an empty, . or .. segment, a segment .git in any case, a control character, U+2028, U+2029 or a bidirectional
-control, or above 4,096 bytes (name); and a blob above 1 MiB (large). Where what remains is above 50,000 files or 512
-MiB (536,870,912 bytes) it refuses, exit 3, over-cap. Neither refusal creates anything. Otherwise it makes --out, mode
-0700, and writes each file under it at its repository path: each directory made, mode 0700, and opened relative to its
-parent's descriptor without following a link; each file created exclusively, mode 0600, relative to its directory's
-descriptor, without following one. A mkdir or a create failing because the name is taken -- two names one under a file
-system's case folding -- or a segment is too long for the file system skips that file, or every file under that
-directory, counted name; any other failure is exit 2. A file whose base name is .gitignore, .ignore or .rgignore, which
-a search tool would honour and so hide other files, is written as that name plus .exported. The contents come raw from
-one `cat-file --batch`, by object id -- no filter and no textconv runs -- each header naming a blob of the size the
-listing gave, else exit 2; where it runs past 300 seconds export refuses, exit 3, timeout, the partial --out left for
-the caller to remove and no manifest written. It writes --manifest last, created exclusively without following a link:
-for each file written, in tree order, its path as written and its repository path, the first relative to --out and the
-second to the clone's top level, each followed by a NUL -- the two equal but for a renamed ignore file. It checks
-nothing out, fetches nothing, and leaves the clone's index and working tree alone. It prints {"files": <n>, "bytes":
-<n>, "skipped": {"link": <n>, "submodule": <n>, "other": <n>, "name": <n>, "large": <n>}, "paths": {<p>:
-"exported"|"absent"|"skipped"}}: files and bytes those written; each --path exported where it, or a path under it, is in
-the manifest, absent where the listing holds neither, and skipped otherwise, a --path compared as git reads a pathspec
-(./, // and /./ collapsed, . the whole tree, a trailing / a directory alone). On exit 3 it prints {"refused": "<why>",
-"files": <n>|null, "bytes": <n>|null}, <why> commit-absent, over-cap or timeout, the counts those of the files it would
-write, null for commit-absent.
+refuses, exit 3, commit-absent, where `cat-file -e <oid>^{commit}` fails. Before any git call it opens --out's parent
+and --manifest's, each a real directory, without following a link, and it makes both relative to those descriptors, so a
+parent swapped for a link meanwhile carries nothing elsewhere. It lists `ls-tree -r -z -l --full-tree <oid>`, each
+--path a pathspec `:(literal)<p>` where --whole is absent -- a listing git does not give within 30 seconds, as on a very
+large tree, is exit 2 -- and leaves out, counting each and printing none: a symbolic link (link); a submodule
+(submodule); any other mode but 100644 and 100755 (other); a name not strict UTF-8, holding an empty, . or .. segment, a
+segment .git in any case, a control character, U+2028, U+2029 or a bidirectional control, or above 4,096 bytes, or whose
+written path under --out reaches the file system's PATH_MAX, so that no reader could open it by its absolute path
+(name); and a blob above 1 MiB (large). Where the clone lacks a blob it would write -- a partial clone's, which the
+listing sizes BAD -- it refuses, exit 3, blob-absent. Where what remains is above 50,000 files or 512 MiB (536,870,912
+bytes) it refuses, exit 3, over-cap. None of these refusals creates anything. Otherwise it makes --out, mode 0700, and
+writes each file under it at its repository path: each directory made, mode 0700, and opened relative to its parent's
+descriptor without following a link; each file created exclusively, mode 0600, relative to its directory's descriptor,
+without following one. A mkdir or a create failing because the name is taken -- two names one under a file system's case
+folding -- or a segment is too long for the file system skips that file, or every file under that directory, counted
+name; any other failure is exit 2. A path segment named, in any case, .gitignore, .ignore or .rgignore -- which a search
+tool would honour, hiding other files -- or .svn, .hg, .bzr, .jj or .sl -- which the Grep tool passes over wherever they
+stand -- is written with .exported appended. The contents come raw from one `cat-file --batch`, by object id -- no
+filter and no textconv runs -- each header naming a blob of the size the listing gave, else exit 2, or, where it says
+the clone lacks the blob, blob-absent, the partial --out left and no manifest written; where it runs past 300 seconds
+export refuses, exit 3, timeout, the partial --out left for the caller to remove and no manifest written. It writes
+--manifest last, created exclusively without following a link: for each file written, in tree order, its path as written
+and its repository path, the first relative to --out and the second to the clone's top level, each followed by a NUL --
+the two equal but for a renamed segment. It checks nothing out, fetches nothing, and leaves the clone's index and
+working tree alone. It prints {"files": <n>, "bytes": <n>, "skipped": {"link": <n>, "submodule": <n>, "other": <n>,
+"name": <n>, "large": <n>}, "paths": {<p>: "exported"|"absent"|"skipped"}}: files and bytes those written; each --path
+exported where it, or a path under it, is in the manifest, absent where the listing holds neither, and skipped
+otherwise, a --path compared as git reads a pathspec (./, // and /./ collapsed, . the whole tree, a trailing / or /. a
+directory alone). On exit 3 it prints {"refused": "<why>", "files": <n>|null, "bytes": <n>|null}, <why> commit-absent,
+blob-absent, over-cap or timeout, the counts those of the files it would write, null for commit-absent and blob-absent.
 
 The arguments are tested before anything is read or run: --id against the unit-id class; --walkthrough against the same
 class, less every value YAML reads, written plain as edit writes it, as something other than a string -- a null,
@@ -117,12 +123,12 @@ no empty, . or .. segment; --repo, a directory, which moved and edit also hold t
 export to the absolute-path class -- opening with /, and holding no control character, U+2028, U+2029 or bidirectional
 control -- and to being a clone's top level, as its paragraph says; --commit against ^[0-9a-f]{40}([0-9a-f]{24})?$;
 --out and --manifest against the absolute-path class, each absent by lstat, in a parent that is a real directory by
-lstat, and not the same path; each --path against the relative-path class -- not empty, opening with neither / nor -,
-holding no .. segment and none of those characters -- valid UTF-8 and at most 4,096 bytes. --own-moves and --whole take
-no value; export takes --whole, a --path, or both. A flag given twice (--id to moved and --path to export aside), or as
---flag=value, refuses the run. <top>/.dev-workflows must be a real directory and the backlog a regular file, both by
-lstat: a symbolic link to either is refused, never followed, and the backlog is opened without following a link and
-never waited on.
+lstat, and not naming one entry -- one base name in one directory, however spelled; each --path against the
+relative-path class -- not empty, opening with neither / nor -, holding no .. segment and none of those characters --
+valid UTF-8 and at most 4,096 bytes. --own-moves and --whole take no value; export takes --whole, a --path, or both. A
+flag given twice (--id to moved and --path to export aside), or as --flag=value, refuses the run. <top>/.dev-workflows
+must be a real directory and the backlog a regular file, both by lstat: a symbolic link to either is refused, never
+followed, and the backlog is opened without following a link and never waited on.
 
 What it prints of the backlog, a ref or an argument is line numbers, counts, fixed words, and values that passed a class
 test: a unit id in the unit-id class, a branch name in the branch class, the schema version's digits, a --path in the
@@ -143,9 +149,9 @@ exits 2 follow edit's write, each with a <why> of its own: a write -- the edit's
 written; an undo not written, since the backlog no longer held the edit's bytes but another writer's; and an undo that
 failed on its own write, the backlog then read again and found to hold the edit's bytes exactly -- where that read finds
 other bytes, the undo counts as blocked, and where it fails, as a write not reading back. Exit 3: edit refused on the
-file's content before writing, the file untouched; or export refused the commit -- commit-absent or over-cap, nothing
-created, or timeout, a partial --out left and no manifest. Exit 4: edit undone; the file holds the bytes it read.
---selftest exits 0 when every case passes and 1 otherwise.
+file's content before writing, the file untouched; or export refused the commit -- commit-absent, blob-absent or
+over-cap, nothing created, or timeout or a blob-absent its cat-file --batch met, a partial --out left and no manifest.
+Exit 4: edit undone; the file holds the bytes it read. --selftest exits 0 when every case passes and 1 otherwise.
 
 The caller's rule, which fails closed. Any exit but 0, 3 and 4 -- a crash's 1, a signal's -- is read as 2, and so is a
 stdout that is not one JSON object. check or moved exiting anything but 0 is a stop, never a skip: never read as in
@@ -1142,8 +1148,10 @@ def cmd_edit(top, uid, status, page_path, from_status=None, walkthrough=None, bl
 # ---- export ----
 
 XGIT = ("git", "-c", "safe.bareRepository=explicit", "-C")  # every git call export makes in a source repository
-IGNORE_FILES = (b".gitignore", b".ignore", b".rgignore")  # a search tool honours these, so none keeps its name
-IGNORE_SUFFIX = b".exported"
+# A search tool reads the first three as rules that hide other files, and the Grep tool passes over the other five
+# wherever they stand: a segment of any of these names, in any case, is written with RENAMED_SUFFIX appended.
+RENAMED = (b".gitignore", b".ignore", b".rgignore", b".svn", b".hg", b".bzr", b".jj", b".sl")
+RENAMED_SUFFIX = b".exported"
 SKIP_ERRNOS = (errno.EEXIST, errno.ENAMETOOLONG)  # a name taken under case folding, or a segment too long: skipped
 _NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 _DIR_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | _NOFOLLOW
@@ -1176,22 +1184,38 @@ def _rel_path(s):
             and size <= EXPORT_NAME_CAP)
 
 
-def _fresh(path, why):
-    """NotRun(why) unless `path` is absent by lstat and its parent is a real directory by lstat."""
+def _open_parent(path, why):
+    """(a descriptor of `path`'s parent, a real directory opened without following a link, and `path`'s base name as
+    bytes), where that base name -- neither empty, . nor .. -- names nothing there by lstat; NotRun(why) otherwise.
+    export makes --out and --manifest relative to these descriptors, so a parent swapped for a link after the test
+    carries nothing elsewhere."""
+    head, base = os.path.split(os.fsencode(path))
+    if base in (b"", b".", b".."):
+        raise NotRun(why)
     try:
-        os.lstat(path)
+        fd = os.open(head, _DIR_FLAGS)
+    except OSError:
+        raise NotRun(why)
+    try:
+        os.stat(base, dir_fd=fd, follow_symlinks=False)
     except FileNotFoundError:
+        return fd, base
+    except OSError:
         pass
-    except OSError:
-        raise NotRun(why)
-    else:
-        raise NotRun(why)
-    try:
-        st = os.lstat(os.path.dirname(path))
-    except OSError:
-        raise NotRun(why)
-    if not stat.S_ISDIR(st.st_mode):
-        raise NotRun(why)
+    os.close(fd)
+    raise NotRun(why)
+
+
+def _fresh(path, why):
+    """NotRun(why) unless `path` is absent by lstat and its parent is a real directory by lstat: _open_parent's test,
+    its descriptor closed."""
+    os.close(_open_parent(path, why)[0])
+
+
+def _same_place(a, b):
+    """Whether the paths `a` and `b`, each in a real directory, name one entry: one base name, in one directory."""
+    (ha, ba), (hb, bb) = os.path.split(os.fsencode(a)), os.path.split(os.fsencode(b))
+    return ba == bb and os.path.samefile(ha, hb)
 
 
 def _name_in_class(raw):
@@ -1207,6 +1231,16 @@ def _name_in_class(raw):
                                              for s in name.split("/"))
 
 
+def _written_segment(seg):
+    """The segment as export writes it: one of RENAMED, in any case, with RENAMED_SUFFIX appended."""
+    return seg + RENAMED_SUFFIX if seg.lower() in RENAMED else seg
+
+
+def _make_dir(name, dfd):
+    """mkdir `name`, mode 0700, in the open directory `dfd`: export's one mkdir, which --selftest wraps."""
+    os.mkdir(name, 0o700, dir_fd=dfd)
+
+
 def _create_file(name, dfd):
     """A descriptor of the new file `name` in the open directory `dfd`: created exclusively, mode 0600, through no
     link. export's one create, which --selftest wraps."""
@@ -1214,25 +1248,27 @@ def _create_file(name, dfd):
 
 
 def _dir_at(root, want, made, failed):
-    """A descriptor of the directory `want`, a tuple of segments, under the open directory `root`: each level made
-    here, mode 0700, where this export has not made it yet, and opened relative to its parent's descriptor without
-    following a link. None where a level's mkdir fails EEXIST or ENAMETOOLONG -- that level is then in `failed` --
-    and NotRun on any other failure."""
+    """A descriptor of the directory `want`, a tuple of repository segments, under the open directory `root`, each
+    level by its written segment: made here where this export has not made it yet, and opened relative to its
+    parent's descriptor without following a link. None where a level's mkdir fails EEXIST or ENAMETOOLONG -- that
+    level is then in `failed` -- and NotRun on any other failure. A level is keyed by its repository segments, so two
+    that write one name -- a renamed segment beside a committed one already ending .exported -- never share a
+    directory: the second mkdir fails EEXIST."""
     fd = None
     try:
         fd = os.dup(root)
         for i, seg in enumerate(want):
-            key = want[:i + 1]
+            key, name = want[:i + 1], _written_segment(seg)
             if key not in made:
                 try:
-                    os.mkdir(seg, 0o700, dir_fd=fd)
+                    _make_dir(name, fd)
                 except OSError as e:
                     if e.errno not in SKIP_ERRNOS:
                         raise
                     failed.add(key)
                     return None
                 made.add(key)
-            child = os.open(seg, _DIR_FLAGS, dir_fd=fd)
+            child = os.open(name, _DIR_FLAGS, dir_fd=fd)
             os.close(fd)
             fd = child
         got, fd = fd, None
@@ -1248,16 +1284,22 @@ class _Stream(Exception):
     """cat-file --batch did not answer as asked: killed at the timeout, or a header or a body not as listed."""
 
 
+class _Missing(Exception):
+    """cat-file --batch answered that the clone lacks the object."""
+
+
 def _blob(proc, oid, size, fd):
     """Copy the blob `oid` from the running cat-file --batch into `fd`: the header naming it, a blob of `size` bytes,
-    then its bytes and a line feed. _Stream where the stream does not answer so; NotRun where `fd` cannot be
-    written."""
+    then its bytes and a line feed. _Missing where the header says the clone lacks it; _Stream where the stream does
+    not answer so; NotRun where `fd` cannot be written."""
     try:
         proc.stdin.write(oid + b"\n")
         proc.stdin.flush()
         header = proc.stdout.readline(256)
     except (OSError, ValueError):
         raise _Stream()
+    if header == oid + b" missing\n":
+        raise _Missing()
     if header != b"%s blob %d\n" % (oid, size):
         raise _Stream()
     left = size
@@ -1282,14 +1324,16 @@ def _blob(proc, oid, size, fd):
         raise _Stream()
 
 
-def _export_files(repo, keep, out, skipped):
-    """Make `out`, mode 0700, and write under it each of `keep` -- (repository path, object id, size), in tree order
-    -- by its written path, its contents from one cat-file --batch. The (written path, repository path, size) of each
-    file written, in tree order; None where EXPORT_TIMEOUT passed first, `out` then left as it stands. A mkdir or a
-    create failing EEXIST or ENAMETOOLONG skips the file, counted name in `skipped`; any other failure is NotRun."""
+def _export_files(repo, keep, out_dir, out_base, skipped):
+    """Make --out, `out_base` in the open directory `out_dir`, mode 0700, and write under it each of `keep` --
+    (repository path, object id, size), in tree order -- by its written path, its contents from one cat-file --batch.
+    ("done", the (written path, repository path, size) of each file written, in tree order); or ("timeout", None)
+    where EXPORT_TIMEOUT passed first, or ("blob-absent", None) where cat-file says the clone lacks a blob, --out then
+    left as it stands. A mkdir or a create failing EEXIST or ENAMETOOLONG skips the file, counted name in `skipped`;
+    any other failure is NotRun."""
     try:
-        os.mkdir(out, 0o700)
-        root = os.open(out, _DIR_FLAGS)
+        _make_dir(out_base, out_dir)
+        root = os.open(out_base, _DIR_FLAGS, dir_fd=out_dir)
     except OSError:
         raise NotRun(WHY_EXPORT_WRITE)
     _IO["writes"] += 1
@@ -1318,9 +1362,9 @@ def _export_files(repo, keep, out, skipped):
             timer.start()
         for name, oid, size in keep:
             if expired or time.monotonic() >= deadline:
-                return None
+                return "timeout", None
             segs = name.split(b"/")
-            base = segs[-1] + IGNORE_SUFFIX if segs[-1] in IGNORE_FILES else segs[-1]
+            base = _written_segment(segs[-1])
             want = tuple(segs[:-1])
             if any(want[:i] in failed for i in range(1, len(want) + 1)):
                 skipped["name"] += 1
@@ -1344,16 +1388,18 @@ def _export_files(repo, keep, out, skipped):
                 continue
             try:
                 _blob(proc, oid, size, fd)
+            except _Missing:
+                return "blob-absent", None
             except _Stream:
                 if expired or time.monotonic() >= deadline:
-                    return None
+                    return "timeout", None
                 raise NotRun(WHY_BLOB)
             finally:
                 os.close(fd)
-            done.append((b"/".join(segs[:-1] + [base]), name, size))
+            done.append((b"/".join([_written_segment(s) for s in segs]), name, size))
             _IO["writes"] += 1
         finished = True
-        return done
+        return "done", done
     finally:
         if timer is not None:
             timer.cancel()
@@ -1379,11 +1425,11 @@ def _export_files(repo, keep, out, skipped):
 def _path_states(paths, listed, written):
     """{<p>: exported | absent | skipped} for each --path: exported where it, or a path under it, is a repository
     path `written` holds; absent where the listing holds neither; skipped otherwise. A path is compared as git reads
-    a pathspec -- ./, // and /./ collapsed, . the whole tree, and a trailing / naming a directory alone."""
+    a pathspec -- ./, // and /./ collapsed, . the whole tree, and a trailing / or /. naming a directory alone."""
     states = {}
     for p in paths:
         raw = p.encode("utf-8")
-        norm, dir_only = posixpath.normpath(raw), raw.endswith(b"/")
+        norm, dir_only = posixpath.normpath(raw), raw.endswith((b"/", b"/."))
 
         def under(name):
             return norm == b"." or (name == norm and not dir_only) or name.startswith(norm + b"/")
@@ -1392,7 +1438,30 @@ def _path_states(paths, listed, written):
     return states
 
 
+def _path_max(dfd):
+    """The longest path, in bytes and counting its terminating NUL, the file system under the open directory `dfd`
+    lets a reader open; 4096 where it names no limit."""
+    try:
+        got = os.fpathconf(dfd, "PC_PATH_MAX")
+    except (OSError, ValueError):
+        got = None
+    return got if got is not None and got > 0 else 4096
+
+
 def cmd_export(repo, commit, out, manifest, whole, paths):
+    out_dir = man_dir = None
+    try:
+        out_dir, out_base = _open_parent(out, WHY_OUT)
+        man_dir, man_base = _open_parent(manifest, WHY_MANIFEST)
+        return _export_commit(repo, commit, os.fsencode(out), out_dir, out_base, man_dir, man_base, whole, paths)
+    finally:
+        for fd in (out_dir, man_dir):
+            if fd is not None:
+                with contextlib.suppress(OSError):
+                    os.close(fd)
+
+
+def _export_commit(repo, commit, out, out_dir, out_base, man_dir, man_base, whole, paths):
     if not os.path.lexists(os.path.join(repo, ".git")):  # before any git call: see the docstring
         raise NotRun(WHY_CLONE)
     r = _xgit(repo, "rev-parse", "--show-toplevel")
@@ -1410,7 +1479,8 @@ def cmd_export(repo, commit, out, manifest, whole, paths):
     r = _xgit(repo, "ls-tree", "-r", "-z", "-l", "--full-tree", commit, *specs)
     if r is None or r[0] != 0:
         raise NotRun(WHY_TREE)
-    listed, keep = [], []
+    path_max = _path_max(out_dir)
+    listed, keep, absent = [], [], False
     skipped = {"link": 0, "submodule": 0, "other": 0, "name": 0, "large": 0}
     for record in r[1].split(b"\0"):
         if not record:
@@ -1429,20 +1499,30 @@ def cmd_export(repo, commit, out, manifest, whole, paths):
             skipped["other"] += 1
         elif not _name_in_class(name):
             skipped["name"] += 1
-        elif not size.isdigit() or not OBJECT_ID_RE.fullmatch(oid.decode("ascii", "replace")):
+        elif len(out) + 1 + len(b"/".join(_written_segment(s) for s in name.split(b"/"))) >= path_max:
+            skipped["name"] += 1  # written, it could not be opened by its absolute path
+        elif not OBJECT_ID_RE.fullmatch(oid.decode("ascii", "replace")):
+            raise NotRun(WHY_TREE)
+        elif size == b"BAD":  # git could not read the blob's size: a partial clone that lacks it
+            absent = True
+        elif not size.isdigit():
             raise NotRun(WHY_TREE)
         elif int(size) > EXPORT_FILE_CAP:
             skipped["large"] += 1
         else:
             keep.append((name, oid, int(size)))
+    if absent:
+        return 3, {"refused": "blob-absent", "files": None, "bytes": None}
     total = sum(size for _, _, size in keep)
     if len(keep) > EXPORT_FILES_CAP or total > EXPORT_BYTES_CAP:
         return 3, {"refused": "over-cap", "files": len(keep), "bytes": total}
-    done = _export_files(repo, keep, out, skipped)
-    if done is None:
+    how, done = _export_files(repo, keep, out_dir, out_base, skipped)
+    if how == "timeout":
         return 3, {"refused": "timeout", "files": len(keep), "bytes": total}
+    if how == "blob-absent":
+        return 3, {"refused": "blob-absent", "files": None, "bytes": None}
     try:  # last, so a manifest exists only beside a whole export
-        fd = os.open(manifest, os.O_WRONLY | os.O_CREAT | os.O_EXCL | _NOFOLLOW, 0o600)
+        fd = os.open(man_base, os.O_WRONLY | os.O_CREAT | os.O_EXCL | _NOFOLLOW, 0o600, dir_fd=man_dir)
     except OSError:
         raise NotRun(WHY_EXPORT_WRITE)
     try:
@@ -1556,7 +1636,7 @@ def _args(argv):
         return cmd_edit, (a.repo, a.id[0], a.status, a.page_path, a.from_status, a.walkthrough, a.block)
     _fresh(a.out, WHY_OUT)
     _fresh(a.manifest, WHY_MANIFEST)
-    if os.path.normpath(a.out) == os.path.normpath(a.manifest):
+    if _same_place(a.out, a.manifest):
         raise NotRun(WHY_MANIFEST)
     return cmd_export, (a.repo, a.commit, a.out, a.manifest, a.whole, list(dict.fromkeys(a.path or ())))
 
@@ -2915,7 +2995,9 @@ def _skipped(**counts):
 def case_export_whole_tree(tmp):
     """--whole over nested directories, an executable and a non-ASCII UTF-8 name: each file byte-equal under --out,
     mode 0600 in a tree of mode 0700, the manifest pairing each written path with its repository path in tree order,
-    files and bytes right, nothing else written, and the clone's index and working tree untouched."""
+    files and bytes right, nothing else written, and the clone's index and working tree untouched -- with a GIT_DIR,
+    GIT_WORK_TREE, GIT_INDEX_FILE and GIT_OBJECT_DIRECTORY in the environment naming another repository, which no git
+    call export makes may read."""
     files = {"README.md": b"# top\n", "src/app.ts": b"export const x = 1;\r\n", "src/deep/er/mod.py": b"X = 2\n",
              "bin/run.sh": b"#!/bin/sh\necho hi\n", "docs/café.md": "café — ok\n".encode("utf-8")}
     top, oid = _src(tmp, files, execs=("bin/run.sh",))
@@ -2923,8 +3005,20 @@ def case_export_whole_tree(tmp):
     status = _fx(top, "status", "--porcelain")
     index = os.path.join(top, ".git", "index")
     before = (_bytes_of(index), os.stat(index).st_mtime_ns)
+    other, _ = _src(tmp, {"other.txt": b"another repository\n"}, name="other")
+    hostile = {"GIT_DIR": os.path.join(other, ".git"), "GIT_WORK_TREE": other, "GIT_INDEX_FILE": index + ".other",
+               "GIT_OBJECT_DIRECTORY": os.path.join(other, ".git", "objects")}
+    saved = {k: os.environ.get(k) for k in hostile}
     d, out, man = _xdir(tmp)
-    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    os.environ.update(hostile)
+    try:
+        obj, _ = _export_ok(top, oid, out, man, "--whole")
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
     _eq(_files(out), {k.encode("utf-8"): v for k, v in files.items()}, "the files written")
     tree = [p.encode("utf-8") for p in _fx(top, "ls-tree", "-r", "-z", "--name-only", oid).split("\0") if p]
     _eq(_manifest(man), [(p, p) for p in tree], "the manifest, in tree order")
@@ -2940,7 +3034,9 @@ def case_export_whole_tree(tmp):
 
 def case_export_links_not_followed(tmp):
     """A committed link to a file outside the repository, and one to a directory holding files: no path made for
-    either, skipped.link 2, and the file outside -- the sentinel -- and its directory unchanged."""
+    either, skipped.link 2, and the file outside -- the sentinel -- and its directory unchanged. A directory export
+    has just made, --out or one under it, swapped for a link to that directory before export opens it: exit 2, and
+    nothing written through the link."""
     outside = os.path.join(tmp, "outside")
     os.mkdir(outside)
     sentinel = os.path.join(outside, "secret.txt")
@@ -2955,6 +3051,18 @@ def case_export_links_not_followed(tmp):
     _eq(obj, {"files": 1, "bytes": 2, "skipped": _skipped(link=2), "paths": {}})
     _eq((_bytes_of(sentinel), os.stat(sentinel).st_mtime_ns), (b"secret\n", mtime), "the sentinel unchanged")
     _eq(sorted(os.listdir(outside)), ["more.txt", "secret.txt"], "nothing written outside")
+    top2, oid2 = _src(tmp, {"a.txt": b"a\n", "c/d.txt": b"d\n"}, name="src2")
+    real = _make_dir
+    for victim, base in ((b"c", "o1"), (b"o2", "o2")):  # a directory under --out, and --out itself
+        def swapping(name, dfd):  # another process swaps the new directory for a link before it is opened
+            real(name, dfd)
+            if name == victim:
+                os.rmdir(name, dir_fd=dfd)
+                os.symlink(outside, name, dir_fd=dfd)
+        out2, man2 = os.path.join(d, base), os.path.join(d, base + ".files")
+        code, stdout, err = _with("_make_dir", swapping, lambda: _export(top2, oid2, out2, man2, "--whole"))
+        _refused(code, stdout, err, WHY_EXPORT_WRITE)
+        _eq(sorted(os.listdir(outside)), ["more.txt", "secret.txt"], "%r swapped: nothing written through it" % victim)
 
 
 def case_export_submodule_skipped(tmp):
@@ -2969,7 +3077,9 @@ def case_export_submodule_skipped(tmp):
 
 def case_export_name_out_of_class(tmp):
     """Names holding a newline, a tab and a U+202E: skipped.name 3, none in stdout or the manifest. And a tree a
-    committer built by hand, holding a directory .GIT, which git itself refuses to add: skipped name."""
+    committer built by hand, holding a directory .GIT, which git itself refuses to add: skipped name. A name above
+    4,096 bytes is outside the class; one under it whose path under --out reaches the file system's PATH_MAX, which no
+    reader could open by its absolute path: skipped name."""
     names = ("new\nline.txt", "tab\there.txt", "bidi‮txt.md")
     top, oid = _src(tmp, dict({"ok.txt": b"ok\n"}, **{n: b"x\n" for n in names}))
     d, out, man = _xdir(tmp)
@@ -2988,6 +3098,17 @@ def case_export_name_out_of_class(tmp):
     out2, man2 = os.path.join(d, "out2"), os.path.join(d, "out2.files")
     obj, _ = _export_ok(top, crafted, out2, man2, "--whole")
     _eq((obj["skipped"], sorted(os.listdir(out2))), (_skipped(name=1), ["ok.txt"]), "a .GIT segment, in any case")
+    _eq((_name_in_class(b"a/" * 2047 + b"bc"), _name_in_class(b"a/" * 2048 + b"b")), (True, False),
+        "the name class: 4,096 bytes and no more")
+    child = _fx_in(top, b"100644 blob %s\t%s\n" % (blob.encode(), b"f" * 60), "mktree").strip()
+    for _ in range(19):  # with the one below, 20 directories of 200 bytes over a 60-byte file: 4,080 bytes
+        child = _fx_in(top, b"040000 tree %s\t%s\n" % (child.encode(), b"s" * 200), "mktree").strip()
+    tree = _fx_in(top, b"040000 tree %s\t%s\n100644 blob %s\tok.txt\n" % (child.encode(), b"s" * 200,
+                                                                         blob.encode()), "mktree").strip()
+    deep = _fx(top, "commit-tree", "-m", "deep", tree).strip()
+    out3, man3 = os.path.join(d, "out3"), os.path.join(d, "out3.files")
+    obj, _ = _export_ok(top, deep, out3, man3, "--whole")
+    _eq((obj["skipped"], sorted(os.listdir(out3))), (_skipped(name=1), ["ok.txt"]), "a path past PATH_MAX under --out")
 
 
 def case_export_ignore_files_renamed(tmp):
@@ -3066,20 +3187,26 @@ def case_export_paths_at_ref(tmp):
 
 
 def case_export_path_states(tmp):
-    """--whole with --path a file, a directory (also as ./dir/), an absent path, a prefix of a name that is no path,
-    and a link: exported, exported, exported, absent, absent, skipped."""
+    """--whole with --path a file, a directory (also as ./dir/ and dir/.), an absent path, a prefix of a name that is
+    no path, a link, and a file spelled as a directory (f.txt/.): exported, exported, exported, exported, absent,
+    absent, skipped, absent -- f.txt/. as git lists it without --whole."""
     top, oid = _src(tmp, {"f.txt": b"f\n", "dir/g.txt": b"g\n", "dir/h.txt": b"h\n", "ln": "f.txt"})
     d, out, man = _xdir(tmp)
     obj, _ = _export_ok(top, oid, out, man, "--whole", "--path", "f.txt", "--path", "dir", "--path", "./dir/",
-                        "--path", "gone.txt", "--path", "di", "--path", "ln")
-    _eq(obj["paths"], {"f.txt": "exported", "dir": "exported", "./dir/": "exported", "gone.txt": "absent",
-                       "di": "absent", "ln": "skipped"})
+                        "--path", "dir/.", "--path", "gone.txt", "--path", "di", "--path", "ln", "--path", "f.txt/.")
+    _eq(obj["paths"], {"f.txt": "exported", "dir": "exported", "./dir/": "exported", "dir/.": "exported",
+                       "gone.txt": "absent", "di": "absent", "ln": "skipped", "f.txt/.": "absent"})
     _eq(obj["skipped"], _skipped(link=1))
+    out2, man2 = os.path.join(d, "out2"), os.path.join(d, "out2.files")
+    obj, _ = _export_ok(top, oid, out2, man2, "--path", "f.txt/.")
+    _eq((obj["files"], obj["paths"]), (0, {"f.txt/.": "absent"}), "f.txt/. without --whole")
 
 
 def case_export_out_refused(tmp):
     """--out existing, a link, a dangling link or under a linked parent; --manifest existing, under a linked parent or
-    --out itself: exit 2 each, nothing run or written."""
+    --out itself, however spelled: exit 2 each, nothing run or written. --manifest planted as a link while the export
+    runs: exit 2, the link's target untouched. --out's parent swapped for a link after the test: the export and its
+    manifest land in the directory tested, now moved, and nothing under the link's target."""
     top, oid = _src(tmp, {"a.txt": b"a\n"})
     d = os.path.join(tmp, "x")
     real = os.path.join(tmp, "real")
@@ -3094,18 +3221,46 @@ def case_export_out_refused(tmp):
     for out, man, why in ((j("taken"), j("m"), WHY_OUT), (j("linkout"), j("m"), WHY_OUT),
                           (j("dangling"), j("m"), WHY_OUT), (j("linkparent", "out"), j("m"), WHY_OUT),
                           (j("out"), j("taken.files"), WHY_MANIFEST), (j("out"), j("linkparent", "m"), WHY_MANIFEST),
-                          (j("out"), j("out"), WHY_MANIFEST)):
+                          (j("out"), j("out"), WHY_MANIFEST), (j("out"), "/" + j("out"), WHY_MANIFEST),
+                          (j("out"), j(".", "out"), WHY_MANIFEST)):
         code, stdout, err = _export(top, oid, out, man, "--whole")
         _refused(code, stdout, err, why)
         _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "%s, %s: nothing read, run or written" % (out, man))
     _eq((sorted(os.listdir(d)), os.listdir(real), os.path.lexists(os.path.join(tmp, "nowhere"))),
         (listing, [], False), "nothing written")
+    victim = os.path.join(real, "victim")
+    _put_files(real, {"victim": b"keep\n"})
+    real_create = _create_file
+
+    def planting(name, dfd):  # another process plants the manifest path as a link, mid-export
+        if not os.path.lexists(j("m2")):
+            os.symlink(victim, j("m2"))
+        return real_create(name, dfd)
+    code, stdout, err = _with("_create_file", planting, lambda: _export(top, oid, j("o2"), j("m2"), "--whole"))
+    _refused(code, stdout, err, WHY_EXPORT_WRITE)
+    _eq(_bytes_of(victim), b"keep\n", "the planted link's target untouched")
+    parent, moved, elsewhere = os.path.join(tmp, "p"), os.path.join(tmp, "p.moved"), os.path.join(tmp, "elsewhere")
+    for p in (parent, elsewhere):
+        os.mkdir(p)
+    real_xgit = _xgit
+
+    def swapping(repo, *args):  # another process swaps --out's parent for a link while git lists the tree
+        if args[0] == "ls-tree":
+            os.rename(parent, moved)
+            os.symlink(elsewhere, parent)
+        return real_xgit(repo, *args)
+    obj, _ = _with("_xgit", swapping, lambda: _export_ok(top, oid, os.path.join(parent, "out"),
+                                                         os.path.join(parent, "out.files"), "--whole"))
+    _eq((sorted(os.listdir(moved)), os.listdir(elsewhere), obj["files"]), (["out", "out.files"], [], 1),
+        "written in the directory tested, nothing through the link")
 
 
 def case_export_bare_repo_refused(tmp):
     """--repo laid out as a git directory with no .git, its config naming a core.fsmonitor that would write a
     sentinel: exit 2, no git call made, no sentinel. With an empty .git directory beside it, which git without
-    safe.bareRepository=explicit passes over to take --repo itself as the repository, its top level --repo: exit 2."""
+    safe.bareRepository=explicit passes over to take --repo itself as the repository, its top level --repo: exit 2.
+    A clone's subdirectory holding an empty .git directory, which git passes over to name the clone its top level:
+    exit 2."""
     gitdir, sentinel = os.path.join(tmp, "gitdir"), os.path.join(tmp, "sentinel")
     _fx(tmp, "init", "-q", "--bare", gitdir)
     for key, value in (("core.bare", "false"), ("core.worktree", gitdir), ("core.fsmonitor", "touch " + sentinel)):
@@ -3119,6 +3274,11 @@ def case_export_bare_repo_refused(tmp):
     code, stdout, err = _export(gitdir, "ab" * 20, out, man, "--whole")
     _refused(code, stdout, err, WHY_CLONE)
     _eq((os.path.lexists(sentinel), os.listdir(d)), (False, []), "an empty .git: no sentinel, nothing created")
+    top, oid = _src(tmp, {"a.txt": b"a\n", "sub/b.txt": b"b\n"})
+    os.mkdir(os.path.join(top, "sub", ".git"))
+    code, stdout, err = _export(os.path.join(top, "sub"), oid, out, man, "--whole")
+    _refused(code, stdout, err, WHY_CLONE)
+    _eq(os.listdir(d), [], "a subdirectory: nothing created")
 
 
 def case_export_bad_args(tmp):
@@ -3136,6 +3296,8 @@ def case_export_bad_args(tmp):
                       (argv(["--path", "a\tb"]), WHY_PATH), (argv(["--path", "a‮b"]), WHY_PATH),
                       (argv(["--path", "a" * 4097]), WHY_PATH), (argv(["--path", "x\udcff"]), WHY_PATH),
                       (argv(["--whole"], repo="rel"), WHY_REPO_ABS), (argv(["--whole"], out="rel"), WHY_OUT),
+                      (argv(["--whole"], repo=top + "\x01"), WHY_REPO_ABS), (argv(["--whole"], out=out + "\t"), WHY_OUT),
+                      (argv(["--whole"], manifest=man + "\n"), WHY_MANIFEST),
                       (argv(["--whole"], manifest="rel/m"), WHY_MANIFEST),
                       (argv(["--whole"], repo=os.path.join(tmp, "absent")), WHY_REPO),
                       (argv([]), WHY_USAGE), (argv(["--whole", "--whole"]), WHY_USAGE),
@@ -3154,7 +3316,8 @@ def case_export_bad_args(tmp):
 def case_export_no_filter_run(tmp):
     """The clone's config naming a filter.x.clean, a filter.x.smudge and a diff.x.textconv, each a command that would
     write a sentinel, and a committed .gitattributes `* filter=x diff=x`: each file's raw blob bytes written, and no
-    sentinel."""
+    sentinel. A listing whose size is not its blob's, and a 100644 entry naming a tree, which ls-tree lists as a blob:
+    exit 2, no manifest."""
     files = {".gitattributes": b"* filter=x diff=x\n", "a.txt": b"raw a\r\n", "b.md": b"raw b\n"}
     top, oid = _src(tmp, files)
     sentinel = os.path.join(tmp, "sentinel")
@@ -3177,6 +3340,14 @@ def case_export_no_filter_run(tmp):
     code, stdout, err = _with("_xgit", lying, lambda: _export(top, oid, out2, man2, "--whole"))
     _refused(code, stdout, err, WHY_BLOB)
     _true(not os.path.lexists(man2), "a blob not as listed: no manifest written")
+    tree_oid = _fx(top, "rev-parse", oid + "^{tree}").strip()
+    raw = b"100644 a.txt\0" + bytes.fromhex(tree_oid)  # a file entry whose object is a tree
+    crafted = _fx(top, "commit-tree", "-m", "a tree as a file",
+                  _fx_in(top, raw, "hash-object", "-t", "tree", "-w", "--literally", "--stdin").strip()).strip()
+    out3, man3 = os.path.join(d, "out3"), os.path.join(d, "out3.files")
+    code, stdout, err = _export(top, crafted, out3, man3, "--whole")
+    _refused(code, stdout, err, WHY_BLOB)
+    _true(not os.path.lexists(man3), "a tree listed as a file: no manifest written")
 
 
 def case_export_timeout(tmp):
@@ -3207,6 +3378,79 @@ def case_export_name_collision(tmp):
     _eq(obj, {"files": 2, "bytes": 4, "skipped": _skipped(name=2), "paths": {}})
     _eq(_files(out), {b"a.txt": b"a\n", b"c/d.txt": b"d\n"})
     _eq(_manifest(man), [(b"a.txt", b"a.txt"), (b"c/d.txt", b"c/d.txt")])
+
+
+def case_export_renamed_in_any_case(tmp):
+    """An ignore file's name in another case -- .IGNORE, sub/.RgIgnore, .GitIgnore -- which a file system that folds
+    case answers for .ignore, .rgignore or .gitignore; and the five names the Grep tool passes over wherever they
+    stand -- .svn, .hg, .bzr, .jj and .sl, as a directory or a file, in any case: each segment written with .exported
+    appended, byte-equal, the manifest pairing each with its repository path, nothing skipped. A committed
+    .hg.exported directory beside .hg: one of the two skipped, name, never merged into the other."""
+    files = {".IGNORE": b"*\n", "sub/.RgIgnore": b"*\n", ".GitIgnore": b"x-*\n", ".hg/hgrc": b"[ui]\n",
+             "tools/.svn/entries": b"12\n", ".jj/x": b"jj\n", ".sl": b"sl\n", ".BZR/y": b"bzr\n", "sub/a.ts": b"a\n"}
+    top, oid = _src(tmp, files)
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole", "--path", ".hg/hgrc", "--path", "sub/.RgIgnore")
+    written = {".IGNORE": ".IGNORE.exported", "sub/.RgIgnore": "sub/.RgIgnore.exported",
+               ".GitIgnore": ".GitIgnore.exported", ".hg/hgrc": ".hg.exported/hgrc",
+               "tools/.svn/entries": "tools/.svn.exported/entries", ".jj/x": ".jj.exported/x", ".sl": ".sl.exported",
+               ".BZR/y": ".BZR.exported/y", "sub/a.ts": "sub/a.ts"}
+    _eq(_files(out), {written[k].encode(): v for k, v in files.items()}, "the files written")
+    tree = [p.encode() for p in _fx(top, "ls-tree", "-r", "-z", "--name-only", oid).split("\0") if p]
+    _eq(_manifest(man), [(written[p.decode()].encode(), p) for p in tree], "the manifest, in tree order")
+    _eq(obj, {"files": 9, "bytes": sum(len(v) for v in files.values()), "skipped": _skipped(),
+              "paths": {".hg/hgrc": "exported", "sub/.RgIgnore": "exported"}})
+    top2, oid2 = _src(tmp, {".hg/a": b"theirs\n", ".hg.exported/b": b"committed\n"}, name="src2")
+    out2, man2 = os.path.join(d, "out2"), os.path.join(d, "out2.files")
+    obj, _ = _export_ok(top2, oid2, out2, man2, "--whole")
+    _eq((obj["files"], obj["skipped"], len(_files(out2))), (1, _skipped(name=1), 1), "one written, one skipped")
+
+
+def case_export_parent_ignore_files(tmp):
+    """Ignore files above --out -- a .rgignore, an .ignore and a .gitignore, each naming every file -- change nothing
+    the export writes, and it writes no ignore file of its own: the files that outrank a parent's rules for a search
+    tool, an .ignore and a .rgignore each holding !*, are the caller's to write beside its exports, never this
+    script's."""
+    files = {"a.txt": b"a\n", "node_modules/m.js": b"m\n", ".hidden/h.log": b"h\n", "src/app.ts": b"x\n"}
+    top, oid = _src(tmp, files)
+    d, out, man = _xdir(tmp)
+    _put_files(tmp, {".rgignore": b"*\n", ".ignore": b"*\n", ".gitignore": b"*\n"})
+    _put_files(d, {".rgignore": b"*.ts\nnode_modules/\n"})
+    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    _eq(_files(out), {k.encode(): v for k, v in files.items()}, "every file written")
+    _eq((sorted(os.listdir(d)), sorted(os.listdir(out))), ([".rgignore", "out", "out.files"],
+                                                           [".hidden", "a.txt", "node_modules", "src"]),
+        "no ignore file of the export's own")
+
+
+def case_export_blob_absent(tmp):
+    """A blobless partial clone lacking an older commit's blob, which ls-tree -l lists with the size BAD: exit 3,
+    blob-absent, nothing created, whether a --path names it or --whole takes it, and no fetch made for it. A blob the
+    listing sized that cat-file --batch then lacks: blob-absent, and no manifest."""
+    src, old = _src(tmp, {"a.txt": b"old\n", "b.txt": b"b\n"})
+    _put_files(src, {"a.txt": b"new\n"})
+    _fx(src, "commit", "-qam", "newer")
+    _fx(src, "config", "uploadpack.allowFilter", "true")
+    clone = os.path.join(tmp, "clone")
+    _fx(tmp, "clone", "-q", "--filter=blob:none", "file://" + src, clone)
+    packs = sorted(os.listdir(os.path.join(clone, ".git", "objects", "pack")))
+    d, out, man = _xdir(tmp)
+    for flags in (["--path", "a.txt"], ["--whole"]):
+        code, stdout, err = _export(clone, old, out, man, *flags)
+        _eq((code, err), (3, ""), flags)
+        _eq(_obj(stdout), {"refused": "blob-absent", "files": None, "bytes": None}, flags)
+        _eq(os.listdir(d), [], "%r: nothing created" % (flags,))
+    _eq(sorted(os.listdir(os.path.join(clone, ".git", "objects", "pack"))), packs, "no fetch made")
+    real = _xgit
+
+    def sized(repo, *args):  # the listing gives the absent blob a size: cat-file --batch then lacks it
+        r = real(repo, *args)
+        return (r[0], r[1].replace(b"    BAD\ta.txt", b"      4\ta.txt")) if args[0] == "ls-tree" else r
+    code, stdout, err = _with("_xgit", sized, lambda: _export(clone, old, out, man, "--path", "a.txt"))
+    _eq((code, err), (3, ""))
+    _eq(_obj(stdout), {"refused": "blob-absent", "files": None, "bytes": None})
+    _true(not os.path.lexists(man), "no manifest written")
+    _eq(sorted(os.listdir(os.path.join(clone, ".git", "objects", "pack"))), packs, "still no fetch made")
 
 
 def case_visibility_marker_pinned(tmp):
@@ -3261,7 +3505,8 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_export_name_out_of_class, case_export_ignore_files_renamed, case_export_large_file_skipped,
          case_export_over_cap, case_export_commit_absent, case_export_paths_at_ref, case_export_path_states,
          case_export_out_refused, case_export_bare_repo_refused, case_export_bad_args, case_export_no_filter_run,
-         case_export_timeout, case_export_name_collision,
+         case_export_timeout, case_export_name_collision, case_export_renamed_in_any_case,
+         case_export_parent_ignore_files, case_export_blob_absent,
          case_visibility_marker_pinned,
          case_shape_paragraph_pinned, case_marker_phrase_pinned)
 
