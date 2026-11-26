@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.100.3] — 2026-11-26
+
+Four references follow `dev-workflows` 4.71.3's `/conformance`. **What changes for you.** A `/product-workflows:create-ard` refine reads a threat's decision pair naming an ARD area file in letters of another script, so a record entry on that file's decision sends the threat back; and the Dev lane names the Dev's `/dev-workflows:design` for a threat returned to the architect. Install with `dev-workflows` 4.71.3 and `product-workflows` 3.88.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.3 bullet).
+
+### Fixed
+
+- **`references/threat-intake.md` §4.** A pair `<ARD file> [AD#N]` named a decision only where its area file's name matched `^ard-[A-Za-z0-9._-]+\.md$`, so a pair naming an area file in letters of another script — a name `workflows-core:ard-resolution` reads — named nothing. Its name now begins `ard-`, ends `.md` and is, whole, in `addressing` §2's class, tested as §2's *The class* tests a name; §6's table gains the row. The opening says `/dev-workflows:conformance` also restates §4's test of an entry that names a pair's decision and nominates, in its Phase 6.
+- **`references/threat-model-format.md` §9, *An agent given a repository*.** The backstop's patterns run over every section of a `conformance-tracer`'s output, a mitigation's and any other requirement's, on a run that hands any tracer a mitigation; they ran over a mitigation's section alone. The test of what is carried is unchanged.
+- **`references/phase-handoff.md` §4.0, the `_conformance.md` row.** `/dev-workflows:conformance` Phase 6's `/create-ard` line is printed where a threat of a model it read rests on an `[AD#n]` Rule and the record holds an entry on it decided `amend-document` or `accept`, or takes out of nomination the default branch's entry on it — the GIT-G1 clause E3, which the maintainer approved changing by name on 2026-11-26. The row named the entry alone.
+- **`references/next-phase-offer.md`, the Dev lane's threat routes.** A threat that is `unanswered — returned to the architect` names `/dev-workflows:design <KEY>` on each design that returned it, after the PA's route; and a stand-alone entry that stands alone because `its threat is in no model a refine reads beside this design` is the Dev's, as `/conformance` 4.71.3 routes them. `reference-parts/next-phase-offer/dev.md` is regenerated.
+
 ## [1.100.2] — 2026-11-26
 
 A folder's name read from the specs tree is held to one class before a command is built from it, the threat intake reads a legacy Epic folder, and a stop on a folder placed at no level no longer sends a legacy PRD to `/product-workflows:create-prd`. **What changes for you.** Where a folder holds its PRD under its file name from before the artifact filenames lost their keys (`<KEY>_<slug>.md`), a stop that cannot place the folder prints the rename that places it, and never the run that would write a second PRD. A `/product-workflows:create-ard` refine now reads the design and record of a legacy Epic folder with no `EPIC-` prefix, and names a design only your checkout holds in any folder under the PRD folder. Needs `dev-workflows` 4.71.2, `product-workflows` 3.88.2, `docs-workflows` 1.44.2 and `security-workflows` 0.13.2 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.2 bullet).

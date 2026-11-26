@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.88.3] — 2026-11-26
+
+**What changes for you.** `/create-ard`'s page says that `/dev-workflows:conformance` names the Dev's `/dev-workflows:design` beside your refine for a threat a design returned to you. The command's own text is unchanged. Install with `dev-workflows` 4.71.3 and `workflows-core` 1.100.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.3 bullet).
+
+### Fixed
+
+- **`/create-ard`'s page**, *A threat left sent back is put again* and *What brings you back once code is built*: `/dev-workflows:conformance` 4.71.3 sends a returned threat to your refine and then to the Dev's `/dev-workflows:design` on the design that returned it, which puts it to the Dev again; the page said it kept sending it to you alone.
+
 ## [3.88.2] — 2026-11-26
 
 **What changes for you.** No stop of this plugin sends a folder holding its PRD under its file name from before the artifact filenames lost their keys to `/create-prd`, which writes a second PRD there: it prints the rename instead. And `/create-ard`'s refine of a threat model reads legacy Epic folders, through `workflows-core` 1.100.2. Needs `workflows-core` 1.100.2 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.2 bullet).
