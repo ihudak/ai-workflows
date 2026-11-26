@@ -24,8 +24,17 @@ counted, once per id, in duplicates_outside_class; ids_outside_class the number 
 class. Or it prints {"shape": "out", "line": <n>, "reason": "<word>"}: <n> the first line out of shape, 1-based (0 for
 too-large, whose reason is the whole file), and <word> the paragraph's reason for it.
 
-moved tells which of the --id units a branch not merged into the base has moved. It resolves the base as
-refs/remotes/origin/<base>, else refs/heads/<base>, and reads HEAD's branch itself. It lists `git for-each-ref
+moved tells which of the --id units the base, or a branch not merged into it, has moved. It resolves the base as
+refs/remotes/origin/<base>, else refs/heads/<base>, and reads HEAD's branch itself. The base moves a unit where it
+moved it after HEAD's branch left it: where the unit's status in the base's backlog, read by object id within a kept
+ref's limits below, differs from its working status and from its status at every merge base of HEAD with the base
+(`git merge-base --all`), read the same way -- no backlog or no entry there being a status that differs. No merge base
+is read where no unit's status in the base's backlog differs from its working status, and the base moves nothing where
+a merge base's backlog is the base's own blob. An absent backlog on the base, or an entry absent there, moves nothing.
+Where that cannot be told -- the base's backlog unreadable as a kept ref's is, no merge base (an orphan branch, a
+shallow clone), git failing or timing out on the merge bases, or a merge base's backlog unreadable -- the base is
+unreadable, never compared with the working backlog alone, and moves nothing. A move made in a local <base> that
+origin/<base> lacks is not seen: origin/<base>, where it exists, is the base. It lists `git for-each-ref
 --sort=-committerdate` over refs/heads and refs/remotes/origin, each ref with its object id, full name and short name,
 and drops refs/remotes/origin/HEAD, HEAD's branch, <base> and origin/<base> -- by full name, since git shortens
 refs/remotes/origin/HEAD to "origin" and shortens a ref another one shadows to "heads/..." or "remotes/..." -- and
@@ -43,10 +52,12 @@ differs from the unit's status in the backlog at the ref's merge base with the b
 unit moved on the base, still holding the older status, moves nothing. That backlog is read by its object id within a
 kept ref's limits, and one those limits make unreadable makes the ref unreadable; no backlog there, or no entry for
 the unit, is a status that differs; and a ref sharing no merge base with the base is compared as without the flag.
-Without it a merge base's backlog is compared with the ref's by tree entry alone, never read. It prints {"moved":
-{<id>: [<ref>...]}, "unreadable": [<ref>...], "read": <n>, "more": <n>, "names_outside_class": <n>}: moved names only
-the ids some ref moved, each ref by its short name, newest first; read counts the refs kept, each either compared or
-unreadable; more counts every ref past the point it stopped.
+Without it a merge base's backlog is compared with the ref's by tree entry alone, never read. The flag does not change
+how the base is read. It prints {"moved": {<id>: [<ref>...]}, "unreadable": [<ref>...], "read": <n>, "more": <n>,
+"names_outside_class": <n>}: moved names only the ids the base or some ref moved, the base first, by the name it
+resolved as -- origin/<base> or <base> -- then each ref by its short name, newest first; unreadable lists the base
+first where it is unreadable, then each unreadable ref; read counts the refs kept, each either compared or unreadable,
+and never counts the base; more counts every ref past the point it stopped.
 
 edit writes one unit's move. It refuses, exit 3, the file untouched: a backlog out of shape; an --id no entry or two
 entries hold; where --from is given, an entry whose status: is another -- tested before the refusals after it; where
@@ -810,6 +821,47 @@ def _statuses(blob, ids):
     return got
 
 
+UNKNOWN = "unknown"
+
+
+def _base_moves(top, base_oid, own, ids):
+    """The ids the base itself moved since HEAD's branch left it: each whose status in the base's backlog differs from
+    its working status and from its status at every merge base of HEAD with the base (`git merge-base --all`), no
+    backlog or no entry at a merge base being a status that differs. UNKNOWN where that cannot be told: the base's
+    backlog unreadable as a kept ref's is; no merge base (an orphan branch, a shallow clone), or git failing or timing
+    out on the merge bases; or a merge base's backlog unreadable. An empty set where no id's status there differs from
+    the working one, read before any merge base is, or where a merge base's backlog is the base's own blob."""
+    entry = _tree_entry(top, base_oid)
+    if entry is ERROR:
+        return UNKNOWN
+    if entry is ABSENT:
+        return set()
+    tip = _statuses(_read_blob(top, entry), ids)
+    if tip is None:
+        return UNKNOWN
+    differ = [uid for uid in ids if uid in tip and tip[uid] != own[uid]]
+    if not differ:
+        return set()
+    r = _git(top, "merge-base", "--all", "HEAD", base_oid)
+    if r is None or r[0] != 0:
+        return UNKNOWN
+    forks = r[1].decode("ascii", "replace").split()
+    if not forks or not all(OBJECT_ID_RE.fullmatch(f) for f in forks):
+        return UNKNOWN
+    entries = [_tree_entry(top, fork) for fork in forks]
+    if entry in entries:  # the base's backlog is a merge base's: it moved nothing since
+        return set()
+    if ERROR in entries:
+        return UNKNOWN
+    at_forks = []
+    for fork_entry in entries:
+        got = {} if fork_entry is ABSENT else _statuses(_read_blob(top, fork_entry), differ)
+        if got is None:
+            return UNKNOWN
+        at_forks.append(got)
+    return {uid for uid in differ if all(tip[uid] != at.get(uid) for at in at_forks)}
+
+
 def cmd_moved(top, base, ids, own_moves=False):
     _require_top(top)
     data, _ = _read_backlog(top)
@@ -827,10 +879,11 @@ def cmd_moved(top, base, ids, own_moves=False):
     if head is None or head[0] not in (0, 1):
         raise NotRun(WHY_HEAD)
     head_ref = head[1].decode("utf-8", "surrogateescape").strip() if head[0] == 0 else None
-    base_oid = None
-    for ref in ("refs/remotes/origin/" + base, "refs/heads/" + base):
+    base_oid = base_name = None
+    for ref, name in (("refs/remotes/origin/" + base, "origin/" + base), ("refs/heads/" + base, base)):
         base_oid = _oid(_git(top, "rev-parse", "--verify", "--quiet", "--end-of-options", ref + "^{commit}"))
         if base_oid is not None:
+            base_name = name
             break
     if base_oid is None:
         raise NotRun(WHY_NO_BASE)
@@ -857,6 +910,12 @@ def cmd_moved(top, base, ids, own_moves=False):
             continue
         remaining.append((oid, short))
     moved, unreadable, examined, kept = {}, [], 0, 0
+    by_base = _base_moves(top, base_oid, own, ids)
+    if by_base is UNKNOWN:
+        unreadable.append(base_name)
+    else:
+        for uid in by_base:
+            moved[uid] = [base_name]
     for oid, name in remaining:
         if examined == EXAMINE_CAP or kept == READ_REFS_CAP:
             break
@@ -1254,10 +1313,13 @@ def _get(top):
         return fh.read()
 
 
-def _fx(cwd, *args):
-    """A fixture's git command, its stdout; HOME is the case's empty directory, so no user configuration is read."""
+def _fx(cwd, *args, date=None):
+    """A fixture's git command, its stdout; HOME is the case's empty directory, so no user configuration is read. A
+    `date` (seconds since the epoch) fixes the author and committer dates, for a fixture whose shape turns on them."""
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
     env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_TERMINAL_PROMPT": "0"})
+    if date is not None:
+        env.update({"GIT_AUTHOR_DATE": "@%d +0000" % date, "GIT_COMMITTER_DATE": "@%d +0000" % date})
     r = subprocess.run(["git", "-c", "user.name=selftest", "-c", "user.email=selftest@example.invalid",
                         "-c", "init.defaultBranch=main", "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false",
                         *args], cwd=cwd, env=env, check=True, stdin=subprocess.DEVNULL, capture_output=True)
@@ -1625,8 +1687,9 @@ def case_moved_on_branch(tmp):
     _fx(top, "merge", "-q", "--no-ff", "-m", "merge feat/a", "feat/a")
     _fx(top, "push", "-q", "origin", "main")
     _fx(top, "switch", "-q", "work")
-    _eq(_moved_ok(top, "U-001"), {"moved": {}, "unreadable": [], "read": 0, "more": 0, "names_outside_class": 0},
-        "merged into origin/main")
+    # work was cut before the merge, so origin/main moved U-001 after work left it: the base names it.
+    _eq(_moved_ok(top, "U-001"), {"moved": {"U-001": ["origin/main"]}, "unreadable": [], "read": 0, "more": 0,
+                                  "names_outside_class": 0}, "merged into origin/main")
 
 
 def case_ref_name_outside_class(tmp):
@@ -2196,6 +2259,134 @@ def case_own_moves_unchanged_without_flag(tmp):
              '}\n', "stdout, byte for byte")
 
 
+def _note(top, text, date=None):
+    """A commit on the branch HEAD is on that changes a file other than the backlog."""
+    with open(os.path.join(top, "NOTES"), "a", encoding="utf-8") as fh:
+        fh.write(text + "\n")
+    _fx(top, "add", "-A", date=date)
+    _fx(top, "commit", "-qm", text, date=date)
+
+
+def case_base_merge_commit(tmp):
+    """M1: `stale` is cut, then docs/w-u-001 drafts U-001 and main merges it by a merge commit, so that branch is merged
+    and examined no more. Standing on stale, the base moved U-001 after stale left it: the base names it."""
+    top = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "branch", "stale")
+    _branch_with(top, "docs/w-u-001", _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "merge", "-q", "--no-ff", "-m", "merge docs/w-u-001", "docs/w-u-001")
+    _fx(top, "switch", "-q", "stale")
+    _eq(_moved_ok(top, "U-001", "U-002"), _moved_json({"U-001": ["main"]}), "flag or not")
+    _eq(_moved_ok(top, "U-001", "U-002", own_moves=True), _moved_json({"U-001": ["main"]}), "with --own-moves")
+
+
+def case_base_squash_branch_deleted(tmp):
+    """M3: as M1, merged by a squash and the drafting branch deleted, so no other ref holds the move: the base names
+    U-001, the one ref that does."""
+    top = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "branch", "stale")
+    _branch_with(top, "docs/w-u-001", _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "merge", "-q", "--squash", "docs/w-u-001")
+    _fx(top, "commit", "-qm", "squash docs/w-u-001")
+    _fx(top, "branch", "-q", "-D", "docs/w-u-001")
+    _fx(top, "switch", "-q", "stale")
+    _eq(_moved_ok(top, "U-001", "U-002"), _moved_json({"U-001": ["main"]}))
+
+
+def case_base_own_draft_not_moved(tmp):
+    """M7: the branch HEAD is on drafted U-001 itself, unmerged; the base's status differs from the working one but is
+    its status at the merge base, so the base moved nothing: a command verifying that branch's own draft takes it."""
+    top = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "switch", "-q", "-c", "docs/docs-write-u-001")
+    _put(top, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "commit", "-qam", "docs: draft U-001")
+    _eq(_moved_ok(top, "U-001", own_moves=True), _moved_json({}), "with --own-moves")
+    _eq(_moved_ok(top, "U-001"), _moved_json({}), "without it")
+
+
+def case_base_reset_on_branch_not_moved(tmp):
+    """M8: main holds U-001 drafted; a branch cut from it moves U-001 back to missing by hand, to redraft it. The base
+    has not moved U-001 since the branch left it, so it names nothing."""
+    top = _repo(tmp, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "switch", "-q", "-c", "redo-u-001")
+    _put(top, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "commit", "-qam", "U-001 back to missing, to redraft")
+    _eq(_moved_ok(top, "U-001", "U-002"), _moved_json({}))
+
+
+def case_base_criss_cross_every_merge_base(tmp):
+    """R5b: main and w merge each other crosswise, so they share two merge bases -- M1, where main drafted U-001, and
+    W1, a commit of w's dated after it, which `git merge-base` alone picks. w then resets U-001 to missing. The base
+    holds U-001 at M1's status, so it has not moved it since w took M1: read at every merge base, it names nothing."""
+    top = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")))
+    _put(top, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "add", "-A", date=1700000100)
+    _fx(top, "commit", "-qm", "M1: U-001 drafted on main", date=1700000100)
+    m1 = _fx(top, "rev-parse", "HEAD").strip()
+    _fx(top, "switch", "-q", "-c", "w", "HEAD~1")
+    _note(top, "W1, dated after M1", date=1700000200)
+    w1 = _fx(top, "rev-parse", "HEAD").strip()
+    _fx(top, "switch", "-q", "main")
+    _fx(top, "merge", "-q", "--no-ff", "-m", "M2: merge W1", w1, date=1700000300)
+    _fx(top, "switch", "-q", "w")
+    _fx(top, "merge", "-q", "--no-ff", "-m", "W2: merge M1", m1, date=1700000400)
+    _put(top, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "add", "-A", date=1700000500)
+    _fx(top, "commit", "-qm", "W3: U-001 reset to missing, to redraft", date=1700000500)
+    _eq(sorted(_fx(top, "merge-base", "--all", "HEAD", "main").split()), sorted([m1, w1]), "two merge bases")
+    _eq(_fx(top, "merge-base", "HEAD", "main").strip(), w1, "the one `git merge-base` alone picks")
+    _eq(_moved_ok(top, "U-001"), _moved_json({}))
+
+
+def case_base_shallow_unknown(tmp):
+    """R6: a depth-1 clone holds no merge base of its branches with origin/main. Where the base's status differs from
+    the working one, whether the base moved the unit cannot be told: the base is unreadable and names nothing -- for
+    the branch's own draft (U-002), and for a unit origin/main did draft (U-001) alike."""
+    seed = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")), "seed")
+    _fx(seed, "branch", "redo")
+    _put(seed, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(seed, "commit", "-qam", "U-001 drafted on main")
+    _fx(seed, "switch", "-q", "redo")
+    _put(seed, _units(("U-001", "missing"), ("U-002", "drafted")))
+    _fx(seed, "commit", "-qam", "redo drafts U-002")
+    _fx(seed, "switch", "-q", "main")
+    _note(seed, "main moves on")
+    top = os.path.join(tmp, "top")
+    _fx(tmp, "-c", "protocol.file.allow=always", "clone", "-q", "--depth", "1", "--no-single-branch",
+        "file://" + seed, top)
+    _fx(top, "switch", "-q", "redo")
+    for ids, own in ((("U-002",), True), (("U-001",), False)):
+        res = _moved_ok(top, *ids, own_moves=own)
+        _eq((res["moved"], res["unreadable"]), ({}, ["origin/main"]), "%s" % (ids,))
+
+
+def case_base_orphan_unknown(tmp):
+    """R7: an orphan branch shares no history with the base, so no merge base tells whether the base moved a unit
+    whose statuses differ: the base is unreadable and names nothing."""
+    top = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "switch", "-q", "--orphan", "w")
+    _put(top, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "add", "-A")
+    _fx(top, "commit", "-qm", "w's own backlog")
+    _eq(_moved_ok(top, "U-001", own_moves=True), _moved_json({}, unreadable=["main"]))
+
+
+def case_base_fork_backlog_unreadable(tmp):
+    """R10: the merge base's backlog holds U-001 twice, so its status there cannot be read: the base is unreadable and
+    names nothing, never falling back to comparing the base with the working backlog alone."""
+    top = _repo(tmp, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _put(top, _units(("U-001", "drafted"), ("U-002", "missing")).replace(
+        "threshold: 2\n", "  - id: U-001\n    status: drafted\nthreshold: 2\n"))
+    _fx(top, "commit", "-qam", "U-001 twice at the fork")
+    _fx(top, "switch", "-q", "-c", "w")
+    _put(top, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "commit", "-qam", "w repairs the backlog, U-001 missing")
+    _fx(top, "switch", "-q", "main")
+    _put(top, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "commit", "-qam", "main repairs it, U-001 drafted")
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001"), _moved_json({}, unreadable=["main"]))
+
+
 def case_own_moves_bad_args(tmp):
     """--own-moves is a bare flag of moved: given twice, with a value, or to another verb, exit 2, nothing read."""
     top = _repo(tmp, MINI)
@@ -2453,6 +2644,9 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_edit_not_a_repository, case_edit_undo, case_bad_args,
          case_own_moves_open_draft_branch, case_own_moves_real_move, case_own_moves_no_merge_base,
          case_own_moves_merge_base_unreadable, case_own_moves_unchanged_without_flag, case_own_moves_bad_args,
+         case_base_merge_commit, case_base_squash_branch_deleted, case_base_own_draft_not_moved,
+         case_base_reset_on_branch_not_moved, case_base_criss_cross_every_merge_base, case_base_shallow_unknown,
+         case_base_orphan_unknown, case_base_fork_backlog_unreadable,
          case_edit_from_refused, case_edit_from_ok, case_edit_walkthrough_unset, case_edit_walkthrough_other,
          case_edit_walkthrough_same, case_edit_no_walkthrough_key, case_edit_block_sets, case_edit_block_refused,
          case_edit_no_blocked_by_key, case_edit_record_noop, case_edit_new_flags_bad_args,

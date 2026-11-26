@@ -496,6 +496,7 @@ Present a concise plan:
 - `Repos: <value> (from REPOS_PATH | REPOS_PATH unset — the default) — another base is set through REPOS_PATH or named at the plan's approval` — or, where the repositories question took *Proceed without the repos*, `Repos: none — PRD-only for every repo (<phase>); name a base at the plan's approval to read the code after all`, `<phase>` being `Phase 0` where Phase 0 step 3a put that question and `Phase 1` where Phase 1 did — the repositories to examine are resolved in Phase 4, after the folder read and the commit scan; a repository with several clones is asked about there
 - Parallelism plan (up to 4 `diff-summarizer` instances per batch; up to 4 repos per Agent message)
 - Write context + whether branching will happen. In a `docs_repo` context (or a `non_docs_repo` confirmed at Phase 0 step 2) the plan says `Branch: yes — Phase 6.2 cuts a branch and the pages are committed on it; answer *Revise plan* with "no branch" to leave them uncommitted on the branch the docs repository is on`. A revision asking for no branch changes the line to `Branch: no — the pages are left uncommitted; no commit, squash, push or pull-request draft`, and one asking for the branch back changes it again. *Approve* records the line of the plan it approves: `branching_confirmed: true` for `Branch: yes`, `false` for `Branch: no`. **Except in the inline-profiling case** (`profile_source: generated`): Phase 0's profiling already cut `profile_branch` and committed the profile on it, so there is no branch left to decline — the line says `Branch: yes — <profile_branch>, which profiling cut, renamed in Phase 6.2`, `branching_confirmed` is `true`, and a revision asking for no branch is answered with that line and the plan re-asked. In every other context `branching_confirmed` is `false` and the line says why.
+- Navigation, where the write context is `docs_repo` or a confirmed `non_docs_repo` and the profile records `builds[]`: `Navigation: regenerated — Phase 6.3 rewrites the generated nav: block of <each builds[] config> to place the pages it adds`, where Phase 6.3's *Regenerate* finds its first two conditions hold now, the third, the pages' content root, being tested there once the targets are known; otherwise `Navigation: not regenerated — <why>`, its reason worded as Phase 9's `Navigation:` line words it. With no `builds[]`, or in any other write context, the plan carries no such line, and Phase 6.3 regenerates nothing.
 - Screenshots: `new_images_wanted` (yes/no, from Phase 1). Phase 5.6 always runs: when yes, its add-list candidates are gathered and confirmed there (specs scan + folder `attachments[]` + manual paths) — list "candidates resolved in Phase 5.6"; either way, Phase 5.6 also reviews the images already on the edited pages for staleness.
 
 Ask:
@@ -782,7 +783,7 @@ Handle the return:
   ```
   The manual path asks in plain text for one entry per target (`path` + `kind` + `section`) and validates path existence for `extend-existing` targets. **Cancel**, on this array and on the two above, stops the run, under Phase 1's opening rule for every **Cancel** below it.
 
-The confirmed target list (from any of the three paths above) is the **authoritative write-target set** for Phase 6.3 and is handed to `doc-planner` in Phase 5.7.
+The confirmed target list (from any of the three paths above) is the **authoritative set of the pages** Phase 6.3 writes and is handed to `doc-planner` in Phase 5.7. The one other file Phase 6.3 writes in the docs repository is each build config its *Regenerate* rewrites, which the plan's `Navigation:` line (Phase 2) named.
 
 ---
 
@@ -1082,7 +1083,7 @@ Write context governs branch/commit (Phase 0 step 6); **the orchestrator commits
 | Write context | Branch | Commit |
 |---|---|---|
 | `obsidian` | NEVER | NEVER |
-| `docs_repo` | YES where `branching_confirmed` (Phase 2) — see Phase 6.2; NO where the operator chose no branch | Follows the Branch column: YES (orchestrator commits doc-writer's `files_written` that lie in the docs repo) only on the branch Phase 6.2 cut; NO otherwise — the pages are left uncommitted on the branch the docs repository is on |
+| `docs_repo` | YES where `branching_confirmed` (Phase 2) — see Phase 6.2; NO where the operator chose no branch | Follows the Branch column: YES (orchestrator commits doc-writer's `files_written` that lie in the docs repo, and each config *Regenerate* rewrote) only on the branch Phase 6.2 cut; NO otherwise — the pages are left uncommitted on the branch the docs repository is on |
 | `non_docs_repo` | Phase 0 step 2 already asked user to confirm; if confirmed, behave as `docs_repo` | As `docs_repo`, where the user confirmed at Phase 0 |
 | `plain_dir` | NEVER | NEVER |
 
@@ -1092,9 +1093,9 @@ This table governs the **documentation write target only**. Independently of eve
 
 - the write context is `docs_repo`, or a `non_docs_repo` the user confirmed;
 - §4's *Where it applies* holds, read from each config a `builds[]` entry of the profile names, and each such file, `<docs_repo_path>/<config>`, is a regular file and no symbolic link (`test -f` succeeding and `test -L` failing on it) whose resolved path lies inside `<docs_repo_path>` — `python3 -I -c 'import os, sys; r, p = (os.path.realpath(a) for a in sys.argv[1:3]); sys.exit(0 if p.startswith(r.rstrip("/") + "/") else 1)' '<docs_repo_path>' '<docs_repo_path>/<config>'` exiting 0, each `'` a value holds written `'\''` — so that no profile entry points the rewrite outside the repository;
-- every `.md` page `doc-writer` wrote under `<docs_repo_path>` lies under one `spaces[]` entry's `content_root`, which is §4's `<content root>`.
+- every `.md` page `doc-writer` wrote under `<docs_repo_path>` lies under one and the same `spaces[]` entry's `content_root`, which is §4's `<content root>` — a page under no content root, or pages under two, fail it.
 
-Run it with `<top>` as `<docs_repo_path>`, each page `doc-writer` wrote under that root that `git -C <docs_repo_path> ls-files` does not list being a page the commit adds, whether or not this run commits. It rewrites each config's generated block over the tree as the run leaves it — an entry `doc-writer` put inside a block gives way to the generated entries — and each config it rewrote is one of this run's written paths from then on: this phase's commit, where the table above makes one, stages it with the pages, Phase 8.5's squash carries it, and Phase 9 names it. Where it does not apply, it writes nothing, into any config, and places no page: an entry `doc-writer` added stands as written, and Phase 9 says why regenerate did not apply, so that a page this run added to a scaffolded repository is placed by hand, by §4's rule. It runs once more at the end of Phase 8, where a `doc-fixer` pass has edited a page since.
+Run it with `<top>` as `<docs_repo_path>`, each page `doc-writer` wrote under that root that `git -C <docs_repo_path> ls-files` does not list being a page the commit adds, whether or not this run commits. It rewrites each config's generated block over the tree as the run leaves it — an entry `doc-writer` put inside a block gives way to the generated entries — and each config it rewrote is held apart from `files_written`, as `nav_configs`: this phase's commit, where the table above makes one, stages it with the pages, Phase 8 step a lists it, Phase 8.5's squash carries it and Phase 9 names it, and nothing that reads `files_written` — Phase 6.4's style check, Phase 6.5's affected pages, Phase 7's review — ever takes it. Where it does not apply, it writes nothing, into any config, and places no page: an entry `doc-writer` added stands as written, and Phase 9's `Navigation:` line says why. It runs once more at the end of Phase 8 (*Regenerate again*).
 
 ---
 
@@ -1104,14 +1105,14 @@ Run it with `<top>` as `<docs_repo_path>`, each page `doc-writer` wrote under th
 
 `docs-style-checker` runs the chain **internally**: the repo's primary linter (Vale, etc.) AND `prose-style-checker` as a complementary semantic / cross-page-consistency pass, merging and deduping both finding sets. The two are complementary, not redundant (Vale: lexical at scale + frontmatter; `prose-style-checker`: engineer jargon, cross-page label consistency, subject-verb agreement, plural/singular label mismatch). The command does NOT invoke `prose-style-checker` separately — the agent already did. It climbs the rungs as a ladder — a detected-but-broken rung does not abandon the ones below it — and, when the caller passes `spaces`, lints each written space with that space's own command.
 
-Invoke `docs-style-checker` on the files written in Phase 6.3:
+Invoke `docs-style-checker` on the files `doc-writer` wrote in Phase 6.3 — its `files_written`, never a config *Regenerate* rewrote:
 
 → Agent (subagent_type: "docs-workflows:docs-style-checker", model: `<detection_model — §9 / §2.1 Sonnet chain; under §10, run_flags.enforced_model>`):
   > "Run the style check for this brief:
   >
   > repo_root: [the resolved docs_repo_path (Phase 0)]
   > site_root: [docs_repo_resolved (Phase 0 step 2), where it differs from docs_repo_path — the site's own .vale.ini, package.json and lint configuration are looked for there first, then in each directory above it up to docs_repo_path; omit the key otherwise]
-  > files:     [absolute paths of every file written or modified in Phase 6.3]
+  > files:     [absolute paths of every file in Phase 6.3's files_written — no config its Regenerate rewrote]
   > spaces:    [one entry per space in profile.spaces that has a profile.commands.per_space entry — {id, content_root, lint}; omit the key entirely when the profile declares no per_space commands]
   > enforced_model: [run_flags.enforced_model, when set — docs-style-checker passes it as model: on its own prose-style-checker dispatch in place of the Sonnet detection chain (workflows-core:model-routing/classification §10); omit the key otherwise]"
 
@@ -1119,7 +1120,7 @@ Write the `style_check` ledger row before acting on the return — rewriting the
 `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` §3), deriving its outcome from the agent's
 `primary_attempts` and `complementary_linter`:
 
-- no file was written in Phase 6.3 → `NOT_APPLICABLE`, `precondition_unmet: "no files written"`.
+- Phase 6.3's `files_written` names no file → `NOT_APPLICABLE`, `precondition_unmet: "no files written"`.
 - a primary rung succeeded → `RAN`, `mechanism: <primary_linter> + prose-style-checker` (the complementary pass always runs; name `<primary_linter>` alone only when the return carries a `complementary_error`), `findings:` = the number of merged violations returned.
 - no primary rung produced a result — every detected rung failed, or none was ever detected — but `prose-style-checker` ran → `DEGRADED`, `not_run:` one entry per rung from `primary_attempts`, and `findings:` = the number of merged violations returned. `ci_still_checks:` depends on which of those two happened: where a rung was **detected and failed**, name the linter the repository's CI runs on the pull request — `"<that linter> runs on the PR in CI"` — or say that none runs where the repository's CI runs none, with its reason (`"none runs: the repository has no CI build"`, or `"none runs: the repository's CI runs no linter"`); where **no rung was ever detected** there is no repo linter to name and CI checks nothing here, so write `"no repo-level linter is configured; the complementary semantic pass was the only coverage"`. §6 makes an empty `ci_still_checks` a BLOCKER, so the field is filled either way — but never by a claim about CI the repository cannot support.
 - `status: ERROR` → `UNAVAILABLE`; convert it per `gate-ledger.md` §5.
@@ -1164,7 +1165,7 @@ Then act on the return:
 - Write context is `obsidian` or `plain_dir` → append BOTH `build_check` and `render_smoke_check` as `NOT_APPLICABLE` with `precondition_unmet` naming the actual context — `"write context is obsidian"` or `"write context is plain_dir"`. These rows are final; the phase does not run.
 - Write context is `docs_repo` or a confirmed `non_docs_repo` → append both provisionally as `RAN`, then rewrite each at the end of this phase per **Ledger (final)** below.
 
-Run this phase after Phase 6.4 **only** when Phase 6.3 wrote files into a buildable docs repo (write context `docs_repo`, or `non_docs_repo` confirmed at Phase 0). Skip for `obsidian` / `plain_dir` (nothing was written into a repo that builds) — the rows above are already recorded. Mechanics: `${CLAUDE_PLUGIN_ROOT}/references/docs-profiles/render-verification.md`. "Affected pages" = every file written or modified in Phase 6.3.
+Run this phase after Phase 6.4 **only** when Phase 6.3's `files_written` names files written into a buildable docs repo (write context `docs_repo`, or `non_docs_repo` confirmed at Phase 0). Skip for `obsidian` / `plain_dir` (nothing was written into a repo that builds) — the rows above are already recorded. Mechanics: `${CLAUDE_PLUGIN_ROOT}/references/docs-profiles/render-verification.md`. "Affected pages" = every file in Phase 6.3's `files_written` — never a config its *Regenerate* rewrote, which is no page.
 
 ### Step 1 — Build check (gating)
 
@@ -1285,7 +1286,7 @@ Invoke `doc-reviewer` (Opus — pinned by its own frontmatter; recorded as `revi
   > "Review the written product documentation for this brief:
   >
   > Task description: [one-paragraph summary of the feature and <KEY>]
-  > Written doc file paths: [absolute paths of every file written in Phase 6.3]
+  > Written doc file paths: [absolute paths of every file in Phase 6.3's files_written — no config its Regenerate rewrote]
   > PRD folder path:        [the PRD folder (Phase 0 step 1)]
   > Diff summaries:         [array of diff-summarizer outputs from Phase 5]
   > doc-planner checklist:  [the full YAML from Phase 5.7 — as Phase 6.3's `BLOCKED` loop left it, where that loop rewrote it]
@@ -1342,7 +1343,7 @@ stops before this phase removes the files it had made, in the same way.
 
 Then gather the change context:
 
-a. Capture the list of changed files from what the run's agents reported — `doc-writer`'s `files_written` and every file `doc-fixer` reported changing — and each config Phase 6.3's regenerate rewrote, never from `git diff --stat`, which lists no new page git does not track yet, and nothing at all once Phase 6.3 has committed the pages on a run that cut no branch.
+a. Capture the list of changed files from what the run's agents reported — `doc-writer`'s `files_written` and every file `doc-fixer` reported changing — and each config in Phase 6.3's `nav_configs`, never from `git diff --stat`, which lists no new page git does not track yet, and nothing at all once Phase 6.3 has committed the pages on a run that cut no branch.
 b. Compose a **change summary block**:
 
 ```
@@ -1371,7 +1372,7 @@ Then spawn all four Phase 4-style maintenance agents in a **single Agent message
 > Determine if *other* documentation needs updating as a consequence of this write (e.g., an index page, a cross-referenced overview, a changelog entry at the docs repository's top level). Do NOT touch release-notes / what's-new pages — `/release-notes` drafts the note, and whoever publishes the release notes takes it from there.
 > - Skip if: the edit is confined to the intended target pages with no inbound cross-references.
 > - Update if: new page requires an index/sidebar entry, new sections require inbound cross-links.
-> [Where Phase 6.3's regenerate rewrote a config: The `nav:` blocks in [each config it rewrote, by absolute path] are generated from the pages' frontmatter, and this run places every page there: never edit one.]
+> [Where Phase 6.3 found its Regenerate applies: The `nav:` blocks in [each config a `builds[]` entry of the profile names, by absolute path] are generated from the pages' frontmatter, and this run places every page there: never edit one.]
 > If an update is warranted: apply minimal edits to the relevant section(s), inside the docs repository.
 > Return: the absolute path of each file you edited and what changed, OR 'no update required (reason)'."
 
@@ -1436,7 +1437,7 @@ are committed by the separate terminal `commit-artifacts` step, per
 `workflows-core:specs-repo-git` §4), and NEVER writes
 into the docs repo or the current working directory, where it is not the specs repository.
 
-**Regenerate again.** Where Phase 6.3's regenerate rewrote a config and a `doc-fixer` pass of Phase 6.4, 6.5 or 7 has edited a page since, run it once more, as Phase 6.3 ran it, over the tree as the run now leaves it, once the comparisons above have been read: a page's `title:` and `order:` decide its place in the sort, and a fixer can change either. A config the paragraph above reported, or reported as unchecked, is left as it stands, and Phase 9 says so. What this second run changes is the run's own uncommitted edit, which Phase 8.5's squash stages where that phase runs.
+**Regenerate again.** Where Phase 6.3 found *Regenerate* applies — whether or not it changed a byte — and the run has edited a page or a config since — a `doc-fixer` pass of Phase 6.4, 6.5 or 7, or a path Agent 1 returned — run it once more, as Phase 6.3 ran it, over the tree as the run now leaves it, once this phase's tree comparisons (the paragraph opening *Once all four have returned*) have been read: a page's `title:` and `order:` decide its place in the sort, and an edit can change either, or a hand edit move an entry in a block. A config those comparisons reported, or reported as unchecked, is left as it stands, and Phase 9 says so. What this second run changes is the run's own uncommitted edit, which Phase 8.5's squash stages where that phase runs.
 
 ---
 
@@ -1579,7 +1580,7 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 ### Output file(s)
 - [absolute path] — [kind: extend-existing | new-page-in-existing-section | new-section]
 - ...
-- Navigation: [regenerated — each config Phase 6.3's regenerate rewrote, by absolute path, and whether Phase 8's second run rewrote it again, or left it as it stands, Phase 8 having reported it | not regenerated — <why: the write context, a `builds[]` config without the generated block, outside the repository or not a regular file, no `builds[]`, or pages under more than one content root>; a page this run added is placed by hand, by `scaffold-tree.md` §4's rule]
+- Navigation: [only where the write context is `docs_repo` or a confirmed `non_docs_repo` and the profile records `builds[]`; omitted otherwise: regenerated — each config in `nav_configs`, by absolute path, and whether Phase 8's second run rewrote it again, or left it as it stands, Phase 8 having reported it | not regenerated — a `builds[]` config holds no generated `nav:` block, so the repository keeps its own navigation and each entry `doc-writer` added stands | not regenerated — <a `builds[]` config that is not a regular file, is a symbolic link or resolves outside the repository | a page under no content root | pages under two content roots>, though every config holds the generated block: a page this run added is placed by hand, by `scaffold-tree.md` §4's rule]
 
 ### Branch
 [branch name created in Phase 6.2, e.g. docs/<key>-<slug>] OR "N/A — no branch created (context: obsidian / plain_dir)" OR "N/A — no branch chosen at plan approval; the pages are left uncommitted on <the branch the docs repository is on>"
@@ -1757,7 +1758,7 @@ name is ever written (§10 privacy).
 - NEVER write product documentation outside the resolved `docs_repo_path` (Phase 0). Outside the docs repository and its remote the run writes these and nothing else: the resolved PRD folder's two drafts, the `<KEY>-implementation-gaps.md` bug-report draft and `pr-draft.md`; a new image placed in the resolved PRD folder's `Doc screenshots/` (Phase 5.6), never its `attachments/`; screenshots staged under `<screenshot_staging_dir>`, and, for each one staged under `$SPECS_PATH`, one line in that repository's local exclude file (Phase 6.3); its session bookkeeping under `$SPECS_PATH`, with the commits, pushes and branch moves `specs-preflight` and `commit-artifacts` make there (`workflows-core:specs-repo-git`), and the session-cost checkpoint Phase 11 advances under `~/.claude/dev-workflows/cost-state/` (`workflows-core:cost-emission` §3); its temporary files, each made by `mktemp` — the commit scan's JSON file (`key-discovery.md` §1), removed once the phase that ran the scan has taken what the run needs of it (Phase 3's *What every scan's result gives the run*), save the one Mode A Phase 0 step 3a keeps, which Phase 3 removes once it has taken its result, or unread where it runs the scan again over a base named at Phase 2's *Revise plan*, and which a run ending before Phase 3 removes as it ends (*Ending early*); Phase 6.3's handoff file and Phase 7's claims file, removed at the top of Phase 8, Phase 8's tree-read files, removed once its comparisons are read, and Phase 6.5's smoke logs, each removed as `render-verification.md` §2 step 5 removes one, save a log that step keeps because it could not show its server stopped, which the record naming it leaves in place; the refresh Phase 1 chose for the resolved code clones, in their own git state (Phase 5's `diff-summarizer`, its Refresh step); whatever the tools it invokes write of their own accord — the repository's own linter, build and server commands, which Phases 6.4 and 6.5 run, above all; and, only behind Phase 8.6's own consent, each accepted Agent 2 or Agent 3 proposal, written to the file that proposal names — which may lie outside every repository, `~/.claude/CLAUDE.md` or `~/.claude/memory/` among them.
 - ALWAYS escalate missing repos before proceeding — never silent skip
 - ALWAYS invoke `docs-style-checker` (Phase 6.4) before `doc-reviewer` (Phase 7)
-- ALWAYS run `scaffold-tree.md` §4's **regenerate** where Phase 6.3 finds it applies, before that phase commits the pages, and again at the end of Phase 8 where a `doc-fixer` pass has edited a page since — NEVER place a page in a generated `nav:` block by hand
+- ALWAYS run `scaffold-tree.md` §4's **regenerate** where Phase 6.3 finds it applies, before that phase commits the pages, and again at the end of Phase 8 where the run has edited a page or a config since — NEVER place a page in a generated `nav:` block by hand, and NEVER hand a config it rewrote to a step that reads `files_written`
 - ALWAYS run the Phase 0 toolchain preflight (`${CLAUDE_PLUGIN_ROOT}/references/toolchain-preflight.md`) after profile resolution and before Phase 1; it prompts only when a required tool is missing
 - ALWAYS run `specs-preflight` in the shared `## Mode detection` section, before dispatching to either mode — so it runs for Mode B as well as Mode A — and again, with the slice's key set, where Phase 0 step 1 re-enters for a slice the operator entered at `DOCUMENT_BRD_NOT_SLICED`; and `commit-artifacts` as the run's last action (per `workflows-core:specs-repo-git`) — bounded to `$SPECS_PATH`'s artifact paths (§2.1), switching only branches the plugin created (§2.2) and pushing only what §4 step 5 allows, always `git -C "$SPECS_PATH"` and never a `cd` (§1 rule 1), never force-pushing, and never failing the run
 - ALWAYS append each gate's ledger row at the moment that gate completes, per `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` — NEVER reconstruct the ledger at Phase 9, and NEVER leave a registry gate without a row
