@@ -171,7 +171,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`
 - `workflows-core:phase-handoff` — `handoff-to-main`, `require-on-main`, `branch-check`, the branch-prefix authority, the handoff consent choice → `workflows-core-handoff.md`
 - `workflows-core:document-lineage` — the lineage record, the moved rule, the kind table, `record` and `upstream-check` → `workflows-core.md`
-- `workflows-core:read-only-repos` — read-only mount detection, write-free ref reading, the `prep` output contract → `workflows-core-read-only.md`
+- `workflows-core:read-only-repos` — read-only mount detection, the clone test, write-free ref reading, the `prep` output contract → `workflows-core-read-only.md`
 - `workflows-core:docs-grounding` — `$DOCS_PATH` grounding: the resolution gate, `resolve-docs-grounding`, grill-rank / writer-attach → `docs-grounding.md`
 - `dev-workflows:bug-diagnosis` — repro first, ranked hypotheses, tagged instrumentation, a regression test at a seam → `dev-workflows.md`
 - `dev-workflows:code-handoff` — the code repo's `finish-code-branch`: commit, consent-gated push and pull request; a fixer's per-unit revert (§6) → `dev-workflows.md`

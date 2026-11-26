@@ -203,7 +203,7 @@ folder an `@<path>` names, a name beginning with a kind token being prefixed onl
 `<KIND>-<the resolved key>-` — is otherwise placed by positive evidence: a resolved `kind: epic`
 counts as an `EPIC-` folder below, and a resolved `kind: prd`, or a `brd-link.md` naming a
 `parent:`, as a `PRD-` folder. A folder none of these places is not guessed at — stop, naming the
-folder and what it carries — and, where it holds an `idea.md` and no `prd.md`, name `/product-workflows:create-prd <KEY>` too, whose `prd.md` places it (`workflows-core:addressing` §4.1).
+folder and what it carries — and, where it holds its PRD under its pre-rename file name and no `prd.md`, print `workflows-core:addressing` §4.1's *The rename* in place of any run, naming none; otherwise, where it holds an `idea.md` and no `prd.md`, name `/product-workflows:create-prd <KEY>` too, whose `prd.md` places it (`workflows-core:addressing` §4.1). On an `@<path>`, which returns no key to make the first test with (§3 step 1), the `/create-prd <KEY>` it names takes *The rename*'s `@<path>` clause after it.
 
 **Check the branch the run stands on** — once the folder is placed, so a placement refusal above is the one reported, and before the Epic listing below reads the tree. On a keyed run, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with no `prefix`: this command's own handoff is conditional, and onto prefixes it does not own. A stop it makes ends the run here. A direct run resolves no folder, and skips this.
 
@@ -809,7 +809,7 @@ Runs after Phase 1.6 and replaces the single Phase 2B exploration subagent for m
    `/dev-workflows:ready` names the agent only to forbid dispatching it. `/idea` pins the same two
    values for the same reason.
 
-   Wait for all scanners in the batch to return. A scanner returning `REPO_MISSING` — the path is not a directory — escalates per the `Repo missing (after resolution)` rule in `workflows-core:escalation-rules`; `DIRTY_TREE` **cannot occur here** — `code-scanner` gates it on `refresh.pull`, which this dispatch
+   Wait for all scanners in the batch to return. A scanner returning `REPO_MISSING` — the path is not a directory, or holds no `.git` of its own — escalates per the `Repo missing (after resolution)` rule in `workflows-core:escalation-rules`; `DIRTY_TREE` **cannot occur here** — `code-scanner` gates it on `refresh.pull`, which this dispatch
    pins false, so no scanner stashes anything in a repo whose pre-existing changes Phase 1.4 has
    already recorded, as `pre_existing_dirty` or in `stash_ref`. It escalates per the `Dirty working tree` rule and `REFRESH_BLOCKED` per the `Refresh blocked` rule in the same file. None is ever hidden, and none is merely announced — each offers the user a way forward (§8.4), and a stop any of them ends in names where the user's work stands (Phase 1.4). A scanner returning `prep.read_only: true` is not a failure — it scanned at `prep.scanned_ref`; escalate per the `Read-only mount — ref stale or diverged` rule in `workflows-core:escalation-rules` only when `prep.ref_committed_at` is more than 14 days old or `prep.head_divergence.ahead > 0`, and cite evidence at `prep.scanned_ref`.
 

@@ -194,8 +194,11 @@ once its check shows every one of them settled:
   repository the item names with it — once that path is absent from, or present at, that
   repository's default ref: in the specs repository the `<default-ref>` this run's preflight
   resolved (`specs-repo-git.md` §3.2), in a code repository its default branch's tip in the refs
-  the run holds — `git -C <repository> cat-file -e <ref>:<path>` fails, or succeeds, where `<ref>`
-  resolves. A path an item names for any other reason — a command's argument (the `<repo-path>` of
+  the run holds — `git -c safe.bareRepository=explicit -C '<repository>' cat-file -e '<ref>:<path>'`
+  fails, or succeeds, each value single-quoted, each `'` it holds written `'\''`, where `<ref>` resolves, on a
+  repository path that has passed
+  `workflows-core:read-only-repos` §0's clone test first, since the pointer is a committed file; an
+  item whose repository fails it carries. A path an item names for any other reason — a command's argument (the `<repo-path>` of
   `/security-workflows:scan`'s Security Engineer offers among them), the deliverable a merge
   carries, a file a decision is about — is settled with its item, by the check for what the item
   waits on. An item naming a worktree that `/security-workflows:scan` 0.2.0 or older failed to
@@ -255,8 +258,10 @@ for good where that command writes another folder's pointer or none:
 root's or a sibling's, whose `priced-against` record names each input's content and no time, and
 `/workflows-core:frames`, which writes none; an item asking for `/security-workflows:scan` on a repository path with no
 register slug beside it — a Security Engineer offer an older `/security-workflows:scan` wrote, say
-— until a run on a machine where that path is that repository, a repository with an `origin` that
-`git -C <path> rev-parse --show-toplevel` names, settles it by the command check, with the slug it
+— until a run on a machine where that path is that repository — a clone by
+`workflows-core:read-only-repos` §0's test, `test -e '<path>/.git'` first and then
+`git -c safe.bareRepository=explicit -C '<path>' rev-parse --show-toplevel` printing its resolved
+path, the path single-quoted, each `'` it holds written `'\''`, with an `origin` — settles it by the command check, with the slug it
 derives there as `/security-workflows:scan` does (`workflows-core:components` §1), every other run
 carrying it; and an item an older pointer wrote naming a pull request by its number alone, until a run settles
 it. One can leave sooner than it should: blame names the commit that put a line on the branch the

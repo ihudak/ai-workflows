@@ -238,6 +238,74 @@ any user might pick, and a convention that can be relied on is worth more than o
 convention is stated in the README and in `docs/`; a user who then names their work `PRD-…` has chosen
 the collision.
 
+**The class of a folder's name — a read-side guard, not a naming rule.** A folder's name, read back
+from the tree, is data: the family's commands wrote it, or a person did, and a command that builds a
+shell command from it would run a `$(`, a backtick or a quote it held. So a caller that cites this
+paragraph holds such a name to one class before any command is built from it. **A name is in the
+class** where it is not empty, its first character is `_` or a letter or digit of any script, every
+later character is a letter, a digit or a combining mark of any script, or one of `. _ @ + -`, and
+it holds no `..` — in regular-expression terms, matched whole:
+
+```
+^(?!.*\.\.)[\p{L}\p{N}_][\p{L}\p{N}\p{M}._@+-]*$
+```
+
+**Test it with this program**, which needs no `grep` that knows Unicode classes, the name handed to
+it as one single-quoted argument, never in a here-document, which a line of the name could end:
+
+```
+python3 -I -c 'import sys, unicodedata as u; n = sys.argv[1]; sys.exit(0 if n and ".." not in n and (n[0] == "_" or n[0].isalnum()) and all(c.isalnum() or c in "._@+-" or u.category(c).startswith("M") for c in n) else 1)' '<name>'
+```
+
+**The name is in the class only where the program exits 0**; any other exit — 1, or 127 where no
+`python3` runs, or any other — means it is outside. `str.isalnum()` holds for exactly the letters
+and digits of Unicode's `L` and `N` categories, and a category opening `M` is a combining mark.
+**First, as text, the name is checked for a `'`**, the one character that ends a single-quoted word:
+a name holding one is outside the class and is never handed to the program, nor is any other command
+built from it. A name read from a listing holds no line feed, since a line of a listing ends at one.
+**Why a name in the class is safe in a command**, single-quoted or double-quoted: no shell
+metacharacter, quote, backslash or `$` passes, nor any whitespace, nor a control or format character
+(categories `Cc` and `Cf`, a bidirectional override among them); every character it admits outside
+ASCII is encoded in bytes no shell treats as syntax; its first character is never `-`, which a
+command would read as an option, nor `.`, so it is never `.` or `..`; and it holds no `..` anywhere,
+which git reads as a range in an object name such as `<ref>:./<path>`. **A folder whose name is
+outside the class is named in words and never read** — by its position in the listing, or as a
+folder named outside this class, never by its name: nothing is built from its name, and the caller
+says what it therefore leaves out. Where git lists the names, the listing pins
+`-c core.quotePath=false`, so a name holding a letter outside ASCII prints as it stands, not in git's
+quoted form; a name holding a control character, `"` or `\` is still printed quoted, opening `"`, and
+is outside the class. The reserved subdirectory names above are no folders' names and are passed over
+before the test, untested and unnamed — `Doc screenshots/` holds a space. A name a command creates
+is not tested here.
+
+**A folder refused by its name, among the folders a caller lists under a folder `<P>`** — `<P>`
+the folder's path relative to `$SPECS_PATH`, as the caller holds it. The caller names it by its
+position: `entry <n> of the checkout's listing of <P>'s folders`, `<n>` its place, counting from 1,
+among the lines `(cd "$SPECS_PATH" && find "./<P>" -mindepth 1 -maxdepth 1 -type d) 2>/dev/null | LC_ALL=C sort`
+prints, or, for a folder only `<default-ref>` holds, `entry <n> of the default branch's listing of
+<P>'s folders`, among the lines its `git -C "$SPECS_PATH" -c core.quotePath=false ls-tree -d
+--name-only "<default-ref>" -- "./<P>/"` prints — and gives the remedy: `rename it into
+workflows-core:addressing §2's class — letters, digits and combining marks of any script and
+. _ @ + -, first a letter, a digit or _, no .. — or move it out of <P>`. **Whether it may be an
+Epic folder** — one holding an `epic.md` — is read off a listing of `<P>`'s files, compared as text,
+its name entering no command: in the checkout, a line of
+`(cd "$SPECS_PATH" && find "./<P>" -mindepth 2 -maxdepth 2 -type f -name epic.md) 2>/dev/null` that
+is, whole, `./<P>/<its name>/epic.md`; on `<default-ref>`, a line of
+`git -C "$SPECS_PATH" -c core.quotePath=false ls-tree -r --name-only "<default-ref>" -- "./<P>/"`
+that is, whole, `<P>/<its name>/epic.md`. A folder no such line names holds no `epic.md` either
+listing can show, and a caller that says what it leaves out for an Epic leaves it out of that.
+
+**What it covers, and what it does not.** Every name `<KIND>-<KEY>-<slug>` whose slug holds only
+letters, digits and combining marks of any script and `-` is inside it — the slug
+`/product-workflows:brd-intake` derives from a heading in another script, `zahlungsauslösung-anforderungen`
+for one, among them — and so are §5's legacy `<KEY>_<slug>` and `<KEY>-<slug>` of such a slug. **It
+is tested on a name a caller reads from a listing** — of the folders or the files under a folder
+the run holds: under the run's own folder, under the PRD folder above an Epic (an Epic run's
+siblings among them), or under a fixed path such as a register's `runs/`, each caller naming which —
+**and not on the path a run's own address resolved** (§3), nor on the PRD folder above it, which
+stand in its commands, double-quoted, as they did before the class was stated. The
+callers that cite this paragraph say which names they test.
+
 ## 3. Resolution
 
 ### Entry point: `resolve-address <ARG> [<KIND>]`
@@ -614,7 +682,8 @@ A folder none of the three places is never guessed at: the caller stops, naming 
 it carries — and, where what it carries is an `idea.md` and no `prd.md`, naming
 `/product-workflows:create-prd <KEY>` too, the run whose `prd.md` places it by rule 3 when the caller
 is re-run (on an `@<path>`, which returns no key for such a folder, §3 step 1 says how the operator
-supplies it). That command is named by a caller for which it is a way on: one working at the PRD
+supplies it) — save where the folder holds its PRD under its pre-rename file name, which that
+command never reads: there the caller prints *The rename* below, and names no run. That command is named by a caller for which it is a way on: one working at the PRD
 level, which the placing lets re-run, or a BRD-route command refusing the folder, which names it as
 the idea route's next step (`/product-workflows:brd-interview`'s and `/product-workflows:brd-split`'s
 `*_EMPTY_INVENTORY` stops for a folder that is neither a slice nor a container and `/product-workflows:prd-ground`'s two no-link stops in its Phase 0 step 6 among them). `/product-workflows:brd-intake` names no command for the folder it refuses, and its
@@ -628,6 +697,43 @@ marks as a slice, and writes `idea.md`. A legacy folder holding an `idea.md` and
 reads — where the idea route handed off before the prefixes, an `idea.md` then asserting no `kind:`
 or `key:` (§5) — is the ordinary case: it is placed by none of the three until one of them writes
 its file into it, and by rule 3 from then on.
+
+**The rename — a folder holding its PRD under its pre-rename file name, and no `prd.md`.** That file
+is a top-level `.md` file whose name is the folder's key followed by `_`, other than `<KEY>_ARD.md` —
+the test `workflows-core:phase-handoff` §4.4's `prd.md` rung makes. A folder written before the kind
+prefixes may hold one, beside an `idea.md` asserting no `kind:` or `key:` or alone (§5); no rule
+above places it, since a PRD under that name asserts no `kind:` either, and
+`/product-workflows:create-prd` reads `prd.md` alone and would write a second PRD beside it. Such a
+folder may hold its ARD under its pre-rename name too, `<KEY>_ARD.md`, which
+`/product-workflows:create-ard` reads as no ARD at all and writes a second beside (§5). So the stop
+of a caller above — a placement stop, or a BRD-route command's refusal naming `/create-prd` as the
+idea route's next step — names no run for such a folder, whether or not it holds an `idea.md`, and
+prints the rename itself, `<path>` being the folder's path relative to `$SPECS_PATH`, `<name>` the
+PRD file's name, `<SPECS_PATH>` the specs directory, and `<the way on>` what the caller gives as the
+way on once the folder holds a `prd.md` — its own re-run, typed out, or, for a refusal, the run it
+names after `/create-prd`. **Before it prints a command, it holds `<name>` and each component of
+`<path>` below `specifications/` to the class of §2**, each checked for a `'` and handed to §2's
+program; the command is printed only where all are in the class (the form below), and otherwise the
+rename is said in words alone (*Where a name is outside the class*, below). `<KEY>_ARD.md` needs no
+test: `<KEY>` is a key §1's grammar holds.
+
+`<KEY>'s PRD is <path>/<name>, under its file name from before the artifact filenames lost their keys, so nothing places this folder — do not run /product-workflows:create-prd here, which reads prd.md alone and would write a second PRD beside it. Rename that file to prd.md ('git -C "<SPECS_PATH>" mv -- "<path>/<name>" "<path>/prd.md"', or, where git does not track it, 'mv -- "<SPECS_PATH>/<path>/<name>" "<SPECS_PATH>/<path>/prd.md"') and give it the frontmatter fields kind: prd and key: <KEY>, which no file written under the old name carries<the ARD clause>, commit the result — each new file, with the old name's removal where git tracked the old file — and land that commit on the specs repository's default branch (workflows-core:addressing §5); then <the way on>.`
+
+**The ARD clause**, where the folder also holds `<KEY>_ARD.md` and no `ard.md`, and empty otherwise:
+`; rename <path>/<KEY>_ARD.md to ard.md in the same change ('git -C "<SPECS_PATH>" mv -- "<path>/<KEY>_ARD.md" "<path>/ard.md"', or, where git does not track it, 'mv -- "<SPECS_PATH>/<path>/<KEY>_ARD.md" "<SPECS_PATH>/<path>/ard.md"') and give it kind: ard and key: <KEY>, or a later /product-workflows:create-ard writes a second ARD beside it`.
+
+**On a specs tree that is no git repository** there is nothing to commit or land, and the second
+sentence reads `Rename that file to prd.md ('mv -- "<SPECS_PATH>/<path>/<name>" "<SPECS_PATH>/<path>/prd.md"') and give it the frontmatter fields kind: prd and key: <KEY>, which no file written under the old name carries<the ARD clause>; then <the way on>.`,
+its ARD clause naming the `mv` alone.
+
+**Where a name is outside the class**, no command is printed and no name either, since printing it
+would hand a person a command built from it: the stop reads `<KEY>'s PRD is a file in this folder whose name begins <KEY>_, under its file name from before the artifact filenames lost their keys, so nothing places this folder — do not run /product-workflows:create-prd here, which reads prd.md alone and would write a second PRD beside it. Rename that file to prd.md and give it the frontmatter fields kind: prd and key: <KEY>[, and <KEY>_ARD.md to ard.md, giving it kind: ard and key: <KEY>,] in one change, committed and landed on the specs repository's default branch where the specs tree is a git repository (workflows-core:addressing §5) — no command is printed for it, since that file's name or its folder's path holds a character outside workflows-core:addressing §2's class; then <the way on>.`,
+the bracketed part printed only where the folder holds `<KEY>_ARD.md` and no `ard.md`.
+
+Once renamed and given those fields, `prd.md` places the folder by rule 3. **On an `@<path>` to a
+folder with no carrier**, which returns no key (§3 step 1), there is no key to make the test with,
+and none is parsed out of a file's name: where the stop names `/create-prd <KEY>`, it follows it
+with `— unless the folder holds its PRD as <KEY>_<slug>.md, under its file name from before the artifact filenames lost their keys: then rename that file to prd.md and give it kind: prd and key: <KEY>, and any <KEY>_ARD.md to ard.md with kind: ard and key: <KEY> (workflows-core:addressing §5), and do not run /product-workflows:create-prd, which would write a second PRD beside it.`
 
 **What a caller does at each level is its own, and so is its refusal of a level it does not work
 at.** Where a refusal names the slices under a container, it finds them by
@@ -687,7 +793,8 @@ needs its `<KEY>_<slug>.md` renamed to `prd.md` and its `<KEY>_ARD.md` to `ard.m
 and unlike the folder nothing resolves them for you: a command meeting the old filename reads the
 artifact as absent, and where that stops it, most stops name a remedy written for a folder that never
 had one — the never-produced stops of `/product-workflows:prd-proposal`,
-`/product-workflows:create-ard` and `/product-workflows:specify` name the rename instead. **Each
+`/product-workflows:create-ard` and `/product-workflows:specify` name the rename instead, and a stop
+on a folder §4.1 places at no level prints it (§4.1, *The rename*). **Each
 renamed file also takes the `kind:` and `key:` its format now carries** — `kind: prd` and
 `key: <KEY>` on `prd.md`, `kind: ard` and the key on `ard.md` — because those fields arrived in the
 same commit as the keyless filenames (1da74804), so no file written under the old names carries

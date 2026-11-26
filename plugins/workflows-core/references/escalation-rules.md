@@ -365,10 +365,10 @@ outcome the command cannot deliver.
 Used when a diff-summarizer or code-scanner batch returns `REPO_MISSING` at
 Phase 5 after Phase 4 already checked, in `/idea` Phase 2.6, which has no
 earlier check, in `/implement` Phase 1.7, and in `/docs-workflows:docs-write` twice: at its Phase 1, before any scan, where a source repository resolves by neither its recorded path nor its origin, and at its Phase 4 on `REPO_MISSING`; and in `/docs-workflows:docs-verify` at the same two points, at its Phase 2 and its Phase 5. `REPO_MISSING` means `repo_path`
-is not a directory, **or** the clone's `origin` slug does not match
+is not a directory, **or** it holds no `.git` of its own, or the clone's `origin` slug does not match
 `repo_url_slug`, or it has no `origin` to compare — the agent's note says which,
-and in the last two the directory exists; *Specify a different absolute path for this repo* is the
-option that resolves those two, which the previous list had no answer
+and in the last three the directory exists; *Specify a different absolute path for this repo* is the
+option that resolves those three, which the previous list had no answer
 for at all. Present this choice per affected repo. No `(Recommended)` marker —
 which option is right depends entirely on why the repo is absent.
 

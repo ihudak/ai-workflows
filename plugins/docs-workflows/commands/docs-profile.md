@@ -203,7 +203,7 @@ Produce a reviewable PR in the **target repo** (never the plugin). **Never push 
    ```
    choices: ["Use proposed branch `<name>` (Recommended)", "Edit the name (you'll be prompted)"]
    ```
-   *Edit the name* asks for the branch name in plain text and confirms it the same way.
+   *Edit the name* asks for the branch name in plain text and confirms it the same way. The name, proposed or typed, is held to the class `workflows-core:branch-naming` §1.3 keeps a branch name inside, tested and, where it fails, handled as that section says — the name handed to a program as one single-quoted argument, never written into a here-document — before it is proposed and again on each edit.
 
 2. **Prepare the working tree.** `git -C <repo-root> status --porcelain`; if non-empty:
    ```

@@ -33,9 +33,19 @@ convention live in ONE place.
 
    Collect them **in the working tree and on `<default-ref>`** — the ref `specs-repo-git.md` §3.2
    resolves for the run's preflight, which `require-on-main` reads too — listing each folder there
-   with `git -C "$SPECS_PATH" ls-tree --name-only "<default-ref>" -- "./<folder>/" 2>/dev/null`,
+   with `git -C "$SPECS_PATH" -c core.quotePath=false ls-tree --name-only "<default-ref>" -- "./<folder>/" 2>/dev/null`,
    `<folder>` relative to `$SPECS_PATH`: a filename above that the ref holds and the working tree
-   does not is a candidate too. A listing that fails — `$SPECS_PATH` no git repository, or no
+   does not is a candidate too. **A candidate is found by its name, compared as text** — `ard.md`,
+   or a name that begins `ard-` and ends `.md`, read off a line of that listing that is, whole,
+   `<folder>/` followed by one path component, or off the working tree's listing of the folder's
+   files, `(cd "$SPECS_PATH" && find "./<folder>" -mindepth 1 -maxdepth 1 -type f) 2>/dev/null | LC_ALL=C sort`.
+   A name of the second kind is held to `addressing.md` §2's class of a folder's name before any
+   command is built from it, `require-on-main`'s and every read below among them: checked as text
+   for a `'`, then handed, as one single-quoted argument, to that section's `python3 -I -c`
+   program, in the class only where it exits 0. One outside it is no candidate and is never read,
+   and the run prints, once for each, `ARD: a file of <the folder's key> named outside workflows-core:addressing §2's class is not read — entry <n> of <the default branch's | the checkout's> listing of that folder's files; rename it into that class — letters, digits and combining marks of any script and . _ @ + -, first a letter, a digit or _, no ..`,
+   `<n>` its place among the lines that listing prints, counting from 1 — the checkout's where the
+   working tree holds it, else the default branch's. A listing that fails — `$SPECS_PATH` no git repository, or no
    `<default-ref>`, the states `require-on-main` meets as its rows H and G — adds none. An
    ARD that reached the default branch after the run's own branch was cut is in no working-tree
    listing, so without the ref's the run would resolve `none` and never ask the gate, which stops

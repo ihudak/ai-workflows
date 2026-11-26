@@ -176,7 +176,7 @@ second positional token is refused (Phase 0 step 1, `SPECIFY_ONE_ADDRESS`).
    it, by positive evidence: a resolved `kind: epic` counts as an `EPIC-` folder here; a resolved
    `kind: prd`, or a `brd-link.md` naming a `parent:`, as a `PRD-` folder. A legacy root container is
    step 0's to refuse, on §4.1's container test, and a folder none of these places is not guessed at
-   — stop with `SPECIFY_UNPLACED: <path> carries no prefix and nothing that places it (workflows-core:addressing §4.1): <the carriers it holds>.`, naming the folder and what it carries — and, where it holds an `idea.md` and no `prd.md`, name `/product-workflows:create-prd <KEY>` too, whose `prd.md` places it (`workflows-core:addressing` §4.1).
+   — stop with `SPECIFY_UNPLACED: <path> carries no prefix and nothing that places it (workflows-core:addressing §4.1): <the carriers it holds>.`, naming the folder and what it carries — and, where it holds its PRD under its pre-rename file name and no `prd.md`, print `workflows-core:addressing` §4.1's *The rename* in place of any run, naming none; otherwise, where it holds an `idea.md` and no `prd.md`, name `/product-workflows:create-prd <KEY>` too, whose `prd.md` places it (`workflows-core:addressing` §4.1). On an `@<path>`, which returns no key to make the first test with (§3 step 1), the `/create-prd <KEY>` it names takes *The rename*'s `@<path>` clause after it.
 
    **A second positional token is refused, on every route** (D4). There is no `<PRD> <Epic>` form to
    fall back to: an Epic key encodes its own ancestry, so a second argument would be derivable from
@@ -954,7 +954,7 @@ derived, resolved or gated, and Phase 4 dispatches no `code-scanner`.
    ```
 
 2. **Build the slug→clone map** (`/epics`-style). For each top-level directory under each entry of
-   `$REPOS_PATH`, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git`
+   `$REPOS_PATH` where `test -e '<dir>/.git'` succeeds — tested before any git call names the directory, and `<dir>` single-quoted in both commands, each `'` it holds written `'\''` (`workflows-core:read-only-repos` §0) — run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -c safe.bareRepository=explicit -C '<dir>' remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git`
    or whose `git remote` call fails/times out. Where `arch_grounding: ON`, mark the clone that is `arch_toplevel` `architecture repository — scanned without refresh`: Phase 4 scans it, where a theme resolves to it, with refresh off.
 
 3. **Resolve each candidate against the map.** One match → use it. An ambiguous slug (multiple
