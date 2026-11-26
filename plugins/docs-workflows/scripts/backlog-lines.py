@@ -2,8 +2,9 @@
 r"""backlog-lines.py — the one line reader of the documentation backlog, <top>/.dev-workflows/docs-backlog.yml.
 
   backlog-lines.py check --repo <top>
-  backlog-lines.py moved --repo <top> --base <name> --id <id> [--id <id> ...]
-  backlog-lines.py edit  --repo <top> --id <id> --status <status> [--page-path <rel>]
+  backlog-lines.py moved --repo <top> --base <name> --id <id> [--id <id> ...] [--own-moves]
+  backlog-lines.py edit  --repo <top> --id <id> --status <status> [--page-path <rel>] [--from <status>]
+                         [--walkthrough <id>] [--block <token>]
   backlog-lines.py --selftest
 
 It never parses the backlog as YAML -- no YAML parser ships with the plugins -- and reads it line by line, in the one
@@ -32,41 +33,57 @@ every ref whose short name is outside the branch class, ^[A-Za-z0-9_][A-Za-z0-9.
 names_outside_class and named nowhere. Of the rest, newest first, it examines at most 60, and keeps each whose object
 id is a full object name, ^[0-9a-f]{40}([0-9a-f]{24})?$, that is not merged into the base and whose backlog differs
 from its merge base's (or that shares no merge base with the base), stopping once it has kept 20. A kept ref's backlog
-is read by its object id with `git cat-file`, at most 1 MiB, and tested as check tests one. An entry absent there, or a
-ref with no backlog, is not moved. A backlog over 1 MiB, out of shape, recorded in the tree as anything but a regular
-file (a symbolic link's blob is its target's name, never a file), holding one of the ids twice, or giving one a status
-outside ^[a-z][a-z-]{0,31}$ -- or a ref git cannot answer for -- makes the ref unreadable. A unit is moved on a ref
-where its status there differs from its status in the working backlog, which must be in shape and hold each --id
-exactly once. It prints {"moved": {<id>: [<ref>...]}, "unreadable": [<ref>...], "read": <n>, "more": <n>,
-"names_outside_class": <n>}: moved names only the ids some ref moved, each ref by its short name, newest first; read
-counts the refs kept, each either compared or unreadable; more counts every ref past the point it stopped.
+is read by its object id with `git cat-file`, at most 1 MiB, and tested as check tests one. An entry absent there, or
+a ref with no backlog, is not moved. A backlog over 1 MiB, out of shape, recorded in the tree as anything but a
+regular file (a symbolic link's blob is its target's name, never a file), holding one of the ids twice, or giving one
+a status outside ^[a-z][a-z-]{0,31}$ -- or a ref git cannot answer for -- makes the ref unreadable. A unit is moved on
+a ref where its status there differs from its status in the working backlog, which must be in shape and hold each --id
+exactly once. With --own-moves it is moved only where the ref changed that status itself: where the status there also
+differs from the unit's status in the backlog at the ref's merge base with the base, so that a branch cut before the
+unit moved on the base, still holding the older status, moves nothing. That backlog is read by its object id within a
+kept ref's limits, and one those limits make unreadable makes the ref unreadable; no backlog there, or no entry for
+the unit, is a status that differs; and a ref sharing no merge base with the base is compared as without the flag.
+Without it a merge base's backlog is compared with the ref's by tree entry alone, never read. It prints {"moved":
+{<id>: [<ref>...]}, "unreadable": [<ref>...], "read": <n>, "more": <n>, "names_outside_class": <n>}: moved names only
+the ids some ref moved, each ref by its short name, newest first; read counts the refs kept, each either compared or
+unreadable; more counts every ref past the point it stopped.
 
-edit writes one unit's move. It refuses, exit 3, the file untouched: a backlog out of shape, an --id no entry or two
-entries hold, an entry with no page_path: line where --page-path is given, a page_path already set to another path
-(null, ~ and an empty value are unset), and a backlog that changed while it read it. Where the unit already holds the
-values asked for, it writes nothing -- the file keeps its bytes and its mtime -- and prints an empty changed.
-Otherwise it replaces the status: value and, where --page-path is given and page_path is unset, the page_path value,
-keeping each line's indent, key, trailing comment and line ending and every other byte; checks that the result reads
-back as that edit, in shape; and writes it atomically, a new file beside the backlog renamed over it. Immediately
-before the rename it reads the backlog again and refuses, exit 3, one that no longer holds the bytes it read; after
-it, it reads the backlog back and requires the bytes it wrote. That narrows the window in which another writer's
-change is lost to the instant between the last read and the rename; it does not close it. Then it runs `git -C <top>
-diff -U0 --no-color --no-ext-diff --no-textconv -- .dev-workflows/docs-backlog.yml`. Where the lines that diff removes
-and adds are not exactly the lines it changed, all inside the entry -- or git cannot show them -- it writes back the
-bytes it read, by the same rename, only where the file still holds what it wrote, reads them back, and exits 4; where
-the file no longer holds what it wrote, it writes nothing back and exits 2. It prints {"first": <n>, "last": <n>,
-"changed": [<n>...]}, the entry's first and last line and the lines it changed; on exit 3 {"refused": "<why>", "line":
-<n>|null, "reason": "<word>"|null}, <why> one of shape, id-absent, id-twice, no-page-path, page-path-set and
-changed-while-reading; on exit 4 {"undone": "<why>", "first": <n>, "last": <n>, "changed": [<n>...]}, <why>
-hunk-outside or diff-failed.
+edit writes one unit's move. It refuses, exit 3, the file untouched: a backlog out of shape; an --id no entry or two
+entries hold; where --from is given, an entry whose status: is another -- tested before the refusals after it; where
+--page-path is given, an entry with no page_path: line, or a page_path already set to another path (null, ~ and an
+empty value are unset); where --walkthrough is given, an entry with no walkthrough: line, or a walkthrough already set
+to another id, unset as page_path is; where --block is given, an entry with no blocked_by: line, or a blocked_by
+holding anything but [] or an empty value; and a backlog that changed while it read it. Where the unit already holds
+the values asked for, it writes nothing -- the file keeps its bytes and its mtime -- and prints an empty changed.
+Otherwise it replaces the status: value -- and the page_path value where --page-path is given and page_path is unset,
+the walkthrough value where --walkthrough is given and walkthrough is unset, and the blocked_by value, by [<token>],
+where --block is given -- keeping each line's indent, key, trailing comment and line ending and every other byte;
+checks that the result reads back as that edit, in shape, each of those keys holding what was asked; and writes it
+atomically, a new file beside the backlog renamed over it. Immediately before the rename it reads the backlog again
+and refuses, exit 3, one that no longer holds the bytes it read; after it, it reads the backlog back and requires the
+bytes it wrote. That narrows the window in which another writer's change is lost to the instant between the last read
+and the rename; it does not close it. Then it runs `git -C <top> diff -U0 --no-color --no-ext-diff --no-textconv --
+.dev-workflows/docs-backlog.yml`. Where the lines that diff removes and adds are not exactly the lines it changed, all
+inside the entry -- or git cannot show them -- it writes back the bytes it read, by the same rename, only where the
+file still holds what it wrote, reads them back, and exits 4; where the file no longer holds what it wrote, it writes
+nothing back and exits 2. It prints {"first": <n>, "last": <n>, "changed": [<n>...]}, the entry's first and last line
+and the lines it changed; on exit 3 {"refused": "<why>", "line": <n>|null, "reason": "<word>"|null}, <why> one of
+shape, id-absent, id-twice, status-differs, no-page-path, page-path-set, no-walkthrough, walkthrough-set,
+no-blocked-by, blocked and changed-while-reading, and line, where it is not null, the line out of shape, the line
+refused or, for a key the entry lacks, the entry's first; on exit 4 {"undone": "<why>", "first": <n>, "last": <n>,
+"changed": [<n>...]}, <why> hunk-outside or diff-failed.
 
-The arguments are tested before anything is read or run: --id against the unit-id class; --base against the branch
-class; --status against ^[a-z][a-z-]{0,31}$, less the words YAML reads as something other than a string (null, true,
-false, yes, no, on, off, y, n); --page-path against ^[A-Za-z0-9_][A-Za-z0-9._/-]*\.md$ with no empty, . or ..
-segment; --repo, a directory, which moved and edit also hold to being a git work tree's top level. A flag given twice
-(--id to moved aside), or as --flag=value, refuses the run. <top>/.dev-workflows must be a real directory and the
-backlog a regular file, both by lstat: a symbolic link to either is refused, never followed, and the backlog is opened
-without following a link and never waited on.
+The arguments are tested before anything is read or run: --id against the unit-id class; --walkthrough against the
+same class, less every value YAML reads, written plain as edit writes it, as something other than a string -- a null,
+boolean, integer, float or date of YAML 1.1 or of YAML 1.2's core schema, such as null, true, y, 017, 0x1f, 1_000,
+1.5, 1e3 or 2026-11-18 -- which would not read back as an id, null as no walkthrough at all (the refusal is a little
+wider, refusing a few spellings of digits, _ and . that YAML reads as strings, such as 0_8 or 2026-1-5); --base against the branch
+class; --status, --from and --block against ^[a-z][a-z-]{0,31}$, less the words YAML reads as something other than a
+string (null, true, false, yes, no, on, off, y, n); --page-path against ^[A-Za-z0-9_][A-Za-z0-9._/-]*\.md$ with no
+empty, . or .. segment; --repo, a directory, which moved and edit also hold to being a git work tree's top level.
+--own-moves takes no value. A flag given twice (--id to moved aside), or as --flag=value, refuses the run.
+<top>/.dev-workflows must be a real directory and the backlog a regular file, both by lstat: a symbolic link to either
+is refused, never followed, and the backlog is opened without following a link and never waited on.
 
 What it prints of the backlog, a ref or an argument is line numbers, counts, fixed words, and values that passed a
 class test: a unit id in the unit-id class, a branch name in the branch class, the schema version's digits. A value
@@ -126,10 +143,23 @@ GIT_TIMEOUT = 30  # seconds, every git call
 UNIT_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", re.ASCII)
 STATUS_RE = re.compile(r"[a-z][a-z-]{0,31}", re.ASCII)
 STATUS_RESERVED = ("null", "true", "false", "yes", "no", "on", "off", "y", "n")  # YAML reads these as no string
+# A plain scalar YAML reads as something other than a string, in every form the unit-id class lets through: YAML 1.1's
+# null, bool, int, float and date, by its type repository's expressions (PyYAML resolves the same less y, n and the
+# spec's wider float), a date's month and day taken at one digit or two as some loaders read one; and YAML 1.2 core's
+# null, bool, int and float. edit writes --walkthrough plain, so such a value would not read back as an id: null, the
+# one that matters most, as no walkthrough at all. The pattern is a little wider than those forms: it also takes a few
+# spellings of digits, _ and . near them that YAML reads as strings, such as 0_8, as the docstring says.
+NON_STRING_RE = re.compile(
+    r"null|Null|NULL"
+    r"|y|Y|yes|Yes|YES|n|N|no|No|NO|true|True|TRUE|false|False|FALSE|on|On|ON|off|Off|OFF"
+    r"|0b[01_]+|0o[0-7]+|0x[0-9a-fA-F_]+|[0-9][0-9_]*"
+    r"|[0-9][0-9_]*\.[0-9._]*(?:[eE][-+]?[0-9]+)?|[0-9]+(?:\.[0-9]*)?[eE][-+]?[0-9]+"
+    r"|[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}", re.ASCII)
 PAGE_PATH_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._/-]*\.md", re.ASCII)
 OBJECT_ID_RE = re.compile(r"[0-9a-f]{40}([0-9a-f]{24})?", re.ASCII)
 BRANCH_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._/@+-]*", re.ASCII)  # read-only-repos section 3's class
-SINGLE_FLAGS = ("--repo", "--base", "--status", "--page-path")  # each taken once: a second refuses the run
+SINGLE_FLAGS = ("--repo", "--base", "--status", "--page-path", "--own-moves", "--from", "--walkthrough",
+                "--block")  # each taken once: a second refuses the run
 
 # The reasons, one word each, the paragraph's: --selftest holds this tuple to it.
 REASONS = ("block-scalar", "anchor", "alias", "tag", "tab", "control", "encoding", "unclosed-quote",
@@ -143,6 +173,10 @@ WHY_ID = "--id is outside the unit-id class"
 WHY_BASE = "--base is outside the branch class"
 WHY_STATUS = "--status is outside the status class"
 WHY_PAGE_PATH = "--page-path is outside the page-path class"
+WHY_FROM = "--from is outside the status class"
+WHY_WALKTHROUGH = ("--walkthrough is outside the unit-id class, or is a spelling YAML reads as no string, "
+                   "or one near such a spelling")
+WHY_BLOCK = "--block is outside the status class"
 WHY_DIR = "<top>/.dev-workflows is not a real directory (absent, or a symbolic link)"
 WHY_FILE = "the backlog is not a regular file (absent, a symbolic link, or another kind of file)"
 WHY_READ = "the backlog could not be read"
@@ -710,10 +744,27 @@ def _tree_entry(top, commit):
     return ABSENT
 
 
-def _ref_blob(top, base_oid, oid):
+def _read_blob(top, entry):
+    """The backlog's bytes at a tree entry, read by object id: a regular file's mode, a blob, at most REF_CAP bytes;
+    ERROR otherwise."""
+    mode, kind, blob = entry
+    if mode not in FILE_MODES or kind != b"blob" or not OBJECT_ID_RE.fullmatch(blob):
+        return ERROR
+    size = _git(top, "cat-file", "-s", blob)
+    text = size[1].strip() if size is not None and size[0] == 0 else b""
+    if not text.isdigit() or int(text) > REF_CAP:
+        return ERROR
+    r = _git(top, "cat-file", "blob", blob)
+    if r is None or r[0] != 0 or len(r[1]) != int(text):
+        return ERROR
+    return r[1]
+
+
+def _ref_blob(top, base_oid, oid, with_base=False):
     """None where the ref is not kept: merged into the base, no backlog in its tree, or the same backlog as its merge
     base's. ERROR where it is kept and cannot be read. Otherwise the backlog's bytes, at most REF_CAP of them, read by
-    object id."""
+    object id. With with_base, a kept ref's answer is a pair: that answer, and the backlog's tree entry at the ref's
+    merge base with the base -- ABSENT where there is no merge base, or no backlog in its tree."""
     if not OBJECT_ID_RE.fullmatch(oid):
         return ERROR
     r = _git(top, "merge-base", "--is-ancestor", oid, base_oid)
@@ -729,27 +780,37 @@ def _ref_blob(top, base_oid, oid):
     mb = _git(top, "merge-base", base_oid, oid)
     if mb is None or mb[0] not in (0, 1):
         return ERROR
-    mb_oid = _oid(mb)
+    mb_oid, mb_entry = _oid(mb), ABSENT
     if mb_oid is not None:  # with no merge base at all the ref is kept: there is nothing to compare it with
         mb_entry = _tree_entry(top, mb_oid)
         if mb_entry is ERROR:
             return ERROR
         if mb_entry == entry:
             return None
-    mode, kind, blob = entry
-    if mode not in FILE_MODES or kind != b"blob" or not OBJECT_ID_RE.fullmatch(blob):
-        return ERROR
-    size = _git(top, "cat-file", "-s", blob)
-    text = size[1].strip() if size is not None and size[0] == 0 else b""
-    if not text.isdigit() or int(text) > REF_CAP:
-        return ERROR
-    r = _git(top, "cat-file", "blob", blob)
-    if r is None or r[0] != 0 or len(r[1]) != int(text):
-        return ERROR
-    return r[1]
+    blob = _read_blob(top, entry)
+    return (blob, mb_entry) if with_base else blob
 
 
-def cmd_moved(top, base, ids):
+def _statuses(blob, ids):
+    """{id: status} of each of `ids` an entry of the backlog `blob` holds; None where the backlog is unreadable: ERROR,
+    out of shape, holding one of the ids twice, or giving one a status outside the status class."""
+    if blob is ERROR:
+        return None
+    try:
+        shape = read_shape(blob)
+    except Out:
+        return None
+    got = {}
+    for uid in ids:
+        hits = [e for e in shape.entries if e.id == uid]
+        if len(hits) > 1 or (hits and not STATUS_RE.fullmatch(hits[0].keys["status"].value.text)):
+            return None
+        if hits:
+            got[uid] = hits[0].keys["status"].value.text
+    return got
+
+
+def cmd_moved(top, base, ids, own_moves=False):
     _require_top(top)
     data, _ = _read_backlog(top)
     try:
@@ -800,29 +861,23 @@ def cmd_moved(top, base, ids):
         if examined == EXAMINE_CAP or kept == READ_REFS_CAP:
             break
         examined += 1
-        blob = _ref_blob(top, base_oid, oid)
-        if blob is None:
+        got = _ref_blob(top, base_oid, oid, own_moves)
+        if got is None:
             continue
         kept += 1
-        theirs = None
-        if blob is not ERROR:
-            try:
-                shape = read_shape(blob)
-                theirs = {}
-                for uid in ids:
-                    hits = [e for e in shape.entries if e.id == uid]
-                    if len(hits) > 1 or (hits and not STATUS_RE.fullmatch(hits[0].keys["status"].value.text)):
-                        theirs = None
-                        break
-                    if hits:
-                        theirs[uid] = hits[0].keys["status"].value.text
-            except Out:
-                theirs = None
-        if theirs is None:
+        blob, mb_entry = got if own_moves and got is not ERROR else (got, ABSENT)
+        theirs = _statuses(blob, ids)
+        # With --own-moves a ref moves a unit only where it changed the unit's status itself: the status at its merge
+        # base, read as the ref's own backlog is read, is the other status it must differ from. No backlog there, or
+        # no entry for the unit, differs from any status.
+        at_base = {}
+        if theirs is not None and mb_entry is not ABSENT:
+            at_base = _statuses(_read_blob(top, mb_entry), ids)
+        if theirs is None or at_base is None:
             unreadable.append(name)
             continue
         for uid, status in theirs.items():
-            if status != own[uid]:
+            if status != own[uid] and status != at_base.get(uid):
                 moved.setdefault(uid, []).append(name)
     return 0, {"moved": {uid: moved[uid] for uid in ids if uid in moved}, "unreadable": unreadable, "read": kept,
                "more": len(remaining) - examined, "names_outside_class": outside}
@@ -868,7 +923,8 @@ def _diff_lines(out):
 
 
 def _scalar_text(value):
-    """A page_path value's text as YAML reads it, where this reader can say; None where it cannot."""
+    """A scalar value's text -- page_path's or walkthrough's -- as YAML reads it, where this reader can say; None where
+    it cannot."""
     if value.kind == "plain":
         return value.text
     if value.kind == "squote":
@@ -903,7 +959,23 @@ def _refuse(why, line=None, reason=None):
     return 3, {"refused": why, "line": line, "reason": reason}
 
 
-def cmd_edit(top, uid, status, page_path):
+def _set_unset(entry, key, new, texts, absent, taken):
+    """Set `key`'s value to `new` in `texts` where it is unset -- null, ~, or an empty value with no block under it --
+    and leave it where it already reads as `new`. The refusal where the entry has no such line (`absent`, at the
+    entry's first line) or the line holds anything else (`taken`, at its line); None otherwise."""
+    item = entry.keys.get(key)
+    if item is None:
+        return _refuse(absent, entry.first)
+    unset = (item.value.kind == "empty" and not item.had_child) or (
+        item.value.kind == "plain" and item.value.text in ("null", "~"))
+    if unset:
+        texts[item.line - 1] = _replace(texts[item.line - 1], item.value, new)
+    elif item.had_child or _scalar_text(item.value) != new:
+        return _refuse(taken, item.line)
+    return None
+
+
+def cmd_edit(top, uid, status, page_path, from_status=None, walkthrough=None, block=None):
     _require_top(top)
     data, mode = _read_backlog(top)
     try:
@@ -916,33 +988,45 @@ def cmd_edit(top, uid, status, page_path):
     if len(hits) > 1:
         return _refuse("id-twice")
     entry = hits[0]
-    texts = list(shape.texts)
     st = entry.keys["status"]
+    if from_status is not None and st.value.text != from_status:  # the move asked for starts from another status
+        return _refuse("status-differs", st.line)
+    texts = list(shape.texts)
     texts[st.line - 1] = _replace(texts[st.line - 1], st.value, status)
     if page_path is not None:
-        pp = entry.keys.get("page_path")
-        if pp is None:
-            return _refuse("no-page-path", entry.first)
-        unset = (pp.value.kind == "empty" and not pp.had_child) or (
-            pp.value.kind == "plain" and pp.value.text in ("null", "~"))
-        if unset:
-            texts[pp.line - 1] = _replace(texts[pp.line - 1], pp.value, page_path)
-        elif pp.had_child or _scalar_text(pp.value) != page_path:
-            return _refuse("page-path-set", pp.line)
+        refused = _set_unset(entry, "page_path", page_path, texts, "no-page-path", "page-path-set")
+        if refused is not None:
+            return refused
+    if walkthrough is not None:
+        refused = _set_unset(entry, "walkthrough", walkthrough, texts, "no-walkthrough", "walkthrough-set")
+        if refused is not None:
+            return refused
+    if block is not None:
+        bb = entry.keys.get("blocked_by")
+        if bb is None:
+            return _refuse("no-blocked-by", entry.first)
+        if not ((bb.value.kind == "empty" and not bb.had_child) or (bb.value.kind == "flow" and bb.value.text == "[]")):
+            return _refuse("blocked", bb.line)
+        texts[bb.line - 1] = _replace(texts[bb.line - 1], bb.value, "[" + block + "]")
     new_data = "\n".join(texts).encode("utf-8")
     changed = [k + 1 for k, (a, b) in enumerate(zip(shape.texts, texts)) if a != b]
     result = {"first": entry.first, "last": entry.last, "changed": changed}
     if not changed:  # the unit already holds these values: nothing is written, and the file keeps its bytes and mtime
         return 0, result
-    # What it is about to write must read back as the edit, in shape, the entry where it was.
+    # What it is about to write must read back as the edit, in shape, the entry where it was, each key asked for
+    # holding what was asked.
     try:
         after = read_shape(new_data)
     except Out:
         raise NotRun(WHY_INTERNAL)
     back = [e for e in after.entries if e.id == uid]
+    keys = back[0].keys if len(back) == 1 else {}
     if (len(back) != 1 or (back[0].first, back[0].last) != (entry.first, entry.last)
-            or back[0].keys["status"].value.text != status
-            or (page_path is not None and _scalar_text(back[0].keys["page_path"].value) != page_path)
+            or keys["status"].value.text != status
+            or (page_path is not None and _scalar_text(keys["page_path"].value) != page_path)
+            or (walkthrough is not None and _scalar_text(keys["walkthrough"].value) != walkthrough)
+            or (block is not None and (keys["blocked_by"].value.kind, keys["blocked_by"].value.text)
+                != ("flow", "[" + block + "]"))
             or not all(entry.first <= k <= entry.last for k in changed)):
         raise NotRun(WHY_INTERNAL)
     try:
@@ -1002,6 +1086,17 @@ def _unit_id(s):
     return UNIT_ID_RE.fullmatch(s) is not None
 
 
+def _status(s):
+    """The status class, less the words YAML reads as something other than a string: --status, --from and --block."""
+    return STATUS_RE.fullmatch(s) is not None and s not in STATUS_RESERVED
+
+
+def _walkthrough(s):
+    """The unit-id class, less every value YAML reads, written plain, as something other than a string, and a few
+    spellings of digits, _ and . that YAML reads as strings: --walkthrough."""
+    return _unit_id(s) and NON_STRING_RE.fullmatch(s) is None
+
+
 def _page_path(s):
     return PAGE_PATH_RE.fullmatch(s) is not None and all(seg not in ("", ".", "..") for seg in s.split("/"))
 
@@ -1021,11 +1116,15 @@ def _args(argv):
     mp.add_argument("--repo")
     mp.add_argument("--base")
     mp.add_argument("--id", action="append")
+    mp.add_argument("--own-moves", action="store_true")
     ep = sub.add_parser("edit", add_help=False, allow_abbrev=False)
     ep.add_argument("--repo")
     ep.add_argument("--id", action="append")
     ep.add_argument("--status")
     ep.add_argument("--page-path")
+    ep.add_argument("--from", dest="from_status")
+    ep.add_argument("--walkthrough")
+    ep.add_argument("--block")
     a = ap.parse_args(argv)
     if a.verb not in ("check", "moved", "edit") or not a.repo:
         raise NotRun(WHY_USAGE)
@@ -1039,8 +1138,11 @@ def _args(argv):
         if a.status is None or not a.id or len(a.id) != 1:
             raise NotRun(WHY_USAGE)
         checks = [(_unit_id(a.id[0]), WHY_ID),
-                  (STATUS_RE.fullmatch(a.status) is not None and a.status not in STATUS_RESERVED, WHY_STATUS),
-                  (a.page_path is None or _page_path(a.page_path), WHY_PAGE_PATH)]
+                  (_status(a.status), WHY_STATUS),
+                  (a.page_path is None or _page_path(a.page_path), WHY_PAGE_PATH),
+                  (a.from_status is None or _status(a.from_status), WHY_FROM),
+                  (a.walkthrough is None or _walkthrough(a.walkthrough), WHY_WALKTHROUGH),
+                  (a.block is None or _status(a.block), WHY_BLOCK)]
     for ok, why in checks:
         if not ok:
             raise NotRun(why)
@@ -1049,8 +1151,8 @@ def _args(argv):
     if a.verb == "check":
         return cmd_check, (a.repo,)
     if a.verb == "moved":
-        return cmd_moved, (a.repo, a.base, list(dict.fromkeys(a.id)))
-    return cmd_edit, (a.repo, a.id[0], a.status, a.page_path)
+        return cmd_moved, (a.repo, a.base, list(dict.fromkeys(a.id)), a.own_moves)
+    return cmd_edit, (a.repo, a.id[0], a.status, a.page_path, a.from_status, a.walkthrough, a.block)
 
 
 def _drop_stdout():
@@ -1094,9 +1196,15 @@ def main(argv):
 
 BF_PATH = os.path.join(HERE, os.pardir, "references", "docs-audit", "backlog-format.md")
 FH_PATH = os.path.join(HERE, os.pardir, "references", "finish-and-handoff.md")
+VIS_PATH = os.path.join(HERE, os.pardir, "references", "docs-workflow", "visibility.md")
+DW_PATH = os.path.join(HERE, os.pardir, "commands", "docs-write.md")
+BR_PATH = os.path.join(HERE, os.pardir, "references", "docs-iteration", "backlog-run.md")
 BF_LEAD = "**The line shape a backlog run reads.**"
-# /docs-write finds the page-level marker in evidence-contract section 3 by this phrase, at its Phase 0 and Phase 9.
+# backlog-run.md's two marker programs, section 10.1's read and section 10.2's test, find the page-level marker in
+# evidence-contract section 3 by this phrase; /docs-write runs them at its Phase 0 and Phase 9.
 EC_MARKER_PHRASE = "this page-level marker, character for character: "
+# An internal page's first line after its frontmatter, which backlog-run.md's section 10.2 program matches as page text.
+VISIBILITY_MARKER = "<!-- docs-visibility: internal -->"
 MINI = ("schema_version: 1\n"                          # 1
         "units:\n"                                     # 2
         "  - id: U-001\n"                              # 3
@@ -1108,6 +1216,8 @@ MINI = ("schema_version: 1\n"                          # 1
         "threshold: 2\n")                              # 9
 DRAFTED = MINI.replace("status: missing", "status: drafted")
 STATUS6 = "    status: missing             # missing|drafted\n"
+WALK8 = "    walkthrough: null\n"
+MINI_W = MINI.replace("    page_path: null\n", "    page_path: null\n" + WALK8)  # the entry is lines 3 to 9
 
 
 class _Fail(Exception):
@@ -1219,23 +1329,27 @@ def _ok(units=1, schema="1", duplicates=(), dup_out=0, ids_out=0):
             "duplicates_outside_class": dup_out, "ids_outside_class": ids_out}
 
 
-def _moved(top, *ids, base="main"):
+def _moved(top, *ids, base="main", own_moves=False):
     argv = ["moved", "--repo", top, "--base", base]
     for i in ids:
         argv += ["--id", i]
+    if own_moves:
+        argv.append("--own-moves")
     return _call(argv)
 
 
-def _moved_ok(top, *ids, base="main"):
-    code, out, err = _moved(top, *ids, base=base)
+def _moved_ok(top, *ids, base="main", own_moves=False):
+    code, out, err = _moved(top, *ids, base=base, own_moves=own_moves)
     _eq((code, err), (0, ""), "moved's exit and stderr")
     return _obj(out)
 
 
-def _edit(top, uid, status, page_path=None):
+def _edit(top, uid, status, page_path=None, frm=None, walkthrough=None, block=None):
     argv = ["edit", "--repo", top, "--id", uid, "--status", status]
-    if page_path is not None:
-        argv += ["--page-path", page_path]
+    for flag, value in (("--page-path", page_path), ("--from", frm), ("--walkthrough", walkthrough),
+                        ("--block", block)):
+        if value is not None:
+            argv += [flag, value]
     return _call(argv)
 
 
@@ -1816,20 +1930,25 @@ def case_edit_undo_failed(tmp):
 
 
 def case_marker_phrase_pinned(tmp):
-    """/docs-write reads the page-level marker out of evidence-contract section 3 by one phrase, at its Phase 0 and
-    at its Phase 9. The phrase stands in that section directly before the marker, once, and in each of the command's
-    two programs, so a reword of either side turns the build red, not a run after its review."""
+    """The backlog runs read the page-level marker out of evidence-contract section 3 by one phrase, in
+    backlog-run.md's two programs -- section 10.1's read and section 10.2's test, which /docs-write runs at its Phase 0
+    and at its Phase 9. The phrase stands in that section directly before the marker, once, and in each of the two
+    programs, so a reword of either side turns the build red, not a run after its review; docs-write.md holds no
+    program of its own that searches by it."""
     with open(os.path.join(HERE, os.pardir, "references", "docs-audit", "evidence-contract.md"), encoding="utf-8") as fh:
         ec = fh.read()
     sec = ec[ec.index("\n## 3. "):ec.index("\n## 4. ")]
     _eq(sec.count(EC_MARKER_PHRASE + "`[NEEDS CLARIFICATION: "), 1,
         "evidence-contract section 3 gives the marker directly after the phrase, once")
     _eq(ec.count(EC_MARKER_PHRASE), 1, "the phrase stands nowhere else in evidence-contract")
-    with open(os.path.join(HERE, os.pardir, "commands", "docs-write.md"), encoding="utf-8") as fh:
+    with open(BR_PATH, encoding="utf-8") as fh:
+        br = fh.read()
+    _eq(br.count('r"' + EC_MARKER_PHRASE + '`(\\[NEEDS CLARIFICATION: [^`]*\\])`"'), 2,
+        "backlog-run's section 10.1 and 10.2 programs search by the phrase, byte for byte")
+    _eq(br.count("character for character: `("), 2, "no program of backlog-run searches by another phrase")
+    with open(DW_PATH, encoding="utf-8") as fh:
         dw = fh.read()
-    _eq(dw.count('r"' + EC_MARKER_PHRASE + '`(\\[NEEDS CLARIFICATION: [^`]*\\])`"'), 2,
-        "docs-write's Phase 0 and Phase 9 programs search by the phrase, byte for byte")
-    _eq(dw.count("character for character: `("), 2, "no program of docs-write searches by another phrase")
+    _eq(dw.count("character for character: `("), 0, "docs-write holds no program of its own that searches by it")
 
 
 def case_edit_undo_failed_over_another_writer(tmp):
@@ -1939,6 +2058,372 @@ def case_bad_args(tmp):
     _eq(os.stat(os.path.join(top, BACKLOG_DIR, BACKLOG_NAME)).st_mtime_ns, stamp, "not rewritten")
 
 
+# ---- moved --own-moves ----
+
+def _units(*pairs):
+    """A backlog in shape holding one entry per (id, status), in order."""
+    return ("schema_version: 1\nunits:\n"
+            + "".join("  - id: %s\n    status: %s\n    page_path: null\n    blocked_by: []\n" % p for p in pairs)
+            + "threshold: 2\n")
+
+
+def _open_draft_repo(tmp, name="top"):
+    """C1's repository. main holds U-001 drafted, U-002 missing, U-003 drafted. docs/w-u-002 was cut while U-001 was
+    still missing on main and moved U-002 to drafted; docs/v-u-003 was cut after and moved U-003 to verified."""
+    top = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing"), ("U-003", "drafted")), name)
+    _branch_with(top, "docs/w-u-002", _units(("U-001", "missing"), ("U-002", "drafted"), ("U-003", "drafted")))
+    _put(top, _units(("U-001", "drafted"), ("U-002", "missing"), ("U-003", "drafted")))
+    _fx(top, "commit", "-qam", "U-001 drafted on main")
+    _branch_with(top, "docs/v-u-003", _units(("U-001", "drafted"), ("U-002", "missing"), ("U-003", "verified")))
+    return top
+
+
+def _moved_json(moved, unreadable=(), read=0, outside=0):
+    return {"moved": moved, "unreadable": list(unreadable), "read": read, "more": 0, "names_outside_class": outside}
+
+
+def case_own_moves_open_draft_branch(tmp):
+    """C1: an open draft branch cut before U-001 was drafted on main still holds it as missing. Without --own-moves
+    that branch moves U-001; with the flag a ref moves a unit only where it changed the unit's status itself."""
+    top = _open_draft_repo(tmp)
+    _eq(_moved_ok(top, "U-001", "U-003"),
+        _moved_json({"U-001": ["docs/w-u-002"], "U-003": ["docs/v-u-003"]}, read=2), "without the flag")
+    _eq(_moved_ok(top, "U-001", "U-003", own_moves=True), _moved_json({"U-003": ["docs/v-u-003"]}, read=2),
+        "with it")
+    _eq(_moved_ok(top, "U-002", own_moves=True), _moved_json({"U-002": ["docs/w-u-002"]}, read=2),
+        "the open branch's own move still counts")
+
+
+def case_own_moves_real_move(tmp):
+    """A branch that moved U-001 itself is moved, flag or not -- where its merge base held the unit at the base's
+    status, where the merge base had no backlog, and where its backlog had no entry for the unit."""
+    for name, at_base in (("real", DRAFTED), ("no-backlog", None), ("no-entry", DRAFTED.replace("U-001", "U-009"))):
+        top = os.path.join(tmp, name)
+        os.makedirs(top)
+        _fx(top, "init", "-q", "-b", "main")
+        if at_base is None:
+            with open(os.path.join(top, "README"), "w", encoding="utf-8") as fh:
+                fh.write("no backlog yet\n")
+        else:
+            _put(top, at_base)
+        _fx(top, "add", "-A")
+        _fx(top, "commit", "-qm", "the merge base")
+        _branch_with(top, "docs/v-u-001", DRAFTED.replace("status: drafted", "status: verified"))
+        _put(top, DRAFTED)
+        with open(os.path.join(top, "NEXT"), "w", encoding="utf-8") as fh:
+            fh.write("main moves on\n")
+        _fx(top, "add", "-A")
+        _fx(top, "commit", "-qm", "main moves on")
+        want = _moved_json({"U-001": ["docs/v-u-001"]}, read=1)
+        _eq(_moved_ok(top, "U-001"), want, name + " without the flag")
+        _eq(_moved_ok(top, "U-001", own_moves=True), want, name + " with it")
+
+
+def case_own_moves_no_merge_base(tmp):
+    """An orphan branch shares no merge base with the base: it is compared as without the flag, and moved."""
+    top = _repo(tmp, MINI)
+    _fx(top, "switch", "-q", "--orphan", "orphan")
+    _put(top, DRAFTED)
+    _fx(top, "add", "-A")
+    _fx(top, "commit", "-qm", "an unrelated history")
+    _fx(top, "switch", "-q", "main")
+    want = _moved_json({"U-001": ["orphan"]}, read=1)
+    _eq(_moved_ok(top, "U-001"), want, "without the flag")
+    _eq(_moved_ok(top, "U-001", own_moves=True), want, "with it")
+
+
+def case_own_moves_merge_base_unreadable(tmp):
+    """With --own-moves the merge base's backlog is read by object id within the ref's own limits. Out of shape (the
+    flow tokenizer's `?` rule), over 1 MiB, a symbolic link, holding the id twice, or giving it a status outside the
+    class, it makes the ref unreadable, and read counts it. Without the flag that merge base is never read, and the
+    same ref is moved."""
+    big = MINI + ("# " + "x" * 1021 + "\n") * 1127
+    _true(REF_CAP < len(big.encode("utf-8")) < 2 * REF_CAP, "the fixture is about 1.1 MiB")
+    for name, at_base in (("shape", MINI.replace("    roles: [customer]\n", "    roles: [a?', [' ]\n")),
+                          ("big", big),
+                          ("linked", None),
+                          ("twice",
+                           MINI.replace("threshold: 2\n", "  - id: U-001\n    status: missing\nthreshold: 2\n")),
+                          ("odd-status", MINI.replace("status: missing", "status: Missing!"))):
+        top = os.path.join(tmp, name)
+        path = os.path.join(top, BACKLOG_PATH)
+        os.makedirs(os.path.join(top, BACKLOG_DIR))
+        _fx(top, "init", "-q", "-b", "main")
+        if at_base is None:  # a committed link, whose blob is its target's text, never a file
+            os.symlink(MINI, path)
+        else:
+            _put(top, at_base)
+        _fx(top, "add", "-A")
+        _fx(top, "commit", "-qm", "the merge base")
+        _fx(top, "switch", "-q", "-c", "docs/w-u-001")
+        os.remove(path)
+        _put(top, DRAFTED)
+        _fx(top, "add", "-A")
+        _fx(top, "commit", "-qm", "U-001 drafted on a branch")
+        _fx(top, "switch", "-q", "main")
+        os.remove(path)
+        _put(top, MINI)
+        _fx(top, "add", "-A")
+        _fx(top, "commit", "-qm", "main moves on")
+        _eq(_moved_ok(top, "U-001", own_moves=True), _moved_json({}, unreadable=["docs/w-u-001"], read=1),
+            name + " with the flag")
+        _eq(_moved_ok(top, "U-001"), _moved_json({"U-001": ["docs/w-u-001"]}, read=1), name + " without it")
+
+
+def case_own_moves_unchanged_without_flag(tmp):
+    """Without --own-moves, moved prints what it printed before the flag existed, byte for byte: every key, a moved
+    unit, an unreadable ref and a name outside the class, pinned to a literal."""
+    top = _open_draft_repo(tmp)
+    _branch_with(top, "bad-shape", DRAFTED.replace("    roles: [customer]\n", "    roles: |\n"))
+    _branch_with(top, "x$(id)", DRAFTED)
+    code, out, err = _moved(top, "U-001", "U-003")
+    _eq((code, err), (0, ""), "exit and stderr")
+    _eq(out, '{\n'
+             '  "moved": {\n'
+             '    "U-001": [\n'
+             '      "docs/w-u-002"\n'
+             '    ],\n'
+             '    "U-003": [\n'
+             '      "docs/v-u-003"\n'
+             '    ]\n'
+             '  },\n'
+             '  "unreadable": [\n'
+             '    "bad-shape"\n'
+             '  ],\n'
+             '  "read": 3,\n'
+             '  "more": 0,\n'
+             '  "names_outside_class": 1\n'
+             '}\n', "stdout, byte for byte")
+
+
+def case_own_moves_bad_args(tmp):
+    """--own-moves is a bare flag of moved: given twice, with a value, or to another verb, exit 2, nothing read."""
+    top = _repo(tmp, MINI)
+    moved = ["moved", "--repo", top, "--base", "main", "--id", "U-001"]
+    for argv in (moved + ["--own-moves", "--own-moves"], moved + ["--own-moves=yes"], moved + ["--own-moves", "yes"],
+                 ["edit", "--repo", top, "--id", "U-001", "--status", "drafted", "--own-moves"],
+                 ["check", "--repo", top, "--own-moves"]):
+        code, out, err = _call(argv)
+        _refused(code, out, err, WHY_USAGE)
+        _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "%r: nothing read, run or written" % (argv[3:],))
+
+
+# ---- edit --from, --walkthrough, --block ----
+
+def _stat(top):
+    st = os.stat(os.path.join(top, BACKLOG_PATH))
+    return st.st_ino, st.st_mtime_ns
+
+
+def _edit_refused(top, data, want, *args, **flags):
+    """edit exits 3 with `want`, writing nothing: the bytes, the inode and the mtime as they were."""
+    before = _stat(top)
+    code, out, err = _edit(top, *args, **flags)
+    _eq((code, err), (3, ""), "exit and stderr")
+    _eq(_obj(out), want)
+    _eq(_IO["writes"], 0, "nothing written")
+    _eq(_get(top), data.encode("utf-8"), "untouched")
+    _eq(_stat(top), before, "inode and mtime")
+
+
+def case_edit_from_refused(tmp):
+    """--from names a status the entry does not hold: exit 3, status-differs, its status line -- tested after the id
+    and before anything else, a missing page_path line included."""
+    top = _repo(tmp, MINI)
+    _edit_refused(top, MINI, {"refused": "status-differs", "line": 6, "reason": None}, "U-001", "verified",
+                  frm="drafted")
+    _edit_refused(top, MINI, {"refused": "id-absent", "line": None, "reason": None}, "U-404", "verified",
+                  frm="drafted")
+    data = MINI.replace("    page_path: null\n", "")
+    top = _repo(tmp, data, "no-page-path")
+    _edit_refused(top, data, {"refused": "status-differs", "line": 6, "reason": None}, "U-001", "verified",
+                  "docs/a.md", frm="drafted")
+
+
+def case_edit_from_ok(tmp):
+    """--from names the entry's status: the edit goes on, as without it -- and with --walkthrough, the verify move."""
+    top = _repo(tmp, DRAFTED)
+    code, out, err = _edit(top, "U-001", "verified", frm="drafted")
+    _eq((code, err), (0, ""))
+    _eq(_obj(out), {"first": 3, "last": 8, "changed": [6]})
+    _eq(_get(top), DRAFTED.replace("status: drafted", "status: verified").encode("utf-8"))
+    data = MINI_W.replace("status: missing", "status: drafted")
+    top = _repo(tmp, data, "verify")
+    code, out, err = _edit(top, "U-001", "verified", frm="drafted", walkthrough="U-001")
+    _eq((code, err), (0, ""), "the verify move")
+    _eq(_obj(out), {"first": 3, "last": 9, "changed": [6, 8]}, "the verify move")
+    _eq(_get(top), data.replace("status: drafted", "status: verified").replace(WALK8, "    walkthrough: U-001\n")
+        .encode("utf-8"), "the verify move")
+
+
+def case_edit_walkthrough_unset(tmp):
+    """An unset walkthrough line -- null, ~, or an empty value, with a comment or without -- takes the id; every other
+    byte is kept, a CRLF ending and the comment included."""
+    for name, line, want in (("null", WALK8, "    walkthrough: U-001\n"),
+                             ("tilde", "    walkthrough: ~\n", "    walkthrough: U-001\n"),
+                             ("empty", "    walkthrough:\n", "    walkthrough: U-001\n"),
+                             ("commented", "    walkthrough:   # none yet\n", "    walkthrough: U-001   # none yet\n")):
+        for eol in ("\n", "\r\n"):
+            label = name + ("-crlf" if eol == "\r\n" else "")
+            data = MINI_W.replace(WALK8, line).replace("\n", eol)
+            top = _repo(tmp, data, label)
+            code, out, err = _edit(top, "U-001", "missing", walkthrough="U-001")
+            _eq((code, err), (0, ""), label)
+            _eq(_obj(out), {"first": 3, "last": 9, "changed": [8]}, label)
+            _eq(_get(top), MINI_W.replace(WALK8, want).replace("\n", eol).encode("utf-8"), label)
+
+
+def case_edit_walkthrough_other(tmp):
+    """A walkthrough line naming another id, or holding a block, is set: exit 3, walkthrough-set, its line."""
+    for name, lines in (("other", "    walkthrough: W-9\n"), ("quoted", "    walkthrough: 'W-9'\n"),
+                        ("child", "    walkthrough:\n      id: U-001\n")):
+        data = MINI_W.replace(WALK8, lines)
+        top = _repo(tmp, data, name)
+        _edit_refused(top, data, {"refused": "walkthrough-set", "line": 8, "reason": None}, "U-001", "drafted",
+                      walkthrough="U-001")
+
+
+def case_edit_walkthrough_same(tmp):
+    """A walkthrough line already reading as the id is left as it is, quoted or plain."""
+    data = MINI_W.replace(WALK8, "    walkthrough: \"U-001\"\n")
+    top = _repo(tmp, data)
+    code, out, err = _edit(top, "U-001", "drafted", walkthrough="U-001")
+    _eq((code, err), (0, ""))
+    _eq(_obj(out), {"first": 3, "last": 9, "changed": [6]})
+    _eq(_get(top), data.replace("status: missing", "status: drafted").encode("utf-8"), "the line unchanged")
+    data = MINI_W.replace(WALK8, "    walkthrough: U-001\n")
+    top = _repo(tmp, data, "plain")
+    before = _stat(top)
+    code, out, err = _edit(top, "U-001", "missing", walkthrough="U-001")
+    _eq((code, out and _obj(out), err), (0, {"first": 3, "last": 9, "changed": []}, ""), "plain, nothing to change")
+    _eq((_get(top), _stat(top)), (data.encode("utf-8"), before), "plain, nothing written")
+
+
+def case_edit_no_walkthrough_key(tmp):
+    top = _repo(tmp, MINI)
+    _edit_refused(top, MINI, {"refused": "no-walkthrough", "line": 3, "reason": None}, "U-001", "drafted",
+                  walkthrough="U-001")
+
+
+def case_edit_block_sets(tmp):
+    """An empty blocked_by -- [] or an empty value, with a comment or without -- takes [<token>]. The record move's
+    three flags together change two lines; over a backlog dirty on another line the same edit is undone, exit 4."""
+    for name, line, want in (("flow", "    blocked_by: []\n", "    blocked_by: [claims-unresolved]\n"),
+                             ("empty", "    blocked_by:\n", "    blocked_by: [claims-unresolved]\n"),
+                             ("commented", "    blocked_by:   # none\n",
+                              "    blocked_by: [claims-unresolved]   # none\n")):
+        data = MINI.replace("    blocked_by: []\n", line)
+        top = _repo(tmp, data, name)
+        code, out, err = _edit(top, "U-001", "missing", block="claims-unresolved")
+        _eq((code, err), (0, ""), name)
+        _eq(_obj(out), {"first": 3, "last": 8, "changed": [8]}, name)
+        _eq(_get(top), data.replace(line, want).encode("utf-8"), name)
+    data = MINI_W.replace("status: missing", "status: drafted")
+    want = data.replace(WALK8, "    walkthrough: U-001\n").replace("blocked_by: []", "blocked_by: [claims-unresolved]")
+    top = _repo(tmp, data, "record")
+    code, out, err = _edit(top, "U-001", "drafted", frm="drafted", walkthrough="U-001", block="claims-unresolved")
+    _eq((code, err), (0, ""), "the record move")
+    _eq(_obj(out), {"first": 3, "last": 9, "changed": [8, 9]}, "the record move")
+    _eq(_get(top), want.encode("utf-8"), "the record move")
+    top = _repo(tmp, data, "undone")
+    dirty = data.replace("schema_version: 1\n", "schema_version: 1  # touched\n")
+    _put(top, dirty)
+    code, out, err = _edit(top, "U-001", "drafted", frm="drafted", walkthrough="U-001", block="claims-unresolved")
+    _eq((code, err), (4, ""), "undone")
+    _eq(_obj(out), {"undone": "hunk-outside", "first": 3, "last": 9, "changed": [8, 9]}, "undone")
+    _eq(_get(top), dirty.encode("utf-8"), "byte-equal to what it read")
+
+
+def case_edit_block_refused(tmp):
+    """A blocked_by holding anything but [] or an empty value -- a token, the same token, a block sequence, null, ~, or
+    an empty flow sequence spelled other than [] -- is blocked: exit 3, its line."""
+    for name, lines in (("token", "    blocked_by: [env-down]\n"),
+                        ("same-token", "    blocked_by: [claims-unresolved]\n"),
+                        ("sequence", "    blocked_by:\n      - env-down\n"),
+                        ("null", "    blocked_by: null\n"),
+                        ("tilde", "    blocked_by: ~\n"),
+                        ("spaced", "    blocked_by: [ ]\n")):
+        data = MINI.replace("    blocked_by: []\n", lines)
+        top = _repo(tmp, data, name)
+        _edit_refused(top, data, {"refused": "blocked", "line": 8, "reason": None}, "U-001", "missing",
+                      block="claims-unresolved")
+
+
+def case_edit_no_blocked_by_key(tmp):
+    data = MINI.replace("    blocked_by: []\n", "")
+    top = _repo(tmp, data)
+    _edit_refused(top, data, {"refused": "no-blocked-by", "line": 3, "reason": None}, "U-001", "missing",
+                  block="claims-unresolved")
+
+
+def case_edit_record_noop(tmp):
+    """The record move over a unit that already holds what it asks: exit 0, changed empty, nothing written."""
+    for name, data, flags in (("status", DRAFTED, {}),
+                              ("walkthrough", MINI_W.replace("status: missing", "status: drafted")
+                               .replace(WALK8, "    walkthrough: U-001\n"), {"walkthrough": "U-001"})):
+        top = _repo(tmp, data, name)
+        before = _stat(top)
+        code, out, err = _edit(top, "U-001", "drafted", frm="drafted", **flags)
+        _eq((code, err), (0, ""), name)
+        _eq(_obj(out), {"first": 3, "last": 8 if name == "status" else 9, "changed": []}, name)
+        _eq(_IO["writes"], 0, name + ": nothing written")
+        _eq((_get(top), _stat(top)), (data.encode("utf-8"), before), name + ": bytes, inode and mtime")
+
+
+# --walkthrough values in the unit-id class that YAML reads, written plain, as no string, one row per form: null (the
+# one that would read back as no walkthrough), YAML 1.1's and 1.2's booleans, integers (decimal, 1.1's octal, hex,
+# binary, underscores; 1.2's octal), floats (1.1's dotted forms, the spec's wider one, 1.2's exponent forms) and a date
+# (two digits each, as YAML 1.1 has it, and one, as some loaders take it). `~` is outside the class already, and its row
+# holds that too.
+NON_STRING_IDS = ("null", "Null", "NULL", "~", "true", "True", "FALSE", "yes", "No", "ON", "off", "y", "N", "123", "0",
+                  "017", "08", "0x1F", "0o17", "0b101", "1_000", "1__", "1.5", "1.", "1.2.3", "1e3", "1E-3", "1.5e3",
+                  "2026-11-18", "2026-1-5")
+# Ids near those forms that YAML reads as strings, which --walkthrough takes.
+STRING_IDS = ("U-001", "W-9", "1-2", "inf", "nan", "x1e3", "0x", "0b2", "1_000e3", "1.2-3", "2026-11", "Y2K",
+              "nullable", "onboarding", "yes-no")
+
+
+def case_edit_new_flags_bad_args(tmp):
+    """Each new flag outside its class, given twice or as --flag=value: exit 2, nothing read, run or written. A
+    --walkthrough YAML reads as no string is outside its class; one near such a form passes."""
+    top = _repo(tmp, MINI)
+    before = _stat(top)
+    edit = ["edit", "--repo", top, "--id", "U-001", "--status", "drafted"]
+    for extra, why in ((["--from", "Drafted!"], WHY_FROM), (["--from", "null"], WHY_FROM),
+                       (["--walkthrough", "../x"], WHY_WALKTHROUGH), (["--walkthrough", "U-001\n"], WHY_WALKTHROUGH),
+                       (["--block", "a b"], WHY_BLOCK), (["--block", "true"], WHY_BLOCK),
+                       (["--from", "drafted", "--from", "drafted"], WHY_USAGE),
+                       (["--walkthrough", "U-001", "--walkthrough", "U-001"], WHY_USAGE),
+                       (["--block", "x", "--block", "x"], WHY_USAGE), (["--block=x"], WHY_USAGE),
+                       (["--from"], WHY_USAGE)) + tuple((["--walkthrough", v], WHY_WALKTHROUGH)
+                                                        for v in NON_STRING_IDS):
+        code, out, err = _call(edit + extra)
+        _refused(code, out, err, why)
+        _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "%r: nothing read, run or written" % (extra,))
+    for v in STRING_IDS:
+        _eq(_args(edit + ["--walkthrough", v])[1][5], v, "%r passes" % v)
+    for flag in ("--from", "--walkthrough", "--block"):  # edit's flags, unknown to moved
+        code, out, err = _call(["moved", "--repo", top, "--base", "main", "--id", "U-001", flag, "x"])
+        _refused(code, out, err, WHY_USAGE)
+    _eq((_get(top), _stat(top)), (MINI.encode("utf-8"), before), "untouched")
+
+
+def case_visibility_marker_pinned(tmp):
+    """The visibility marker is page text backlog-run.md's section 10.2 program matches, which /docs-write runs at its
+    Phase 9: visibility.md section 5 states it on a line of its own, once, backlog-run.md holds it as the program's
+    Python literal, once, and docs-write.md, which holds no copy of that program, holds the literal nowhere."""
+    with open(VIS_PATH, encoding="utf-8") as fh:
+        vis = fh.read()
+    sec = vis[vis.index("\n## 5. "):vis.index("\n## 6. ")]
+    _eq(sec.split("\n").count(VISIBILITY_MARKER), 1, "visibility.md section 5 states the marker on a line, once")
+    with open(BR_PATH, encoding="utf-8") as fh:
+        br = fh.read()
+    _eq(br.count('"' + VISIBILITY_MARKER + '"'), 1, "backlog-run's section 10.2 program holds its literal, once")
+    with open(DW_PATH, encoding="utf-8") as fh:
+        dw = fh.read()
+    _eq(dw.count('"' + VISIBILITY_MARKER + '"'), 0, "docs-write holds the marker's literal nowhere")
+
+
 def case_shape_paragraph_pinned(tmp):
     """BF section 1's shape paragraph names, in its out-of-shape list, exactly the reasons this script gives."""
     with open(BF_PATH, encoding="utf-8") as fh:
@@ -1966,6 +2451,12 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_edit_undo_failed_over_another_writer, case_edit_undo_failed_unreadable,
          case_edit_noop,
          case_edit_not_a_repository, case_edit_undo, case_bad_args,
+         case_own_moves_open_draft_branch, case_own_moves_real_move, case_own_moves_no_merge_base,
+         case_own_moves_merge_base_unreadable, case_own_moves_unchanged_without_flag, case_own_moves_bad_args,
+         case_edit_from_refused, case_edit_from_ok, case_edit_walkthrough_unset, case_edit_walkthrough_other,
+         case_edit_walkthrough_same, case_edit_no_walkthrough_key, case_edit_block_sets, case_edit_block_refused,
+         case_edit_no_blocked_by_key, case_edit_record_noop, case_edit_new_flags_bad_args,
+         case_visibility_marker_pinned,
          case_shape_paragraph_pinned, case_marker_phrase_pinned)
 
 
