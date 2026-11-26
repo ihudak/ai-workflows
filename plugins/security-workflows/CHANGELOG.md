@@ -5,13 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [0.13.1] — 2026-11-26
+## [0.13.2] — 2026-11-26
 
-**What changes for you.** `/scan`'s reservations test each run record's file name before they copy it from another branch, so a file name holding a command substitution no longer runs it. Needs `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).
+**What changes for you.** `/scan`'s reservations test each run record's file name before they copy it from another branch, so a file name holding a command substitution no longer runs it. Needs `workflows-core` 1.100.2 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.2 bullet).
 
 ### Fixed
 
 - **`/scan` Phase 0 step 6, the reservations.** Its listing of a `session/*` branch's `security/<repo-slug>/runs/` pins `-c core.quotePath=false`, and each record's file name is held to `workflows-core:addressing` §2's class — checked for a `'`, then handed to that section's `python3 -I -c` program — before the test of its path or the `git show` that copies it; that `git show`'s object is now double-quoted. A name outside the class, or a line in git's quoted form, is not copied, and the report's `### Register` names it by its position in that branch's listing, never by its name.
+
+## [0.13.1] — 2026-11-26
+
+**What changes for you.** Nothing in a scan's behaviour: `/scan` reads its repository's slug with the command `workflows-core` 1.100.1's `components` §1 now gives, `git -c safe.bareRepository=explicit -C '<repo root>' remote get-url origin`, its path single-quoted. Update with `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).
+
+### Fixed
+
+- **`commands/scan.md` Phase 0 step 5.** The `<repo-slug>` line quoted `components` §1's command without the setting and the quoting that section now gives; it now carries both, and says that the top level `git rev-parse --show-toplevel` printed holds the `.git` §1 asks of a directory.
 
 ## [0.13.0] — 2026-11-25
 

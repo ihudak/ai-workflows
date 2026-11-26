@@ -37,7 +37,7 @@ Refuse to run without `repo_path` and at least one element in **`refs`**.
 records an entry's refs as `repo` / `branch` / `base` / `commit` / `pushed` — its other fields, an
 `at:` instant and any `accepted:` lineage links, are no refs — and records no URL, no host, no PR id,
 so there is no host to route on and no forge to ask. The diff is taken directly
-(`git -C <repo_path> diff <branch_to>...<branch_from>`, `branch_from` accepted as a commit sha, the
+(`git -c safe.bareRepository=explicit -C "<repo_path>" diff <branch_to>...<branch_from>`, `branch_from` accepted as a commit sha, the
 form both callers hand, `branch_to` read as `origin/<branch_to>` wherever the local branch is absent
 or an ancestor of it) — except where `branch_from` has already landed on `branch_to`, which empties that range:
 the agent then reads the merge that landed it (`<landing>^1...<branch_from>`), or, where a
@@ -52,7 +52,7 @@ commit with no parent is read against the empty tree, or, in a shallow clone, wh
 the clone's boundary, comes back unresolved.
 
 When `repo_url_slug` is provided, before summarising run
-`git -C <repo_path> remote get-url origin`, strip any trailing `/` and then a trailing `.git`, and compare
+`git -c safe.bareRepository=explicit -C "<repo_path>" remote get-url origin`, strip any trailing `/` and then a trailing `.git`, and compare
 the URL's last path segment — what follows its last `/` or `:` — to `repo_url_slug`. On mismatch, return
 `status: REPO_MISSING` with a note naming both slugs — do NOT summarise the wrong
 repository. When `repo_url_slug` is absent, trust `repo_path` as given.
@@ -101,7 +101,7 @@ aggregate_summary: |
 | Status              | Meaning                                                                        |
 |---------------------|--------------------------------------------------------------------------------|
 | `OK`                | Every element resolved on its own ref; summaries complete.                     |
-| `REPO_MISSING`      | `repo_path` does not exist or is not a git repo.                              |
+| `REPO_MISSING`      | `repo_path` does not exist, holds no `.git` of its own, or is not a git repo; or, where `repo_url_slug` was given, its `origin` slug differs from it. |
 | `DIRTY_TREE`        | Working tree is dirty and refresh was requested, on a **writable** mount; orchestrator must escalate. A read-only mount never returns this. |
 | `REFRESH_BLOCKED`   | `git fetch` or `git pull` genuinely failed (auth, network, non-fast-forward); orchestrator escalates. A read-only mount is NOT a cause — resolution proceeds at `prep.scanned_ref` with `prep.read_only: true`. |
 | `NO_PRS_RESOLVED`   | None of the provided `refs` elements could be resolved; `unresolved_prs` lists all of them.|

@@ -809,7 +809,7 @@ Runs after Phase 1.6 and replaces the single Phase 2B exploration subagent for m
    `/dev-workflows:ready` names the agent only to forbid dispatching it. `/idea` pins the same two
    values for the same reason.
 
-   Wait for all scanners in the batch to return. A scanner returning `REPO_MISSING` — the path is not a directory — escalates per the `Repo missing (after resolution)` rule in `workflows-core:escalation-rules`; `DIRTY_TREE` **cannot occur here** — `code-scanner` gates it on `refresh.pull`, which this dispatch
+   Wait for all scanners in the batch to return. A scanner returning `REPO_MISSING` — the path is not a directory, or holds no `.git` of its own — escalates per the `Repo missing (after resolution)` rule in `workflows-core:escalation-rules`; `DIRTY_TREE` **cannot occur here** — `code-scanner` gates it on `refresh.pull`, which this dispatch
    pins false, so no scanner stashes anything in a repo whose pre-existing changes Phase 1.4 has
    already recorded, as `pre_existing_dirty` or in `stash_ref`. It escalates per the `Dirty working tree` rule and `REFRESH_BLOCKED` per the `Refresh blocked` rule in the same file. None is ever hidden, and none is merely announced — each offers the user a way forward (§8.4), and a stop any of them ends in names where the user's work stands (Phase 1.4). A scanner returning `prep.read_only: true` is not a failure — it scanned at `prep.scanned_ref`; escalate per the `Read-only mount — ref stale or diverged` rule in `workflows-core:escalation-rules` only when `prep.ref_committed_at` is more than 14 days old or `prep.head_divergence.ahead > 0`, and cite evidence at `prep.scanned_ref`.
 

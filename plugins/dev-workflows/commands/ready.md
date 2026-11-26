@@ -502,8 +502,8 @@ this run. This is the mechanical half of that dimension. **The optional rung is 
    found (`design-format.md`'s header `- **Repos**: <the confirmed implementation repos this design
    spans>`); and any ARD's `grounded_repos:` frontmatter list (`product-workflows:ard-format`). Dedupe.
 2. Build the slug→clone map **exactly as `epics.md` Phase 4 does**: for each top-level directory under
-   each entry of `${REPOS_PATH:-/workspace}`, run
-   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote`
+   each entry of `${REPOS_PATH:-/workspace}` where `test -e '<dir>/.git'` succeeds — tested before any git call names the directory, and `<dir>` single-quoted in both commands, each `'` it holds written `'\''` (`workflows-core:read-only-repos` §0) — run
+   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -c safe.bareRepository=explicit -C '<dir>' remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote`
    call fails/times out.
 3. Match each derived candidate against the map: mounted (record the resolved path) or not-mounted.
    **Presence only — never dispatch `code-scanner`, never confirm/mount-gate like `/design`'s Phase 3**;
