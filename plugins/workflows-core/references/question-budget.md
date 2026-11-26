@@ -128,7 +128,10 @@ of the question it was merged into.
 - **Never across a tag.** A `[V]` and a `[C]` asking the same thing are a mis-tag, corrected under
   `product-workflows:interview-tagging` §3 with its reason recorded, never merged.
 - **Never a carried question**, on either side of a merge, and never into a question that is not
-  open (§8, *Reach*).
+  open (§8, *Reach*). A question whose substance a carried question already asks is dropped
+  instead, its reason `already asked as <round>/<position> in a sent package`, so it never reaches
+  the customer twice; the customer's answer to the carried question is applied to the rest like any
+  other answer (§8).
 
 ## 6. Ranking
 
