@@ -799,6 +799,10 @@ def test_kind_of():
     _check("kind spec", kind_of("specifications/PRD-1-x/specification.md") == "specification")
     _check("kind ard", kind_of("specifications/PRD-1-x/ard-server.md") == "ard")
     _check("kind ard plain", kind_of("specifications/PRD-1-x/ard.md") == "ard")
+    for area in ("ard-платежі.md", "ard-Cart.md", "ard-v2.api.md", "ard-भुगतान.md", "ard-zahlungsauslo\u0308sung.md"):
+        _check("kind ard, an area named in the class: " + area, kind_of("specifications/PRD-1-x/" + area) == "ard")
+    for name in ("ard-a b.md", "ard-a..b.md", "ard-$(x).md"):
+        _check("kind not ard, a name outside the class: " + name, kind_of("specifications/PRD-1-x/" + name) is None)
     _check("kind unknown", kind_of("specifications/PRD-1-x/notes.md") is None)
 
 

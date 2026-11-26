@@ -75,9 +75,9 @@ flowchart TD
 |---|---|
 | 0 — Resolve | Strip the flags; resolve the repository's git top level; run the specs-repo preflight; read the profile; check the backlog and the profile are committed; read the backlog's shape. |
 | 0 — continued | Name any directory an earlier run left under `.dev-workflows/unfinished/`; run the toolchain check; classify the run and record its model routing. |
-| 1 — Select | Take the named unit, or the actionable ones; pass over any a branch not yet merged has already moved; resolve each unit's code repositories and decision records. |
+| 1 — Select | Take the named unit, or the actionable ones; pass over any an unmerged branch, or the default branch since yours left it, has moved; resolve each unit's repositories and records. |
 | 2 — Place | Take the unit's recorded page path, or find a place for the page; list each file that gains a link or a navigation entry; ask once, showing what the run will read, write and execute. |
-| 3 — Branch | Continue on your branch or cut a new one, checking the working tree first; then, per unit, re-read the unit and the profile on that branch. |
+| 3 — Branch | Continue on your branch or cut a new one, told how far it is behind and of a unit the default branch moved; check the working tree; then, per unit, re-read the unit and profile there. |
 | 4 — Ground | Read each decision record at the specs default branch; scan each code repository at its default branch, at most four at a time. |
 | 5 — Write | Write the brief and have `doc-writer` draft the page and its entries; refuse any edit outside them. |
 | 6 — Style | Run the style check over the page, fix its violations once, and re-run it. |
@@ -90,6 +90,8 @@ flowchart TD
 ## Gates
 
 **The consent.** Nothing is written, and no repository is scanned, until you have seen, in one question: each unit and its page path; each file that gains the page's entry; each code repository and decision record the run will read, a repository outside `$REPOS_PATH` marked as admitted only by this answer (a repository you name later, when a scan finds one missing, is admitted by that answer instead, and its question says so); the branch; each branch whose backlog could not be read; each build config; every build and lint command the run will execute, verbatim; and that the style check also runs the repository's own linter, such as Vale or markdownlint, on the repository's configuration. A batch asks once for all of its units.
+
+**The branch question.** Where you stand on a branch other than the default, the run asks whether to continue on it or cut a new one. Where your branch lacks commits of the default branch — `origin`'s, as last fetched, for the run fetches nothing first, or the local one where `origin` has none — it says how many; where it lacks none, it says nothing of it. Where the default branch moved a unit the run will draft after your branch left it — only a unit you named can be one, since `--next` and `--batch` pass such a unit over — it names the unit and says continuing drafts it a second time; where the run could not tell — in a shallow clone, on an orphan branch, or where a backlog could not be read — it says continuing may. Either way it recommends neither answer: cutting a new branch, or merging the default branch into yours first, reads the move.
 
 **The style check, the build and the review**, per unit. The style check runs the repository's own linter and the semantic prose pass over the page, and one fixer pass is made over its violations. The build runs every build the consent showed, and it decides whether the unit can move: only a passing build — or a profile that records no build command for the page's space — lets the unit commit. A build that fails on its content gets one fixer pass and one re-run; a build that fails because its tool will not run asks you, and proceeding without it ends the unit uncommitted. The review is Opus, and its findings are triaged before any fix: each is verified where it points, kept, marked unverified or dismissed with a reason, and only survivors are fixed. One fix cycle and one re-review at most; a BLOCKER still standing is asked about one at a time — fix notes, defer, override with a rationale, or cancel.
 
@@ -130,7 +132,7 @@ flowchart TD
 /docs-workflows:docs-write --next
 ```
 
-Resolves the documentation repository, checks that its backlog and profile are committed, takes the highest-priority unit no other branch has already moved, places its page, and asks once. Then it cuts a branch, scans the unit's code repositories at their default branch, drafts the page, style-checks, builds and reviews it, and commits the page, its navigation and the unit's move to `drafted` in one commit — and offers to push.
+Resolves the documentation repository, checks that its backlog and profile are committed, takes the highest-priority unit no unmerged branch, and not the default branch since yours left it, has already moved, places its page, and asks once. Then it cuts a branch, scans the unit's code repositories at their default branch, drafts the page, style-checks, builds and reviews it, and commits the page, its navigation and the unit's move to `drafted` in one commit — and offers to push.
 
 ```
 /docs-workflows:docs-write --batch 3 --docs-repo /workspace/docs
