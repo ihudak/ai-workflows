@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.88.5] — 2026-11-26
+
+**What changes for you.** `/harvest-decisions` passes over `ard-seed.md`, the seed `/brd-intake --sort-existing` writes, wherever it stands: it mints no team record from a slice's seed and reports no BRD folder's seed as an unparseable ARD. Update with `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
+
+### Fixed
+
+- **`scripts/architecture-harvest.py`'s `--layout prd`** matched `ard-seed.md` as an `ard-<area>.md`: in a BRD folder it reported the seed `unparseable`, as an ARD outside a `PRD-` or `EPIC-` folder, and in a `PRD-` slice it harvested it as the area `seed` where it held `## Architecture decisions`, and reported it otherwise. `PRD_ARD_RE` now refuses the exact name, so discovery and the citation scan read the seed as any other markdown file. `--selftest` gains a BRD folder's seed, a slice's seed with decisions and one without, and `ard-seeds.md`, which is still harvested as an area.
+- **Pages.** The `/harvest-decisions` page says `ard-seed.md` is never an ARD.
+
 ## [3.88.4] — 2026-11-26
 
 **What changes for you.** `/create-ard`, `/specify` and `/epics` addressed with an `@<path>` to a PRD folder outside the specs repository's work tree — a second clone, say — read that folder as they read a specs tree that is no git repository: they gate nothing in it, read its own files, its ARD among them, record no lineage for what they write, and no stop prints commands that cut a branch in the specs repository and then fail; a command a stop names by its key is followed by a sentence saying to run it with `SPECS_PATH` set to a specs tree that holds the folder. `/update-spec` no longer names a grounding file as differing from the default branch's copy where only git's line-ending rules tell them apart. Update with `workflows-core` 1.100.4 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.4 bullet).

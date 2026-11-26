@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.71.4] — 2026-11-26
+
+**What changes for you.** `/implement` addressed with an `@<path>` to a unit folder outside the specs repository's work tree — a second clone, say — reads that folder's own ARD, never one of the same key under `$SPECS_PATH`, gates nothing there, reports `Lineage: not checked — no specs repository` rather than `Lineage: current`, and follows each command it names by a key with a sentence saying that command finds the folder by its key in `$SPECS_PATH`. Update with `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
+
+### Fixed
+
+- **`/implement` on a unit folder outside the specs repository's work tree.** Phase 0 read the unit's pair as row H, but Phase 1.8's `ard-resolution` call passed the PRD folder's key alone, so the resolution found a folder of that key under `$SPECS_PATH` — another tree's ARD, or none — and the lineage check, whose `docs` are only the documents the gate passed, checked nothing and reported `Lineage: current`. Phase 1.8 now passes `folder`, the unit's folder; *Check the chain under the in-scope documents* is skipped there, the line `Lineage: not checked — no specs repository` carried in run-state `lineage` with no check file; Phase 1's multi-component check reads its file rows `unmanaged`, as `workflows-core` 1.100.5's `components` §6 returns them; and every command a stop, a question or the `### Next step` names by a key is followed by the outside sentence Phase 0 gives, save a re-run of `/dev-workflows:implement <ADDRESS>`.
+- **Pages.** The `/implement` page says what such a run reads, checks and prints.
+
 ## [4.71.3] — 2026-11-26
 
 **What changes for you.** `/conformance` prints its line about `/product-workflows:create-ard` only where a threat of a threat model it read rests on the ARD Rule the line is about, or a threat model it could not use may, and now also where the run takes a decision a refine would see out of the default branch's record. On a run that hands a threat mitigation, every tracer's section, not a mitigation's alone, is held back where it holds a security finding id or a findings-register path its tracer's handoff does not hold and the code it traced does not hold as a path. On a PRD run, *Fix the code* on a PRD-level ARD Rule names the PRD's only Epic, or asks which. A threat returned to the architect names the Dev's `/design` too, and a design's returned entry whose threat no refine lists goes to the Dev. An ARD area file named in letters of another script is traced. Needs `workflows-core` 1.100.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.3 bullet).
