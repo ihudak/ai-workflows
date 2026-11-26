@@ -1,6 +1,6 @@
 # Fewer, better questions: a question budget for the BRD route
 
-Date: 2026-11-26. Status: approach A chosen by the user in conversation (a shared question engine); the intent, goals and the intake-walk wording are the user's; calls marked *(builder's call)* or *(design call)* are the designer's and open to correction. Revised after a builder check, which asked seven questions; each is answered in the decision it touches, marked *(design call, builder check)*.
+Date: 2026-11-26. Status: approach A chosen by the user in conversation (a shared question engine); the intent, goals and the intake-walk wording are the user's; calls marked *(builder's call)* or *(design call)* are the designer's and open to correction. Revised after a builder check, which asked seven questions; each is answered in the decision it touches, marked *(design call, builder check)*. **Approved by the user on 2026-11-26**, with two notes folded in: the detailed questions are kept whole as a registry under the strategic layer (D6), and every answer is checked against the whole registry at once (D7); and the risk mitigations were to be made sufficient (*Risks*, D16).
 
 ## Background
 
@@ -129,6 +129,7 @@ Every question, in every place:
 
 `/brd-interview` owns the decision register and the round records, so strategic sittings are a mode of it, not a new command.
 
+- **The registry is kept whole.** Round generation stays as it is today: every detailed question is generated and tagged, then merged (D4), and the result is the round's **registry**. Strategic questions are planned *over* the registry and never replace it. Each answer closes the registry questions it determines (D7); whatever no answer closes is still there, worded in detail, and is asked in detail afterwards. In the user's words: build the questions the old way and keep that registry, ask strategic questions, auto-answer the registry from the answers, and "a dozen or two or three dozens of questions will remain, and those can be asked in a detailed way".
 - **Trigger.** After generation, tagging and merging, where the questions left for a person exceed one sitting's budget, the run says so — how many questions, and the plan (strategic sittings first) — and starts the strategic mode. This is also the scale warning the engagement lacked.
 - **Planning.** A planner agent (D9) groups the open questions into strategic questions modelled on the hand-written call list: a plain statement, *Why we ask*, the coverage (the detailed questions it determines), options and a recommended answer with its reason. Ranked by how many questions an answer covers and by Impact × Uncertainty.
 - **Tags.** A strategic question takes the tag of what it covers. One covering `[V]`s is a `[V]` and is answered by the delivery team in the interview; one covering `[C]`s is a `[C]` and goes to the customer through the package (D11); one covering both is split. A strategic `[C]` is never answered by the PM.
@@ -139,15 +140,15 @@ Every question, in every place:
 
 ### D7. Answers are applied forward
 
-- **Within a sitting**, before each next question, the orchestrator checks whether an answer already given determines it (the planner's coverage makes most of these mechanical); if so, it is not asked.
-- **After each sitting**, an applier agent (D9) reads every remaining open question against the answers recorded so far — worded the same or not — and returns, per question: *determined* (with the derived answer, the decision it follows and a one-line reason), *narrowed* (the question rewritten to what is still open), or *untouched*.
+- **After each answer**, strategic or detailed, the whole registry is checked for every question that answer determines — worded the same or not — across every open question on file (*Reach*, below). The planner's coverage links settle most of these mechanically; an applier agent (D9) reads the rest against the answer. Per question it returns *determined* (with the derived answer, the decision it follows and a one-line reason), *narrowed* (the question rewritten to what is still open), or *untouched*. **The next question shown is never one an answer has already closed.** The user: "After each answer, Agent should look which questions from the registry can be closed as well."
+- **The applier closes only what it can derive in one line.** A question it cannot derive with confidence from the answer is *narrowed* or left *untouched*, never closed on a guess; it then stays in the registry for a later sitting, where its recommendation may cite the answer.
 - **An applied `[V]`** is recorded as a `[VD#n]` marked as applied, naming the decision it follows, with argumentation derived from that decision and the one-line reason *(design call)*. The record's field name is *(builder's call)*, never `settles`.
 - **A held `[C]`** is never answered by the delivery team. Where a delivery-team answer determines what the team would propose, the `[C]` becomes a **proposal** in `interview/customer-questions.md` — "we propose X, because [VD#m]; confirm or correct" — grouped with others for confirmation (D11) *(design call)*. Where the question was the delivery team's to decide all along, it is re-tagged to `[V]` under `interview-tagging` §3 with the cause recorded, then applied. This is the close path the 147 already-settled `[C]` questions lacked.
 - **A deferred `[V]` may name the held `[C]`s it waits on**; when those are answered at `/brd-reconcile`, the next interview surfaces it with the customer's answer as the recommendation.
 - **Reach** *(design call, builder check)*. Applying forward, narrowing and merging reach **every open question on file in the slice** — every round, rounds generated before this ships included, since the engagement's own 648-question round is the case the user needs fixed — **save a held `[C]` a package has already carried to the customer** (its round and position appear in a bundle on file). That entry is left exactly as the customer holds it, because `/brd-reconcile` matches the customer's answer to it by round and position; what the applier found about it is carried beside it as the proposed answer the next package shows, never written over it. To close a held `[C]` no package has carried, `/brd-interview` gains that authority, recording the closure in the round record by append, as the round records are append-only.
 - **What is on file** *(design call, builder check)*: this slice's `decisions.md`, the registers of its sibling slices under the same parent, and those of each BRD its `depends-on:` resolves to, a decision outside this slice cited in the cross-BRD `<KEY>/[id]` form `decision-register-format` §5 already uses. There is no separate "principles" artifact: a principle the operator states — "a requirement that changes working behaviour is a change, not a defect", "the latest design wins on layout" — is recorded as a `[VD#n]`, usually as the answer to a strategic question, and applied like any other. Nothing but a customer answer confirmed at `/brd-reconcile` becomes a `[CD#n]`.
 - **When the source moves** *(design call, builder check)*. Where the decision an applied answer follows is reopened, superseded or withdrawn, every answer applied from it is reopened with it and returns to the queue, by `decision-register-format` §4's reopening; `/brd-reconcile`'s propagation sweep follows the applied-from link as it follows `conditional_on`, so a customer-side applied answer that became a `[CD#n]` is covered too. A decision never stands on a basis that is gone.
-- **The end-of-sitting list** shows every answer applied in that sitting — the question, the derived answer, what it follows — and asks once: all correct, or name the ones to reopen. A reopened one returns to the queue.
+- **The end-of-sitting list** shows every answer applied in that sitting — the question, the derived answer, what it follows — **grouped by the answer it follows**, so that one answer misread is visible at once as one group, and asks once: all correct, or name the ones (or the whole group) to reopen. A reopened one returns to the registry. The same list shows the questions dropped by the value test and the merges made, each with its reason, and either can be undone there.
 
 ### D8. The tail table
 
@@ -160,7 +161,7 @@ The interview also gains the sanctioned bulk paths the engagement improvised: **
 Agents cross plugin boundaries for free, and project 4's customer plugin will want them, so both live in `workflows-core` *(design call; names are the builder's)*:
 
 - **A planner**: given a queue of questions (text, tag, rows, evidence ids, any recommendation), the decisions on file (D7) and the findings and documentation grounding the queue cites, it returns the merges (D4), the strategic questions with their coverage (D6), and a ranked plan for the next sitting: what to ask, what may go in a table, what waits.
-- **An applier**: given the answers just recorded, the remaining queue and the register, it returns per question *determined*, *narrowed* or *untouched* (D7), each with its reason.
+- **An applier**: run after each answer, given that answer, the open registry questions the coverage links did not settle, and the register, it returns per question *determined*, *narrowed* or *untouched* (D7), each with its reason.
 
 Both are read-only save their one output file: they **write their result to a file and return its path and counts**, never a large inline reply — the engagement's 338-row reply was truncated. Where the caller keeps a run folder, they go through `workflows-core:run-folder`'s saved dispatches, so a resumed run reuses their results. Model tier per `workflows-core:model-routing/classification` *(builder's call)*.
 
@@ -228,6 +229,14 @@ This must not depend on the open grounding rule about a feature absent from one 
 
 Each changed command's `docs/` page, the `workflows-core` docs for the new reference and agents, the route map lines in `.claude/rules/brd-route.md` and the agent caller lines in `.claude/rules/workflows-core.md`, the BRD route diagram in `plugins/product-workflows/docs/brd-workflow.md` where a step's behaviour it shows changes, each plugin's `CHANGELOG.md` and version, and the coupling bullets (`.claude/rules/plugin-updates-coupling.md`). Every gate in `.github/workflows/validate-catalog.yml` passes.
 
+### D16. Every question is accounted for
+
+No question disappears without a trace. Every round record, and the run's final report, reconciles per tag:
+
+> generated = merged into another + dropped by the value test + applied from an answer + confirmed in a table + asked and answered + deferred + still open in the registry
+
+each term listing its questions by round and position, each applied one naming what it follows, each dropped or merged one its reason. A run whose sum does not close reports the gap as a defect of the run, as `workflows-core:finding-triage`'s reporting contract does for findings. The intake walk keeps the same account over its candidates (asked, recorded without a question, noted in the inventory, in a table, carried to the next sitting, sent on as open by the operator's choice).
+
 ## Constraints
 
 - **Public repository.** No customer, product, person or host name from the engagement appears in the tree — not in tests, fixtures, docs or commit messages. Tests use **synthetic fixtures** shaped like the engagement (a few hundred rows; findings across several repositories with most rows absent from most of them; repeated questions in different words; questions an earlier answer settles). The real engagement data stays on the maintainer's machine and may be used locally to measure goal 9, never committed.
@@ -239,10 +248,38 @@ Each changed command's `docs/` page, the `workflows-core` docs for the new refer
 
 ## Risks
 
-- **A wrong inference applied forward.** Mitigated by the end-of-sitting list and reopen, and by every applied record naming what it follows; residual risk is an operator skimming the list.
-- **Strategic questions too abstract to answer.** Mitigated by the hand-written list's shape (plain statement, why we ask, coverage, proposed answer); an operator can split a strategic question into the detailed ones it covers.
-- **The customer's agent not following the rules.** It runs a prompt with nothing installed; `/brd-reconcile` still confirms every answer, applied ones included.
-- **Interaction with `/brd-interview`'s existing machinery** — rounds, re-runs, torn writes, re-disposition, the will-change rule. The command is large and dense; the builder should read its phases end to end before placing the strategic mode.
+Each risk, what mitigates it, and what is left.
+
+- **An answer applied wrongly to another question.**
+  - *Mitigations:* the applier closes only what it can derive in one line, and narrows or leaves the rest (D7); every applied record names the answer it follows; the end-of-sitting list groups applied answers by that answer, so one misread answer shows as one group to reopen; reopening a decision reopens everything applied from it (D7, *When the source moves*); a held `[C]` is never answered by the delivery team, so a PM-side misreading reaches the customer only as a proposal the customer confirms or corrects (D7, D11); and the delivery team's positions are shown to the customer in the package, as today.
+  - *Left:* an operator who accepts the list without reading it. The grouping keeps that list short to read: one line per source answer, its applications beneath it.
+- **Strategic questions too abstract to answer.**
+  - *Mitigations:* the detailed registry is kept whole under them (D6), so anything a strategic answer does not settle is still asked in detail — the user's own resolution of this risk; strategic questions follow the hand-written list's shape (plain statement, why we ask, coverage, proposed answer); an operator can split a strategic question into the detailed questions it covers.
+  - *Left:* a strategic sitting that settles little, which costs one sitting and loses nothing.
+- **A question lost** — merged into one that differs, dropped as changing nothing, or closed and forgotten.
+  - *Mitigations:* the account (D16) reconciles every question generated against what became of it; merges and drops are shown in the end-of-sitting list with their reasons and can be undone there (D7); merging never crosses a tag (D4).
+  - *Left:* none the account would not show.
+- **Rubber-stamping a table.**
+  - *Mitigations:* a table holds only questions an earlier decision determines or whose recommendation the agent is confident of, each row with its reason (D8); an uncertain item never goes in one (anti-goal); each accepted row is marked as table-confirmed (D8), so a later reader can tell it was not asked singly; the account (D16) counts table confirmations separately.
+  - *Left:* an operator accepting a table unread — the same risk as today's defaults after question 20, on far fewer and better-explained items.
+- **A customer question already sent being rewritten.**
+  - *Mitigations:* a held `[C]` a package has carried is never rewritten, narrowed, re-tagged or closed (D7, *Reach*); where whether a package carried it cannot be established from the bundles on file, it is treated as carried.
+  - *Left:* none.
+- **A sibling slice's decision applied out of its context.**
+  - *Mitigations:* it is cited in the cross-BRD `<KEY>/[id]` form, appears in the end-of-sitting list like any applied answer, and is reopened with its source across slices, as `/brd-reconcile`'s propagation sweep already crosses BRDs (D7).
+  - *Left:* an operator accepting it unread, as above.
+- **The customer's agent not following the rules.**
+  - *Mitigations:* `/brd-reconcile` confirms every answer with the operator, applied ones included, and confirms a group of applied answers together with the customer answer they follow, so the operator sees each derivation (D11); a review that ignores the budget or the strategic order is still a valid review — the worst case is today's behaviour. Once project 4 ships, the customer is recommended to use Claude Code with the family's customer plugin, which runs the same rulebook and the same two agents (D9) instead of a prompt alone; the package prompt stays for a customer who installs nothing.
+  - *Left:* none beyond today's.
+- **Cost of checking every answer against the whole registry.**
+  - *Mitigations:* coverage links settle most closures without a dispatch; the applier reads question texts and decisions, not grounding files; the run states its expected dispatches before the first sitting, with the scale warning (D6); the cost is measured on the synthetic fixtures before release (goal 9).
+  - *Left:* a run more expensive per answer than today and far cheaper per question settled; the measurement says by how much.
+- **Interaction with `/brd-interview`'s existing machinery** — rounds, re-runs, torn writes, re-disposition, the will-change rule.
+  - *Mitigations:* the builder reads the command's phases end to end before placing the strategic mode; delivery in the four increments (*Left to the builder*), each passing every gate and tested on the synthetic fixtures; the claim-expiry sweep over every sentence the change falsifies (*Constraints*).
+  - *Left:* the size and density of the command, which only careful reading meets.
+- **Answers lost mid-sitting** — compaction, restart, a stop.
+  - *Mitigations:* each answer is persisted as it is given, through a run folder (D10), the intake walk included.
+  - *Left:* none beyond the run folder's own limits.
 
 ## Left to the builder
 
@@ -250,7 +287,7 @@ Each changed command's `docs/` page, the `workflows-core` docs for the new refer
 - Whether the rulebook is a new reference or a section of `grilling-technique` (one ranking rule either way).
 - How the budget is set per run; the strategic mode's stop thresholds within "one to three strategic sittings".
 - How strategic sittings map onto rounds and round records.
-- Whether the within-sitting check is the orchestrator's own or a light agent call.
+- How the after-each-answer check is kept cheap — coverage links first, the applier for the rest — within the rule that every answer is checked against the whole registry before the next question.
 - Model tiers for the agents.
 - The final option wording in the intake walk and the code-defect question, within D5.
 - **Delivery order**, suggested as increments that each ship value: (1) the rulebook, the question shape and the intake walk; (2) in the interview: merging, one question per row, applying forward, the bulk paths and the code-defect change; (3) strategic sittings; (4) the package prompt and `/brd-reconcile`'s reading of applied answers.
