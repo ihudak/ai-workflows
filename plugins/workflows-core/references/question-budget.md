@@ -137,11 +137,15 @@ of the question it was merged into.
 
 The queue is ranked by **coverage first** — how many open questions an answer would close, its own
 included, more first — then by `workflows-core:grilling-technique`'s **Impact × Uncertainty**, the
-least certain and the most rows touched first. There is no second ranking rule. The planner writes
-each question's rank into the registry, lower first, and `next` (§12) returns the open questions
-strategic first, then by rank: a sitting asks them in that order, up to the budget.
+least certain and the most rows touched first. There is no second ranking rule. The planner returns
+the ranks, lower first, and after each plan the caller writes them into the registry with `rank`
+(§12), a strategic question entering with its own through `add`; `next` then returns the open
+questions strategic first, then by rank, and a sitting asks them in that order, up to the budget.
 
 ## 7. Strategic sittings
+
+Strategic sittings are `/brd-interview`'s, and reach the customer through the questions it writes
+(§13); intake's walk groups and budgets its candidates, but plans none.
 
 **The registry is kept whole.** Every detailed question is generated, tagged and merged first;
 strategic questions are planned over the registry and never replace it. Each answer closes the
@@ -162,9 +166,10 @@ first; the dispatches it expects — and plans strategic questions.
   carried one;
 - covering both, it is split in two.
 
-**After each strategic sitting** its answers are applied forward (§8), what is left is planned again,
-and the run offers another strategic sitting or the detailed walk, recommending one by the **stop
-rule**, measured over the questions still open for the person the sittings ask:
+**After each strategic sitting** its answers are applied forward (§8), what is left is planned again
+and its new ranks written with `rank` (§6), and the run offers another strategic sitting or the
+detailed walk, recommending one by the **stop rule**, measured over the questions still open for the
+person the sittings ask:
 
 - at most 2 × budget open: the detailed walk is recommended;
 - more than that, with fewer than 3 strategic sittings run: another strategic sitting is
@@ -303,6 +308,7 @@ its contract, and this section maps it to the rules above.
 | `drop` | closes a question as dropped, with the reason | §2, §7 |
 | `record` | one event: `answered`, `applied`, `table`, `deferred` or `auto` closes the question; `narrowed`, `proposed` or `retagged` leaves it open | §4, §8, §9 |
 | `reopen` | `--qid`, one question; `--follows <decision-id>`, every one applied from that decision, transitively | §8, §10 |
+| `rank` | sets the rank of each open, uncarried question named, from the planner's plan | §6, §7 |
 | `next` | the open, uncarried questions to ask, strategic first, then by rank, up to the budget | §3, §6 |
 | `sitting-list` | one sitting's end-of-sitting list | §10 |
 | `account` | the account per tag, and whether it closes | §11 |

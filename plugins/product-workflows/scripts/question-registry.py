@@ -7,6 +7,7 @@
   question-registry.py drop         --registry <file> --qid <qid> --reason <text> [--sitting <n>]
   question-registry.py record       --registry <file> --sitting <n>   (stdin one event E)
   question-registry.py reopen       --registry <file> (--qid <qid> | --follows <decision-id>)
+  question-registry.py rank         --registry <file>   (stdin {"<qid>": <rank>, ...})
   question-registry.py next         --registry <file> [--limit <N>]
   question-registry.py sitting-list --registry <file> --sitting <n>
   question-registry.py account      --registry <file>
@@ -35,6 +36,8 @@ noted-in-inventory, sent-on-unreviewed.
 reopen --follows X reopens every question whose applied_from is X, then every question whose applied_from is
 the decision of one just reopened, and so on; reopen --qid reopens that one question. Either clears its
 decision, applied_from, answer, reason, into and sitting and sets it open; prints the reopened qids.
+rank sets the rank of each question its stdin object names, a whole number from 0, lower asked first; a
+question it does not name keeps its rank, and an empty object writes nothing; prints {"ranked": n}.
 next prints the open, not carried, qids: open strategic first, then by rank, then by qid; default limit is
 the budget. sitting-list prints markdown: "### Applied from <decision-id>" groups, "### Merged",
 "### Dropped", "### Confirmed in a table", for the questions of that sitting; an empty group is left out.
@@ -46,8 +49,9 @@ proposed on a carried question; answered, applied or table on tag C; applied wit
 decision; answered or table without a decision; auto on a tag other than DEF; deferred on tag DEF with a
 decision other than sent-on-unreviewed; retagged without tag and reason, or to the same tag; narrowed
 without text; proposed without answer; a merge across tags, into a question that is not open, or of a
-carried question; a drop of a carried question; a reopen of a carried question or of one already open; init
-over an existing registry; a Q or an event that does not match the shape above.
+carried question; a drop of a carried question; a reopen of a carried question or of one already open; a
+rank of an unknown, carried or not open question, or a rank that is not a whole number from 0; init over an
+existing registry; a Q or an event that does not match the shape above.
 
 Exit 0: it ran. Exit 3: it refused the caller's input, which it can rebuild and send once more. Exit 2: the
 registry is absent, unreadable or invalid (a state no column holds, a missing field), or cannot be written.
@@ -464,6 +468,21 @@ def reopen(path, qid, follows):
     return reopened
 
 
+def rank(path, text):
+    data = _parse_stdin(text, "a rank for each qid it names")
+    for qid, value in data.items():
+        if not _is_int(value) or value < 0:
+            raise InputRefused("the rank for %s is not a whole number from 0" % json.dumps(qid))
+    registry = _load(path)
+    for qid in data:
+        _open_question(registry, qid, "the question ranked,")
+    for qid, value in data.items():
+        registry["questions"][qid]["rank"] = value
+    if data:
+        _write(path, registry)
+    return {"ranked": len(data)}
+
+
 def next_qids(path, limit):
     registry = _load(path)
     limit = registry["budget"] if limit is None else _positive(limit, "--limit")
@@ -530,6 +549,7 @@ def main(argv):
             ("--reason", {"required": True}), ("--sitting", {"default": "0"}))
     command("drop", ("--qid", {"required": True}), ("--reason", {"required": True}), ("--sitting", {"default": "0"}))
     command("record", ("--sitting", {"required": True}))
+    command("rank")
     command("next", ("--limit", {"default": None}))
     command("sitting-list", ("--sitting", {"required": True}))
     command("account")
@@ -555,6 +575,8 @@ def main(argv):
             print(json.dumps(record(path, sys.stdin.read(), args.sitting)))
         elif c == "reopen":
             print("".join(q + "\n" for q in reopen(path, args.qid, args.follows)), end="")
+        elif c == "rank":
+            print(json.dumps(rank(path, sys.stdin.read())))
         elif c == "next":
             print("".join(q + "\n" for q in next_qids(path, args.limit)), end="")
         elif c == "sitting-list":
@@ -951,6 +973,24 @@ def case_next_orders_and_skips(tmp):
     for bad in ("0", "-1", "x"):
         code, out, err = _run(tmp, "next", ["--limit", bad])
         assert code == 3, (bad, code)
+
+
+def case_rank_sets_order(tmp):
+    _init(tmp, [_q("1/1"), _q("1/2"), _q("1/3"), _q("1/4", tag="C", carried=True), _q("1/5")])
+    assert _run(tmp, "next")[1].split() == ["1/1", "1/2", "1/3", "1/5"]
+    code, out, err = _run(tmp, "rank", stdin={"1/3": 0, "1/1": 2, "1/2": 1, "1/5": 3})
+    assert code == 0 and json.loads(out) == {"ranked": 4}, (code, out, err)
+    assert _run(tmp, "next")[1].split() == ["1/3", "1/2", "1/1", "1/5"]
+    assert _run(tmp, "rank", stdin={"1/5": 0})[0] == 0
+    assert _run(tmp, "next")[1].split() == ["1/3", "1/5", "1/2", "1/1"]
+    assert _event(tmp, qid="1/2", event="deferred")[0] == 0
+    before = _get(tmp)
+    for stdin in ({"9/9": 1}, {"1/2": 1}, {"1/4": 1}, {"1/1": -1}, {"1/1": 1.5}, {"1/1": "1"}, {"1/1": True},
+                  {"1/1": 1, "9/9": 1}, "[]", "not json"):
+        code, out, err = _run(tmp, "rank", stdin=stdin)
+        _unchanged(tmp, before, code)
+    code, out, err = _run(tmp, "rank", stdin={})
+    assert code == 0 and json.loads(out) == {"ranked": 0} and _get(tmp) == before, (code, out)
 
 
 def case_sitting_list_groups_by_source(tmp):
