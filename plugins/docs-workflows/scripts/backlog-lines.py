@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-r"""backlog-lines.py — the one line reader of the documentation backlog, <top>/.dev-workflows/docs-backlog.yml.
+r"""backlog-lines.py — the one line reader of the documentation backlog, <top>/.dev-workflows/docs-backlog.yml, and the
+export of a source repository's commit for /docs-verify's claim reader.
 
   backlog-lines.py check --repo <top>
   backlog-lines.py moved --repo <top> --base <name> --id <id> [--id <id> ...] [--own-moves]
   backlog-lines.py edit  --repo <top> --id <id> --status <status> [--page-path <rel>] [--from <status>]
                          [--walkthrough <id>] [--block <token>]
+  backlog-lines.py export --repo <clone> --commit <oid> --out <dir> --manifest <file> [--whole]
+                         [--path <rel> ...]
   backlog-lines.py --selftest
 
 It never parses the backlog as YAML -- no YAML parser ships with the plugins -- and reads it line by line, in the one
@@ -73,61 +76,106 @@ no-blocked-by, blocked and changed-while-reading, and line, where it is not null
 refused or, for a key the entry lacks, the entry's first; on exit 4 {"undone": "<why>", "first": <n>, "last": <n>,
 "changed": [<n>...]}, <why> hunk-outside or diff-failed.
 
-The arguments are tested before anything is read or run: --id against the unit-id class; --walkthrough against the
-same class, less every value YAML reads, written plain as edit writes it, as something other than a string -- a null,
-boolean, integer, float or date of YAML 1.1 or of YAML 1.2's core schema, such as null, true, y, 017, 0x1f, 1_000,
-1.5, 1e3 or 2026-11-18 -- which would not read back as an id, null as no walkthrough at all (the refusal is a little
-wider, refusing a few spellings of digits, _ and . that YAML reads as strings, such as 0_8 or 2026-1-5); --base against the branch
-class; --status, --from and --block against ^[a-z][a-z-]{0,31}$, less the words YAML reads as something other than a
-string (null, true, false, yes, no, on, off, y, n); --page-path against ^[A-Za-z0-9_][A-Za-z0-9._/-]*\.md$ with no
-empty, . or .. segment; --repo, a directory, which moved and edit also hold to being a git work tree's top level.
---own-moves takes no value. A flag given twice (--id to moved aside), or as --flag=value, refuses the run.
-<top>/.dev-workflows must be a real directory and the backlog a regular file, both by lstat: a symbolic link to either
-is refused, never followed, and the backlog is opened without following a link and never waited on.
+export writes one commit of a source repository under --out as regular files, and a manifest of them, for /docs-verify's
+claim reader, which reads them with Read, Grep and Glob and runs nothing. --repo must be a clone's top level:
+<repo>/.git exists -- tested before any git call, since a directory laid out as a git directory can be committed into
+any repository, and git run in it would run the commands its config names -- and `git -c safe.bareRepository=explicit -C
+<repo> rev-parse --show-toplevel` prints <repo>'s resolved path. Every git call export makes takes that form. It
+refuses, exit 3, commit-absent, where `cat-file -e <oid>^{commit}` fails. It lists `ls-tree -r -z -l --full-tree <oid>`,
+each --path a pathspec `:(literal)<p>` where --whole is absent, and leaves out, counting each and printing none: a
+symbolic link (link); a submodule (submodule); any other mode but 100644 and 100755 (other); a name not strict UTF-8,
+holding an empty, . or .. segment, a segment .git in any case, a control character, U+2028, U+2029 or a bidirectional
+control, or above 4,096 bytes (name); and a blob above 1 MiB (large). Where what remains is above 50,000 files or 512
+MiB (536,870,912 bytes) it refuses, exit 3, over-cap. Neither refusal creates anything. Otherwise it makes --out, mode
+0700, and writes each file under it at its repository path: each directory made, mode 0700, and opened relative to its
+parent's descriptor without following a link; each file created exclusively, mode 0600, relative to its directory's
+descriptor, without following one. A mkdir or a create failing because the name is taken -- two names one under a file
+system's case folding -- or a segment is too long for the file system skips that file, or every file under that
+directory, counted name; any other failure is exit 2. A file whose base name is .gitignore, .ignore or .rgignore, which
+a search tool would honour and so hide other files, is written as that name plus .exported. The contents come raw from
+one `cat-file --batch`, by object id -- no filter and no textconv runs -- each header naming a blob of the size the
+listing gave, else exit 2; where it runs past 300 seconds export refuses, exit 3, timeout, the partial --out left for
+the caller to remove and no manifest written. It writes --manifest last, created exclusively without following a link:
+for each file written, in tree order, its path as written and its repository path, the first relative to --out and the
+second to the clone's top level, each followed by a NUL -- the two equal but for a renamed ignore file. It checks
+nothing out, fetches nothing, and leaves the clone's index and working tree alone. It prints {"files": <n>, "bytes":
+<n>, "skipped": {"link": <n>, "submodule": <n>, "other": <n>, "name": <n>, "large": <n>}, "paths": {<p>:
+"exported"|"absent"|"skipped"}}: files and bytes those written; each --path exported where it, or a path under it, is in
+the manifest, absent where the listing holds neither, and skipped otherwise, a --path compared as git reads a pathspec
+(./, // and /./ collapsed, . the whole tree, a trailing / a directory alone). On exit 3 it prints {"refused": "<why>",
+"files": <n>|null, "bytes": <n>|null}, <why> commit-absent, over-cap or timeout, the counts those of the files it would
+write, null for commit-absent.
 
-What it prints of the backlog, a ref or an argument is line numbers, counts, fixed words, and values that passed a
-class test: a unit id in the unit-id class, a branch name in the branch class, the schema version's digits. A value
-that fails is counted, never printed, not even in an error. Outside --selftest it opens no file but the backlog and
-writes nothing but the backlog, and it runs git as an argument list, never a shell, with a 30-second timeout per
-call, in its own environment less every variable whose name starts with GIT_, plus GIT_TERMINAL_PROMPT=0,
-GIT_OPTIONAL_LOCKS=0 and GIT_NO_LAZY_FETCH=1. Git's stderr is never printed.
+The arguments are tested before anything is read or run: --id against the unit-id class; --walkthrough against the same
+class, less every value YAML reads, written plain as edit writes it, as something other than a string -- a null,
+boolean, integer, float or date of YAML 1.1 or of YAML 1.2's core schema, such as null, true, y, 017, 0x1f, 1_000, 1.5,
+1e3 or 2026-11-18 -- which would not read back as an id, null as no walkthrough at all (the refusal is a little wider,
+refusing a few spellings of digits, _ and . that YAML reads as strings, such as 0_8 or 2026-1-5); --base against the
+branch class; --status, --from and --block against ^[a-z][a-z-]{0,31}$, less the words YAML reads as something other
+than a string (null, true, false, yes, no, on, off, y, n); --page-path against ^[A-Za-z0-9_][A-Za-z0-9._/-]*\.md$ with
+no empty, . or .. segment; --repo, a directory, which moved and edit also hold to being a git work tree's top level, and
+export to the absolute-path class -- opening with /, and holding no control character, U+2028, U+2029 or bidirectional
+control -- and to being a clone's top level, as its paragraph says; --commit against ^[0-9a-f]{40}([0-9a-f]{24})?$;
+--out and --manifest against the absolute-path class, each absent by lstat, in a parent that is a real directory by
+lstat, and not the same path; each --path against the relative-path class -- not empty, opening with neither / nor -,
+holding no .. segment and none of those characters -- valid UTF-8 and at most 4,096 bytes. --own-moves and --whole take
+no value; export takes --whole, a --path, or both. A flag given twice (--id to moved and --path to export aside), or as
+--flag=value, refuses the run. <top>/.dev-workflows must be a real directory and the backlog a regular file, both by
+lstat: a symbolic link to either is refused, never followed, and the backlog is opened without following a link and
+never waited on.
 
-Exit 0: it ran, and the answer is the one JSON object on stdout -- for check, the shape in or out. Exit 2: it could
-not run -- an argument outside its class, a usage error, --repo no directory or no work tree's top level,
-.dev-workflows or the backlog refused as above or unreadable, git not run or not answering where moved must have an
-answer (HEAD, the base, the branch list), the working backlog out of shape or not holding an --id once (moved), a
-write that failed (the backlog unchanged), or an internal error; stdout is empty and stderr holds one line,
-"backlog-lines: not run (<why>)", <why> fixed text. Three exits 2 follow edit's write, each with a <why> of its own: a
-write -- the edit's or its undo's -- not reading back as written; an undo not written, since the backlog no longer
-held the edit's bytes but another writer's; and an undo that failed on its own write, the backlog then read again and
-found to hold the edit's bytes exactly -- where that read finds other bytes, the undo counts as blocked, and where it
-fails, as a write not reading back. Exit 3: edit refused on the file's content before writing; the file is untouched.
-Exit 4: edit undone; the file holds the bytes it read. --selftest exits 0 when every case passes and 1 otherwise.
+What it prints of the backlog, a ref or an argument is line numbers, counts, fixed words, and values that passed a class
+test: a unit id in the unit-id class, a branch name in the branch class, the schema version's digits, a --path in the
+relative-path class. A value that fails is counted, never printed, not even in an error. Outside --selftest it opens no
+file but the backlog and those export makes, and writes nothing but the backlog and, for export, the files under --out
+and the file --manifest names; it runs git as an argument list, never a shell, with a 30-second timeout per call --
+export's one cat-file --batch, 300 seconds -- in its own environment less every variable whose name starts with GIT_,
+plus GIT_TERMINAL_PROMPT=0, GIT_OPTIONAL_LOCKS=0 and GIT_NO_LAZY_FETCH=1. Git's stderr is never printed.
+
+Exit 0: it ran, and the answer is the one JSON object on stdout -- for check, the shape in or out. Exit 2: it could not
+run -- an argument outside its class, a usage error, --repo no directory or no work tree's top level, .dev-workflows or
+the backlog refused as above or unreadable, git not run or not answering where moved must have an answer (HEAD, the
+base, the branch list), the working backlog out of shape or not holding an --id once (moved), a write that failed (the
+backlog unchanged), export's own -- --repo no clone's top level, --out or --manifest refused as above, git not listing
+the commit or not giving a blob as it listed it, or a write of the export that failed, a partial --out then left -- or
+an internal error; stdout is empty and stderr holds one line, "backlog-lines: not run (<why>)", <why> fixed text. Three
+exits 2 follow edit's write, each with a <why> of its own: a write -- the edit's or its undo's -- not reading back as
+written; an undo not written, since the backlog no longer held the edit's bytes but another writer's; and an undo that
+failed on its own write, the backlog then read again and found to hold the edit's bytes exactly -- where that read finds
+other bytes, the undo counts as blocked, and where it fails, as a write not reading back. Exit 3: edit refused on the
+file's content before writing, the file untouched; or export refused the commit -- commit-absent or over-cap, nothing
+created, or timeout, a partial --out left and no manifest. Exit 4: edit undone; the file holds the bytes it read.
+--selftest exits 0 when every case passes and 1 otherwise.
 
 The caller's rule, which fails closed. Any exit but 0, 3 and 4 -- a crash's 1, a signal's -- is read as 2, and so is a
 stdout that is not one JSON object. check or moved exiting anything but 0 is a stop, never a skip: never read as in
-shape, as no duplicate or as nothing moved. edit exiting 3 or 4 ends the unit, the backlog as it was. edit exiting 2
-ends the unit and stops the run, and what the caller then does with the backlog turns on stderr's one line, matched
-whole. Only "backlog-lines: not run (the edit was written and its undo failed on its own write, so the backlog still
-holds the edit, unchecked; restore the backlog from the copy taken before the edit)" has the caller restore the
-backlog from the copy it took before the edit. Every other line -- the read-back and the blocked undo after a write
-among them, an exit 2 before any write, and a crash or a stderr it cannot read -- leaves the backlog as it is, to be
-compared with that copy: restoring there could overwrite another writer's change, and leaving it is the side that
-cannot destroy one.
+shape, as no duplicate or as nothing moved. export exiting 3 leaves that commit unread, and exiting anything else but 0
+-- a 4 among them -- is a stop; either way a partial --out is the caller's to remove with its scratch. edit exiting 3 or
+4 ends the unit, the backlog as it was. edit exiting 2 ends the unit and stops the run, and what the caller then does
+with the backlog turns on stderr's one line, matched whole. Only "backlog-lines: not run (the edit was written and its
+undo failed on its own write, so the backlog still holds the edit, unchecked; restore the backlog from the copy taken
+before the edit)" has the caller restore the backlog from the copy it took before the edit. Every other line -- the
+read-back and the blocked undo after a write among them, an exit 2 before any write, and a crash or a stderr it cannot
+read -- leaves the backlog as it is, to be compared with that copy: restoring there could overwrite another writer's
+change, and leaving it is the side that cannot destroy one.
 
 Python standard library only.
 """
 
 import argparse
 import contextlib
+import errno
 import io
 import json
 import os
+import posixpath
 import re
 import stat
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BACKLOG_DIR = ".dev-workflows"
@@ -138,6 +186,11 @@ REF_CAP = 1024 * 1024  # bytes: a larger backlog on a ref is unreadable
 EXAMINE_CAP = 60  # refs examined at most, newest first
 READ_REFS_CAP = 20  # refs kept and read at most
 GIT_TIMEOUT = 30  # seconds, every git call
+EXPORT_FILE_CAP = 1048576  # bytes: a larger blob is not exported, counted large
+EXPORT_FILES_CAP = 50000  # files: an export that would write more is refused, over-cap
+EXPORT_BYTES_CAP = 536870912  # bytes: an export that would write more is refused, over-cap
+EXPORT_TIMEOUT = 300  # seconds: export's one cat-file --batch
+EXPORT_NAME_CAP = 4096  # bytes: a longer tree name is not exported, counted name; a longer --path is refused
 
 # Every pattern that tests a whole value is used with fullmatch and is ASCII; digits are [0-9].
 UNIT_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", re.ASCII)
@@ -159,7 +212,9 @@ PAGE_PATH_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._/-]*\.md", re.ASCII)
 OBJECT_ID_RE = re.compile(r"[0-9a-f]{40}([0-9a-f]{24})?", re.ASCII)
 BRANCH_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._/@+-]*", re.ASCII)  # read-only-repos section 3's class
 SINGLE_FLAGS = ("--repo", "--base", "--status", "--page-path", "--own-moves", "--from", "--walkthrough",
-                "--block")  # each taken once: a second refuses the run
+                "--block", "--commit", "--out", "--manifest", "--whole")  # each taken once: a second refuses the run
+# backlog-run.md section 3's X: the characters its relative-path and absolute-path classes, and export's names, refuse.
+X_RE = re.compile(r"[\x00-\x1f\x7f-\x9f  ‪-‮⁦-⁩]")
 
 # The reasons, one word each, the paragraph's: --selftest holds this tuple to it.
 REASONS = ("block-scalar", "anchor", "alias", "tag", "tab", "control", "encoding", "unclosed-quote",
@@ -197,6 +252,17 @@ WHY_UNDO_BLOCKED = ("the edit was written, and its undo was not: the backlog no 
                     "another writer's, so nothing was written back; leave the backlog as it is and compare it with "
                     "the copy taken before the edit")
 WHY_INTERNAL = "internal error"
+# export's.
+WHY_REPO_ABS = "--repo is outside the absolute-path class"
+WHY_COMMIT = "--commit is outside the object-id class"
+WHY_OUT = "--out is outside the absolute-path class, already exists, or its parent is not a real directory"
+WHY_MANIFEST = ("--manifest is outside the absolute-path class, already exists, its parent is not a real directory, "
+                "or it is --out")
+WHY_PATH = "--path is outside the relative-path class, is not UTF-8, or is above 4,096 bytes"
+WHY_CLONE = "--repo is not a clone's top level: it holds no .git, or git does not name it its top level"
+WHY_TREE = "git could not list the commit's tree"
+WHY_BLOB = "git did not give a blob of the commit as its listing named it"
+WHY_EXPORT_WRITE = "the export could not be written"
 
 _IO = {"git": 0, "reads": 0, "writes": 0}  # what a run did, for --selftest's "nothing read or written"
 
@@ -1073,6 +1139,325 @@ def cmd_edit(top, uid, status, page_path, from_status=None, walkthrough=None, bl
     return 4, dict({"undone": why}, **result)
 
 
+# ---- export ----
+
+XGIT = ("git", "-c", "safe.bareRepository=explicit", "-C")  # every git call export makes in a source repository
+IGNORE_FILES = (b".gitignore", b".ignore", b".rgignore")  # a search tool honours these, so none keeps its name
+IGNORE_SUFFIX = b".exported"
+SKIP_ERRNOS = (errno.EEXIST, errno.ENAMETOOLONG)  # a name taken under case folding, or a segment too long: skipped
+_NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
+_DIR_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | _NOFOLLOW
+
+
+def _xgit(repo, *args):
+    """_git for a source repository: `git -c safe.bareRepository=explicit -C <repo> <args>`, the same environment,
+    timeout and discarded stderr."""
+    _IO["git"] += 1
+    try:
+        r = subprocess.run([*XGIT, repo, *args], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                           stderr=subprocess.DEVNULL, env=_git_env(), timeout=GIT_TIMEOUT)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return r.returncode, r.stdout
+
+
+def _abs_path(s):
+    """backlog-run.md section 3's absolute-path class: --repo, --out and --manifest."""
+    return s.startswith("/") and X_RE.search(s) is None
+
+
+def _rel_path(s):
+    """backlog-run.md section 3's relative-path class, valid UTF-8 and at most EXPORT_NAME_CAP bytes: --path."""
+    try:
+        size = len(s.encode("utf-8"))
+    except UnicodeEncodeError:
+        return False
+    return (s != "" and s[0] not in "/-" and ".." not in s.split("/") and X_RE.search(s) is None
+            and size <= EXPORT_NAME_CAP)
+
+
+def _fresh(path, why):
+    """NotRun(why) unless `path` is absent by lstat and its parent is a real directory by lstat."""
+    try:
+        os.lstat(path)
+    except FileNotFoundError:
+        pass
+    except OSError:
+        raise NotRun(why)
+    else:
+        raise NotRun(why)
+    try:
+        st = os.lstat(os.path.dirname(path))
+    except OSError:
+        raise NotRun(why)
+    if not stat.S_ISDIR(st.st_mode):
+        raise NotRun(why)
+
+
+def _name_in_class(raw):
+    """A tree name export writes: strict UTF-8, at most EXPORT_NAME_CAP bytes, no empty, . or .. segment, no segment
+    .git in any case, and no character X_RE names."""
+    if len(raw) > EXPORT_NAME_CAP:
+        return False
+    try:
+        name = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+    return X_RE.search(name) is None and all(s not in ("", ".", "..") and s.lower() != ".git"
+                                             for s in name.split("/"))
+
+
+def _create_file(name, dfd):
+    """A descriptor of the new file `name` in the open directory `dfd`: created exclusively, mode 0600, through no
+    link. export's one create, which --selftest wraps."""
+    return os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | _NOFOLLOW, 0o600, dir_fd=dfd)
+
+
+def _dir_at(root, want, made, failed):
+    """A descriptor of the directory `want`, a tuple of segments, under the open directory `root`: each level made
+    here, mode 0700, where this export has not made it yet, and opened relative to its parent's descriptor without
+    following a link. None where a level's mkdir fails EEXIST or ENAMETOOLONG -- that level is then in `failed` --
+    and NotRun on any other failure."""
+    fd = None
+    try:
+        fd = os.dup(root)
+        for i, seg in enumerate(want):
+            key = want[:i + 1]
+            if key not in made:
+                try:
+                    os.mkdir(seg, 0o700, dir_fd=fd)
+                except OSError as e:
+                    if e.errno not in SKIP_ERRNOS:
+                        raise
+                    failed.add(key)
+                    return None
+                made.add(key)
+            child = os.open(seg, _DIR_FLAGS, dir_fd=fd)
+            os.close(fd)
+            fd = child
+        got, fd = fd, None
+        return got
+    except OSError:
+        raise NotRun(WHY_EXPORT_WRITE)
+    finally:
+        if fd is not None:
+            os.close(fd)
+
+
+class _Stream(Exception):
+    """cat-file --batch did not answer as asked: killed at the timeout, or a header or a body not as listed."""
+
+
+def _blob(proc, oid, size, fd):
+    """Copy the blob `oid` from the running cat-file --batch into `fd`: the header naming it, a blob of `size` bytes,
+    then its bytes and a line feed. _Stream where the stream does not answer so; NotRun where `fd` cannot be
+    written."""
+    try:
+        proc.stdin.write(oid + b"\n")
+        proc.stdin.flush()
+        header = proc.stdout.readline(256)
+    except (OSError, ValueError):
+        raise _Stream()
+    if header != b"%s blob %d\n" % (oid, size):
+        raise _Stream()
+    left = size
+    while left:
+        try:
+            chunk = proc.stdout.read(min(left, 1 << 20))
+        except (OSError, ValueError):
+            raise _Stream()
+        if not chunk:
+            raise _Stream()
+        view = memoryview(chunk)
+        try:
+            while view:
+                view = view[os.write(fd, view):]
+        except OSError:
+            raise NotRun(WHY_EXPORT_WRITE)
+        left -= len(chunk)
+    try:
+        if proc.stdout.read(1) != b"\n":
+            raise _Stream()
+    except (OSError, ValueError):
+        raise _Stream()
+
+
+def _export_files(repo, keep, out, skipped):
+    """Make `out`, mode 0700, and write under it each of `keep` -- (repository path, object id, size), in tree order
+    -- by its written path, its contents from one cat-file --batch. The (written path, repository path, size) of each
+    file written, in tree order; None where EXPORT_TIMEOUT passed first, `out` then left as it stands. A mkdir or a
+    create failing EEXIST or ENAMETOOLONG skips the file, counted name in `skipped`; any other failure is NotRun."""
+    try:
+        os.mkdir(out, 0o700)
+        root = os.open(out, _DIR_FLAGS)
+    except OSError:
+        raise NotRun(WHY_EXPORT_WRITE)
+    _IO["writes"] += 1
+    done, made, failed, dirs, dfd, proc, timer, expired = [], set(), set(), None, None, None, None, []
+    finished = False
+    deadline = time.monotonic() + EXPORT_TIMEOUT
+    try:
+        try:
+            os.fchmod(root, 0o700)
+        except OSError:
+            raise NotRun(WHY_EXPORT_WRITE)
+        if keep:
+            _IO["git"] += 1
+            try:
+                proc = subprocess.Popen([*XGIT, repo, "cat-file", "--batch"], stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=_git_env())
+            except (OSError, subprocess.SubprocessError):
+                raise NotRun(WHY_NO_GIT)
+
+            def expire():
+                expired.append(True)
+                with contextlib.suppress(OSError):
+                    proc.kill()
+            timer = threading.Timer(max(deadline - time.monotonic(), 0), expire)
+            timer.daemon = True
+            timer.start()
+        for name, oid, size in keep:
+            if expired or time.monotonic() >= deadline:
+                return None
+            segs = name.split(b"/")
+            base = segs[-1] + IGNORE_SUFFIX if segs[-1] in IGNORE_FILES else segs[-1]
+            want = tuple(segs[:-1])
+            if any(want[:i] in failed for i in range(1, len(want) + 1)):
+                skipped["name"] += 1
+                continue
+            if want != dirs:
+                if dfd is not None:
+                    os.close(dfd)
+                    dfd = None
+                dirs = None
+                dfd = _dir_at(root, want, made, failed)
+                if dfd is None:
+                    skipped["name"] += 1
+                    continue
+                dirs = want
+            try:
+                fd = _create_file(base, dfd)
+            except OSError as e:
+                if e.errno not in SKIP_ERRNOS:
+                    raise NotRun(WHY_EXPORT_WRITE)
+                skipped["name"] += 1
+                continue
+            try:
+                _blob(proc, oid, size, fd)
+            except _Stream:
+                if expired or time.monotonic() >= deadline:
+                    return None
+                raise NotRun(WHY_BLOB)
+            finally:
+                os.close(fd)
+            done.append((b"/".join(segs[:-1] + [base]), name, size))
+            _IO["writes"] += 1
+        finished = True
+        return done
+    finally:
+        if timer is not None:
+            timer.cancel()
+        if proc is not None:
+            with contextlib.suppress(OSError, ValueError):
+                proc.stdin.close()
+            if not finished:  # a timeout or a failure: git may be blocked writing a blob nobody will read
+                with contextlib.suppress(OSError):
+                    proc.kill()
+            try:
+                proc.wait(timeout=GIT_TIMEOUT)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait()
+            with contextlib.suppress(OSError, ValueError):
+                proc.stdout.close()
+        for fd in (dfd, root):
+            if fd is not None:
+                with contextlib.suppress(OSError):
+                    os.close(fd)
+
+
+def _path_states(paths, listed, written):
+    """{<p>: exported | absent | skipped} for each --path: exported where it, or a path under it, is a repository
+    path `written` holds; absent where the listing holds neither; skipped otherwise. A path is compared as git reads
+    a pathspec -- ./, // and /./ collapsed, . the whole tree, and a trailing / naming a directory alone."""
+    states = {}
+    for p in paths:
+        raw = p.encode("utf-8")
+        norm, dir_only = posixpath.normpath(raw), raw.endswith(b"/")
+
+        def under(name):
+            return norm == b"." or (name == norm and not dir_only) or name.startswith(norm + b"/")
+        states[p] = ("exported" if any(under(n) for n in written) else
+                     "absent" if not any(under(n) for n in listed) else "skipped")
+    return states
+
+
+def cmd_export(repo, commit, out, manifest, whole, paths):
+    if not os.path.lexists(os.path.join(repo, ".git")):  # before any git call: see the docstring
+        raise NotRun(WHY_CLONE)
+    r = _xgit(repo, "rev-parse", "--show-toplevel")
+    if r is None:
+        raise NotRun(WHY_NO_GIT)
+    top = r[1].rstrip(b"\n")
+    if r[0] != 0 or not top or os.path.realpath(os.fsdecode(top)) != os.path.realpath(repo):
+        raise NotRun(WHY_CLONE)
+    r = _xgit(repo, "cat-file", "-e", commit + "^{commit}")
+    if r is None:
+        raise NotRun(WHY_NO_GIT)
+    if r[0] != 0:
+        return 3, {"refused": "commit-absent", "files": None, "bytes": None}
+    specs = [] if whole else ["--"] + [":(literal)" + p for p in paths]
+    r = _xgit(repo, "ls-tree", "-r", "-z", "-l", "--full-tree", commit, *specs)
+    if r is None or r[0] != 0:
+        raise NotRun(WHY_TREE)
+    listed, keep = [], []
+    skipped = {"link": 0, "submodule": 0, "other": 0, "name": 0, "large": 0}
+    for record in r[1].split(b"\0"):
+        if not record:
+            continue
+        head, tab, name = record.partition(b"\t")
+        fields = head.split()
+        if not tab or not name or len(fields) != 4:
+            raise NotRun(WHY_TREE)
+        mode, kind, oid, size = fields
+        listed.append(name)
+        if mode == b"120000":
+            skipped["link"] += 1
+        elif mode == b"160000":
+            skipped["submodule"] += 1
+        elif mode not in FILE_MODES or kind != b"blob":
+            skipped["other"] += 1
+        elif not _name_in_class(name):
+            skipped["name"] += 1
+        elif not size.isdigit() or not OBJECT_ID_RE.fullmatch(oid.decode("ascii", "replace")):
+            raise NotRun(WHY_TREE)
+        elif int(size) > EXPORT_FILE_CAP:
+            skipped["large"] += 1
+        else:
+            keep.append((name, oid, int(size)))
+    total = sum(size for _, _, size in keep)
+    if len(keep) > EXPORT_FILES_CAP or total > EXPORT_BYTES_CAP:
+        return 3, {"refused": "over-cap", "files": len(keep), "bytes": total}
+    done = _export_files(repo, keep, out, skipped)
+    if done is None:
+        return 3, {"refused": "timeout", "files": len(keep), "bytes": total}
+    try:  # last, so a manifest exists only beside a whole export
+        fd = os.open(manifest, os.O_WRONLY | os.O_CREAT | os.O_EXCL | _NOFOLLOW, 0o600)
+    except OSError:
+        raise NotRun(WHY_EXPORT_WRITE)
+    try:
+        view = memoryview(b"".join(written + b"\0" + name + b"\0" for written, name, _ in done))
+        while view:
+            view = view[os.write(fd, view):]
+    except OSError:
+        raise NotRun(WHY_EXPORT_WRITE)
+    finally:
+        os.close(fd)
+    _IO["writes"] += 1
+    return 0, {"files": len(done), "bytes": sum(size for _, _, size in done), "skipped": skipped,
+               "paths": _path_states(paths, listed, [name for _, name, _ in done])}
+
+
 # ---- the command line ----
 
 class _Parser(argparse.ArgumentParser):
@@ -1125,8 +1510,15 @@ def _args(argv):
     ep.add_argument("--from", dest="from_status")
     ep.add_argument("--walkthrough")
     ep.add_argument("--block")
+    xp = sub.add_parser("export", add_help=False, allow_abbrev=False)
+    xp.add_argument("--repo")
+    xp.add_argument("--commit")
+    xp.add_argument("--out")
+    xp.add_argument("--manifest")
+    xp.add_argument("--whole", action="store_true")
+    xp.add_argument("--path", action="append")
     a = ap.parse_args(argv)
-    if a.verb not in ("check", "moved", "edit") or not a.repo:
+    if a.verb not in ("check", "moved", "edit", "export") or not a.repo:
         raise NotRun(WHY_USAGE)
     if a.verb == "check":
         checks = []
@@ -1134,7 +1526,7 @@ def _args(argv):
         if a.base is None or not a.id:
             raise NotRun(WHY_USAGE)
         checks = [(all(_unit_id(i) for i in a.id), WHY_ID), (BRANCH_RE.fullmatch(a.base) is not None, WHY_BASE)]
-    else:
+    elif a.verb == "edit":
         if a.status is None or not a.id or len(a.id) != 1:
             raise NotRun(WHY_USAGE)
         checks = [(_unit_id(a.id[0]), WHY_ID),
@@ -1143,6 +1535,14 @@ def _args(argv):
                   (a.from_status is None or _status(a.from_status), WHY_FROM),
                   (a.walkthrough is None or _walkthrough(a.walkthrough), WHY_WALKTHROUGH),
                   (a.block is None or _status(a.block), WHY_BLOCK)]
+    else:
+        if a.commit is None or a.out is None or a.manifest is None or not (a.whole or a.path):
+            raise NotRun(WHY_USAGE)
+        checks = [(_abs_path(a.repo), WHY_REPO_ABS),
+                  (OBJECT_ID_RE.fullmatch(a.commit) is not None, WHY_COMMIT),
+                  (_abs_path(a.out), WHY_OUT),
+                  (_abs_path(a.manifest), WHY_MANIFEST),
+                  (all(_rel_path(p) for p in a.path or ()), WHY_PATH)]
     for ok, why in checks:
         if not ok:
             raise NotRun(why)
@@ -1152,7 +1552,13 @@ def _args(argv):
         return cmd_check, (a.repo,)
     if a.verb == "moved":
         return cmd_moved, (a.repo, a.base, list(dict.fromkeys(a.id)), a.own_moves)
-    return cmd_edit, (a.repo, a.id[0], a.status, a.page_path, a.from_status, a.walkthrough, a.block)
+    if a.verb == "edit":
+        return cmd_edit, (a.repo, a.id[0], a.status, a.page_path, a.from_status, a.walkthrough, a.block)
+    _fresh(a.out, WHY_OUT)
+    _fresh(a.manifest, WHY_MANIFEST)
+    if os.path.normpath(a.out) == os.path.normpath(a.manifest):
+        raise NotRun(WHY_MANIFEST)
+    return cmd_export, (a.repo, a.commit, a.out, a.manifest, a.whole, list(dict.fromkeys(a.path or ())))
 
 
 def _drop_stdout():
@@ -2408,6 +2814,401 @@ def case_edit_new_flags_bad_args(tmp):
     _eq((_get(top), _stat(top)), (MINI.encode("utf-8"), before), "untouched")
 
 
+# ---- export ----
+
+def _bytes_of(path):
+    with open(path, "rb") as fh:
+        return fh.read()
+
+
+def _put_files(top, files, execs=()):
+    """Each of `files`, {path: bytes}, under `top` -- a str value is the target of a symbolic link made there -- and
+    each path in `execs` made executable."""
+    for rel, data in files.items():
+        p = os.path.join(top, *rel.split("/"))
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        if isinstance(data, str):
+            os.symlink(data, p)
+        else:
+            with open(p, "wb") as fh:
+                fh.write(data)
+        if rel in execs:
+            os.chmod(p, 0o755)
+
+
+def _src(tmp, files, name="src", execs=()):
+    """A source repository at <tmp>/<name> whose one commit holds `files`, as _put_files writes them; (its path, the
+    commit's object id)."""
+    top = os.path.join(tmp, name)
+    os.makedirs(top)
+    _fx(top, "init", "-q", "-b", "main")
+    _put_files(top, files, execs)
+    _fx(top, "add", "-A")
+    _fx(top, "commit", "-qm", "source")
+    return top, _fx(top, "rev-parse", "HEAD").strip()
+
+
+def _fx_in(cwd, data, *args):
+    """_fx with `data` on git's stdin."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_TERMINAL_PROMPT": "0"})
+    r = subprocess.run(["git", "-c", "user.name=selftest", "-c", "user.email=selftest@example.invalid", *args],
+                       cwd=cwd, env=env, check=True, input=data, capture_output=True)
+    return r.stdout.decode("utf-8", "replace")
+
+
+def _commit_entry(top, mode, oid, path):
+    """A commit on top of HEAD adding the index entry `path`, with `mode` and object `oid`, which no working tree
+    file need hold; the new commit's object id."""
+    _fx(top, "update-index", "--add", "--cacheinfo", "%s,%s,%s" % (mode, oid, path))
+    _fx(top, "commit", "-qm", "an entry")
+    return _fx(top, "rev-parse", "HEAD").strip()
+
+
+def _xdir(tmp):
+    """A new directory to hold an export's --out and --manifest: (it, --out, --manifest)."""
+    d = os.path.join(tmp, "x")
+    os.mkdir(d)
+    return d, os.path.join(d, "out"), os.path.join(d, "out.files")
+
+
+def _export(repo, commit, out, manifest, *flags):
+    return _call(["export", "--repo", repo, "--commit", commit, "--out", out, "--manifest", manifest, *flags])
+
+
+def _export_ok(repo, commit, out, manifest, *flags):
+    """export's JSON object and its stdout, where it exits 0 with an empty stderr."""
+    code, stdout, err = _export(repo, commit, out, manifest, *flags)
+    _eq((code, err), (0, ""), "export's exit and stderr")
+    return _obj(stdout), stdout
+
+
+def _manifest(path):
+    """The manifest's pairs, (written path, repository path) as bytes, its NUL-separated layout checked."""
+    data = _bytes_of(path)
+    if not data:
+        return []
+    _true(data.endswith(b"\0"), "the manifest ends with a NUL")
+    parts = data[:-1].split(b"\0")
+    _eq(len(parts) % 2, 0, "the manifest holds pairs")
+    return list(zip(parts[0::2], parts[1::2]))
+
+
+def _files(out):
+    """{path relative to `out`, as bytes: bytes} of every file under `out`; anything but a directory or a regular
+    file -- a symbolic link among them -- fails the case."""
+    got, root = {}, os.fsencode(out)
+    for dirpath, dirnames, filenames in os.walk(root):
+        for n in dirnames + filenames:
+            p = os.path.join(dirpath, n)
+            st = os.lstat(p)
+            _true(stat.S_ISDIR(st.st_mode) or stat.S_ISREG(st.st_mode), "%r is a directory or a regular file" % p)
+            if stat.S_ISREG(st.st_mode):
+                got[os.path.relpath(p, root)] = _bytes_of(p)
+    return got
+
+
+def _skipped(**counts):
+    return dict({"link": 0, "submodule": 0, "other": 0, "name": 0, "large": 0}, **counts)
+
+
+def case_export_whole_tree(tmp):
+    """--whole over nested directories, an executable and a non-ASCII UTF-8 name: each file byte-equal under --out,
+    mode 0600 in a tree of mode 0700, the manifest pairing each written path with its repository path in tree order,
+    files and bytes right, nothing else written, and the clone's index and working tree untouched."""
+    files = {"README.md": b"# top\n", "src/app.ts": b"export const x = 1;\r\n", "src/deep/er/mod.py": b"X = 2\n",
+             "bin/run.sh": b"#!/bin/sh\necho hi\n", "docs/café.md": "café — ok\n".encode("utf-8")}
+    top, oid = _src(tmp, files, execs=("bin/run.sh",))
+    _eq(_fx(top, "ls-tree", "HEAD", "bin/run.sh").split(" ")[0], "100755", "the fixture's executable")
+    status = _fx(top, "status", "--porcelain")
+    index = os.path.join(top, ".git", "index")
+    before = (_bytes_of(index), os.stat(index).st_mtime_ns)
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    _eq(_files(out), {k.encode("utf-8"): v for k, v in files.items()}, "the files written")
+    tree = [p.encode("utf-8") for p in _fx(top, "ls-tree", "-r", "-z", "--name-only", oid).split("\0") if p]
+    _eq(_manifest(man), [(p, p) for p in tree], "the manifest, in tree order")
+    _eq(obj, {"files": 5, "bytes": sum(len(v) for v in files.values()), "skipped": _skipped(), "paths": {}})
+    _eq(sorted(os.listdir(d)), ["out", "out.files"], "nothing else written")
+    for dirpath, dirnames, filenames in os.walk(out):
+        _eq(stat.S_IMODE(os.stat(dirpath).st_mode), 0o700, "%s's mode" % dirpath)
+        for n in filenames:
+            _eq(stat.S_IMODE(os.stat(os.path.join(dirpath, n)).st_mode), 0o600, "%s's mode" % n)
+    _eq((_bytes_of(index), os.stat(index).st_mtime_ns), before, "the clone's index untouched")
+    _eq(_fx(top, "status", "--porcelain"), status, "the clone's working tree untouched")
+
+
+def case_export_links_not_followed(tmp):
+    """A committed link to a file outside the repository, and one to a directory holding files: no path made for
+    either, skipped.link 2, and the file outside -- the sentinel -- and its directory unchanged."""
+    outside = os.path.join(tmp, "outside")
+    os.mkdir(outside)
+    sentinel = os.path.join(outside, "secret.txt")
+    _put_files(outside, {"secret.txt": b"secret\n", "more.txt": b"more\n"})
+    mtime = os.stat(sentinel).st_mtime_ns
+    top, oid = _src(tmp, {"a.txt": b"a\n", "lnfile": sentinel, "lndir": outside})
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    _eq(sorted(os.listdir(out)), ["a.txt"], "no path made for either link")
+    _eq(_files(out), {b"a.txt": b"a\n"}, "the regular file alone")
+    _eq(_manifest(man), [(b"a.txt", b"a.txt")])
+    _eq(obj, {"files": 1, "bytes": 2, "skipped": _skipped(link=2), "paths": {}})
+    _eq((_bytes_of(sentinel), os.stat(sentinel).st_mtime_ns), (b"secret\n", mtime), "the sentinel unchanged")
+    _eq(sorted(os.listdir(outside)), ["more.txt", "secret.txt"], "nothing written outside")
+
+
+def case_export_submodule_skipped(tmp):
+    """A gitlink entry: skipped.submodule 1, nothing made for it."""
+    top, first = _src(tmp, {"a.txt": b"a\n"})
+    oid = _commit_entry(top, "160000", first, "vendor/lib")
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    _eq(obj, {"files": 1, "bytes": 2, "skipped": _skipped(submodule=1), "paths": {}})
+    _eq(sorted(os.listdir(out)), ["a.txt"], "nothing made for the submodule")
+
+
+def case_export_name_out_of_class(tmp):
+    """Names holding a newline, a tab and a U+202E: skipped.name 3, none in stdout or the manifest. And a tree a
+    committer built by hand, holding a directory .GIT, which git itself refuses to add: skipped name."""
+    names = ("new\nline.txt", "tab\there.txt", "bidi‮txt.md")
+    top, oid = _src(tmp, dict({"ok.txt": b"ok\n"}, **{n: b"x\n" for n in names}))
+    d, out, man = _xdir(tmp)
+    obj, stdout = _export_ok(top, oid, out, man, "--whole")
+    _eq(obj, {"files": 1, "bytes": 3, "skipped": _skipped(name=3), "paths": {}})
+    _eq(_files(out), {b"ok.txt": b"ok\n"})
+    raw = _bytes_of(man)
+    for n in names:
+        _true(n.encode("utf-8") not in raw, "%r is not in the manifest" % n)
+        _true(n not in stdout and json.dumps(n)[1:-1] not in stdout, "%r is not in stdout" % n)
+    blob = _fx(top, "rev-parse", oid + ":ok.txt").strip()
+    sub = _fx_in(top, b"100644 blob %s\tconfig\n" % blob.encode(), "mktree").strip()
+    tree = _fx_in(top, b"040000 tree %s\t.GIT\n100644 blob %s\tok.txt\n" % (sub.encode(), blob.encode()),
+                  "mktree").strip()
+    crafted = _fx(top, "commit-tree", "-m", "crafted", tree).strip()
+    out2, man2 = os.path.join(d, "out2"), os.path.join(d, "out2.files")
+    obj, _ = _export_ok(top, crafted, out2, man2, "--whole")
+    _eq((obj["skipped"], sorted(os.listdir(out2))), (_skipped(name=1), ["ok.txt"]), "a .GIT segment, in any case")
+
+
+def case_export_ignore_files_renamed(tmp):
+    """.gitignore, sub/.ignore and .rgignore are written as that name plus .exported, byte-equal, the manifest
+    pairing each with its repository path, nothing skipped; a committed .gitignore.exported beside a .gitignore makes
+    the second create fail EEXIST, skipped name."""
+    files = {".gitignore": b"ignored-*\n", "sub/.ignore": b"*.log\n", ".rgignore": b"*\n", "sub/a.log": b"log\n"}
+    top, oid = _src(tmp, files)
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    _eq(_files(out), {b".gitignore.exported": b"ignored-*\n", b"sub/.ignore.exported": b"*.log\n",
+                      b".rgignore.exported": b"*\n", b"sub/a.log": b"log\n"}, "the files written")
+    _eq(_manifest(man), [(b".gitignore.exported", b".gitignore"), (b".rgignore.exported", b".rgignore"),
+                         (b"sub/.ignore.exported", b"sub/.ignore"), (b"sub/a.log", b"sub/a.log")])
+    _eq(obj, {"files": 4, "bytes": 22, "skipped": _skipped(), "paths": {}})
+    top2, oid2 = _src(tmp, {".gitignore": b"ignored-*\n", ".gitignore.exported": b"committed\n"}, name="src2")
+    out2, man2 = os.path.join(d, "out2"), os.path.join(d, "out2.files")
+    obj, _ = _export_ok(top2, oid2, out2, man2, "--whole", "--path", ".gitignore.exported")
+    _eq(_files(out2), {b".gitignore.exported": b"ignored-*\n"}, "the renamed file, the committed one skipped")
+    _eq(_manifest(man2), [(b".gitignore.exported", b".gitignore")])
+    _eq(obj, {"files": 1, "bytes": 10, "skipped": _skipped(name=1), "paths": {".gitignore.exported": "skipped"}})
+
+
+def case_export_large_file_skipped(tmp):
+    """Files of 1,048,576 and 1,048,577 bytes: the first exported, the second counted large; a --path naming the
+    second is skipped."""
+    top, oid = _src(tmp, {"cap.bin": b"a" * 1048576, "over.bin": b"b" * 1048577})
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole", "--path", "over.bin")
+    _eq(obj, {"files": 1, "bytes": 1048576, "skipped": _skipped(large=1), "paths": {"over.bin": "skipped"}})
+    _eq(_files(out), {b"cap.bin": b"a" * 1048576})
+
+
+def case_export_over_cap(tmp):
+    """EXPORT_FILES_CAP set to 3 over four files: exit 3, over-cap, files 4, --out not created; EXPORT_BYTES_CAP set
+    one under the bytes the same; each cap met exactly exports."""
+    top, oid = _src(tmp, {"a": b"1", "b": b"22", "c": b"333", "d": b"4444"})
+    d, out, man = _xdir(tmp)
+    for cap, value in (("EXPORT_FILES_CAP", 3), ("EXPORT_BYTES_CAP", 9)):
+        code, stdout, err = _with(cap, value, lambda: _export(top, oid, out, man, "--whole"))
+        _eq((code, err), (3, ""), cap)
+        _eq(_obj(stdout), {"refused": "over-cap", "files": 4, "bytes": 10}, cap)
+        _eq(os.listdir(d), [], cap + ": nothing created")
+    for cap, value in (("EXPORT_FILES_CAP", 4), ("EXPORT_BYTES_CAP", 10)):
+        out, man = os.path.join(d, cap), os.path.join(d, cap + ".files")
+        obj, _ = _with(cap, value, lambda: _export_ok(top, oid, out, man, "--whole"))
+        _eq((obj["files"], obj["bytes"]), (4, 10), cap + " met exactly")
+
+
+def case_export_commit_absent(tmp):
+    """An object id the clone does not hold, and one naming a blob: exit 3, commit-absent, nothing created."""
+    top, oid = _src(tmp, {"a.txt": b"a\n"})
+    d, out, man = _xdir(tmp)
+    for commit in ("de" * 20, _fx(top, "rev-parse", oid + ":a.txt").strip()):
+        code, stdout, err = _export(top, commit, out, man, "--whole")
+        _eq((code, err), (3, ""), commit)
+        _eq(_obj(stdout), {"refused": "commit-absent", "files": None, "bytes": None}, commit)
+        _eq(os.listdir(d), [], "nothing created")
+
+
+def case_export_paths_at_ref(tmp):
+    """An older commit, --path a file and a directory, without --whole: only those exported, at that commit, both
+    exported. A --path holding a glob character, or opening as pathspec magic does, is a literal path."""
+    top, old = _src(tmp, {"src/a.ts": b"old a\n", "src/sub/b.ts": b"old b\n", "lib/c.ts": b"c\n", "README.md": b"r\n",
+                          "lit/a*b.txt": b"star\n", "lit/aXb.txt": b"x\n"})
+    _put_files(top, {"src/a.ts": b"new a\n", "lib/d.ts": b"d\n"})
+    _fx(top, "add", "-A")
+    _fx(top, "commit", "-qm", "newer")
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, old, out, man, "--path", "README.md", "--path", "src", "--path", "lit/a*b.txt",
+                        "--path", ":/lib")
+    _eq(_files(out), {b"README.md": b"r\n", b"src/a.ts": b"old a\n", b"src/sub/b.ts": b"old b\n",
+                      b"lit/a*b.txt": b"star\n"})
+    _eq(obj, {"files": 4, "bytes": 19, "skipped": _skipped(),
+              "paths": {"README.md": "exported", "src": "exported", "lit/a*b.txt": "exported", ":/lib": "absent"}})
+
+
+def case_export_path_states(tmp):
+    """--whole with --path a file, a directory (also as ./dir/), an absent path, a prefix of a name that is no path,
+    and a link: exported, exported, exported, absent, absent, skipped."""
+    top, oid = _src(tmp, {"f.txt": b"f\n", "dir/g.txt": b"g\n", "dir/h.txt": b"h\n", "ln": "f.txt"})
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole", "--path", "f.txt", "--path", "dir", "--path", "./dir/",
+                        "--path", "gone.txt", "--path", "di", "--path", "ln")
+    _eq(obj["paths"], {"f.txt": "exported", "dir": "exported", "./dir/": "exported", "gone.txt": "absent",
+                       "di": "absent", "ln": "skipped"})
+    _eq(obj["skipped"], _skipped(link=1))
+
+
+def case_export_out_refused(tmp):
+    """--out existing, a link, a dangling link or under a linked parent; --manifest existing, under a linked parent or
+    --out itself: exit 2 each, nothing run or written."""
+    top, oid = _src(tmp, {"a.txt": b"a\n"})
+    d = os.path.join(tmp, "x")
+    real = os.path.join(tmp, "real")
+    for p in (d, real, os.path.join(d, "taken")):
+        os.mkdir(p)
+    os.symlink(real, os.path.join(d, "linkout"))
+    os.symlink(os.path.join(tmp, "nowhere"), os.path.join(d, "dangling"))
+    os.symlink(real, os.path.join(d, "linkparent"))
+    _put_files(d, {"taken.files": b""})
+    listing = sorted(os.listdir(d))
+    j = lambda *p: os.path.join(d, *p)
+    for out, man, why in ((j("taken"), j("m"), WHY_OUT), (j("linkout"), j("m"), WHY_OUT),
+                          (j("dangling"), j("m"), WHY_OUT), (j("linkparent", "out"), j("m"), WHY_OUT),
+                          (j("out"), j("taken.files"), WHY_MANIFEST), (j("out"), j("linkparent", "m"), WHY_MANIFEST),
+                          (j("out"), j("out"), WHY_MANIFEST)):
+        code, stdout, err = _export(top, oid, out, man, "--whole")
+        _refused(code, stdout, err, why)
+        _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "%s, %s: nothing read, run or written" % (out, man))
+    _eq((sorted(os.listdir(d)), os.listdir(real), os.path.lexists(os.path.join(tmp, "nowhere"))),
+        (listing, [], False), "nothing written")
+
+
+def case_export_bare_repo_refused(tmp):
+    """--repo laid out as a git directory with no .git, its config naming a core.fsmonitor that would write a
+    sentinel: exit 2, no git call made, no sentinel. With an empty .git directory beside it, which git without
+    safe.bareRepository=explicit passes over to take --repo itself as the repository, its top level --repo: exit 2."""
+    gitdir, sentinel = os.path.join(tmp, "gitdir"), os.path.join(tmp, "sentinel")
+    _fx(tmp, "init", "-q", "--bare", gitdir)
+    for key, value in (("core.bare", "false"), ("core.worktree", gitdir), ("core.fsmonitor", "touch " + sentinel)):
+        _fx(tmp, "config", "-f", os.path.join(gitdir, "config"), key, value)
+    d, out, man = _xdir(tmp)
+    code, stdout, err = _export(gitdir, "ab" * 20, out, man, "--whole")
+    _refused(code, stdout, err, WHY_CLONE)
+    _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "no git call made")
+    _eq((os.path.lexists(sentinel), os.listdir(d)), (False, []), "no sentinel, nothing created")
+    os.mkdir(os.path.join(gitdir, ".git"))
+    code, stdout, err = _export(gitdir, "ab" * 20, out, man, "--whole")
+    _refused(code, stdout, err, WHY_CLONE)
+    _eq((os.path.lexists(sentinel), os.listdir(d)), (False, []), "an empty .git: no sentinel, nothing created")
+
+
+def case_export_bad_args(tmp):
+    """Each export argument outside its class, a flag missing or given twice, or --flag=value: exit 2, nothing read,
+    run or written; export's flags are unknown to the other verbs."""
+    top, oid = _src(tmp, {"a.txt": b"a\n"})
+    d, out, man = _xdir(tmp)
+    base = {"--repo": top, "--commit": oid, "--out": out, "--manifest": man}
+
+    def argv(extra, **swap):
+        flags = dict(base, **{"--" + k: v for k, v in swap.items()})
+        return ["export"] + [t for k, v in flags.items() if v is not None for t in (k, v)] + extra
+    for args, why in ((argv(["--whole"], commit="HEAD"), WHY_COMMIT), (argv(["--whole"], commit=oid[:39]), WHY_COMMIT),
+                      (argv(["--path", "../x"]), WHY_PATH), (argv(["--path", "/x"]), WHY_PATH),
+                      (argv(["--path", "a\tb"]), WHY_PATH), (argv(["--path", "a‮b"]), WHY_PATH),
+                      (argv(["--path", "a" * 4097]), WHY_PATH), (argv(["--path", "x\udcff"]), WHY_PATH),
+                      (argv(["--whole"], repo="rel"), WHY_REPO_ABS), (argv(["--whole"], out="rel"), WHY_OUT),
+                      (argv(["--whole"], manifest="rel/m"), WHY_MANIFEST),
+                      (argv(["--whole"], repo=os.path.join(tmp, "absent")), WHY_REPO),
+                      (argv([]), WHY_USAGE), (argv(["--whole", "--whole"]), WHY_USAGE),
+                      (argv(["--whole"], commit=None), WHY_USAGE), (argv(["--whole", "--commit", oid]), WHY_USAGE),
+                      (argv(["--path=a.txt"]), WHY_USAGE), (argv(["--path"]), WHY_USAGE),
+                      (["check", "--repo", top, "--whole"], WHY_USAGE),
+                      (["moved", "--repo", top, "--base", "main", "--id", "U-001", "--path", "a"], WHY_USAGE),
+                      (["edit", "--repo", top, "--id", "U-001", "--status", "drafted", "--out", out], WHY_USAGE)):
+        code, stdout, err = _call(args)
+        _refused(code, stdout, err, why)
+        _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "%r: nothing read, run or written" % (args[1:],))
+    _eq(os.listdir(d), [], "nothing created")
+    _eq(_args(argv(["--path", "a" * 4096]))[1][5], ["a" * 4096], "a --path of 4,096 bytes passes")
+
+
+def case_export_no_filter_run(tmp):
+    """The clone's config naming a filter.x.clean, a filter.x.smudge and a diff.x.textconv, each a command that would
+    write a sentinel, and a committed .gitattributes `* filter=x diff=x`: each file's raw blob bytes written, and no
+    sentinel."""
+    files = {".gitattributes": b"* filter=x diff=x\n", "a.txt": b"raw a\r\n", "b.md": b"raw b\n"}
+    top, oid = _src(tmp, files)
+    sentinel = os.path.join(tmp, "sentinel")
+    for key in ("filter.x.clean", "filter.x.smudge", "diff.x.textconv"):
+        _fx(top, "config", key, "touch '%s'; cat" % sentinel)
+    _fx(top, "cat-file", "--filters", oid + ":a.txt")
+    _true(os.path.lexists(sentinel), "the fixture's filter runs where git is asked to run it")
+    os.unlink(sentinel)
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    _eq(_files(out), {k.encode("utf-8"): v for k, v in files.items()}, "each file's raw blob bytes")
+    _eq(obj["files"], 3)
+    _true(not os.path.lexists(sentinel), "no filter or textconv ran")
+    real = _xgit
+
+    def lying(repo, *args):  # the last file's listed size one short, its blob's last byte a line feed
+        r = real(repo, *args)
+        return (r[0], r[1].replace(b"      6\tb.md", b"      5\tb.md")) if args[0] == "ls-tree" else r
+    out2, man2 = os.path.join(d, "out2"), os.path.join(d, "out2.files")
+    code, stdout, err = _with("_xgit", lying, lambda: _export(top, oid, out2, man2, "--whole"))
+    _refused(code, stdout, err, WHY_BLOB)
+    _true(not os.path.lexists(man2), "a blob not as listed: no manifest written")
+
+
+def case_export_timeout(tmp):
+    """EXPORT_TIMEOUT set to 0.000001: exit 3, timeout, and no manifest written."""
+    top, oid = _src(tmp, {"a.txt": b"a\n", "b.txt": b"b\n"})
+    d, out, man = _xdir(tmp)
+    code, stdout, err = _with("EXPORT_TIMEOUT", 0.000001, lambda: _export(top, oid, out, man, "--whole"))
+    _eq((code, err), (3, ""))
+    _eq(_obj(stdout), {"refused": "timeout", "files": 2, "bytes": 4})
+    _true(not os.path.lexists(man), "no manifest written")
+
+
+def case_export_name_collision(tmp):
+    """A create forced in-process to fail EEXIST for one name, and a committed directory name of 256 bytes (a real
+    ENAMETOOLONG): both skipped, skipped.name 2, every other file exported, exit 0."""
+    top, _ = _src(tmp, {"a.txt": b"a\n", "b.txt": b"b\n", "c/d.txt": b"d\n"})
+    blob = os.path.join(tmp, "blob")
+    _put_files(tmp, {"blob": b"long\n"})
+    oid = _commit_entry(top, "100644", _fx(top, "hash-object", "-w", blob).strip(), "y" * 256 + "/f.txt")
+    real = _create_file
+
+    def colliding(name, dfd):
+        if name == b"b.txt":
+            raise OSError(errno.EEXIST, "forced")
+        return real(name, dfd)
+    d, out, man = _xdir(tmp)
+    obj, _ = _with("_create_file", colliding, lambda: _export_ok(top, oid, out, man, "--whole"))
+    _eq(obj, {"files": 2, "bytes": 4, "skipped": _skipped(name=2), "paths": {}})
+    _eq(_files(out), {b"a.txt": b"a\n", b"c/d.txt": b"d\n"})
+    _eq(_manifest(man), [(b"a.txt", b"a.txt"), (b"c/d.txt", b"c/d.txt")])
+
+
 def case_visibility_marker_pinned(tmp):
     """The visibility marker is page text backlog-run.md's section 10.2 program matches, which /docs-write runs at its
     Phase 9: visibility.md section 5 states it on a line of its own, once, backlog-run.md holds it as the program's
@@ -2456,6 +3257,11 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_edit_from_refused, case_edit_from_ok, case_edit_walkthrough_unset, case_edit_walkthrough_other,
          case_edit_walkthrough_same, case_edit_no_walkthrough_key, case_edit_block_sets, case_edit_block_refused,
          case_edit_no_blocked_by_key, case_edit_record_noop, case_edit_new_flags_bad_args,
+         case_export_whole_tree, case_export_links_not_followed, case_export_submodule_skipped,
+         case_export_name_out_of_class, case_export_ignore_files_renamed, case_export_large_file_skipped,
+         case_export_over_cap, case_export_commit_absent, case_export_paths_at_ref, case_export_path_states,
+         case_export_out_refused, case_export_bare_repo_refused, case_export_bad_args, case_export_no_filter_run,
+         case_export_timeout, case_export_name_collision,
          case_visibility_marker_pinned,
          case_shape_paragraph_pinned, case_marker_phrase_pinned)
 

@@ -37,7 +37,7 @@ Four pages orient you before you touch a command: [Getting started](getting-star
 
 ## Reference
 
-- [Agents](reference/agents.md) — the subagent inventory: what each of the eleven agents does and which command dispatches it.
+- [Agents](reference/agents.md) — the subagent inventory: what each of the twelve agents does and which command dispatches it.
 - [References](reference/references.md) — the reference-doc inventory under `references/`, grouped by concern.
 - [Skills](reference/references.md#skills) — the one bundled skills entry, `docs-frontmatter`: what it is for, and whether it is user-invocable.
 - [Environment](reference/environment.md) — every environment variable the plugin reads, and what it configures.
@@ -64,4 +64,4 @@ Neither pipeline plugin is a dependency in either direction; this plugin install
 
 ## Status
 
-This plugin ships 8 slash commands, 11 agents, 26 reference files and 2 hooks — and it ships one bundled skills entry, `docs-frontmatter`. `prose-style` is a declared dependency, so no style check here skips or degrades for want of it. `dev-workflows` and `product-workflows` each ship a `preload-context` hook of their own, covering their own commands; [Hooks](reference/hooks.md) says how the three plugins' hooks share a prompt.
+This plugin ships 8 slash commands, 12 agents, 26 reference files and 2 hooks — and it ships one bundled skills entry, `docs-frontmatter`. `prose-style` is a declared dependency, so no style check here skips or degrades for want of it. `dev-workflows` and `product-workflows` each ship a `preload-context` hook of their own, covering their own commands; [Hooks](reference/hooks.md) says how the three plugins' hooks share a prompt.
