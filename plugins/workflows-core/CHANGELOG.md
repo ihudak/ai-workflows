@@ -14,7 +14,7 @@ DOC-D-G1, sub-project 2, batch 2: the shared references register `/docs-workflow
 - **`scripts/command-namespaces.json`** lists `docs-verify` under `docs-workflows`.
 - **`references/cost-emission.md`.** §7 gains `/docs-verify`'s row, `documenting`, `dev`, so thirty-one of the thirty-three commands with a §7 row cite the file from their terminal phase; §8 files its entry under `$SPECS_PATH/documentation/<docs-repo-slug>/`, beside the other five documentation runs that resolve no PRD folder.
 - **`references/feedback-emission.md` §2** files its feedback there too, the same six; the automatic callers are thirty-one.
-- **`references/branch-naming.md`** names `/docs-verify` among its consumers, once per run where it cuts a branch, and its prefix row, `docs/`.
+- **`references/branch-naming.md`** names `/docs-verify` among its consumers, once per run where it cuts a branch, its prefix row, `docs/`, and its §3 slug, `docs-verify-<id>`.
 - **`references/model-routing/classification.md` §9.2: the synthesis row names `claim-reader`'s reading of a page's claims**, which a unit's move to `verified` rests on, on §2's Opus chain, so the *Reader* row's §2.1 Sonnet chain is never read to cover it.
 
 ### Changed

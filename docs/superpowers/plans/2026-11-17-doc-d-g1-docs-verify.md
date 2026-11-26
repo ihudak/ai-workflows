@@ -477,7 +477,7 @@ Inputs a reasonable operator will meet that no gate exercises, most likely first
 
   Run: FAIL naming `export_whole_tree`.
 - [ ] **Step 2: Implement** the verb on today's `_git_env`, `NotRun` and exits; every earlier case still passes. **Step 3: Run:** `selftest: 94 passed` (91 planned, three added by Task 2.1's review).
-  - *Note (fix batch B46):* `docs-workflows` 1.44.3 adds eight `moved` cases (75 → 83), so every count this plan expects after batch 1 — 94 here, at the gates and in Task 2.3, and Task 3.1's `91 +` — is eight higher: re-derive it at landing.
+  - *Note (fix batch B46):* `docs-workflows` 1.44.3 adds eight `moved` cases (75 → 83), so every count this plan expects after batch 1 — 94 here, at the gates and in Task 2.3, and Task 3.1's base, 94 before it — is eight higher, 102: re-derive it at landing.
 - [ ] **Step 4: The docstring and the invariant.**
 - [ ] **Step 5: The build-time probe** (R31, N1), in a live session whose Grep and Glob are the harness's. In the session's scratchpad, `probe/.ignore` holding `*.log` and `node_modules/` (a parent ignore file); under it `probe/root/`, holding the command's `.ignore` (`!*`) and an export-shaped `c1/` with `c1/.github/workflows/ci.yml`, `c1/node_modules/pkg/index.js`, `c1/build.log` and `c1/src/app.ts`, each holding one line, a token. Grep for the token and Glob for `**/*` over `probe/root`, first with the root `.ignore`, then without it; record in the task report what each found. **Expected:** with it, both find all four. Where either misses one with it in place, stop the task and report to the controller with the result and the fallback, which is not built without a ruling: `export` writes each segment opening `.` with `%2E` in its place and each `%` as `%25`, the manifest recording each written path beside its repository path, so no exported name is hidden and R27 maps through the pairs. The probe's result is quoted in Task 2.3's report of T-CANARY.
 - [ ] **Step 6: Write the agent and its docs row.**
@@ -673,7 +673,7 @@ Inputs a reasonable operator will meet that no gate exercises, most likely first
   - `slot_comment_pinned`: UB §3.3 step 5 gives `<!-- docs-image-slot: <slot> -->` once; Task 3.3's slot program carries `"<!-- docs-image-slot: "` once (until Task 3.3 lands, this case asserts the UB half and is completed there).
   Run: FAIL naming the first.
 - [ ] **Step 2: Implement** the verbs on the existing line functions (`_chars`, `_value`, `_mapping`, `_seq`, `_flow`, `_quoted`), a structure reader of their own, and the shared atomic write; `REASONS` and the backlog verbs unchanged (every earlier case still passes).
-- [ ] **Step 3: Run.** `selftest: <n> passed` — record `<n>` (91 + this task's cases) for the gates.
+- [ ] **Step 3: Run.** `selftest: <n> passed` — record `<n>` (102 + this task's cases) for the gates.
 - [ ] **Step 4: EC §4's paragraph and stamp key; the invariant; the docstring.**
 - [ ] **Step 5: Gates. Step 6: Commit:** `feat(doc-d-g1): backlog-lines.py reads and writes walkthroughs — walk-check, walk-stamp, walk-record, walk-new, walk-append`.
 

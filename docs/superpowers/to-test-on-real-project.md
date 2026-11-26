@@ -356,7 +356,7 @@ Install it alone; it needs nothing from the other plugins' releases.
 
 - **DOC-D-G5 — a state the release starts from reaches the note.** Setup: the e2e specs copy restored to `BOOK-2-01`'s release-notes start state, specs `668ffef` and code `e439178`, as the lean-context-loader live runs restored it (`docs/superpowers/verification/2026-10-20-lean-context-loader-ledger.md`, Task 14 run 3), with `DOCS_PATH` set to the bookstore docs repository. Then `/docs-workflows:release-notes BOOK-2-01`. Expect the `## Feature updates` draft to carry one plain present-tense sentence saying the store starts with no ratings because every earlier rating was removed: in its first paragraph, or in a paragraph of its own straight after its list where the draft takes the list shape. The PRD states that fact as done in three live places: the Goal's second sentence (*No rating predates this release: every existing rating was removed before go-live.*), the clean-up bullet of `## Scope`'s Out of scope, and item 1 of `## Assumptions & open questions` (*Settled: no rating predates this release*). Then, on a fresh copy, rewrite the Goal's whole second sentence as a plan, *Every existing rating will be removed before go-live.*, and run it again: expect the sentence still, from the other two. Then, on a third fresh copy, rewrite all three as plans and run it again: expect no such sentence, although the withdrawn `[US#6]`'s note and the notes on the withdrawn `[AC#25]` and `[AC#26]` still state the fact as done.
 
-## Fix batch B45 — `product-workflows` 3.88.3, `workflows-core` 1.100.3
+## Fix batch B45 — `product-workflows` 3.88.4, `workflows-core` 1.100.4
 
 Install both together.
 
