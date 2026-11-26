@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.88.3] — 2026-11-26
+
+**What changes for you.** `/create-ard`, `/specify` and `/epics` addressed with an `@<path>` to a PRD folder outside the specs repository's work tree — a second clone, say — no longer stop with commands that cut a branch in the specs repository and then fail: the folder's own `prd.md` decides, as on a specs tree that is no git repository, and a command a stop names by its key is followed by a sentence saying to run it with `SPECS_PATH` set to a specs tree that holds the folder. Update with `workflows-core` 1.100.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.3 bullet).
+
+### Fixed
+
+- **`/create-ard`, `/specify` and `/epics`, Phase 0's *Gate the PRD*.** An `@<path>` PRD folder outside `$SPECS_PATH`'s work tree was gated by a path beginning `../`, which `require-on-main` reads as on no ref, so a folder holding a `prd.md` stopped with the uncommitted form of `CREATE_ARD_PRD_NOT_HANDED_OFF`, `SPECIFY_PRD_NOT_HANDED_OFF` or `EPICS_PRD_NOT_HANDED_OFF`, whose `switch --no-track -c` left a stray `prd/` branch checked out in the specs repository and whose `add -f` failed. Each gate now tells such a folder first — `git -C "<the PRD folder>" rev-parse --show-toplevel` failing, or printing other than `$SPECS_PATH`'s — and takes `unmanaged` without running the gate, as `workflows-core:phase-handoff` §4.4's *The first missing document* reads one. `/create-ard` and `/specify` go on where the folder holds a `prd.md`, and where it holds none on the idea route stop with their `*_NEEDS_PRD` in its form for a specs tree that is no git repository, its `/create-prd <PRD>` followed by §4.4's sentence; `/epics`' step 1b table tests the folder's own file, and each command its refusals name by a key is followed by that sentence. The three commands' pages say so.
+
+### Known limits
+
+- **The later gates of such a run still read the folder as on no ref**: on a BRD-route slice outside the tree that holds a `decisions.md`, `/create-ard` and `/specify` stop at *Gate the decision register* with commands that cut a branch and fail, and an ARD file there is not read. Address such a folder by its key from a `SPECS_PATH` that holds it.
+
 ## [3.88.2] — 2026-11-26
 
 **What changes for you.** No stop of this plugin sends a folder holding its PRD under its file name from before the artifact filenames lost their keys to `/create-prd`, which writes a second PRD there: it prints the rename instead. And `/create-ard`'s refine of a threat model reads legacy Epic folders, through `workflows-core` 1.100.2. Needs `workflows-core` 1.100.2 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.2 bullet).
