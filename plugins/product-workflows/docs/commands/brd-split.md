@@ -370,7 +370,8 @@ reads was already independently verified by `/prd-ground`'s own agents.
   it, so its stop names a fresh intake under a new key instead — and, where the folder holds an
   `idea.md` and no `prd.md` (an idea in a legacy, unprefixed folder), also
   [`/create-prd`](create-prd.md) on the same key, which accepts the folder and writes the `prd.md`
-  that turns a re-run into the idea-route refusal above.
+  that turns a re-run into the idea-route refusal above. Where that folder holds its PRD under its
+  file name from before the artifact filenames lost their keys, the stop prints the rename of that file to `prd.md` — the commands, and the frontmatter fields it then takes — in place of `/create-prd`, which reads `prd.md` alone and would write a second PRD.
 - **`$SPECS_PATH`** (required) — if unset, the run stops naming `SPECS_PATH`.
 - **`$REPOS_PATH`** (*Ground now* only) — resolved as [`/prd-ground`](prd-ground.md) resolves it,
   to list the clones once for every child; where no entry resolves, the run asks for it, passes the path you type to each child run as `--repos-path` — each entry's real path; a path containing whitespace is refused and asked for again, since it cannot pass to a child run — so no child asks again, and *Cancel* there

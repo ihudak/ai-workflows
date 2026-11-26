@@ -238,6 +238,36 @@ any user might pick, and a convention that can be relied on is worth more than o
 convention is stated in the README and in `docs/`; a user who then names their work `PRD-…` has chosen
 the collision.
 
+**The class of a folder's name — a read-side guard, not a naming rule.** A folder's name, read back
+from the tree, is data: the family's commands wrote it, or a person did, and a command that builds a
+shell command from it would run a `$(`, a backtick or a quote it held. So a caller that cites this
+paragraph holds such a name to one class before any command is built from it:
+
+```
+^[A-Za-z0-9_][A-Za-z0-9._@+-]*$
+```
+
+matched whole — letters, digits and `. _ @ + -`, the first a letter, a digit or `_`:
+`workflows-core:read-only-repos` §3's branch-name class without `/`, since a name is one path
+component. A name inside it holds no character a shell acts on inside double quotes or single ones.
+**The caller tests the name as text, whole, as it read it** — a line of a listing, each line ending
+at a line feed — never by handing the name to a command to test, which would be a command built from
+it. **A folder whose name is outside the class is named in words and never read** — by its
+position in the listing, or as a folder named outside this class, never by its name: nothing is
+built from its name, and the caller says what it therefore leaves out. The reserved
+subdirectory names above are no folders' names and are passed over before the test, untested and unnamed
+— `Doc screenshots/` holds a space. A name a command creates is not tested here.
+
+**What it covers, and what it does not.** Every name `<KIND>-<KEY>-<slug>` whose slug holds only
+ASCII letters, digits and `-` is inside it, and so are §5's legacy `<KEY>_<slug>` and `<KEY>-<slug>`
+of that slug. A slug is not always ASCII:
+`/product-workflows:brd-intake` keeps a heading's letters of any script in a BRD folder's slug, so
+that folder and every slice nested in it carry a component outside the class. **So the class is
+tested on a name a caller reads from a listing of a folder's contents — a folder's directly under
+the one its address resolved, or a file's in such a folder — and never on the path its own address resolved** (§3), which stands
+in its commands, double-quoted, as before: testing that path would refuse every slice of such a BRD.
+The callers that cite this paragraph say which names they test.
+
 ## 3. Resolution
 
 ### Entry point: `resolve-address <ARG> [<KIND>]`
@@ -614,7 +644,8 @@ A folder none of the three places is never guessed at: the caller stops, naming 
 it carries — and, where what it carries is an `idea.md` and no `prd.md`, naming
 `/product-workflows:create-prd <KEY>` too, the run whose `prd.md` places it by rule 3 when the caller
 is re-run (on an `@<path>`, which returns no key for such a folder, §3 step 1 says how the operator
-supplies it). That command is named by a caller for which it is a way on: one working at the PRD
+supplies it) — save where the folder holds its PRD under its pre-rename file name, which that
+command never reads: there the caller prints *The rename* below, and names no run. That command is named by a caller for which it is a way on: one working at the PRD
 level, which the placing lets re-run, or a BRD-route command refusing the folder, which names it as
 the idea route's next step (`/product-workflows:brd-interview`'s and `/product-workflows:brd-split`'s
 `*_EMPTY_INVENTORY` stops for a folder that is neither a slice nor a container and `/product-workflows:prd-ground`'s two no-link stops in its Phase 0 step 6 among them). `/product-workflows:brd-intake` names no command for the folder it refuses, and its
@@ -628,6 +659,28 @@ marks as a slice, and writes `idea.md`. A legacy folder holding an `idea.md` and
 reads — where the idea route handed off before the prefixes, an `idea.md` then asserting no `kind:`
 or `key:` (§5) — is the ordinary case: it is placed by none of the three until one of them writes
 its file into it, and by rule 3 from then on.
+
+**The rename — a folder holding its PRD under its pre-rename file name, and no `prd.md`.** That file
+is a top-level `.md` file whose name is the folder's key followed by `_`, other than `<KEY>_ARD.md` —
+the test `workflows-core:phase-handoff` §4.4's `prd.md` rung makes. A folder written before the kind
+prefixes may hold one, beside an `idea.md` asserting no `kind:` or `key:` or alone (§5); no rule
+above places it, since a PRD under that name asserts no `kind:` either, and
+`/product-workflows:create-prd` reads `prd.md` alone and would write a second PRD beside it. So the
+stop of a caller above — a placement stop, or a BRD-route command's refusal naming `/create-prd` as
+the idea route's next step — names no run for such a folder, whether or not it holds an `idea.md`,
+and prints the rename itself, `<path>` being the folder's path relative to `$SPECS_PATH`, `<name>`
+that file's name, `<SPECS_PATH>` the specs directory, and `<the way on>` what the caller gives as
+the way on once the folder holds a `prd.md` — its own re-run, typed out, or, for a refusal, the run
+it names after `/create-prd`:
+
+`<KEY>'s PRD is <path>/<name>, under its file name from before the artifact filenames lost their keys, so nothing places this folder — do not run /product-workflows:create-prd here, which reads prd.md alone and would write a second PRD beside it. Rename that file to prd.md ('git -C "<SPECS_PATH>" mv -- "<path>/<name>" "<path>/prd.md"', or, where git does not track it, 'mv -- "<SPECS_PATH>/<path>/<name>" "<SPECS_PATH>/<path>/prd.md"'), give it the frontmatter fields kind: prd and key: <KEY>, which no file written under the old name carries, commit the old name's removal and prd.md together, and land that commit on the specs repository's default branch (workflows-core:addressing §5); then <the way on>.`
+
+On a specs tree that is no git repository there is nothing to commit or land, and its second
+sentence reads `Rename that file to prd.md ('mv -- "<SPECS_PATH>/<path>/<name>" "<SPECS_PATH>/<path>/prd.md"') and give it the frontmatter fields kind: prd and key: <KEY>, which no file written under the old name carries (workflows-core:addressing §5); then <the way on>.`
+Once renamed and given those fields, `prd.md` places the folder by rule 3. **On an `@<path>` to a
+folder with no carrier**, which returns no key (§3 step 1), there is no key to make the test with,
+and none is parsed out of a file's name: where the stop names `/create-prd <KEY>`, it follows it
+with `— unless the folder holds its PRD as <KEY>_<slug>.md, under its file name from before the artifact filenames lost their keys: then rename that file to prd.md and give it kind: prd and key: <KEY> (workflows-core:addressing §5), and do not run /product-workflows:create-prd, which would write a second PRD beside it.`
 
 **What a caller does at each level is its own, and so is its refusal of a level it does not work
 at.** Where a refusal names the slices under a container, it finds them by
@@ -687,7 +740,8 @@ needs its `<KEY>_<slug>.md` renamed to `prd.md` and its `<KEY>_ARD.md` to `ard.m
 and unlike the folder nothing resolves them for you: a command meeting the old filename reads the
 artifact as absent, and where that stops it, most stops name a remedy written for a folder that never
 had one — the never-produced stops of `/product-workflows:prd-proposal`,
-`/product-workflows:create-ard` and `/product-workflows:specify` name the rename instead. **Each
+`/product-workflows:create-ard` and `/product-workflows:specify` name the rename instead, and a stop
+on a folder §4.1 places at no level prints it (§4.1, *The rename*). **Each
 renamed file also takes the `kind:` and `key:` its format now carries** — `kind: prd` and
 `key: <KEY>` on `prd.md`, `kind: ard` and the key on `ard.md` — because those fields arrived in the
 same commit as the keyless filenames (1da74804), so no file written under the old names carries

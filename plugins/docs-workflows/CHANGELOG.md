@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.44.1] — 2026-11-26
+
+**What changes for you.** `/document`'s `DOCUMENT_FOLDER_NOT_PLACED` and `/release-notes`' `RELEASE_NOTES_FOLDER_NOT_PLACED`, on a folder holding its PRD under its file name from before the artifact filenames lost their keys, print the rename that places it, never `/product-workflows:create-prd`, which writes a second PRD there. Needs `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).
+
+### Fixed
+
+- **`DOCUMENT_FOLDER_NOT_PLACED` and `RELEASE_NOTES_FOLDER_NOT_PLACED`.** Their remedy prints `workflows-core:addressing` §4.1's *The rename*, naming no run, where the folder holds its PRD under its pre-rename file name and no `prd.md`; it named `/product-workflows:create-prd`. On an `@<path>`, which holds no key to make that test with, the run it names is followed by *The rename*'s `@<path>` clause. Both pages say so.
+
 ## [1.44.0] — 2026-11-26
 
 DOC-D-G1, sub-project 2, batch 1: the groundwork for `/docs-verify`, which is not in this release. **No behaviour of `/docs-write` changes**: the steps it shares with any backlog run move, with their words, into one reference it reads and cites; the backlog line reader gains four flags `/docs-write` does not pass; and `finish-and-handoff` §6 is worded for any backlog run, reading as before for `/docs-write`. Designed in `docs/superpowers/specs/2026-11-17-doc-d-g1-sp2-docs-verify-design.md` (its Q2, S2-D14 and S2-D15) and built by `docs/superpowers/plans/2026-11-17-doc-d-g1-docs-verify.md`, batch 1. Needs nothing from the other plugins' releases.

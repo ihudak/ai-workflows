@@ -262,7 +262,9 @@ behaviour, not the behaviour.
       name alone — each no-link stop in step 6 appends its `/product-workflows:create-prd <KEY>`
       clause: that command accepts the folder (its Phase 0 steps 5a and 5b refuse only a container and
       an Epic folder) and writes the `prd.md` whose `kind: prd` sets `route: idea` here on the re-run,
-      which is what `PRD_GROUND_NEEDS_PRD` names for a `PRD-` folder in the same state.
+      which is what `PRD_GROUND_NEEDS_PRD` names for a `PRD-` folder in the same state — save where
+      the folder holds its PRD under its pre-rename file name, which `/create-prd` never reads: there
+      each appends `workflows-core:addressing` §4.1's *The rename* in its place, naming no run.
     **The no-`parent:` stop**, on `route: brd`, once the refusals and the route above have placed the
     folder as a slice, and before step 6, whose row-F splits and step 6a read through `parent:`:
     where its `brd-link.md` names no `parent:`, stop with `PRD_GROUND_BRD_LINK_NO_PARENT`, its
@@ -324,9 +326,10 @@ behaviour, not the behaviour.
        *The no-`parent:` stop*, after step 5a). `/brd-intake` re-runs only over a
        container (`workflows-core:addressing` §4.1) and refuses this folder with
        `BRD_INTAKE_NOT_A_BRD`, so name no re-run over it — and, where the folder holds an `idea.md` and
-       no `prd.md`, name `/create-prd` on this key (step 5a). `<what it carries>` is the folder's
+       no `prd.md`, name `/create-prd` on this key (step 5a), save where it holds its PRD under its
+       pre-rename file name, where §4.1's *The rename* stands in its place. `<what it carries>` is the folder's
        top-level files and subdirectories, as read. Stop:
-       `PRD_GROUND_NO_INVENTORY: <BRD-KEY> resolves to <path>, which carries <what it carries> and has no brd/brd-inventory.md and no brd-link.md naming a parent — it is not a slice, and not a BRD container /product-workflows:brd-intake would re-run over. Nothing was written. To intake a customer's BRD, run '/product-workflows:brd-intake <NEW-KEY> @<brd-file>' with a key no folder under $SPECS_PATH/specifications/ asserts; this folder is left exactly as it stands.<where the folder holds an idea.md and no prd.md, append:> It holds an idea.md and no prd.md, so the idea route goes on from it: run '/product-workflows:create-prd <BRD-KEY>', merge its handoff, then re-run '/product-workflows:prd-ground <BRD-KEY>'.`
+       `PRD_GROUND_NO_INVENTORY: <BRD-KEY> resolves to <path>, which carries <what it carries> and has no brd/brd-inventory.md and no brd-link.md naming a parent — it is not a slice, and not a BRD container /product-workflows:brd-intake would re-run over. Nothing was written. To intake a customer's BRD, run '/product-workflows:brd-intake <NEW-KEY> @<brd-file>' with a key no folder under $SPECS_PATH/specifications/ asserts; this folder is left exactly as it stands.<where the folder holds its PRD under its pre-rename file name and no prd.md, append workflows-core:addressing §4.1's The rename, its way on re-run '/product-workflows:prd-ground <BRD-KEY>'; otherwise, where the folder holds an idea.md and no prd.md, append:> It holds an idea.md and no prd.md, so the idea route goes on from it: run '/product-workflows:create-prd <BRD-KEY>', merge its handoff, then re-run '/product-workflows:prd-ground <BRD-KEY>'.`
      - **`parent: <PARENT-KEY>` present** — this is a slice. Stop:
        `PRD_GROUND_NO_INVENTORY: <BRD-KEY> is a slice of <PARENT-KEY> and has no brd/brd-inventory.md, so there is no claim list to ground. <remedy>`
 
@@ -407,9 +410,9 @@ behaviour, not the behaviour.
    - **No `brd-link.md`** — not a slice and not a BRD container, so
      `/brd-intake` refuses it with `BRD_INTAKE_NOT_A_BRD` rather than re-running over it; name a new
      key instead — and, where the folder holds an `idea.md` and no `prd.md`, `/create-prd` on this
-     one (step 5a) — `<what it carries>` being the folder's top-level files and subdirectories, as read.
+     one (step 5a), or §4.1's *The rename* where it holds its PRD under its pre-rename file name — `<what it carries>` being the folder's top-level files and subdirectories, as read.
      Stop:
-     `PRD_GROUND_NEEDS_INTAKE: <BRD-KEY> resolves to <path>, which carries <what it carries> — no intake artifacts on main and none in the folder either, and no brd-link.md naming a parent. It is not a slice, and not a BRD container /product-workflows:brd-intake would re-run over. Nothing was written. To intake a customer's BRD, run '/product-workflows:brd-intake <NEW-KEY> @<brd-file>' with a key no folder under $SPECS_PATH/specifications/ asserts and merge the pull request; this folder is left exactly as it stands.<where the folder holds an idea.md and no prd.md, append:> It holds an idea.md and no prd.md, so the idea route goes on from it: run '/product-workflows:create-prd <BRD-KEY>', merge its handoff, then re-run '/product-workflows:prd-ground <BRD-KEY>'.`
+     `PRD_GROUND_NEEDS_INTAKE: <BRD-KEY> resolves to <path>, which carries <what it carries> — no intake artifacts on main and none in the folder either, and no brd-link.md naming a parent. It is not a slice, and not a BRD container /product-workflows:brd-intake would re-run over. Nothing was written. To intake a customer's BRD, run '/product-workflows:brd-intake <NEW-KEY> @<brd-file>' with a key no folder under $SPECS_PATH/specifications/ asserts and merge the pull request; this folder is left exactly as it stands.<where the folder holds its PRD under its pre-rename file name and no prd.md, append workflows-core:addressing §4.1's The rename, its way on re-run '/product-workflows:prd-ground <BRD-KEY>'; otherwise, where the folder holds an idea.md and no prd.md, append:> It holds an idea.md and no prd.md, so the idea route goes on from it: run '/product-workflows:create-prd <BRD-KEY>', merge its handoff, then re-run '/product-workflows:prd-ground <BRD-KEY>'.`
    - **`parent: <PARENT-KEY>` present** — this is a slice, and `/brd-intake` is not the fix: a
      slice has no document of its own to intake (`brd-format.md` §2.1), and the command that writes
      a slice's ledger and inventory is `/brd-split` on the parent

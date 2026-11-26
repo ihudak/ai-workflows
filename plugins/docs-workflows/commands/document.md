@@ -118,10 +118,13 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
      `DOCUMENT_FOLDER_NOT_PLACED: <KEY> resolves to <path>, which carries <what it carries> and nothing workflows-core:addressing §4.1 places at any level. <the remedy>`
      `<what it carries>` names its top-level files and what `kind:` and `key:` each asserts — a
      `prd.md` asserting no `kind:` among them, where it holds one. `<the remedy>` is to give the
-     folder a carrier (`workflows-core:addressing` §5) and, where it holds an `idea.md` and no
-     `prd.md`, to run `/product-workflows:create-prd <KEY>`, whose `prd.md` places it (§4.1). On an
+     folder a carrier (`workflows-core:addressing` §5): where it holds its PRD under its pre-rename
+     file name and no `prd.md`, §4.1's *The rename*, printed in place of any run, naming none;
+     otherwise, where it holds an `idea.md` and no `prd.md`, to run `/product-workflows:create-prd <KEY>`,
+     whose `prd.md` places it (§4.1). On an
      `@<path>` to a folder with no carrier, §3 returns no key: `<KEY>` in the message is that
-     `@<path>`, and the remedy's `<KEY>` is left for the operator to supply (§3 step 1).
+     `@<path>`, and the remedy's `<KEY>` is left for the operator to supply (§3 step 1), the run it
+     names followed by *The rename*'s `@<path>` clause (§4.1).
    - **A PRD folder with no key.** Where §4.1 places the PRD folder at PRD level but `<PRD>` came
      back empty — an `@<path>` to a folder with no carrier (§3 step 1), such as a slice whose
      `brd-link.md` asserts no `key:`, or an Epic whose PRD folder has none — stop, a plain stop with

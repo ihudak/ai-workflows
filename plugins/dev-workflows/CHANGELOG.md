@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.71.1] — 2026-11-26
+
+**What changes for you.** `/conformance` checks the name of each folder under the PRD folder before it reads one, and names in *Not traced* any it will not read; and `/design`, `/implement` and `/ready` no longer send a legacy PRD to `/product-workflows:create-prd`. Needs `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).
+
+### Fixed
+
+- **`/conformance` holds a folder's name to `workflows-core:addressing` §2's class.** Phase 0 step 3 tests each folder directly under the PRD folder — a PRD run's Epics, and the siblings an Epic run's Phase 2 lists — as text, before its carrier is read or any command is built from its name; a folder outside the class, or a line of the default branch's listing in git's quoted form, is neither placed nor read, and the report's *Not traced* names it in words, never by its name — on a PRD run the record's `Not traced:` line too (`references/conformance-format.md` §2). §2's reserved subdirectory names are passed over. The path the run's own address resolved is not tested, for the reason `addressing` §2 gives.
+- **`/conformance`'s listings of the specs tree pin `-c core.quotePath=false`** — Phase 0 step 3's, step 4's, step 5's and Phase 1 (b)'s *Threat input* step 1's — so a path holding a byte above 0x7F, a BRD folder named from a heading in another script among them, lists as it stands rather than in git's quoted form, which named no file it then read. Step 5's paths, written bare in its commands, are written in double quotes.
+- **`/design`, `/implement` and `/ready`**, on a folder `workflows-core:addressing` §4.1 places at no level, print §4.1's *The rename* where the folder holds its PRD under its pre-rename file name, naming no run; they named `/product-workflows:create-prd`, which writes a second PRD there.
+
 ## [4.71.0] — 2026-11-25
 
 `/ready`, `/conformance`, `/design`, `/upgrade` and `/vuln` resume a stopped run. **What changes for you.** Each keeps its working state in a run folder outside every repository, and running the same command again on the same machine offers to continue it or start over. A session that ends in the middle — a crash, a container restart, usage limits — no longer costs the traces, reviews, plans and answers it had made, and the steps that write or push something are made once. Needs `workflows-core` 1.100.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet): beside an older one the commands find no `run-folder` entry points. Each command's page has a *Stopping and resuming* section.

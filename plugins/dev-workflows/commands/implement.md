@@ -203,7 +203,7 @@ folder an `@<path>` names, a name beginning with a kind token being prefixed onl
 `<KIND>-<the resolved key>-` — is otherwise placed by positive evidence: a resolved `kind: epic`
 counts as an `EPIC-` folder below, and a resolved `kind: prd`, or a `brd-link.md` naming a
 `parent:`, as a `PRD-` folder. A folder none of these places is not guessed at — stop, naming the
-folder and what it carries — and, where it holds an `idea.md` and no `prd.md`, name `/product-workflows:create-prd <KEY>` too, whose `prd.md` places it (`workflows-core:addressing` §4.1).
+folder and what it carries — and, where it holds its PRD under its pre-rename file name and no `prd.md`, print `workflows-core:addressing` §4.1's *The rename* in place of any run, naming none; otherwise, where it holds an `idea.md` and no `prd.md`, name `/product-workflows:create-prd <KEY>` too, whose `prd.md` places it (`workflows-core:addressing` §4.1).
 
 **Check the branch the run stands on** — once the folder is placed, so a placement refusal above is the one reported, and before the Epic listing below reads the tree. On a keyed run, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with no `prefix`: this command's own handoff is conditional, and onto prefixes it does not own. A stop it makes ends the run here. A direct run resolves no folder, and skips this.
 

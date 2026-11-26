@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.88.1] — 2026-11-26
+
+**What changes for you.** No stop of this plugin sends a folder holding its PRD under its file name from before the artifact filenames lost their keys to `/create-prd`, which writes a second PRD there: it prints the rename instead. And `/create-ard`'s refine of a threat model reads legacy Epic folders, through `workflows-core` 1.100.1. Needs `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).
+
+### Fixed
+
+- **The rename, not `/create-prd`.** `/create-ard`'s `CREATE_ARD_UNPLACED` and `/specify`'s `SPECIFY_UNPLACED`, and the refusals naming the idea route's next step — `/brd-split`'s `BRD_SPLIT_EMPTY_INVENTORY`, `/prd-ground`'s `PRD_GROUND_NO_INVENTORY` and `PRD_GROUND_NEEDS_INTAKE`, and `/brd-interview`'s `BRD_INTERVIEW_EMPTY_INVENTORY` — print `workflows-core:addressing` §4.1's *The rename* where the folder holds its PRD under its pre-rename file name and no `prd.md`, naming no run; each named `/product-workflows:create-prd`. Their pages say so.
+- **`/create-ard`'s page, *What it never reads*,** says what the refine reads under `workflows-core` 1.100.1's `threat-intake`: a legacy Epic folder by the document asserting its kind, a folder's name checked against one class before anything runs on it, a design only your checkout holds named in any folder under the PRD folder that passes it, and a listing of your checkout that cannot read a directory named in a line. The command's own text is unchanged.
+
 ## [3.88.0] — 2026-11-25
 
 `/prd-ground` no longer does its closing steps twice on a resumed run. **What changes for you.** A resumed run skips the cost entry, session feedback and resume pointer an earlier session finished, where it wrote them again. Its handoff names the branch it settled, so a resumed handoff goes on on the branch an earlier session cut, and opens the pull request that session was cut off before opening. Needs `workflows-core` 1.100.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet).

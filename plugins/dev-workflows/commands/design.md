@@ -74,7 +74,7 @@ Usage: `/design <ADDRESS> [--design-twice] [--no-arch] [--skip-costs] [--skip-fe
    where it begins `<KIND>-<the resolved key>-` — is otherwise placed by positive evidence: a
    resolved `kind: epic` counts as an `EPIC-` folder above; a resolved `kind: prd`, or a
    `brd-link.md` naming a `parent:`, as a `PRD-` folder. A folder none of these places is not
-   guessed at — stop, naming the folder and what it carries — and, where it holds an `idea.md` and no `prd.md`, name `/product-workflows:create-prd <KEY>` too, whose `prd.md` places it (`workflows-core:addressing` §4.1).
+   guessed at — stop, naming the folder and what it carries — and, where it holds its PRD under its pre-rename file name and no `prd.md`, print `workflows-core:addressing` §4.1's *The rename* in place of any run, naming none; otherwise, where it holds an `idea.md` and no `prd.md`, name `/product-workflows:create-prd <KEY>` too, whose `prd.md` places it (`workflows-core:addressing` §4.1).
 
    With no positional address, or one `resolve-address` returns `invalid`, stop with
    `DESIGN_NEEDS_KEY: /design needs a PRD or Epic address — a key, or an @<path> to its folder.` —
