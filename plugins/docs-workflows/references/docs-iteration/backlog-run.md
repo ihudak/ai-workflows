@@ -17,7 +17,7 @@ A backlog run's command reads this file whole, with the Read tool, before it res
 
 *The finish* is `<plugin root>/references/finish-and-handoff.md` §6, its subsections cited as §6.1 to §6.6 of that file. Every other name this file uses and does not define — `<top>`, `<default-ref>`, `specs_git`, the run's content roots, the stop route, a unit's created paths — is its command's.
 
-A section gives a step and what the step finds. Where a section names a stop, a refusal or a unit's end, the `<RUN>` line printed for it and what follows it — where it takes the run, what the command marks and what its report says — are the command's, and this file restates no step a command's own phases hold.
+A section gives a step and what the step finds. Where a section names a stop, a refusal or a unit's end, the `<RUN>` line printed for it, where it has one, and what follows it — where it takes the run, what the command marks and what its report says — are the command's, and this file restates no step a command's own phases hold.
 
 ## 2. Untrusted input
 
