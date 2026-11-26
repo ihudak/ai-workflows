@@ -7,7 +7,7 @@ convention live in ONE place.
 
 ## Inputs
 
-`prd` (PRD key), `epic` (or `null`), `area` (or `null`), `$SPECS_PATH`.
+`prd` (PRD key), `epic` (or `null`), `area` (or `null`), `$SPECS_PATH`, and `folder` (or `null`): the folder of the call's deepest key — `epic`'s where it is set, else `prd`'s — passed by `/product-workflows:specify`, `/product-workflows:create-ard` and `/product-workflows:epics` only where it lies outside the work tree of the repository `$SPECS_PATH` stands in, the test `phase-handoff.md` §4.4's *The first missing document* makes (*A folder outside the work tree*, below).
 
 ## Resolution (most-specific first)
 
@@ -20,7 +20,8 @@ convention live in ONE place.
    its `SPECS_PATH_INSIDE_TREE` message — never `none`, which would let the caller go on without an
    ARD it should have enforced.
 
-   **This step is the only route by which that resolution reaches an ARD.** Every command *Consumers (informative)*
+   **This step is the only route by which that resolution reaches an ARD**, save where a caller passes
+   `folder` (*A folder outside the work tree*, below). Every command *Consumers (informative)*
    below lists delegates its ARD lookup here, so none of them finds an ARD by resolving its *own* folder —
    `/implement` included, which resolves its own folder on a keyed run and still reaches an ARD
    solely by citing this file.
@@ -67,6 +68,8 @@ convention live in ONE place.
    with an empty `invariants` list every consumer's ARD-conformance dimension is skipped exactly as if
    no ARD existed — a binding architecture document enforcing nothing, under a run that reports success.
 4. From the PRD-level ARD alone — the PRD folder's `ard.md`, or, where `epic` names a `PRD-` folder (a BRD-route slice, `addressing.md` §4.1), that slice's own `ard.md`, which `/create-ard <SLICE>` writes as the slice's PRD-level ARD; on an Epic-level resolution too, since an Epic's ARD carries neither (the ARD format's `components:` rule) — read the frontmatter `components:` list into `components`, and the `## Contracts` section into `contracts`: one row per line of its interface table (`| AD | Producer | Consumers | Kind | Status | Artifact |`, the `Consumers` cell split on commas, an `Artifact` of `—` read as null) and the ids of its `### Landing order` list, in order. Accept `[AD#N]` and the legacy dash form in the `AD` column exactly as step 3 does, emitting the `#` form. This step runs on `status: found` and `unmerged` alike — `/ready` reads both. An ARD with no `components:` key yields `components: []`; one with no `## Contracts` heading yields `contracts: null`.
+
+**A folder outside the work tree** (`folder` passed). Step 1 resolves no key, since `resolve-address` finds a folder by its key under `$SPECS_PATH` and would collect another tree's ARD, or none: the folder of the deepest key is `folder`, and, where `epic` is set, the folder `prd` names is the one directly containing `folder`, taken only where its own `key:`, read as `addressing.md` §4 reads one, is `prd` — otherwise no PRD-level file is collected. Step 2 lists those folders in the working tree alone, since no ref of that repository holds them, and puts no candidate through `require-on-main`: each file found is read as on a specs tree that is no git repository, so the status is `found` or `none`, never `unmerged`. Steps 3 and 4 run unchanged.
 
 ## Output — the ARD context, or `none`
 
