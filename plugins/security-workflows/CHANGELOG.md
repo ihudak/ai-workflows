@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.13.1] — 2026-11-26
+
+**What changes for you.** Nothing in a scan's behaviour: `/scan` reads its repository's slug with the command `workflows-core` 1.100.1's `components` §1 now gives, `git -c safe.bareRepository=explicit -C '<repo root>' remote get-url origin`, its path single-quoted. Update with `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).
+
+### Fixed
+
+- **`commands/scan.md` Phase 0 step 5.** The `<repo-slug>` line quoted `components` §1's command without the setting and the quoting that section now gives; it now carries both, and says that the top level `git rev-parse --show-toplevel` printed holds the `.git` §1 asks of a directory.
+
 ## [0.13.0] — 2026-11-25
 
 `/scan` resumes a stopped run. **What changes for you.** `/scan` keeps its working state in a run folder outside every repository, and running it again on the same machine offers to continue it or start over. A resumed run records a scan report already written without scanning again, reuses your triage answers, and makes each later step once: the copy into the register, the patch request, the register commit, the unit note, the maintenance proposals, the follow-ups, the cost entry and the resume pointer. Needs `workflows-core` 1.100.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet). The page has a *Stopping and resuming* section.

@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.71.1] — 2026-11-26
+
+**What changes for you.** The slug→clone maps of `/conformance`, `/design` and `/ready` take a directory under `$REPOS_PATH` only where it holds a `.git` of its own, tested before any git call names it, and read its slug with `git -c safe.bareRepository=explicit`, the directory single-quoted, so a directory laid out as a git directory and committed into a repository is never taken for a clone. Update with `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).
+
+### Fixed
+
+- **`commands/conformance.md`, `commands/design.md` and `commands/ready.md`** test `test -e '<dir>/.git'` before their slug read, citing `workflows-core:read-only-repos` §0, and write the read with the setting, `<dir>` single-quoted with each `'` written `'\''`; `/conformance` tested no `.git`, and `/design` and `/ready` named the test only beside the read. `commands/implement.md` names `REPO_MISSING`'s new cause, a path with no `.git` of its own.
+- **Pages.** The environment page says a directory counts as a clone only where it holds a `.git` of its own; the resume-and-checkpoints page restates the resume pointer's scan item to match and says that a path item whose repository is not one carries; the references page says a repository's pull-request template is read as data.
+
 ## [4.71.0] — 2026-11-25
 
 `/ready`, `/conformance`, `/design`, `/upgrade` and `/vuln` resume a stopped run. **What changes for you.** Each keeps its working state in a run folder outside every repository, and running the same command again on the same machine offers to continue it or start over. A session that ends in the middle — a crash, a container restart, usage limits — no longer costs the traces, reviews, plans and answers it had made, and the steps that write or push something are made once. Needs `workflows-core` 1.100.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet): beside an older one the commands find no `run-folder` entry points. Each command's page has a *Stopping and resuming* section.
