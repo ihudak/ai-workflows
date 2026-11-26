@@ -7,7 +7,8 @@ This is the single source of truth for the mechanics; Phase 6.5 cites it and
 stays lean. Read every path, command, and port from the resolved `profile` — do
 not hard-code example-docs specifics.
 
-"Affected pages" = every file written or modified in Phase 6.3.
+"Affected pages" = every file in Phase 6.3's `files_written` — never a build
+config its *Regenerate* rewrote, which is no page.
 
 ## 1. Build vs boot
 

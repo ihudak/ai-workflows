@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.88.3] — 2026-11-26
+
+**What changes for you.** `/harvest-decisions` harvests an ARD area file named in letters of another script, in mixed case, or with `.`, `_`, `@` or `+` in its name, and reports one whose name it refuses instead of passing over it in silence. `/create-ard`'s page says that `/dev-workflows:conformance` names the Dev's `/dev-workflows:design` beside your refine for a threat a design returned to you. Install with `dev-workflows` 4.71.3 and `workflows-core` 1.100.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.3 bullet).
+
+### Fixed
+
+- **`scripts/architecture-harvest.py`, the `prd` layout.** An area ARD was found only where its name matched `^ard(?:-([a-z0-9][a-z0-9-]*))?\.md$`, so `ard-платежі.md`, and even `ard-Cart.md`, was passed over unreported and never harvested. An area ARD's name is now held, whole, to `workflows-core:addressing` §2's class, the class `workflows-core:ard-resolution` holds it to; one that names no area, or is outside the class, is reported `unparseable`. Its records keep the area's case, `<KEY>-<area>-AD<N>`; two scope keys equal once NFC-normalised and case-folded are a key conflict, both reported and neither harvested, so no two records' files are one file on a case- or normalisation-insensitive file system; and a **Supersedes** link's record id may name such an area, as `workflows-core` 1.100.3's `architecture-kb` §2 states. `--selftest` gains the cases, the fixture's clashing names written into the index alone so that it runs on any file system. The legacy `vi` layout's `<EPIC>-<area>_ARD.md`, which no command of the family writes, is unchanged.
+- **`/create-ard`'s page**, *A threat left sent back is put again* and *What brings you back once code is built*: `/dev-workflows:conformance` 4.71.3 sends a returned threat to your refine and then to the Dev's `/dev-workflows:design` on the design that returned it, which puts it to the Dev again; the page said it kept sending it to you alone.
+
 ## [3.88.2] — 2026-11-26
 
 **What changes for you.** No stop of this plugin sends a folder holding its PRD under its file name from before the artifact filenames lost their keys to `/create-prd`, which writes a second PRD there: it prints the rename instead. And `/create-ard`'s refine of a threat model reads legacy Epic folders, through `workflows-core` 1.100.2. Needs `workflows-core` 1.100.2 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.2 bullet).
