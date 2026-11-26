@@ -175,7 +175,8 @@ sources **2 and 3 only**. It anchored on cwd unconditionally until a live run sh
     Phase 4 start inside an explicit `command bash -c`; and `vale`, which every Vale run in this
     plugin calls as `command vale` (§2, source 2) — is asked of a child `bash`, the shell an
     explicit `bash -c` start gets:
-    `command bash -c 'builtin cd "<dir>" >/dev/null && command -v "<tool>"'` — present when it
+    `command bash -c 'builtin cd -- "$1" >/dev/null && command -v -- "$2"' bash '<dir>' '<tool>'`,
+    the two values handed to it as its arguments, never written into its script — present when it
     exits 0. **`bash` takes this test first, whether or not §2 put it in the required set, and an
     absent `bash` ends the form.** The call runs
     *through* `bash`, so with none installed every tool asked this way exits 127 and reads missing
@@ -195,7 +196,7 @@ sources **2 and 3 only**. It anchored on cwd unconditionally until a live run sh
     `docs-style-checker`'s lint rungs), the tools §2's other signals imply — a lockfile's package
     manager, `markdownlint`, `remark` — and `/docs-init`'s `git`, `python3`, `pip` or `uv`, and
     `mkdocs` — is tested in that same shell, from that same directory:
-    `( builtin cd "<dir>" >/dev/null && command -v "<tool>" )` — present when it exits 0. The
+    `( builtin cd -- '<dir>' >/dev/null && command -v -- '<tool>' )` — present when it exits 0. The
     user's aliases and functions then apply exactly as they will when the gate runs the command,
     and `command -v` reports each: a binary's path, a function's name, or an alias's definition,
     in bash and zsh alike. The subshell and the `builtin` are what keep it honest — the
@@ -212,6 +213,18 @@ sources **2 and 3 only**. It anchored on cwd unconditionally until a live run sh
     repository (§6): a present path-valued tool then reads missing, and the preflight prompts on a
     healthy container (§7). A `<dir>` that does not exist reads the tool missing in both forms,
     which is what the command would meet there too.
+  - **Every value either form writes is held to a class first, then single-quoted**, each `'` it
+    holds written `'\''` — never inside double quotes, where a `$(…)` or a backtick in it would run
+    as the check runs, before any consent has shown the command. A tool §2 derived — from a profile
+    command or a repository file — is held to the `tool` class,
+    `^[A-Za-z0-9_./][A-Za-z0-9_./@+-]*$`, and a directory a leading `cd <dir>` names to `rel-path`
+    and to the containment test against `repo_root` printing `equal` or `inside`: the class test
+    and the containment test `${CLAUDE_PLUGIN_ROOT}/references/docs-iteration/backlog-run.md` gives,
+    as `/docs-workflows:docs-write`'s Phase 0 holds them. A value outside its class — or one whose
+    test gave no answer, `python3` missing among the causes — is never written into a command: the
+    tool reads `missing`, and its `toolchain` row and the report name the field
+    it came from in its place — `commands.build`, say — never the value. `repo_root`, and a tool a
+    caller states rather than §2 derives, go single-quoted the same way.
   - **A tool that resolves to something that is not there still fails when the gate runs it**, and
     the gate records that as it records any other environmental failure: an alias whose value
     names a wrapper that is not installed passes the own-shell test, exactly as it passes in the
@@ -241,7 +254,11 @@ sources **2 and 3 only**. It anchored on cwd unconditionally until a live run sh
   `command <name>` bypasses it and exits 127; a shadow on `command` itself, an alias or a shell
   function of that name, defeats the `command` prefix these forms rest on, as it defeats every
   other `command <name>` read in this plugin (measured in both shells); and macOS's zsh 5.9 is
-  unchecked.
+  unchecked. The forms' single-quoted shape, each value an argument, is `docs-workflows` 1.44.1's,
+  re-measured then with bash 5.3 alone — an alias-provided, a function-provided, an absent and a
+  path-valued tool, and a `<dir>` that does not exist, each answering in both forms as before, and a
+  tool token holding `$(…)` running nothing where the double-quoted forms ran it; zsh was not
+  re-measured.
 - Directory signals (`node_modules/`): `test -d`; a Yarn Plug'n'Play `.pnp.cjs`: `test -f`.
 - Never install anything. Never modify the repo. This step is read-only.
 
@@ -249,7 +266,7 @@ sources **2 and 3 only**. It anchored on cwd unconditionally until a live run sh
 
 ```yaml
 toolchain:
-  - tool: <binary name; for a tool containing "/", the path §3 tested; or a directory signal such as "node_modules">
+  - tool: <binary name; for a tool containing "/", the path §3 tested; or a directory signal such as "node_modules"; for a value outside its §3 class, the field it came from, e.g. "commands.build">
     status: present | missing
     source: <profile.commands | profile.prerequisites | .vale.ini | pnpm-lock.yaml | CONTRIBUTING.md Prerequisites | …>
     required_by: [<gate ids from the caller's registry — gate-ledger.md §4, or §9 for /docs-write — whose primary mechanism runs this tool>]
