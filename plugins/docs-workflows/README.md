@@ -13,6 +13,7 @@ Nine slash commands for a product's documentation and release notes: `/docs-init
 | Docs | [`/docs-init`](docs/commands/docs-init.md) | Scaffold a docs repository for a project that has none: a product-shaped page skeleton, two builds, Vale, CI gates, and the profile the rest of the plugin reads. |
 | Docs | [`/docs-audit`](docs/commands/docs-audit.md) | Enumerate what documentation the product is missing — from its own code and the specs tree — into a coverage grid and a prioritised backlog, gated on an Opus backlog review. |
 | Docs | [`/docs-write`](docs/commands/docs-write.md) | Draft one page per backlog unit from its evidence, build it, review it at Opus, and commit it with its navigation and the unit's move to drafted, on a branch. |
+| Docs | [`/docs-verify`](docs/commands/docs-verify.md) | Read a drafted engineering page's claims in the code at today's commit, apply the readings you take, review it at Opus, and commit it with the unit's move to verified, on a branch. |
 | Anytime — setup | [`/docs-profile`](docs/commands/docs-profile.md), [`/docs-brand`](docs/commands/docs-brand.md), [`/docs-serve`](docs/commands/docs-serve.md) | Write the profile `/document` reads; extract a logo and colours from the code and apply them to the site; or start, stop, or check the dev server — each a reviewable PR where it writes one. |
 
 ## Documentation workflow
@@ -21,7 +22,7 @@ Five of those commands stand a portal up, keep it honest about what it is still 
 
 That page draws the route: its eight steps, which of them a command runs and which you do by hand, and the cadence that keeps a portal current.
 
-`/document`, `/release-notes` and `/docs-profile` sit outside that route: the first two work against a delta once a feature has shipped, and the third describes a documentation repository this plugin did not scaffold. [Workflow overview](docs/workflow.md) draws all eight together.
+`/document`, `/release-notes` and `/docs-profile` sit outside that route: the first two work against a delta once a feature has shipped, and the third describes a documentation repository this plugin did not scaffold. [Workflow overview](docs/workflow.md) draws all nine together.
 
 Twelve agents and twenty-four reference pages carry the docs-repo discovery, diff summarising, doc planning, doc writing and doc review that `/document` and `/release-notes` draw from, and whose locating, writing, style-checking and review agents `/docs-write` dispatches for each backlog unit's page; the `docs-scaffold-reviewer` that `/docs-init` and `/docs-brand` share reviews a scaffold diff, never a page, and the three `/docs-audit` dispatches — `docs-auditor`, `ia-planner` and `docs-audit-reviewer` — enumerate surfaces, plan the backlog and then review it; and `claim-reader` reads an engineering page's claims, for `/docs-verify`, in an export of the code. `/docs-profile` and `/docs-serve` dispatch none of these twelve agents: each works through the reference pages it needs directly — the docs-repo resolution rules and the profile schema for both, plus the render-verification, toolchain-preflight and scaffold-tree pages for `/docs-serve` — and `/docs-profile`'s repository scan runs on general-purpose subagents of its own. Those twenty-four markdown pages plus two bundled data files — `default-owners.txt` and `docs-profile.default.yml`, which the commands, the skill and a hook read as data rather than open as prose — are the **twenty-six files** under `references/`; that is the whole of the difference between the page count and the file count, and [References](docs/reference/references.md) does the arithmetic file by file. Alongside them ship the `docs-frontmatter` skill `/docs-profile` points a repository at, and two advisory hooks — one injecting specs context on a `/document` or `/release-notes` prompt, one reminding about a docs page's changelog and owners frontmatter.
 
@@ -31,7 +32,7 @@ Twelve agents and twenty-four reference pages carry the docs-repo discovery, dif
 |------|--------------|
 | [Documentation index](docs/README.md) | The full "I want to…" lookup table, plus the command, agent, and reference inventories. |
 | [Getting started](docs/getting-started.md) | Install, environment variables, your first `/docs-profile` and `/document` runs. |
-| [Workflow overview](docs/workflow.md) | The eight commands as one diagram, and the two modes of `/document`. |
+| [Workflow overview](docs/workflow.md) | The nine commands as one diagram, and the two modes of `/document`. |
 | [The documentation route](docs/docs-workflow.md) | The ordered procedure from an empty repository to a populated portal, with every manual step written out. |
 | [Roles and phases](docs/roles-and-phases.md) | Which role runs each command, what it hands over, and what each cost phase means. |
 | [Coverage model](docs/reference/docs-coverage-model.md) | What counts as a documentation surface, and how an audit finds each kind. |

@@ -4,11 +4,11 @@ Drafts one page per unit of the documentation backlog — a unit you name, the n
 
 ## Who runs it
 
-`/docs-write` is the command after [`/docs-audit`](docs-audit.md): the audit writes the backlog, and this command takes its units one at a time and writes each one's page. [Workflow overview](../workflow.md) draws it beside the backlog, and [The documentation route](../docs-workflow.md) is the written procedure around it — what comes before, and the walking and publishing of a page that still come after it.
+`/docs-write` is the command after [`/docs-audit`](docs-audit.md): the audit writes the backlog, and this command takes its units one at a time and writes each one's page. [Workflow overview](../workflow.md) draws it beside the backlog, and [The documentation route](../docs-workflow.md) is the written procedure around it — what comes before, and the verifying and publishing of a page that still come after it.
 
 It classifies each unit as **MODERATE** — one page of one type, written from evidence the run reads, on a branch nothing merges without you. The page is written on the Opus chain and reviewed by an Opus reviewer (unless `--enforce-model` pins another model); the scans, the placement, the style check and the fixes run on the Sonnet chain.
 
-**A drafted page is not a verified one.** Every claim the evidence does not ground is marked inline, and every page this command writes opens with one more marker saying it was drafted from the product's code and specifications and has not been checked against the product itself. The unit moves to `drafted`, never further: walking the page and removing the markers is still yours, as [The documentation route](../docs-workflow.md) says.
+**A drafted page is not a verified one.** Every claim the evidence does not ground is marked inline, and every page this command writes opens with one more marker saying it was drafted from the product's code and specifications and has not been checked against the product itself. The unit moves to `drafted`, never further: [`/docs-verify`](docs-verify.md) then reads an engineering page's claims in the code and, where they resolve, moves its unit to `verified`, and walking each user page by hand and removing its markers is still yours, as [The documentation route](../docs-workflow.md) says.
 
 ## Synopsis
 
@@ -142,6 +142,7 @@ Up to three actionable units, tutorials and how-tos left out, each placed and li
 
 - [The documentation route](../docs-workflow.md) — the whole procedure from an empty repository to a published portal, and what to do with a drafted page.
 - [`/docs-audit`](docs-audit.md) — writes the backlog this command reads, and its `--refresh` reconciles a page whose unit's move was lost in a merge.
+- [`/docs-verify`](docs-verify.md) — reads a drafted engineering page's claims in the code, and moves its unit to `verified` where they resolve.
 - [`/docs-init`](docs-init.md) — scaffolds a repository whose navigation this command regenerates.
 - [`/docs-profile`](docs-profile.md) — writes the profile this command reads.
 - [`/document`](document.md) — documents a feature from its PRD; it reads no backlog.

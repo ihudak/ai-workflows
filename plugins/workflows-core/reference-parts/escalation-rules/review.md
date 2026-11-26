@@ -361,7 +361,7 @@ and nothing here offers another; a `BLOCK` the first settle prompt's **Proceed**
 fixer ran spent neither half, and is offered the re-review as above. **Which commands it reaches is a behavioural test, as above: a command whose cap
 allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
 edit the reviewed artifact on the way.** The eight commands that fix inline edit it through the offer
-above, and the six of the asking set through their decision questions too; `/epics`, `/document` and `/docs-write` dispatch `doc-fixer` over the findings — `/epics` also folds a
+above, and the six of the asking set through their decision questions too; `/epics`, `/document`, `/docs-write` and `/docs-verify` dispatch `doc-fixer` over the findings — `/docs-verify` also `doc-writer`, over a finding on an answer's application, and `/epics` also folds a
 finding's rewording in itself, under any verdict, where the user takes it for text they chose, and splits, at its last count, an Epic an *Epic size* finding named —
 and `/implement` `review-fixer`, over the findings and over those the user applies at the offer above. The open questions `A finding left open that needs a decision is
 recorded in the artifact` writes answer no finding, and make no offer. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
@@ -565,13 +565,13 @@ This picker is the prompt *Provide manual fix notes (you'll be prompted)* promis
 A free-text answer to the picker is that BLOCKER's notes.
 
 **A BLOCKER whose fix needs a decision the run does not have gets no draft** (as a BLOCKER
-`doc-fixer` deferred with `Stop condition flag: NEEDS HUMAN` in `/document`, `/epics` or `/docs-write` does), since a
+`doc-fixer` deferred with `Stop condition flag: NEEDS HUMAN` in `/document`, `/epics`, `/docs-write` or `/docs-verify` does), since a
 draft would take that decision for the user. The run drafts nothing and asks in plain text, as §0
 asks: the prompt's first line says that the run waits for the notes and does nothing until they
 arrive, and the prompt then names the decision the notes must settle and the options the finding
 names, recommending none.
 
-Everything after is unchanged: the notes are applied in one bounded pass, with no further re-review — read first per *An inline fix is read against what it overlaps* in a command that fixes inline, and once more, in a command that dispatches `overlap-reader`, as *The read after the last review* says; and applied through `doc-fixer` in `/epics`, `/document` and `/docs-write`, as their commands say.
+Everything after is unchanged: the notes are applied in one bounded pass, with no further re-review — read first per *An inline fix is read against what it overlaps* in a command that fixes inline, and once more, in a command that dispatches `overlap-reader`, as *The read after the last review* says; and applied through `doc-fixer` in `/epics`, `/document` and `/docs-write`, and in `/docs-verify` through the agent the finding belongs to — `doc-writer` for a finding on an answer's application, `doc-fixer` for any other — as their commands say.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /document
 
@@ -581,7 +581,7 @@ Used in `/document` Phase 7 at either of two points: when `doc-fixer` returns `S
 Escalate per unresolved BLOCKER individually. "Manual fix notes" gets the BLOCKER's notes as
 *Manual fix notes — the run drafts them* says. "Override" asks for the rationale in plain text, which
 `/document` records with the finding in `### Deferred items`. `/docs-workflows:docs-write` escalates at
-the same two points (its Phase 8) with a list of its own, which its command holds, since this one's
+the same two points (its Phase 8), and `/docs-workflows:docs-verify` at them and wherever a finding needs more than a rewording, which no agent makes on a page being verified (its Phase 9), each with a list of its own, which its command holds, since this one's
 *Defer* names `/document`'s report and a unit deferred there is not committed.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /epics

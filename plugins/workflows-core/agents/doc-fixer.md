@@ -1,6 +1,6 @@
 ---
 name: doc-fixer
-description: Applies targeted fixes for BLOCKER and MAJOR findings from a doc-reviewer or epic-reviewer report, or for violations from docs-style-checker / prose-style-checker. Mirrors review-fixer for the docs domain. Returns a structured fix report; caller re-runs the reviewer. Shared between `/document`, `/docs-write` and `/epics`. Model tier assigned by the caller per the model-routing policy (no fixed pin).
+description: Applies targeted fixes for BLOCKER and MAJOR findings from a doc-reviewer or epic-reviewer report, or for violations from docs-style-checker / prose-style-checker. Mirrors review-fixer for the docs domain. Returns a structured fix report; caller re-runs the reviewer. Shared between `/document`, `/docs-write`, `/docs-verify` and `/epics`. Model tier assigned by the caller per the model-routing policy (no fixed pin).
 tools: ["Read", "Glob", "Grep", "Write", "Edit"]
 ---
 

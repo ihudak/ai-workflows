@@ -247,7 +247,7 @@ outcome the command cannot deliver.
 
 Used when a diff-summarizer or code-scanner batch returns `REPO_MISSING` at
 Phase 5 after Phase 4 already checked, in `/idea` Phase 2.6, which has no
-earlier check, in `/implement` Phase 1.7, and in `/docs-workflows:docs-write` twice: at its Phase 1, before any scan, where a source repository resolves by neither its recorded path nor its origin, and at its Phase 4 on `REPO_MISSING`. `REPO_MISSING` means `repo_path`
+earlier check, in `/implement` Phase 1.7, and in `/docs-workflows:docs-write` twice: at its Phase 1, before any scan, where a source repository resolves by neither its recorded path nor its origin, and at its Phase 4 on `REPO_MISSING`; and in `/docs-workflows:docs-verify` at the same two points, at its Phase 2 and its Phase 5. `REPO_MISSING` means `repo_path`
 is not a directory, **or** the clone's `origin` slug does not match
 `repo_url_slug`, or it has no `origin` to compare — the agent's note says which,
 and in the last two the directory exists; *Specify a different absolute path for this repo* is the
@@ -257,15 +257,15 @@ which option is right depends entirely on why the repo is absent.
 
 ## Stashing the user's changes
 
-**Seven stash choices run this procedure**: the Stash choice of § *Dirty working tree*, and the
+**Eight stash choices run this procedure**: the Stash choice of § *Dirty working tree*, and the
 "Stash … and continue" choices of the documentation commands that branch a repository they write
-into (`/document` Phase 6.2's two, `/docs-profile` Phase 5, `/docs-init` Phase 2.5, `/docs-brand` Phase 7 and `/docs-write` Phase 3, through `docs-workflows:finish-and-handoff` §6.2). `/implement` and `/upgrade` keep their own: each records a `stash_ref` that
+into (`/document` Phase 6.2's two, `/docs-profile` Phase 5, `/docs-init` Phase 2.5, `/docs-brand` Phase 7, `/docs-write` Phase 3 and `/docs-verify` Phase 4, through `docs-workflows:finish-and-handoff` §6.2). `/implement` and `/upgrade` keep their own: each records a `stash_ref` that
 `dev-workflows:code-handoff` reads; `/vuln` never stashes.
 
 1. **Stash under a name no other run shares**, reading the stash ref on both sides of it:
    `git -C "<repo>" rev-parse -q --verify refs/stash` (empty where there is none), then
    `git -C "<repo>" stash push -u -m "<command> <KEY>: <why> <UTC timestamp>"`, untracked files
-   included, since `status --porcelain` counts them, then the same `rev-parse` again. A caller that names a pathspec appends it to that push after `--`, so the stash takes only the paths it names: `/docs-workflows:docs-write` names `. ':(exclude).dev-workflows/unfinished'`, so that a stash never takes the files of a unit an earlier run did not commit.
+   included, since `status --porcelain` counts them, then the same `rev-parse` again. A caller that names a pathspec appends it to that push after `--`, so the stash takes only the paths it names: `/docs-workflows:docs-write` and `/docs-workflows:docs-verify` name `. ':(exclude).dev-workflows/unfinished'`, so that a stash never takes the files of a unit an earlier run did not commit.
    `<KEY>` is the run's key, or its command name alone where it has none. Never a bare `git stash`. **Where the
    ref did not change, nothing was stashed** — git prints `No local changes to save` and exits 0 on
    a clean tree — so record nothing and say so. Where the choice was § *Dirty working tree*'s, present that choice again rather than re-dispatching: what stash cannot take (changed content inside a submodule) keeps the tree dirty, and a re-dispatch would only return `DIRTY_TREE` again. Anywhere else, go on as the choice says. **Where the push exits
@@ -298,8 +298,8 @@ line each, read by the run itself since `DIRTY_TREE` carries no paths: every cho
 Used in `/document` Phase 5 when a diff-summarizer returns `DIRTY_TREE`. `/create-ard`, `/design`,
 `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without reproducing the list,
 so per the "Choice lists are presented verbatim" convention they use the list written under
-this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list inline. **`/docs-audit`
-and `/docs-write` (Phase 4) reproduce a list without the second choice**, and each says why: a
+this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list inline. **`/docs-audit`,
+`/docs-write` (Phase 4) and `/docs-verify` (Phase 5) reproduce a list without the second choice**, and each says why: a
 coverage denominator, or a page, is a claim about the product as it ships. A new citer that reproduces a list inline states which one it uses.
 
 **The uncommitted changes are the user's, in a repository the run only reads, so no choice commits,
@@ -327,10 +327,10 @@ left it, and asks nothing, save a Stash that stashed nothing (§ *Stashing the u
 `choices: ["Continue with current local state", "Skip this repo", "Cancel"]`
 
 Used in `/document` Phase 5 when a diff-summarizer returns `REFRESH_BLOCKED`. `/create-ard`, `/design`,
-`/docs-audit`, `/docs-write`, `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without
+`/docs-audit`, `/docs-write`, `/docs-verify`, `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without
 reproducing the list, so per the "Choice lists are presented verbatim" convention they use the
 list written under this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list
-inline. **`/docs-audit` and `/docs-write` (Phase 4) reproduce a list without *Continue with current local state* after a read by ref of the session's own repository — `/docs-write` after one of the documentation repository it commits to, too**, and each says why: a coverage denominator, or a page, is a claim about the product as it ships, which that checkout's branch is not (`workflows-core:scan-refresh` §6 lets a fixed-policy caller leave it out). A new citer that reproduces a list inline states which one it uses.
+inline. **`/docs-audit`, `/docs-write` (Phase 4) and `/docs-verify` (Phase 5) reproduce a list without *Continue with current local state* after a read by ref of the session's own repository — `/docs-write` and `/docs-verify` after one of the documentation repository each commits to, too**, and each says why: a coverage denominator, or a page, is a claim about the product as it ships, which that checkout's branch is not (`workflows-core:scan-refresh` §6 lets a fixed-policy caller leave it out). A new citer that reproduces a list inline states which one it uses.
 
 ## Read-only mount — ref stale or diverged
 

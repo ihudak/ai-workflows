@@ -410,7 +410,7 @@ Branch: <name> (cut from <base> | adopted | cut from where HEAD stood); commits 
 <each distinct line, verbatim | omit the section where there is none>
 
 ### Next step
-[per `workflows-core:next-phase-offer`'s *Not pipeline nodes* — guidance only, never auto-invoked. Where a unit committed: push the branch where the run did not, and open the pull request from the draft above against <base>; then walk each page and resolve its markers, since a drafted page is not yet verified; and run /docs-write again for the next unit. Where none committed, name the one thing its end or its stop says to change.]
+[per `workflows-core:next-phase-offer`'s *Not pipeline nodes* — guidance only, never auto-invoked. Where a unit committed: push the branch where the run did not, and open the pull request from the draft above against <base>; then, since a drafted page is not yet verified, run /docs-verify <unit-id> for each engineering page, and walk each user page by hand as the documentation route's step 6 says, resolving its markers; and run /docs-write again for the next unit. Where none committed, name the one thing its end or its stop says to change.]
 ```
 
 The `### Next step` follows `Skill(skill: "workflows-core:reference", args: "next-phase-offer not-pipeline")`'s *Not pipeline nodes*.
@@ -447,7 +447,7 @@ ADDITIVE — this phase NEVER fails the run, NEVER commits, NEVER makes an exter
 
 Terminal phase — runs AFTER Phases 11 and 12; NEVER interrupts an earlier phase. Invoke `Skill(skill: "workflows-core:reference", args: "followup-emission")` and execute its steps inline.
 
-1. **Collect** the qualifying follow-ups: pushing the branch and opening its pull request where a unit committed and the run did not push; walking each drafted page and resolving its markers; each unit left under `unfinished/`; each finding deferred or overridden; each unit passed over for a reason the operator can fix; each path a writing agent changed that the run left as it was.
+1. **Collect** the qualifying follow-ups: pushing the branch and opening its pull request where a unit committed and the run did not push; running `/docs-verify <unit-id>` for each drafted engineering page, and walking each user page by hand as the documentation route's step 6 says, resolving its markers; each unit left under `unfinished/`; each finding deferred or overridden; each unit passed over for a reason the operator can fix; each path a writing agent changed that the run left as it was.
 2. **Filter** them with the reference's §6 qualifying predicate.
 3. This run resolves **no PRD or Epic folder** — that reference's "no folder resolved" rung applies: report-only, kept in the Phase 11 report, with the one-line notice `⚠ No resolved folder — N follow-up(s) kept in this report only.`
 

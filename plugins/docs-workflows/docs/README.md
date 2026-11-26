@@ -3,7 +3,7 @@
 | I want to… | Go to |
 |---|---|
 | install this and set it up | [Getting started](getting-started.md) |
-| see how the eight commands fit together | [Workflow overview](workflow.md) |
+| see how the nine commands fit together | [Workflow overview](workflow.md) |
 | know which role runs each command, and what each cost phase means | [Roles and phases](roles-and-phases.md) |
 | go from no documentation at all to a populated portal | [The documentation route](docs-workflow.md) |
 | start documenting a project that has no docs | [`/docs-init`](commands/docs-init.md) |
@@ -23,11 +23,11 @@
 | pick a run back up in a new session | [Resume and checkpoints](reference/resume-and-checkpoints.md) |
 | know which model a step runs on, or pin one with `--enforce-model` | [Model routing](reference/model-routing.md) |
 
-Four pages orient you before you touch a command: [Getting started](getting-started.md) installs the plugin and sets the environment variables it reads, [Workflow overview](workflow.md) shows the eight commands as one diagram, including the two modes of `/document`, [The documentation route](docs-workflow.md) is the ordered procedure from an empty repository to a populated portal — the steps that run a command and, written out in full, the ones you do by hand — and [Roles and phases](roles-and-phases.md) says which role runs each command and what each cost phase means. Every other page below documents one command, one shared subsystem, or one whole inventory.
+Four pages orient you before you touch a command: [Getting started](getting-started.md) installs the plugin and sets the environment variables it reads, [Workflow overview](workflow.md) shows the nine commands as one diagram, including the two modes of `/document`, [The documentation route](docs-workflow.md) is the ordered procedure from an empty repository to a populated portal — the steps that run a command and, written out in full, the ones you do by hand — and [Roles and phases](roles-and-phases.md) says which role runs each command and what each cost phase means. Every other page below documents one command, one shared subsystem, or one whole inventory.
 
 ## Commands
 
-- [`/docs-init`](commands/docs-init.md) — scaffold a documentation repository for a project that has none: a product-shaped page skeleton with a stub in every section, two builds over one content root, Vale, a CI workflow with the visibility gates, and the profile `/document`, `/docs-serve`, `/docs-brand`, `/docs-audit` and `/docs-write` read.
+- [`/docs-init`](commands/docs-init.md) — scaffold a documentation repository for a project that has none: a product-shaped page skeleton with a stub in every section, two builds over one content root, Vale, a CI workflow with the visibility gates, and the profile `/document`, `/docs-serve`, `/docs-brand`, `/docs-audit`, `/docs-write` and `/docs-verify` read.
 - [`/docs-profile`](commands/docs-profile.md) — scan a documentation repository and write or refresh the machine-readable profile `/document` consumes, as a reviewable pull request.
 - [`/docs-brand`](commands/docs-brand.md) — extract a logo and a rough primary/accent colour pair from a product's own code and apply them to the docs site, standalone or `--inline` from `/docs-init`.
 - [`/docs-serve`](commands/docs-serve.md) — start, stop, or check a profiled repo's dev server, and report a URL that actually opens from the host.
@@ -66,4 +66,4 @@ Neither pipeline plugin is a dependency in either direction; this plugin install
 
 ## Status
 
-This plugin ships 8 slash commands, 12 agents, 26 reference files and 2 hooks — and it ships one bundled skills entry, `docs-frontmatter`. `prose-style` is a declared dependency, so no style check here skips or degrades for want of it. `dev-workflows` and `product-workflows` each ship a `preload-context` hook of their own, covering their own commands; [Hooks](reference/hooks.md) says how the three plugins' hooks share a prompt.
+This plugin ships 9 slash commands, 12 agents, 26 reference files and 2 hooks — and it ships one bundled skills entry, `docs-frontmatter`. `prose-style` is a declared dependency, so no style check here skips or degrades for want of it. `dev-workflows` and `product-workflows` each ship a `preload-context` hook of their own, covering their own commands; [Hooks](reference/hooks.md) says how the three plugins' hooks share a prompt.

@@ -10,7 +10,7 @@ The family's authoring commands read more than the folder they were given: the s
 | [Architecture repository](#architecture-repository) | `/create-ard`, `/specify`, `/update-spec`, `/dev-workflows:design` | `$ARCHITECTURE_REPO_PATH` naming a valid architecture repository | `--no-arch` |
 | [Team decision records](#team-decision-records) | `/create-ard`, `/specify`, `/update-spec`, `/dev-workflows:design` | `$SPECS_PATH/architecture/`, built by `/harvest-decisions` | `--no-arch` |
 | [Security registers](#security-registers) | `/create-ard`, `/specify`, `/update-spec`, `/dev-workflows:design` | a findings register under `$SPECS_PATH/security/`, written by `/security-workflows:scan` | `--no-arch` |
-| [Mounted code](#mounted-code) | `/idea`, `/epics`, `/create-ard`, `/specify`, `/update-spec`, `/prd-ground`, `/dev-workflows:design`, `/dev-workflows:implement`, `/docs-audit`, `/docs-write`; diffs in `/document`, `/release-notes` | clones under `$REPOS_PATH` (default `/workspace`) | per command — see below |
+| [Mounted code](#mounted-code) | `/idea`, `/epics`, `/create-ard`, `/specify`, `/update-spec`, `/prd-ground`, `/dev-workflows:design`, `/implement`, `/docs-audit`, `/docs-write`, `/docs-verify`; diffs in `/document`, `/release-notes` | clones under `$REPOS_PATH` (default `/workspace`) | per command — see below |
 | [Design frames](#design-frames) | `/prd-ground` | a frame set under the folder's `design/`, indexed by `/frames` | `--no-design` |
 
 The status lines are printed in the command's configure or plan step; the off switch is stated beside them. There is no prior-art search in this family: what you hand `/idea` is the only prior art it reads.
@@ -57,6 +57,7 @@ The status lines are printed in the command's configure or plan step; the off sw
   - `/dev-workflows:implement` — its multi-source exploration, on a run that reads a specs folder — every keyed run — or more than one repository.
   - `/docs-audit` — always, over the repositories the docs profile records, or the set it confirms with you where the profile records none.
   - `/docs-write` — always, over the repositories a unit's evidence names, read at their default branch; a clone outside `$REPOS_PATH` is read only once you agree.
+  - `/docs-verify` — always, over the repositories a drafted engineering page's evidence names, read at their default branch and exported at that commit for its claim reader; a clone outside `$REPOS_PATH` is read only once you agree.
   - `/document` (keyed mode) — the repositories the implementation record and the commit scan name, always.
   - `/release-notes` — only when you turn diff grounding on in Phase 1, which it recommends once a specification or design exists and not before.
 - **Status line:** none of its own — the run shows the repository set it resolved or proposes.
