@@ -51,12 +51,12 @@ flowchart TD
     reconcile -.->|questions still held for the customer| package
     reconcile -.->|"the review challenged a code claim — --rebaseline, or a question needing grounding before its round resumes"| ground
     interview -.->|"a question no finding bears on yet, or a --rebaseline"| ground
-    reconcile -->|slice key + the BRD route — nothing left to re-enter for, fully allocated, one row covered-here| createprd
-    reconcile -->|slice key + the BRD route — nothing left to re-enter for| createard
-    reconcile -->|slice key + the BRD route — nothing left to re-enter for| specify
-    interview -.->|nothing for the customer to review, PRD-eligible — no reconciliation needed| createprd
-    interview -.->|nothing for the customer to review — no reconciliation needed| createard
-    interview -.->|nothing for the customer to review — no reconciliation needed| specify
+    reconcile -->|"slice key + the BRD route — nothing left to re-enter for, fully allocated, one row covered-here, no prd.md"| createprd
+    reconcile -->|"slice key + the BRD route — nothing left to re-enter for, fully allocated, one row covered-here, any prd.md landed"| createard
+    reconcile -->|"slice key + the BRD route — nothing left to re-enter for, fully allocated, one row covered-here, any prd.md landed"| specify
+    interview -.->|"nothing for the customer to review, PRD-eligible, no prd.md — no reconciliation needed"| createprd
+    interview -.->|"nothing for the customer to review, PRD-eligible, any prd.md landed — no reconciliation needed"| createard
+    interview -.->|"nothing for the customer to review, PRD-eligible, any prd.md landed — no reconciliation needed"| specify
     createprd -->|prd.md| createard
     createprd -->|prd.md| specify
     createard -->|"ard.md — PRD-level, or an Epic's"| specify
@@ -67,12 +67,12 @@ flowchart TD
     createard -.->|"a prd.md — price against the ARD"| prdproposal
     specify -.->|"a prd.md — price against the specification"| prdproposal
     reconcile -.->|"a [CD#n] frozen — price the slice once its prd.md is on the default branch"| prdproposal
-    createard -.->|"no prd.md — author the PRD"| createprd
-    specify -.->|"no prd.md — author the PRD"| createprd
-    createard -.->|"BRD slice, no prd.md — a row still unallocated"| splitslice
-    specify -.->|"BRD slice, no prd.md — a row still unallocated"| splitslice
-    createard -.->|"an empty slice — keep or remove it"| splitroot
-    specify -.->|"an empty slice — keep or remove it"| splitroot
+    createard -.->|"BRD slice, no prd.md — author the PRD"| createprd
+    specify -.->|"BRD slice, no prd.md — author the PRD"| createprd
+    createard -.->|"stopped on the slice's ledger tests — a claimed row still unallocated"| splitslice
+    specify -.->|"stopped on the slice's ledger tests — a claimed row still unallocated"| splitslice
+    createard -.->|"stopped on the slice's ledger tests — a slice claiming no row: keep or remove it"| splitroot
+    specify -.->|"stopped on the slice's ledger tests — a slice claiming no row: keep or remove it"| splitroot
     ground -.->|"decide a prerequisite slice first"| interview
 
     classDef prod fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
@@ -90,9 +90,14 @@ under `$DOCS_PATH` and, for [`/create-ard`](commands/create-ard.md) and `/specif
 [`/brd-package`](commands/brd-package.md) then carries to the customer. The three also offer one
 another: `/create-prd` hands on to `/create-ard`, or to a PRD-level `/specify` beside `/epics`, and
 every `/create-ard` run on a slice recommends `/specify`. On a slice with no `prd.md`, `/create-ard`
-and `/specify` offer `/create-prd` where the slice can take a PRD, and otherwise hand back into the
-route through `/brd-split` — on the slice, to allocate a row still `unallocated`, or on its parent,
-to keep or remove a slice left empty. Where a `prd.md` exists, both name `/prd-proposal`, priced
+and `/specify` offer `/create-prd`, since a slice that reaches their offer has passed the slice's
+ledger tests. A slice that fails those tests stops both in their own Phase 0, whatever it holds, and
+the stops that name `/brd-split` hand back into the route through it — on the slice, to walk a
+row still `unallocated`, or on its parent, to keep or remove a slice that claims no row: the dashed
+edges from both into the route are those stops' remedies. The stops' other outcomes are not drawn:
+a slice whose claimed rows are all settled with none `covered-here` is named no command, as is one
+claiming no row whose parent's ledger cannot be read, and one claiming rows whose coverage ledger is missing or
+unreadable is sent to `/prd-ground`, which stops there by design and names the repair. Where a `prd.md` exists, both name `/prd-proposal`, priced
 against what they just wrote.
 
 **The proposals box is not part of the route either.** [`/prd-proposal`](commands/prd-proposal.md) prices one slice — any slice
@@ -145,7 +150,9 @@ bears on yet, or a `--rebaseline` pass — and `/brd-reconcile` offers `/brd-int
 `/prd-ground` offers `/brd-interview` on a prerequisite slice whose frozen decisions this slice
 waits on, and `/brd-reconcile` names `/prd-proposal` wherever its run froze a customer decision —
 as pricing the slice once its `prd.md` is on the default branch, after `/create-prd` where the
-slice holds none yet, which is the ordinary state there.
+slice holds none yet, which is the ordinary state there — save on a slice holding no `prd.md` that
+fails its ledger tests or whose ledger cannot be read, where it names no proposal, since
+`/create-prd` would stop there.
 
 **There is a third occasion, and it is a re-run on the parent: the sibling re-cut.** The route carves a
 slice before it is ground, so *"this slice is larger than one deliverable"* is a normal discovery,
@@ -160,7 +167,7 @@ against a row its parent delegated to it — two ledgers already agreeing that n
 requirement — an instruction typed against the parent's fully-allocated ledger, `/brd-split
 <PARENT-KEY> "<what to peel off>"`, re-points that row onto a **sibling under the same parent that
 has not been interviewed and does not already hold a ledger row for that requirement**: one already
-standing, or one that same run carves. The receiving slice's own ledger
+standing whose own ledger and inventory can be read — a sibling missing either, or holding either unreadable, is offered no row — or one that same run carves. The receiving slice's own ledger
 seeds the row `unallocated` — a **new** row, which is why a sibling already holding one for that
 requirement is not its receiver — so it re-enters at `/prd-ground` — with a row no finding on file was
 derived against — and its own `allocate-only` walk then takes the row to `covered-here`. **The
@@ -293,19 +300,36 @@ slice first — so the level question is already settled by the time this next-s
 That phase then decides whether the slice can advance: a reopened decision, a `[C]` still held for the
 customer, a finding the review left to re-derive, or a dependent it could only record each drops the three advance options:
 a `reopened` record may not be consumed downstream and all three consume the register, and a
-dependent recorded-not-written still reads a position the customer has since settled. On an advancing slice run, `/create-prd` on the BRD route carries one further condition —
-the reconciled ledger leaves no row `unallocated` and at least one `covered-here` (the two refusals
-its own Phase 0 raises) — while `/create-ard` on the BRD route and `/specify` on the BRD route carry none of
-their own, since neither reads the ledger as an authoring input, and the PRD gate both run reports a slice holding no `prd.md` rather than stopping on it, and stops on a `prd.md` the slice holds that was never handed off.
-The difference is where the enforcement sits: the level test and `/create-prd`'s eligibility test are
-each refused by the offered command's own Phase 0, whereas the one gate all three run on the register
+dependent recorded-not-written still reads a position the customer has since settled. On an advancing slice run, each of the three carries two further conditions.
+**The first of them is the slice's ledger tests**: the reconciled ledger leaves no row the slice claims
+`unallocated` and at least one `covered-here` — the two tests each of the three applies in its own
+Phase 0, whatever the slice holds, stopping on a slice that fails them (`CREATE_PRD_BRD_UNALLOCATED`
+and `CREATE_PRD_BRD_NOT_ELIGIBLE`, `CREATE_ARD_BRD_UNALLOCATED` and `CREATE_ARD_BRD_NOT_ELIGIBLE`,
+`SPECIFY_BRD_UNALLOCATED` and `SPECIFY_BRD_NOT_ELIGIBLE`). On `/brd-interview`'s offer they come to
+PRD-eligibility, at least one claimed row `covered-here`, since that command has already refused a
+row still `unallocated`. **The second is a landed `prd.md`**:
+where the slice holds one that is not on the specs repo's default branch, `/create-ard` and
+`/specify` stop on it at the PRD gate both run, and `/create-prd` would open on its existing-PRD
+question, whose recommended answer stops for [`/update-prd`](commands/update-prd.md), so the offering run prints that file's
+landing in place of all three — on a specs tree that is no git repository there is no branch to
+land it on, and the condition holds. Where the slice's `prd.md` is landed — or in its folder on such
+a tree — `/create-prd` would open on that same question, so it alone is dropped and the offering run
+names `/update-prd <SLICE-KEY>` in its place, beside `/create-ard` and `/specify`. A slice that passes the tests and holds no `prd.md` is the ordinary state for
+`/create-ard` and `/specify`: the PRD gate both run reports it rather than stopping on it. Where
+either condition does not hold, all three are dropped and the run says why, naming what the slice
+needs first — `/brd-split` on the slice for a row still `unallocated`, `/brd-split` on its parent
+for a slice that claims no row, `/prd-ground` for a ledger missing or unreadable while the slice
+claims rows, the `prd.md`'s landing — or that nothing applies, saying what each claimed row resolved
+to.
+The difference is where the enforcement sits: the level test, the slice's ledger tests and the
+landed `prd.md` are each met in the offered commands' own runs before they author, whereas the one gate all three run on the register
 — `require-on-main` on `decisions.md`, stopping on a register left on an unmerged branch — tests
 which ref it is on and never what it holds, so nothing downstream refuses a merged register carrying
 a `reopened` or `open` record, and the advance/re-entry split is a judgement only the offering station can make — `/brd-reconcile`, or `/brd-interview` on a slice that needs no customer review. That same gate is why all three advance options carry the `<merge-clause>`: the register
 is one of the files `/brd-reconcile` hands off, and each offered command stops until it is merged. **The diagram above draws all three**, as the three solid edges leaving
-`/brd-reconcile` into the right-hand box. They are alternatives rather than a sequence: neither of
-the other two waits on an unauthored PRD, so an ARD or a specification can
-be authored from a BRD whose ledger will never qualify for a PRD of its own. [Workflow overview](workflow.md) draws
+`/brd-reconcile` into the right-hand box. They are alternatives rather than a sequence: neither
+`/create-ard` nor `/specify` waits on an unauthored PRD, so an ARD or a specification can be
+authored on a slice that passes the slice's ledger tests and holds no `prd.md`. [Workflow overview](workflow.md) draws
 the same three edges with the same labels, into the same three commands.
 
 ## Parameters
@@ -323,9 +347,9 @@ each of those three also has a keyed form that this route never uses.
 | `/brd-interview` | `<BRD-KEY>` | `--round N` | Only a slice is interviewed — a root stops with `BRD_INTERVIEW_ROOT_LEVEL`. No flag continues at the first open question; `--round N` resumes or re-opens one, cause recorded |
 | `/brd-package` | `<BRD-KEY>` | `--depends-on <BRD-KEY>…` | Only a slice is packaged — a root stops with `BRD_PACKAGE_ROOT_LEVEL`. `--depends-on` is repeatable; a mistyped key is warned and dropped, never fatal |
 | `/brd-reconcile` | `<BRD-KEY> [@<review-file>]` | `--sent <path>…`, `--free-text` | Only a slice is reconciled — a root stops with `BRD_RECONCILE_ROOT_LEVEL`. The review is a path you give, or the one the customer committed beside the bundle, once you confirm it |
-| `/create-prd` | `<SLICE-KEY>` | `--lean`/`--hybrid`/`--full`, `--no-docs`, `--docs <path>`, `@<path>` (extra grounding, never the seed) | A `BRD-` container is refused. Offered only where the slice's claimed rows leave none `unallocated` and one `covered-here`. Defaults to `--full`. `--from-prd` is refused |
-| `/create-ard` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | Refuses a `BRD-` container; offered on any advancing slice run. Gates `prd.md`: goes on with none, stops on one never handed off. Never authors from the ledger. One address (`CREATE_ARD_ONE_ADDRESS`) |
-| `/specify` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | A `BRD-` container is refused. Otherwise offered on the same terms as `/create-ard`. One address; a second token stops it (`SPECIFY_ONE_ADDRESS`) |
+| `/create-prd` | `<SLICE-KEY>` | `--lean`/`--hybrid`/`--full`, `--no-docs`, `--docs <path>`, `@<path>` (extra grounding, never the seed) | A `BRD-` container is refused. Offered only where the slice's claimed rows leave none `unallocated` and one `covered-here`, and no `prd.md` is written. Defaults to `--full`. `--from-prd` is refused |
+| `/create-ard` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | Refuses a `BRD-` container and a slice failing its ledger tests. Offered where they pass and any `prd.md` is landed; goes on with none, stops on one unlanded. One address (`CREATE_ARD_ONE_ADDRESS`) |
+| `/specify` | `<SLICE-KEY>` | `--no-docs`, `--docs <path>` | Refuses a `BRD-` container, and a slice failing its ledger tests. Offered as `/create-ard` is. One address; a second token stops it (`SPECIFY_ONE_ADDRESS`) |
 
 `--no-docs` and `--docs <path>` appear together on two of the six **route** rows and mean the same
 thing on both: turn off, or point at another root, the optional grounding on shipped product

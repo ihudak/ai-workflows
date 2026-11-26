@@ -28,7 +28,8 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
   interviewed**: a resolved root stops with `BRD_INTERVIEW_ROOT_LEVEL`, naming
   [`/brd-split`](brd-split.md) as the way to carve one, and an idea-route PRD folder — a `PRD-`
   folder no BRD carved, carrying no `brd-link.md` — stops with `BRD_INTERVIEW_NOT_A_SLICE`, naming
-  [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on, once its PRD is on the default branch wherever the specs tree is a git repository — after [`/create-prd`](create-prd.md), its handoff merged, where the folder holds none yet. An `EPIC-` folder stops with `BRD_INTERVIEW_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one.
+  [`/create-ard`](create-ard.md) and [`/specify`](specify.md) as the way that route goes on, once its PRD is on the default branch wherever the specs tree is a git repository — after [`/create-prd`](create-prd.md), its handoff merged, where the folder holds none yet. An `EPIC-` folder stops with `BRD_INTERVIEW_EPIC_LEVEL`, naming the slice the Epic sits in where it sits in one — or, where that slice's `brd-link.md` names no `parent:`, the run stops with `BRD_INTERVIEW_BRD_LINK_NO_PARENT` on that slice instead.
+- **A slice whose `brd-link.md` names its `parent:`.** [`/brd-split`](brd-split.md) writes a `parent:` into every slice's `brd-link.md`; one a hand edit left with none stops the run with `BRD_INTERVIEW_BRD_LINK_NO_PARENT` in Phase 0, before anything is read through it. The stop names the file, prints `git log -p` on it to find the commit that carried the line, and says to restore the line and land it — or, where no commit carried it, to write it by hand as the key of the BRD folder the slice sits in, or to report it. A legacy folder with no kind prefix whose `brd-link.md` names no `parent:` beside its ledger or inventory is read as a BRD container instead, as before (the [`coverage-ledger-format`](../reference/references.md) reference states the stop once).
 - **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `BRD_INTERVIEW_TWO_ADDRESSES`.
 - **`--round N`** (optional) — target one round: resume it if it is open, or re-open it if it is
   closed, recorded as a re-open with its cause. Naming the next round opens it only where every
@@ -207,7 +208,7 @@ subagent is dispatched — every finding this command reads was already independ
   different round from the one asked for.
 - **A slice, not a root and not an idea-route PRD folder.** The moment the folder resolves, its
   prefix is tested — `BRD-` is a root, `EPIC-` an Epic folder, `PRD-` a slice or an idea-route PRD folder — never the
-  folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_INTERVIEW_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-interview <SLICE-KEY>` on the slice above it where there is one, and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD
+  folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_INTERVIEW_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-interview <SLICE-KEY>` on the slice above it where there is one — a `PRD-` folder carrying a `brd-link.md`, whatever its `parent:` says, the run stopping with `BRD_INTERVIEW_BRD_LINK_NO_PARENT` on that slice instead where it names none — and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD
   and stops with `BRD_INTERVIEW_NOT_A_SLICE` before any gate runs: it has no ledger, no inventory
   and no customer to decide with, so the stop sends it on along the idea route — `/create-ard` or
   `/specify`, each of which reads the folder's `grounding/` findings wherever `/prd-ground` wrote
@@ -231,23 +232,37 @@ subagent is dispatched — every finding this command reads was already independ
   is merged, or closed and the branch deleted.
 - **`/prd-ground`'s findings already merged to the specs repo's default branch.** `require-on-main`
   runs against `grounding/code-grounding.md` before anything else is read; an unmerged grounding pull
-  request stops the run naming the branch/PR state, and a BRD never grounded at all stops naming the
+  request stops the run naming the branch/PR state. On a slice, findings written and never handed
+  off — a `grounding/code-grounding.md` in its folder that neither the default branch nor any branch
+  the plugin hands off carries — stop it with `BRD_INTERVIEW_GROUNDING_NOT_HANDED_OFF`, whose
+  action is to land the grounding files already on disk, the ones `/prd-ground`'s handoff would
+  have landed: the stop prints the git commands that land them — on a new `brd/` branch where none
+  of them that the default branch lacks is committed; where they are committed, on a branch of your
+  own or on your local default branch — any of them that branch does not hold committed onto it
+  first — by pushing that branch, where `origin` does not already hold every commit of it, and, for
+  one of your own, merging it, or, where the default branch is protected, a new `brd/` branch and a
+  pull request — and it names `/prd-ground` only to warn against it, since only the landing of
+  the findings written is missing, which a re-run reaches only through the same handoff. Where your branch committed a change to the slice's `brd-link.md` or `coverage-ledger.md` that the default branch does not hold, while the grounding files are uncommitted, the new `brd/` branch starts from the default branch's copy of that file, so the stop leaves it out of what it lands and says to land your branch too where that change is wanted. A BRD never grounded at all — no
+  `code-grounding.md` in a slice's folder either — stops naming the
   fix that actually applies: `BRD_INTERVIEW_NEEDS_GROUNDING` when the inventory holds at least one
   `[BR#n]` row and grounding has simply not run; `BRD_INTERVIEW_NO_INVENTORY` when a slice has no
   `brd/brd-inventory.md` at all — never written, by an interrupted `/brd-split` on the parent, or
   written and since lost — with a remedy that
   turns on the slice's `claims:` and the parent's ledger; and `BRD_INTERVIEW_EMPTY_INVENTORY` when
-  the inventory holds no row, or when a folder naming no parent has none. None of the last three
+  the inventory holds no row. A folder carrying no `brd-link.md`, with no inventory or one holding no row,
+  takes `BRD_INTERVIEW_EMPTY_INVENTORY`'s no-parent form whatever grounding it holds; one whose
+  `brd-link.md` names no `parent:` stops first, with `BRD_INTERVIEW_BRD_LINK_NO_PARENT`. None of
+  `BRD_INTERVIEW_NO_INVENTORY`, `BRD_INTERVIEW_EMPTY_INVENTORY` and its no-parent form
   names `/prd-ground` as the fix — each names it only to warn against it — because it would not
   produce the findings: it stops on a slice's missing or empty inventory with
-  `PRD_GROUND_NO_INVENTORY` or `PRD_GROUND_EMPTY_INVENTORY`, and refuses a folder naming no parent
-  before it reads any inventory. So the fix is upstream, and for a slice it follows `/prd-ground`'s
+  `PRD_GROUND_NO_INVENTORY` or `PRD_GROUND_EMPTY_INVENTORY`, and refuses a folder carrying no
+  `brd-link.md` before it reads any inventory. So the fix is upstream, and for a slice it follows `/prd-ground`'s
   own remedy table rather than a blanket parent re-run: a slice claiming nothing is a standing empty
   child, which `/brd-split` on the parent resolves, in the form the parent's ledger calls for; a
   slice that claims rows but has no inventory file takes the remedy `/prd-ground`'s table gives for
   that state, the table telling the two causes apart by the slice's `claims:` and the parent's
-  ledger; and where the parent's ledger cannot be read, no `/brd-split` form is named. For a folder naming no
-  parent, the fix is a fresh intake under a new key — and, where the folder holds an `idea.md` and
+  ledger; and where the parent's ledger cannot be read, no `/brd-split` form is named. For a folder carrying no
+  `brd-link.md`, the fix is a fresh intake under a new key — and, where the folder holds an `idea.md` and
   no `prd.md` (an idea in a legacy, unprefixed folder), also [`/create-prd`](create-prd.md) on
   the same key, which accepts the folder, then — once its handoff is merged, since both gate
   `prd.md` on the default branch — [`/create-ard`](create-ard.md) or [`/specify`](specify.md). Such a folder carries neither a coverage ledger nor an inventory,
@@ -602,7 +617,7 @@ defects nobody has asked, is not offered the packaging step either: it is offere
 re-open that asks them, recommended, because a package built first would go out without them. A BRD
 whose questions were all settled from the findings — nothing left for a customer at all — is told
 plainly that it is decided and needs no customer review, and is offered a `--rebaseline` grounding
-pass as the one thing this command can offer that could make a new round askable (a requirement
+pass — save where its coverage ledger cannot be read or it claims no row, below — as the one thing this command can offer that could make a new round askable (a requirement
 defect can also become this BRD's to ask, through events outside this command — for instance a
 revised source document, an allocation or a re-cut elsewhere under the parent, a sibling's
 reconciliation moving its row to `rejected` or `superseded-by`, or a sibling file that could not be
@@ -610,7 +625,7 @@ read becoming readable; and a reconciliation can reopen one of its decisions); n
 step nor another round of this command is offered, because both would stop or report a no-op —
 save where the run names a reopened decision that waited on the round it worked, when it says the
 BRD is not decided and offers, in a list of its own, the round that puts that decision's question.
-A decided slice needs no reconciliation before authoring, so it is also offered the authoring ladder, on the conditions [`/brd-reconcile`](brd-reconcile.md) applies: [`/create-ard`](create-ard.md) and [`/specify`](specify.md) always, and [`/create-prd`](create-prd.md) only where the slice is PRD-eligible — some row it claims is `covered-here` — since `/create-prd` refuses one that is not.
+A decided slice needs no reconciliation before authoring, so it is also offered the authoring ladder, on the conditions [`/brd-reconcile`](brd-reconcile.md) applies: [`/create-prd`](create-prd.md), [`/create-ard`](create-ard.md) and [`/specify`](specify.md) only where the slice is PRD-eligible — some row it claims is `covered-here`, which is what the slice's ledger tests come to here, since this command has already refused a row still `unallocated` — because each of the three refuses a slice that is not; and only where the slice's `prd.md`, where one is written, is on the specs repo's default branch, wherever the specs tree is a git repository, since `/create-ard` and `/specify` each stop on one written and never handed off, and `/create-prd` would open on its existing-PRD question beside a landing that says to land the file first. `/create-prd` is offered only where the slice holds no `prd.md` at all: beside a landed one it would open on that question too, so the run names [`/update-prd`](update-prd.md) in its place.
 Re-opening a closed round later, with its cause recorded:
 
 ```
@@ -624,7 +639,7 @@ Phase 11 offers what the state this run leaves allows, and runs nothing itself. 
 - **Ready to package** → `/brd-package <BRD-KEY>`, after the merge; or another round of this command, only if something changed (findings, a requirement defect, a re-grounding, a flagged code defect, or a decision reopened elsewhere — the last two only once every round is closed); or interview another BRD or slice.
 - **A question still in a state packaging refuses** (deferred, needs grounding, untagged) → another round of this command, or [`/prd-ground <BRD-KEY>`](prd-ground.md) for a question no finding bears on yet; `/brd-package` is left out.
 - **Requirement defects that belong to a closed round 1 and nobody has asked yet** → `/brd-interview <BRD-KEY> --round 1` (recommended), which re-opens round 1 to ask them; `/brd-package` is left out.
-- **Nothing left for the customer** → the slice is decided and needs no reconciliation: [`/create-ard <BRD-KEY>`](create-ard.md) (PA, optional), [`/specify <BRD-KEY>`](specify.md) (PE), and [`/create-prd <BRD-KEY>`](create-prd.md) (PM) only where the slice is PRD-eligible — each after the merge — then `/prd-ground <BRD-KEY> --rebaseline`, the one thing this run can offer that could make a new round askable, and interviewing another BRD or slice. The question has room for only some of these: interviewing another BRD or slice is listed in prose only, and so is the `--rebaseline` pass where the slice is PRD-eligible; type either to take it. Neither packaging nor another round is offered.
+- **Nothing left for the customer** → the slice is decided and needs no reconciliation: where it is PRD-eligible and its `prd.md`, if one is written, is on the default branch, wherever the specs tree is a git repository, [`/create-prd <BRD-KEY>`](create-prd.md) (PM), [`/create-ard <BRD-KEY>`](create-ard.md) (PA, optional) and [`/specify <BRD-KEY>`](specify.md) (PE) — each after the merge, `/create-prd` only where no `prd.md` is written: beside one already on the default branch, or in the folder of a specs tree that is no git repository, the run names [`/update-prd <BRD-KEY>`](update-prd.md) in prose in its place, and the question then has room for the `--rebaseline` pass; where a `prd.md` is written and not on the default branch of a specs tree that is a git repository, none of the three, the run printing that file's landing in their place and saying why. Then `/prd-ground <BRD-KEY> --rebaseline`, the one thing this run can offer that could make a new round askable, and interviewing another BRD or slice. Where the slice is not PRD-eligible none of the three is offered, and the run says why — where it claims rows, what each resolved to and that no command makes it eligible. The question has room for only some of these: interviewing another BRD or slice is listed in prose only, and so is the `--rebaseline` pass where all three authoring commands are offered; type either to take it. Where the slice's `coverage-ledger.md` is missing or unreadable while it claims rows, the run offers neither the three nor the `--rebaseline` pass, reports the ledger's path and names [`/prd-ground <BRD-KEY>`](prd-ground.md) in prose — a run that stops on that slice by design and names the repair — and puts no question. Where the slice claims no row, it offers neither either, since `/prd-ground` stops on a slice that claims nothing: it names [`/brd-split <PARENT-KEY>`](brd-split.md), the run that keeps or removes the slice, in the form the parent's ledger decides — or, where that ledger cannot be read, neither form, reporting that file by path — and puts no question. Neither packaging nor another round is offered.
 - **Nothing left for the customer, but a decision reopened elsewhere waits on this round** → another round of this command, which puts its question; the BRD is not decided.
 
 Beside every list the run names each requirement defect left waiting on an open round, and each reopened decision waiting on this round. It also names each requirement defect it withheld as undecidable, with what decides it: where a row the defect joins is still `unallocated`, that row and the BRD whose [`/brd-split`](brd-split.md) run allocates it; otherwise the sibling whose ledger or question set could not be read. [`/brd-reconcile`](brd-reconcile.md) is never offered here: no review has been asked for yet.

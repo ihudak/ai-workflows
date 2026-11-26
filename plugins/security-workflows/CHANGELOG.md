@@ -5,6 +5,48 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.13.0] — 2026-11-25
+
+`/scan` resumes a stopped run. **What changes for you.** `/scan` keeps its working state in a run folder outside every repository, and running it again on the same machine offers to continue it or start over. A resumed run records a scan report already written without scanning again, reuses your triage answers, and makes each later step once: the copy into the register, the patch request, the register commit, the unit note, the maintenance proposals, the follow-ups, the cost entry and the resume pointer. Needs `workflows-core` 1.100.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet). The page has a *Stopping and resuming* section.
+
+### Added
+
+- **Resuming.** The run writes down the commit, the effort and the moment the scan started before it calls Claude Security, and the report directory once it finds it; a resumed run that finds the report records it, whatever `--effort` you type then, and asks before scanning again where the scan left none. A change or codebase scan, `--verify-fixes`, a triage and an `--import` are each their own run, named by `--command`, so one key scanned in two modes resumes each separately.
+- **`scripts/run-folder.py`**, the copy of `workflows-core` 1.100.0's, held byte-identical by CI.
+
+### Changed
+
+- **`/scan`'s *Start over*** removes the run's copy of its report in the register only where every run record in the register reads and none names that copy, and a resume stops where the report and the register copy are both gone. The command's prerequisites are checked before the run folder opens, and a stop keeps the scan folder its resume records.
+- **`.claude/rules/security-workflows.md`** lists the third script and the command's order.
+- **Pages.** The scan page says what a resume reuses, redoes and asks.
+
+### Known limits
+
+- Claude Security's scan and its patches are its own runs, which no session resumes: work cut off inside either is done again.
+- A run you never resume keeps its copy of the report in the register, since the 30-day removal of old run folders never touches the specs repository; it stays there, unrecorded, until an `--import` of the same report records it, or you remove it.
+- On a resumed run the specs-repo preflight may name a maintenance proposal an earlier session applied in its dirty-tree notice, an advisory.
+- The command saves no agent result, its plugin shipping no agent.
+
+## [0.12.8] — 2026-11-18
+
+A page LADDER-ORDER batch 4 left open, and a slice whose `brd-link.md` names no `parent:`. **What changes for you.** On such a slice — one on which `product-workflows` 3.86.0 stops every command that would read through that line — `/scan` no longer writes the architect's `/product-workflows:create-ard` follow-up into the slice, or names a run beside the report's sentence: it prints the line `workflows-core` 1.98.1's `phase-handoff` §4.4 prints there, saying the line is missing and to restore it or report it. Update with `workflows-core` 1.98.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.98.1 bullet).
+
+### Fixed
+
+- **A slice whose `brd-link.md` names no `parent:`.** The PRD key `/scan` passes for the architect's follow-up, and its next step's first missing document, read a slice's ledger tests as the rung does but had no case for this state, so on such a slice whose `prd.md` was on the default branch the run wrote a follow-up naming `/product-workflows:create-ard`, or named `/product-workflows:specify`, each a run that stops there. The slice now passes no PRD key, the follow-up stays a sentence in the report, and the line the rung prints there stands beside it and in place of the run the next step would name. The scan page and the pages that describe the follow-up say the same.
+- **The scan page's follow-up for the product architect.** It said what follows the sentence for the PA — a line on a slice that fails its ledger tests, or on a PRD written and not yet merged — without the case the command makes first: on a specs tree that is a git repository whose default branch does not exist, nothing is read and no line follows the sentence. The page now says so.
+
+## [0.12.7] — 2026-11-17
+
+LADDER-ORDER batch 4, the BRD route. **What changes for you.** `product-workflows` 3.85.0's `/create-ard` and `/specify` stop on a BRD-route slice that fails the slice's ledger tests — a claimed row still `unallocated`, or none `covered-here` — whatever its `prd.md`'s state. So the scan no longer leaves the product architect's follow-up line in the folder of such a slice, and its next step no longer offers `/product-workflows:create-ard` or `/product-workflows:specify` as a run to take for it: after the architect's sentence, which leaves the key for you to fill, it names what `workflows-core` 1.98.0's `phase-handoff` §4.4 *The first missing document* names at its `prd.md` rung. The register, `register.py` and what the scan records are unchanged. Update with `workflows-core` 1.98.0, whose rung the scan reads; `product-workflows` 3.85.0, `dev-workflows` 4.70.3 and `docs-workflows` 1.43.1 are released with them.
+
+### Changed
+
+- **The PRD test for the product architect's line** (7.2). A BRD-route slice — a candidate folder carrying a `brd-link.md` — passes only where its ledger tests pass, read as §4.4's rung reads them for an offer of `/create-ard`. Where they fail, no `--prd-key` is passed, so `weakness-classes` gives the architect's follow-up as a sentence for the report and no line goes into that slice's `follow-ups.md`.
+- **The next step for the product architect.** After each sentence for the architect, where the candidate folder is a slice whose ledger tests fail, the report prints `<PRD> is a BRD-route slice that does not pass the slice's ledger tests, and /product-workflows:create-ard stops on those first:` and what the failing outcome names — that alone, in place of the `prd.md` landing it prints for a PRD not yet on the default branch.
+- **The next step after findings went to fix**, where the unit `/dev-workflows:implement <KEY>` would build is on a slice whose ledger tests fail, names what the failing outcome names — that alone, in place of the `prd.md` landing or the `/product-workflows:specify` run it named there: the run it names, typed out with its key; no command, saying why none applies; or, for a `coverage-ledger.md` missing or unreadable while `claims:` names rows, that file by path and `/product-workflows:prd-ground <SLICE-KEY>`, saying that it stops there by design.
+- **Pages.** The scan page says all three; it, the workflow page, *Roles and phases*, the security register page and the session feedback page say where the architect's line lands — the folder that holds the PRD on the specs repository's default branch, on a slice only where it passes the slice's ledger tests, and otherwise the report.
+
 ## [0.12.6] — 2026-11-16
 
 Docs only: SEC-G2 D. The roles page says what `dev-workflows` 4.69.0's `/conformance` checks of a threat model before the scan, and what it leaves to the scan. It describes that release, and needs nothing of the other plugins' releases, nor they of it.

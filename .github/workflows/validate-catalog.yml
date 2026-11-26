@@ -283,6 +283,15 @@ jobs:
         # agent's. Fixtures are throwaway git repositories built at run time.
         run: python3 plugins/workflows-core/scripts/tree-snapshot.py --selftest
 
+      - name: Self-test the run folder
+        # A command that keeps a run folder saves each agent's input and result, each answer and each
+        # side effect there, so that a run stopped mid-way resumes where it stopped. Its failure modes
+        # are silent: a stale result reused -- one whose input, attached file, agent file or model
+        # changed, or one whose completion was never recorded -- and a superseded session still
+        # writing after another resumed or started over its run. Throwaway homes, git repositories
+        # and concurrent processes are built at run time.
+        run: python3 plugins/workflows-core/scripts/run-folder.py --selftest
+
       - name: Self-test the status line's plan usage
         # /workflows-core:statusline installs statusline-command.sh, whose opt-in plan-usage line
         # draws a cached reply of the account's usage endpoint. Its failure modes are silent: a
@@ -296,12 +305,12 @@ jobs:
 
       - name: Every plugin's copied scripts are the same
         # A command, agent or reference calls ${CLAUDE_PLUGIN_ROOT}/scripts/<name> -- the copy in
-        # the calling file's own plugin, for each of bounded.py and tree-snapshot.py. A plugin with a
-        # call site must ship one, or every such call there exits 2 and reads as "skip"; and every
-        # copy must equal workflows-core's, the one the self-tests above run.
+        # the calling file's own plugin, for each of bounded.py, tree-snapshot.py and run-folder.py. A
+        # plugin with a call site must ship one, or every such call there exits 2 and reads as "skip";
+        # and every copy must equal workflows-core's, the one the self-tests above run.
         run: |
           status=0
-          for name in bounded.py tree-snapshot.py; do
+          for name in bounded.py tree-snapshot.py run-folder.py; do
             pat=${name//./\\.}
             for d in plugins/*/; do
               p=${d%/}

@@ -22,6 +22,7 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `Where the placeholder sits in the text` → `contract`
 - `PM — ideation & framing` → `pm`
 - `PM — the BRD-to-PRD route` → `brd`
+- `The landed condition` → `brd`
 - `PM — effort proposals (optional, and they gate nothing on the build ladder)` → `proposals`
 - `PA — architecture (optional)` → `pa`
 - `PE — breakdown & specification` → `pe`
@@ -174,7 +175,11 @@ array carries every option.
   to `prd.md` the default branch lacks; until that change is merged, neither command reads it —
   from that branch each stops on the difference or offers to switch to the default branch, whose
   copy lacks the change — and the offers name that change's merge first
-  (`/product-workflows:epics` Phase 9).
+  (`/product-workflows:epics` Phase 9). On a BRD-route slice — the PRD folder carrying a
+  `brd-link.md` — both are named as they stand, since `/product-workflows:epics` names them on no test
+  of the slice's ledger and reads none for them, and are followed, once, by `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
+  — which that command prints citing `coverage-ledger-format.md` §5 in its own text, once and in
+  this sentence's place.
 - `/product-workflows:update-spec <KEY>` (a merged specification revised in place) → for each design it
   names — one citing an ID that changed, or one built on the specification it replaced — Dev →
   `/dev-workflows:design <ITS-KEY>` to revise it;
@@ -182,7 +187,12 @@ array carries every option.
   refine; where it names nothing, the next step `/product-workflows:specify` gives a specification at
   the same altitude. Where the PRD folder holds no `prd.md`, or its Phase 0 went on past a PRD
   `/product-workflows:specify` stops on, its Phase 8 says what it names first and names no run that
-  would stop on that PRD.
+  would stop on that PRD. On a BRD-route slice — the PRD folder carrying a `brd-link.md` — each
+  `/product-workflows:create-prd` and `/product-workflows:specify` run its Phase 8 names is named as
+  it stands, since `/product-workflows:update-spec` takes no ledger test and reads no slice's ledger,
+  and they are followed, once, by `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (workflows-core:phase-handoff §4.4, The first missing document).`
+  — which that command prints citing `coverage-ledger-format.md` §5 in its own text, once and in
+  this sentence's place.
 
 **Every `/product-workflows:epics` option the routing graph names is conditional on the folder it names
 holding an authored `prd.md`** (`kind: prd`): `/epics` accepts a PRD folder or an `EPIC-` folder
@@ -202,10 +212,21 @@ never an Epic's — save where that folder holds the PRD under its pre-rename fi
 `/product-workflows:specify <PRD>`, whose own stop prints the rename's commands, saying that run
 stops — **and only where `/product-workflows:create-prd` can itself run**: it refuses more than one shape —
 three on the BRD route, and an `EPIC-` folder on either, which is why the key is the PRD folder's
-— so on a BRD-route slice the two data refusals on that slice's own ledger are tested first and
-the offer resolves to `/product-workflows:brd-split` against one of two keys, or to no option at
-all, where either fails (`product-workflows:coverage-ledger-format` §5.2, the authority, applied
-by each offering command). Where the caller's PRD folder holds a `prd.md` asserting no `kind: prd`
+— so on a BRD-route slice the slice's ledger tests are read first, and each offering command
+names what `${CLAUDE_PLUGIN_ROOT}/references/phase-handoff.md` §4.4's *The first missing document*
+names for them at its `prd.md` rung, which restates them for a plugin that cannot read their
+authority, `product-workflows:coverage-ledger-format` §5.2 — a naming, as that rung is, never a stop
+that applies them, which is `/product-workflows:create-prd`'s own, taken in its Phase 0; where the
+slice's `brd-link.md` names no `parent:`, which that rung reads first, no option at all, the offer
+printing in its place the rung's no-`parent:` line; and where they fail the offer resolves to what the
+failing outcome names: `/product-workflows:brd-split` against one of two keys; no option at all
+where none applies — the gate set non-empty and no row `covered-here`, the offer saying where the
+requirements went, or the gate set empty and the parent's ledger unreadable, that ledger reported by
+path; and, where the slice's `coverage-ledger.md` is missing or unreadable while `claims:` names
+rows, no option either, the file reported by path and `/product-workflows:prd-ground <PRD>` named
+beside the dropped option, in prose, never as an option or `(Recommended)`, as the run whose stop
+tells an interrupted carve from a lost file and names the repair, saying it stops there by design.
+Where the caller's PRD folder holds a `prd.md` asserting no `kind: prd`
 — which `/epics` reads as no PRD and `/product-workflows:create-prd` counts as found, offering
 `/product-workflows:update-prd` or an overwrite — the offer names neither: in their place it says
 that the file asserts no `kind: prd`, and that adding the `kind: prd` and `key: <PRD>` its format

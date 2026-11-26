@@ -119,6 +119,26 @@ Wait for the digest. On `status: ERROR` or any dispatch failure, treat as
 `docs_grounding: OFF` and proceed as the run does without docs grounding (record one line in the final report).
 On `status: EMPTY`, proceed the same way; the digest simply adds nothing.
 
+**Saved, where the caller hands it a run folder.** A caller that keeps a run folder may pass this
+dispatch three values: its `run_folder`, an id prefix and the area (`main`). With all three, it goes
+through `run-dispatch` (`Skill(skill: "workflows-core:reference", args: "run-folder run-dispatch")`):
+id `<prefix>-docs-grounder`; agent `docs-grounder`, its file the path
+`Skill(skill: "workflows-core:agent-file", args: "docs-grounder")` prints; the model above; an inline
+return, saved with `done <folder> <id> --from -`, a `status: ERROR` being the dispatch failing and
+never saved. The input is the block above, each placeholder replaced by its value and nothing else
+changed — `feature_summary` and `themes` as the caller wrote them with `put` when it first generated
+them (`workflows-core:run-folder` §5), so a resumed run passes the same bytes. It names the docs root
+by version with `--attach scratch/<prefix>-docs-grounder/docs-version.txt`, written before each
+`dispatch` call:
+- a line `commit <sha>`, `<sha>` being what `git -C "<docs_root>" rev-parse HEAD` prints, where it
+  prints one and `git -C "<docs_root>" --no-optional-locks status --porcelain -- .` prints nothing and
+  exits 0; otherwise a line `files`, then the blob of each markdown file under the root, from
+  `(builtin cd "<docs_root>" && find . -type f -name '*.md' -print | LC_ALL=C sort | while IFS= read -r f; do printf '%s %s\n' "$(git hash-object --no-filters -- "$f")" "$f"; done)`;
+- then a line `index <retrieval> <documents> <vectors>`: the `retrieval` step 4 returned, and the
+  document and vector counts step 3.5's `qmd status` printed, `none` for each it did not print.
+
+Without the three values, the dispatch is made as above, unsaved.
+
 ## Consumption
 
 **`grill-rank`** (`/idea`, `/create-prd`, `/update-prd`, `/create-ard`, `/specify`, `/update-spec`, `/brd-intake`):
@@ -170,4 +190,4 @@ citation.
 - Single directory; `${DOCS_PATH:-/workspace/docs}`.
 - Index **building and refreshing** happen only in `resolve-docs-grounding` step 3.5, never inside `docs-grounder`, which only probes. A build always requires user consent; a refresh runs bounded at 60s and asks only when that cap is breached.
 - The validity gate (step 3) checks the docs root, never the retrieval index — Path B works with no index at all, so gating on one would disable grounding exactly where the fallback still works.
-- `resolve-docs-grounding` runs **exactly once per run**, at the earliest phase that shows the `docs grounding:` line; any later invocation in that same run consumes the cached result — it never re-prompts, re-probes, or re-refreshes.
+- `resolve-docs-grounding` runs **exactly once per run**, at the earliest phase that shows the `docs grounding:` line; any later invocation in that same run consumes the cached result — it never re-prompts, re-probes, or re-refreshes. Each invocation that resumes the run through its run folder (`workflows-core:run-folder`) — in a later session, or in the same one after a stop — runs it once more, as its own, whatever an earlier invocation cached; step 3.5's question, where one is due, is asked again, unrecorded.

@@ -154,7 +154,8 @@ mount / permission) drops to the next tier with the same notice.
 - **Auto entries dedupe:** before appending an `origin: auto` entry, read the
   existing `id:` values in the file and **skip** any that already exist (report
   `SKIP — already logged`). Because `id = <KEY>-<command>-<short-slug>` is
-  stable, re-running a pipeline never double-logs.
+  stable, re-running a pipeline never double-logs an entry whose slug comes
+  out the same.
 - **Manual (`/feedback`) and prompt (`/prompt*`) entries are intentional** and
   are **never silently skipped.** On an `id` collision, append a numeric suffix
   (`-2`, `-3`, …) and warn if one looks near-identical.
@@ -249,6 +250,15 @@ happened and why it was missed, Suggested improvement = its **Fix**); dedupe by 
 (§3); resolve the target (§2); write silently (§5). Return the persisted path,
 or "no plugin-facing signal — nothing persisted" when the slice is empty.
 
+**Guarded, on a run that keeps a run folder.** Where the calling run carries `run_folder: <path>` and has finished — the tail before `close-run`, never a stop's — this entry point is effect `tail-emit-auto` (`Skill(skill: "workflows-core:reference", args: "run-folder run-effect")`).
+
+- **Its input is the report the caller's maintenance step saved.** That step, which the caller guards as its own effect `tail-maintenance`, writes the agent's whole return with `put <folder> 'scratch/tail-maintenance/report.md' --from -` as the dispatch returns it (`workflows-core:run-folder` §5). A guarded run of this entry point reads the report from that file, so a resumed run whose maintenance step was skipped as done still has it, and a report generated again in another session never takes its place. Where no such file stands — a caller whose maintenance step writes none — it takes the report the caller passes.
+- `done` — skip it, and return the line fact `tail-emit-auto` holds.
+- `none` — `effect <folder> tail-emit-auto start`; run it as above; `fact <folder> tail-emit-auto --set '<the line it returns>'`; `effect <folder> tail-emit-auto done`.
+- `started` — an earlier session began it and never recorded its end: run it again, as above. §3's dedupe skips each entry whose `id` that session wrote; a signal whose short slug comes out differently this time has another `id`, and is logged again — likelier where the report is one the caller passes, generated again, than where it is the saved one. Then the fact and `done`, as on `none`.
+
+Without a run folder, and on a stop, it runs as above, unguarded.
+
 ### `emit-manual` — `/feedback`
 
 Inputs: `command` (the exact name, or `n/a`), the user-authored **Friction** and
@@ -303,3 +313,5 @@ Inputs: the `defect-reporter` **Defects** list, `command` (the exact slash-comma
 Behavior: render one `origin: auto` entry per defect — Friction = the defect plus its evidence; Suggested improvement = the repro plus the location to fix; `impact` is `blocker | friction` only, never `polish` — `emit-bugs` drops any defect marked `polish` and writes no entry for it; `category` is drawn from §1's vocabulary — `environment-defect` for a container-environment location, else `wrong-output` / `missing-reference-doc` / `missing-capability` / `other` as fits; dedupe by the stable `id` (§3); resolve the target (§2); write silently (§5). Return the persisted path.
 
 `emit-bugs` replaces `emit-auto` for the duration of `--skip-feedback`, and is called only when `defect-reporter` returned at least one defect — the orchestrator dispatches `workflows-core:defect-reporter` in place of `impl-maintenance` and, only on a non-empty Defects list, calls `emit-bugs` on the result; when the list is empty, this reference is not loaded at all and the caller reports `— no defects` directly (`workflows-core:run-flags` §4).
+
+On a run that keeps a run folder, `emit-bugs` is guarded as `emit-auto` is, by the *Guarded* paragraph under `emit-auto` and with the same effect id, `tail-emit-auto`: it is that run's feedback step. Its Defects list is read, as `emit-auto`'s report is, from the file the caller's maintenance step saved, `scratch/tail-maintenance/report.md`, which then holds `defect-reporter`'s return.

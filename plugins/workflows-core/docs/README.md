@@ -29,7 +29,7 @@
 
 - [Agents](reference/agents.md) — the eleven agents this plugin bundles, and which commands dispatch them.
 - [References](reference/references.md) — the reference corpus under `references/`, which the whole plugin family reads.
-- [Skills](reference/references.md#skills) — the four bundled skills, `model-routing`, `reference`, `specs-git` and `weakness-classes`: what each is for, and whether it is user-invocable.
+- [Skills](reference/references.md#skills) — the five bundled skills, `agent-file`, `model-routing`, `reference`, `specs-git` and `weakness-classes`: what each is for, and whether it is user-invocable.
 - [Environment](reference/environment.md) — every environment variable this plugin reads, and what it configures, and the three run flags — `--skip-costs`, `--skip-feedback` and `--enforce-model` — whose defaults three of them set.
 - [Grounding sources](reference/grounding.md) — every source the family's authoring commands ground on — shipped docs, the architecture repository and the team's decision records, mounted code, design frames — what turns each on, its status line and its off switch.
 - [Hooks](reference/hooks.md) — the three session-wide hooks this plugin bundles, and why they live here rather than in a pipeline plugin.
@@ -38,4 +38,4 @@
 
 ## Status
 
-This plugin ships 7 slash commands, 11 agents, and 42 reference files. Most of what it carries is not a command: it is the shared corpus and the agents the sibling plugins in this family — `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` — read and dispatch, kept here so more than one plugin can depend on one copy. All four declare it, which is what makes it shared rather than merely reused.
+This plugin ships 7 slash commands, 11 agents, and 43 reference files. Most of what it carries is not a command: it is the shared corpus and the agents the sibling plugins in this family — `dev-workflows`, `product-workflows`, `docs-workflows` and `security-workflows` — read and dispatch, kept here so more than one plugin can depend on one copy. All four declare it, which is what makes it shared rather than merely reused.

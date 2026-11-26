@@ -18,6 +18,7 @@ Every rule name in `next-phase-offer`, with the part that holds it; `core` comes
 - `Where the placeholder sits in the text` → `contract`
 - `PM — ideation & framing` → `pm`
 - `PM — the BRD-to-PRD route` → `brd`
+- `The landed condition` → `brd`
 - `PM — effort proposals (optional, and they gate nothing on the build ladder)` → `proposals`
 - `PA — architecture (optional)` → `pa`
 - `PE — breakdown & specification` → `pe`

@@ -95,12 +95,12 @@ flowchart TD
     brdinterview -->|"decisions.md + held [C] questions"| brdpackage
     brdpackage -->|"review bundle"| review
     review -->|"the returned review"| brdreconcile
-    brdreconcile -->|"frozen decisions.md — PRD-eligible"| createprd
-    brdreconcile -->|"frozen decisions.md"| createard
-    brdreconcile -->|"frozen decisions.md"| specify
-    brdinterview -.->|"decisions.md — no customer review, PRD-eligible"| createprd
-    brdinterview -.->|"decisions.md — no customer review needed"| createard
-    brdinterview -.->|"decisions.md — no customer review needed"| specify
+    brdreconcile -->|"frozen decisions.md — ledger tests passing, no prd.md"| createprd
+    brdreconcile -->|"frozen decisions.md — ledger tests passing, any prd.md landed"| createard
+    brdreconcile -->|"frozen decisions.md — ledger tests passing, any prd.md landed"| specify
+    brdinterview -.->|"decisions.md — no customer review, PRD-eligible, no prd.md"| createprd
+    brdinterview -.->|"decisions.md — no customer review, PRD-eligible, any prd.md landed"| createard
+    brdinterview -.->|"decisions.md — no customer review, PRD-eligible, any prd.md landed"| specify
 
     idea -->|"idea.md"| createprd
     createprd -.->|"prd.md — idea route only, optional"| groundprd
@@ -189,7 +189,7 @@ flowchart TD
 
 - **Solid arrows carry the main inputs**, to commands or to manual work. **Dashed arrows** carry optional inputs, conditional reruns, advice (`/ready`'s verdict), or explicit `action:` / `call:` labels. An artifact edge is not an automatic invocation. Whether a command also waits for its input to be merged is a per-command gate, described on its own page.
 - **`/prd-ground` is one command drawn separately for each route**, not a missing `/brd-ground`. A root BRD is split first, then each slice is grounded before its allocation walk and interview. An idea-route PRD may be grounded but never enters `/brd-split`. BRD authoring also reads the slice's findings after the decision handoff; those extra input edges are omitted here.
-- **The BRD route joins the PRD ladder at the slice folder**, not at an `idea.md`. The three authoring commands are alternatives, not a sequence, and each gates the slice's `decisions.md`. `/brd-reconcile` offers them once the customer's answers are frozen. `/brd-interview` offers them directly when every question was settled from the findings, so the slice needs no customer review — `/create-prd` there, as after a reconciliation, only where a row the slice claims is `covered-here`.
+- **The BRD route joins the PRD ladder at the slice folder**, not at an `idea.md`. The three authoring commands are alternatives, not a sequence, and each gates the slice's `decisions.md`. `/brd-reconcile` offers them once the customer's answers are frozen. `/brd-interview` offers them directly when every question was settled from the findings, so the slice needs no customer review. Either offers all three only where the slice passes its ledger tests — no row it claims still `unallocated`, and at least one `covered-here`, the two tests each of the three applies in its own Phase 0 and stops on — and only where a `prd.md` the slice holds is on the default branch, wherever the specs tree is a git repository; otherwise it offers none of them and names what the slice needs first, or says that nothing applies. `/create-prd` it offers only where the slice holds no `prd.md`: beside a landed one it names `/update-prd` instead, since `/create-prd` would open on its existing-PRD question there.
 - **`/update-prd` offers reruns for existing downstream artifacts** — architecture, specification, Epics and release notes — and recommends a rerun when the update invalidates one; for an existing specification the rerun is `/update-spec`, which revises it in place and keeps its IDs. These edges do not require creating artifacts that do not yet exist. The specification-to-Epics edge is optional enrichment from a PRD-level `specification.md`, not a requirement to specify before splitting.
 - **`/docs-workflows:release-notes` is drawn twice** to show PRD-driven drafts or refreshes and the post-implementation note. The final run reads nothing `/document` writes, so the two documentation commands are independent. This command, `/dev-workflows:upgrade`, [`/workflows-core:statusline`](commands/statusline.md) and [`/workflows-core:feedback`](commands/feedback.md) use qualified names because their bare names collide with built-ins, and `/dev-workflows:design` because its bare name does on the accounts Claude Code's own `/design` is switched on for.
 - **The audit backlog's units are drafted by `/docs-write`, and the rest of their stage is manual.** `/docs-write` takes a unit, drafts its page from the unit's own evidence, and commits the page, its navigation and the unit's move to `drafted` together; verifying the page's claims and publishing it stay manual, and so does every step for a page written any other way — select an actionable unit, write its page, maintain its `unit:` metadata and backlog `page_path` / `status`. `/document` direct mode can help with a described prose edit, but it never reads the backlog or manages unit status; keyed mode remains the feature-documentation route. The `docs-workflows` documentation route page describes both; `--refresh` re-audits coverage and does not replace verification.

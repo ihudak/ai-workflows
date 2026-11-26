@@ -173,13 +173,25 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    `/update-prd` step 3a do: where the folder above holds a `prd.md` asserting `kind: prd`, `This is
    probably the PRD you meant: price it with '/product-workflows:prd-proposal <PRD-KEY>'.`,
    `<PRD-KEY>` being that `prd.md`'s own `key` (`workflows-core:addressing` §4) — never parsed out
-   of either folder's name; where it holds none, this Epic has no PRD above it, the shape
+   of either folder's name — save that where the folder above is a slice whose `brd-link.md` names
+   no `parent:`, the run stops with `PRD_PROPOSAL_BRD_LINK_NO_PARENT` on that folder in place of
+   this stop, as step 4b words it, since the run that remedy names stops there; where it holds none, this Epic has no PRD above it, the shape
    `/product-workflows:epics <KEY>` reports as `EPICS_EPIC_NOT_UNDER_PRD` where this folder holds an
    `epic.md` and as `EPICS_NO_PRD` where it holds none, and the remedy is the one both stops give:
    where the folder above is a `PRD-` folder, `The PRD folder above it holds no PRD yet: author one
    there with '/product-workflows:create-prd <PARENT-KEY>'.`, `<PARENT-KEY>` being that folder's own
-   `key`, subject to step 5's `<remedy>` table applied to *that* folder; anywhere else, name no
-   parent and say so. It is a user halt, so `emit-block` does not fire.
+   `key`, subject to step 5's `<remedy>` table applied to *that* folder — save that where that
+   folder's `brd-link.md` names no `parent:`, the run stops with `PRD_PROPOSAL_BRD_LINK_NO_PARENT` on
+   that folder in place of this stop, as step 4b words it; anywhere else, name no parent and say so.
+   It is a user halt, so `emit-block` does not fire.
+4b. **The no-`parent:` stop**, once steps 4 and 4a have let a folder through — before any read through
+   `parent:`, of which this run makes three: step 5's remedy for a slice claiming nothing, step 4a's,
+   which applies that remedy to the folder above an Epic and takes this stop there, and Phase 11's
+   umbrella and sibling options, which read the parent BRD. Where the resolved folder is a BRD-route
+   slice whose `brd-link.md` names no `parent:`, stop with `PRD_PROPOSAL_BRD_LINK_NO_PARENT`, its
+   condition, message and remedy read in `${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md`
+   §5.3, never from memory, `<re-run>` being `/product-workflows:prd-proposal <ADDRESS>` with the
+   other arguments this run was given.
 
 **Check the branch the run stands on.** Execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on the resolved folder, with `prefix: prd`; a stop it makes ends the run here.
 
@@ -241,7 +253,7 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    | The resolved folder | `<remedy>` |
    |---|---|
    | No `brd-link.md` — an idea-route `PRD-` folder | `Author one first: /product-workflows:create-prd <KEY>` |
-   | A `brd-link.md`, and no readable `coverage-ledger.md` beside it — absent, or present and unreadable — while `brd-link.md` claims rows | Name no command: report `<slice-dir>/coverage-ledger.md` by path, as missing or as unreadable with the read error, and say `/brd-split` wrote it with the slice. This is not an empty gate set — `claims:` names rows and the evidence for judging them is gone — so neither data refusal can be evaluated, and §5.2 forbids resolving it to the empty row's `/brd-split <PARENT-KEY>` (`/product-workflows:create-prd` Phase 0 step 7 names no option on it either) |
+   | A `brd-link.md`, and no readable `coverage-ledger.md` beside it — absent, or present and unreadable — while `brd-link.md` claims rows | Report `<slice-dir>/coverage-ledger.md` by path, as missing or as unreadable with the read error, and name `/product-workflows:prd-ground <KEY>` as the run whose stop on this slice tells a carve interrupted before the ledger was written from a file lost or damaged after it, and names the repair for each — named in the stop's prose, saying that that run stops there by design. This is not an empty gate set — `claims:` names rows and the evidence for judging them is gone — so neither data refusal can be evaluated, and §5.2 forbids resolving it to the empty row's `/brd-split <PARENT-KEY>`, which writes nothing into a slice with a file missing (`/product-workflows:create-prd` Phase 0 step 7 names `/prd-ground` on it too) |
    | A `brd-link.md`; the gate set leaves **no** row `unallocated` **and** at least one `covered-here` | `Author one first: /product-workflows:create-prd <KEY>` |
    | A `brd-link.md`; a gate-set row is still `unallocated` | Not `/create-prd`, which raises `CREATE_PRD_BRD_UNALLOCATED`: `Allocate this slice first: /product-workflows:brd-split <KEY> (allocate-only on a slice; it stops naming /product-workflows:prd-ground <KEY> where the slice's grounding findings do not each carry a verifier verdict), then /product-workflows:create-prd <KEY> where that walk leaves a claimed row covered-here` |
    | A `brd-link.md`; no gate-set row `covered-here`, and the gate set is **empty** | Not `/create-prd`, which raises `CREATE_PRD_BRD_NOT_ELIGIBLE`: `This slice claims nothing: keep or remove it with /product-workflows:brd-split <PARENT-KEY>`, `<PARENT-KEY>` read off the same `brd-link.md` the `claims:` list came from — in the form the **parent's** own ledger decides, exactly as `/product-workflows:create-prd` Phase 0 step 7's empty-gate-set row decides it: where that ledger still holds an `unallocated` row, name `/product-workflows:brd-split <PARENT-KEY> "<how to cut it>"` instead, since that run walks the row too and stops with `BRD_SPLIT_NEEDS_INSTRUCTION` without an instruction; where it holds none, the bare form above; where it cannot be read, report it by path and name neither form |
@@ -824,7 +836,11 @@ The **first** array is presented at tier 1 and at tier 4 — at tier 1 because n
 the tier from a `PRD-` folder alone, at tier 4 because there is no tier above it. The **second** is
 presented at tier 2 and the **third** at tier 3: those are the two runs where a named command actually
 moves the grade, and telling the operator the document they just received is improvable is worth more
-than a forward pointer.
+than a forward pointer. **On a slice — the folder carrying a `brd-link.md` — the command that raises
+the tier is named as it stands**, since this command names it on the tier alone and reads no slice's
+ledger for it: where the second or third array is presented there, print once, in the question's own
+text, led by that command's name — `/product-workflows:create-ard <KEY> — ` or
+`/product-workflows:specify <KEY> — ` before it — `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (coverage-ledger-format.md §5).`
 
 **Drop an option whose subject does not exist on this run** — the umbrella option where the folder has
 no parent BRD, the sibling option where **no sibling holds a stale proposal or holds none at all**.
@@ -886,7 +902,7 @@ canonical emitter tail (`workflows-core:session-hygiene` §5 rule 2): feedback �
 gap, `emit-block` (per `workflows-core:feedback-emission`) fires at that halt **before** escalating.
 **None of this command's own stops qualifies**, and that is the point of naming them here:
 `PRD_PROPOSAL_NEEDS_KEY`, `PRD_PROPOSAL_NOT_FOUND`, `PRD_PROPOSAL_BRD_NOT_SLICED`,
-`PRD_PROPOSAL_EPIC_FOLDER`, `PRD_PROPOSAL_NEEDS_PRD`, `PRD_PROPOSAL_PRD_NOT_HANDED_OFF`,
+`PRD_PROPOSAL_EPIC_FOLDER`, `PRD_PROPOSAL_BRD_LINK_NO_PARENT`, `PRD_PROPOSAL_NEEDS_PRD`, `PRD_PROPOSAL_PRD_NOT_HANDED_OFF`,
 `PRD_PROPOSAL_BASELINE_UNREADABLE`, `PRD_PROPOSAL_BASELINE_IS_OUTPUT`, `PRD_PROPOSAL_NEEDS_PROFILE` and an unset `$SPECS_PATH` each
 report the state of the operator's own argument list, tree or environment — not a capability this
 plugin lacks. **`PRD_PROPOSAL_RECORD_FAILED` qualifies only by its cause**: where the script's stderr, or the shell's, names the operator's tree or environment — a file it cannot read or a name it cannot record, a missing `python3` or `git` (the last two the image exception below) — it is one of these; where it names something this run produced — a record file that no longer parses, an argument the run built — it is a plugin defect, and `emit-block` fires before the stop. A review BLOCK is not one either: that is the gate working. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
