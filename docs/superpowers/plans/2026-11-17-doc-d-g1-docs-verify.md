@@ -676,7 +676,7 @@ Inputs a reasonable operator will meet that no gate exercises, most likely first
 ### Task 3.2: `walkthrough-composer`, and the apply brief's user half [security-sensitive]
 
 **Files:**
-- Create `plugins/docs-workflows/agents/walkthrough-composer.md`; its docs row (`reference/agents.md`, `twelve` → `thirteen`; `docs/README.md`; `README.md`).
+- Create `plugins/docs-workflows/agents/walkthrough-composer.md`; its docs row (`reference/agents.md`, `12` → `13`, a numeral as check 9 reads it; `docs/README.md`; `README.md`).
 - Modify `references/docs-iteration/unit-brief.md`: §2's `walkthrough` field gains "and its `stamp`" beside its ignored `result:` values (UB:43); §2.1 its user parts (`walkthrough` the file's text; `{kind: walkthrough, id}` added to `evidence`; `coverage` the composer's map, as data; `answers.steps`, `answers.images`); §3.4 its user parts (entry validation takes `user`; step 5 references each `images` entry on the line after its slot comment, which stays, alt text from the capture's `shows`; step 7 reads each claim through `coverage` and the steps); §4.6 its user parts (Factual correctness reads `coverage`; Screenshots: each `images` entry at its slot and nothing more; Source-code accuracy `N/A` on a user page, EC:137).
 - Modify `.claude/rules/docs-workflows-backlog.md`: the `walkthrough-composer` caller line under `/docs-verify`'s map line.
 
