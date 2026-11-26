@@ -8,7 +8,7 @@ applying each answer to the whole registry (§8), the tail table (§9), the end-
 (§10), the account (§11) and the registry (§12). A caller reads it whole — it has no entry point —
 and cites its sections by number, keeping only what is its own: which items are candidates, what an
 answer writes, and when a sitting starts. Its citers are what
-`grep -lE 'workflows-core:question-budget|args: "question-budget' plugins/*/commands/*.md plugins/*/agents/*.md`
+`grep -lE 'workflows-core:question-budget|args: "question-budget|references/question-budget\.md' plugins/*/commands/*.md plugins/*/agents/*.md`
 lists.
 
 ## 1. Terms

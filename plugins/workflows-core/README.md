@@ -26,7 +26,7 @@ Most of this plugin is not a command at all. It is the corpus a sibling plugin r
 | [Workflow overview](docs/workflow.md) | Where these seven commands sit relative to the pipeline they serve. |
 | [Family map](docs/family-map.md) | The whole plugin family on one diagram: every command of the five plugins, by role. |
 | [Roles and phases](docs/roles-and-phases.md) | The cost-attribution phases these commands reach, and how. |
-| [Agents](docs/reference/agents.md) | The eleven agents this plugin bundles and who dispatches them. |
+| [Agents](docs/reference/agents.md) | The thirteen agents this plugin bundles and who dispatches them. |
 | [References](docs/reference/references.md) | The reference corpus under `references/`. |
 | [Environment](docs/reference/environment.md) | Every environment variable this plugin reads, and the three run flags. |
 | [Grounding sources](docs/reference/grounding.md) | What each authoring command grounds on, and how to turn a source off. |
