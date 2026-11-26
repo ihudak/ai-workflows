@@ -1017,7 +1017,7 @@ the manual path:
    first array's recommended option names. Where the list holds no clone, skip the
    question: step 4's escalation is the answer.
 2. **Build a slug→clone map**, exactly as `/epics` Phase 4 does: for each top-level directory
-   under each entry of `$REPOS_PATH`, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin
+   under each entry of `$REPOS_PATH` where `test -e '<dir>/.git'` succeeds — tested before any git call names the directory (`workflows-core:read-only-repos` §0) — run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -c safe.bareRepository=explicit -C <dir> remote get-url origin
    2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote` call fails/times out. **Never
    assume a `<base>/<slug>` directory name** — resolution is always by remote slug.
 3. **An entry beginning `/` is an absolute path to a clone** — from `--repos`, or typed at step 1 — and is never matched against the map: it is resolved as *Specify a different absolute path for this repo* resolves one below. Resolve each other named repo against the map: one match → use it; multiple matches → auto-prefer

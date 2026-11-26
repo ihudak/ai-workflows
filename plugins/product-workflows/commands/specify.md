@@ -954,7 +954,7 @@ derived, resolved or gated, and Phase 4 dispatches no `code-scanner`.
    ```
 
 2. **Build the slug→clone map** (`/epics`-style). For each top-level directory under each entry of
-   `$REPOS_PATH`, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <dir> remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git`
+   `$REPOS_PATH` where `test -e '<dir>/.git'` succeeds — tested before any git call names the directory (`workflows-core:read-only-repos` §0) — run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -c safe.bareRepository=explicit -C <dir> remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git`
    or whose `git remote` call fails/times out. Where `arch_grounding: ON`, mark the clone that is `arch_toplevel` `architecture repository — scanned without refresh`: Phase 4 scans it, where a theme resolves to it, with refresh off.
 
 3. **Resolve each candidate against the map.** One match → use it. An ambiguous slug (multiple
