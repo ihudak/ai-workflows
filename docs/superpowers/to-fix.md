@@ -347,6 +347,16 @@ Found while DOC-D-G1's sub-project 1 built `/docs-workflows:docs-write` (`docs/s
   - **Until then.** Cut the run's branch from the base, or merge the base into the branch before the run.
   - **Evidence.** The design's second review, §2 (`.superpowers/design-review-2.md`), and the design's *The to-fix, roadmap and feature-gaps updates*.
 
+## From fix batch B45's review pass — any machine
+
+Found while B45's review pass gave `workflows-core:ard-resolution` a `folder` input for a PRD folder outside the work tree of the repository `$SPECS_PATH` stands in (`workflows-core` 1.100.3, `product-workflows` 3.88.3), which `/product-workflows:create-ard`, `/product-workflows:specify` and `/product-workflows:epics` pass.
+
+- **IMPLEMENT-OUTSIDE-ARD — `/dev-workflows:implement` on a unit folder outside the specs repository's work tree reaches its ARD by key under `$SPECS_PATH`, and reports its lineage `current`.** Owner: `dev-workflows`, `/implement`'s ARD resolution (`implement.md`, *the ARD is resolved … by invoking `ard-resolution`*) and its *Check the chain under the in-scope documents*. Priority: the maintainer's to schedule. Pre-existing: older than B45.
+  - **The case.** LADDER-ORDER batch 2 has `/implement` read such a unit folder as row H, by its own files. Its `ard-resolution` call passes the PRD folder's key alone, so the resolution finds a folder of that key under `$SPECS_PATH` — another tree's ARD, or none — and never the unit's PRD folder's. Its lineage check takes as `docs` only documents the gate passed, and the gate runs on no document of such a folder, so it checks nothing and reports `Lineage: current`. Read, not run.
+  - **What would fix it.** Passing `ard-resolution`'s `folder` — the folder of the call's deepest key — on such a folder, as the three `product-workflows` commands do, and reporting `Lineage: not checked — no specs repository` there (`workflows-core:document-lineage` §7).
+  - **Until then.** Address such a unit by its key from a `$SPECS_PATH` that holds it.
+  - **Evidence.** `implement.md`'s ARD paragraph and *Check the chain under the in-scope documents*, read against `ard-resolution` step 1 (B45's review pass, 2026-11-26).
+
 ## Accepted — known, not to fix
 
 - **Which of the customer's sentences is the reason** a `/brd-reconcile` *Correct it* copies out of the review is a reading no test can make. product-workflows 3.34.5 records every *Correct it* pick in the reconciliation record — the reader's row, the corrected `chosen` and reason, and where in the review each was copied from — so the pick can be checked, as a re-point already is. Nothing further can be done in the command; a reviewer of the record is the check.
