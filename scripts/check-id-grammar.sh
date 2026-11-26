@@ -51,11 +51,15 @@ if [ "${1:-}" = "--selftest" ]; then
     fi
   }
   # The form lists are the whole point: each one pins one alternation of PATTERN.
-  # Bracketed and bare are separate branches of the regex and are asserted separately.
+  # Bracketed, bare and open-bracket are separate branches of the regex and are asserted
+  # separately.
   expect "numeric dash forms are rejected"      1 "$here/fixtures/prd-bad.md" \
          "[US-1]" "[AC-1]" "[AC-2]" "[SM-1]" "[SEC-1]" "bare SEC-2" "[TH-1]" "bare TH-2" "[DT-1]" "bare DT-2"
   expect "placeholder dash forms are rejected"  1 "$here/fixtures/prd-bad-placeholders.md" \
          "[US-n]" "[AC-x]" "[AC-X]" "[SM-Cx]" "bare SM-Cx"
+  expect "open-bracket dash forms are rejected" 1 "$here/fixtures/prd-bad-open-bracket.md" \
+         "[US-3 here" "[AC-3," "[SM-3;" "[SMC-3)" "[UC-3 here" "[FR-n here" "[AD-X here" \
+         "[SEC-3 here" "[TH-3 here" "[DT-3 here" "[SM-C3 here" ": [US-4" ": [SM-C4"
   expect "hash forms and real keys are accepted" 0 "$here/fixtures/prd-good.md"
   expect "a nonexistent root is an error"       2 "$here/fixtures/no-such-file.md"
   # EXCLUDED_SUBTREES, tested as a PAIR on DIRECTORY roots -- the only shape that
@@ -192,16 +196,24 @@ fi
 
 # Requirement-ID prefixes the plugin mints. NOT a general Jira-key check:
 # a real key like PRODUCT-123 is legitimate and must never be flagged.
-# SEC is the security register's finding ID, [SEC#n] (security-workflows); it
-# joined both prefix alternations when nothing in the tree wrote a dash form of it.
-# TH is a threat's ID in an ARD's threat model, [TH#n]
-# (workflows-core:threat-model-format); it joined both prefix alternations when nothing
-# the gate scans wrote a dash form of it (0 hits, 2026-11-14).
+# SEC is the security register's finding ID, [SEC#n] (security-workflows); it joined the
+# bracketed and bare prefix alternations when nothing in the tree wrote a dash form of it.
+# TH is a threat's ID in an ARD's threat model, [TH#n] (workflows-core:threat-model-format);
+# it joined the bracketed and bare prefix alternations when nothing the gate scans wrote a
+# dash form of it (0 hits, 2026-11-14).
 # DT is an entry's ID in a design's threat review, [DT#n] (dev-workflows:design-format); it
-# joined both prefix alternations when nothing the gate scans wrote a dash form of it
-# (0 hits, 2026-11-14).
+# joined the bracketed and bare prefix alternations when nothing the gate scans wrote a dash
+# form of it (0 hits, 2026-11-14).
 #
-# The number class is [NnXx0-9] everywhere, and identical on all four
+# The open-bracket alternations, the last two, take a dash form after a `[` that no `]`
+# closes -- `[DT-3 here`, or `[US-4` ending a line -- which the bracketed alternations
+# (they need the `]`) and the bare ones (they refuse a `[` before the id) both passed.
+# What follows the id there is neither `]`, a letter, a digit nor `_`, as on the bare
+# alternations, so `[US-12]` is never read as `[US-1` and `[AD-Next` is no ID. They joined
+# with every prefix when nothing the gate scans wrote such a form (0 hits, 2026-11-26);
+# scripts/fixtures/prd-bad-open-bracket.md names each prefix in it, and two ending a line.
+#
+# The number class is [NnXx0-9] everywhere, and identical on all six
 # alternations. It covers literal numbers plus every placeholder letter these
 # docs actually use -- N, n, x and X. Narrowing it has already cost us once:
 # the class was [N0-9] when the conversion ran, so `[SM-Cx]` in prd-reviewer.md
@@ -214,7 +226,7 @@ fi
 # below -- SM-C needs its own alternative because it doesn't fit the
 # \[(PREFIX)-[N0-9]+\] shape (the dash sits before the C, not after it).
 NUM='[NnXx0-9]'
-PATTERN="\[(US|AC|SM|SMC|UC|FR|AD|SEC|TH|DT)-${NUM}+\]|\[SM-C${NUM}+\]|(^|[^[:alnum:]_[])(US|AC|SM|SMC|UC|FR|AD|SEC|TH|DT)-${NUM}+([^[:alnum:]_]|\$)|(^|[^[:alnum:]_[])SM-C${NUM}+([^[:alnum:]_]|\$)"
+PATTERN="\[(US|AC|SM|SMC|UC|FR|AD|SEC|TH|DT)-${NUM}+\]|\[SM-C${NUM}+\]|(^|[^[:alnum:]_[])(US|AC|SM|SMC|UC|FR|AD|SEC|TH|DT)-${NUM}+([^[:alnum:]_]|\$)|(^|[^[:alnum:]_[])SM-C${NUM}+([^[:alnum:]_]|\$)|\[(US|AC|SM|SMC|UC|FR|AD|SEC|TH|DT)-${NUM}+([^][:alnum:]_]|\$)|\[SM-C${NUM}+([^][:alnum:]_]|\$)"
 
 # Subtrees that legitimately carry the legacy form, anchored to the SCAN ROOT
 # rather than matched by bare directory name. `--exclude-dir=docs` would skip
