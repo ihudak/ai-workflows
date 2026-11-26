@@ -224,6 +224,13 @@ jobs:
         # customer's requirement text. Fixtures are built at run time.
         run: python3 plugins/product-workflows/scripts/ledger-evidence.py --selftest
 
+      - name: Self-test the question registry
+        # /product-workflows:brd-intake and /product-workflows:brd-interview keep their question
+        # registry, reopen cascade and account with it. Its failure modes are silent: a miscount
+        # lets a question vanish from the account, and a cascade that stops early leaves an applied
+        # answer standing on a decision that was reopened. Fixtures are built at run time.
+        run: python3 plugins/product-workflows/scripts/question-registry.py --selftest
+
       - name: Self-test the bundle scanner
         # /product-workflows:brd-package runs its plugin-free scan (tokens), its citation check
         # (citations) and its set-resolution check (sets) with it. Their failure modes are silent: a
