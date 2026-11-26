@@ -218,12 +218,14 @@ sources **2 and 3 only**. It anchored on cwd unconditionally until a live run sh
     as the check runs, before any consent has shown the command. A tool §2 derived — from a profile
     command or a repository file — is held to the `tool` class,
     `^[A-Za-z0-9_./][A-Za-z0-9_./@+-]*$`, and a directory a leading `cd <dir>` names to `rel-path`
-    and to the containment test against `repo_root` printing `equal` or `inside`: the class test
+    and to the containment test printing `equal` or `inside`, its `<root>` being `repo_root` and its
+    `<path>` `<repo_root>/<dir>` — never `<dir>` alone, which would resolve against the session's
+    directory, so that a directory present under `repo_root` reads outside it: the class test
     and the containment test `${CLAUDE_PLUGIN_ROOT}/references/docs-iteration/backlog-run.md` gives,
     as `/docs-workflows:docs-write`'s Phase 0 holds them. A value outside its class — or one whose
     test gave no answer, `python3` missing among the causes — is never written into a command: the
-    tool reads `missing`, and its `toolchain` row and the report name the field
-    it came from in its place — `commands.build`, say — never the value. `repo_root`, and a tool a
+    tool reads `missing` as a **refused value**, and its `toolchain` row and the report name the field
+    it came from in its place — `commands.build`, say — never the value; §5's prompt says why. `repo_root`, and a tool a
     caller states rather than §2 derives, go single-quoted the same way.
   - **A tool that resolves to something that is not there still fails when the gate runs it**, and
     the gate records that as it records any other environmental failure: an alias whose value
@@ -373,6 +375,12 @@ gate with the outcome it is predicted to record — since *Continue anyway* reco
 
 ```
 choices: ["Cancel — re-run in the docs container (Recommended)", "Continue anyway — record the degraded gates"]
+```
+
+**Where any missing row is a refused value** (§3) — a tool or a `cd` directory holding a character outside its class — the question's own text first names each such field, saying that its value was not checked because of the characters it holds, and never prints the value; and the array is this one, since running in another container changes nothing for such a value:
+
+```
+choices: ["Cancel — correct the refused value where it is recorded, then re-run (Recommended)", "Continue anyway — record the degraded gates"]
 ```
 
 Example consequence line:
