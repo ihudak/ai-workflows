@@ -7,12 +7,12 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.71.1] — 2026-11-26
 
-**What changes for you.** The slug→clone maps of `/conformance`, `/design` and `/ready` take a directory under `$REPOS_PATH` only where it holds a `.git` of its own, tested before any git call names it, and read its slug with `git -c safe.bareRepository=explicit`, so a directory laid out as a git directory and committed into a repository is never taken for a clone. Update with `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).
+**What changes for you.** The slug→clone maps of `/conformance`, `/design` and `/ready` take a directory under `$REPOS_PATH` only where it holds a `.git` of its own, tested before any git call names it, and read its slug with `git -c safe.bareRepository=explicit`, the directory single-quoted, so a directory laid out as a git directory and committed into a repository is never taken for a clone. Update with `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).
 
 ### Fixed
 
-- **`commands/conformance.md`, `commands/design.md` and `commands/ready.md`** test `test -e '<dir>/.git'` before their slug read, citing `workflows-core:read-only-repos` §0, and write the read with the setting; `/conformance` tested no `.git`, and `/design` and `/ready` named the test only beside the read.
-- **Pages.** The environment page says a directory counts as a clone only where it holds a `.git` of its own; the resume-and-checkpoints page restates the resume pointer's scan item to match; the references page says a repository's pull-request template is read as data.
+- **`commands/conformance.md`, `commands/design.md` and `commands/ready.md`** test `test -e '<dir>/.git'` before their slug read, citing `workflows-core:read-only-repos` §0, and write the read with the setting, `<dir>` single-quoted with each `'` written `'\''`; `/conformance` tested no `.git`, and `/design` and `/ready` named the test only beside the read. `commands/implement.md` names `REPO_MISSING`'s new cause, a path with no `.git` of its own.
+- **Pages.** The environment page says a directory counts as a clone only where it holds a `.git` of its own; the resume-and-checkpoints page restates the resume pointer's scan item to match and says that a path item whose repository is not one carries; the references page says a repository's pull-request template is read as data.
 
 ## [4.71.0] — 2026-11-25
 
