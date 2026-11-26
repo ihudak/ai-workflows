@@ -74,7 +74,7 @@ gap_summary: |
 |-------------------|--------------------------------------------------------------------------------|
 | `OK`              | Every theme was scanned and classified (including `absent`, a legitimate scan result, not a failure). |
 | `PARTIAL`         | Scan completed but at least one theme has `classification: error`. Failing themes do NOT abort the scan; mirrors `diff-summarizer`'s `PARTIAL` status. |
-| `REPO_MISSING`    | `repo_path` is not a directory, or — where the brief gave `repo_url_slug` — its `origin` slug differs from it or it has no `origin`. The note says which; in the second case the directory exists. |
+| `REPO_MISSING`    | `repo_path` is not a directory, or holds no `.git` of its own, or — where the brief gave `repo_url_slug` — its `origin` slug differs from it or it has no `origin`. The note says which; in the second and third cases the directory exists. |
 | `DIRTY_TREE`      | Working tree is dirty and `refresh.pull` was requested, on a **writable** mount not read by ref; orchestrator must escalate. A read-only mount, and a read by ref, never return this. |
 | `REFRESH_BLOCKED` | Ref resolution or a writable-mount refresh genuinely failed (no resolvable default branch, network, auth, non-fast-forward); orchestrator escalates. A read-only mount is NOT a cause — that scan proceeds at `prep.scanned_ref` with `prep.read_only: true` — and neither is a read by ref whose fetch failed, which reads the default ref as last fetched with `prep.refreshed: false`. |
 | `EMPTY`           | Repo exists but every theme classified as absent and no relevant files found. Emit instead of `OK` when `capability_map` would contain only `absent` entries. |

@@ -179,8 +179,9 @@ once its check shows every one of them settled:
   repository the item names with it — once that path is absent from, or present at, that
   repository's default ref: in the specs repository the `<default-ref>` this run's preflight
   resolved (`specs-repo-git.md` §3.2), in a code repository its default branch's tip in the refs
-  the run holds — `git -c safe.bareRepository=explicit -C <repository> cat-file -e <ref>:<path>`
-  fails, or succeeds, where `<ref>` resolves, on a repository path that has passed
+  the run holds — `git -c safe.bareRepository=explicit -C '<repository>' cat-file -e '<ref>:<path>'`
+  fails, or succeeds, each value single-quoted, each `'` it holds written `'\''`, where `<ref>` resolves, on a
+  repository path that has passed
   `workflows-core:read-only-repos` §0's clone test first, since the pointer is a committed file; an
   item whose repository fails it carries. A path an item names for any other reason — a command's argument (the `<repo-path>` of
   `/security-workflows:scan`'s Security Engineer offers among them), the deliverable a merge
@@ -245,7 +246,7 @@ register slug beside it — a Security Engineer offer an older `/security-workfl
 — until a run on a machine where that path is that repository — a clone by
 `workflows-core:read-only-repos` §0's test, `test -e '<path>/.git'` first and then
 `git -c safe.bareRepository=explicit -C '<path>' rev-parse --show-toplevel` printing its resolved
-path, with an `origin` — settles it by the command check, with the slug it
+path, the path single-quoted, each `'` it holds written `'\''`, with an `origin` — settles it by the command check, with the slug it
 derives there as `/security-workflows:scan` does (`workflows-core:components` §1), every other run
 carrying it; and an item an older pointer wrote naming a pull request by its number alone, until a run settles
 it. One can leave sooner than it should: blame names the commit that put a line on the branch the
