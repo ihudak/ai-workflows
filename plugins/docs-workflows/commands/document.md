@@ -1035,7 +1035,7 @@ Every git call in this phase, and in Phase 6.3's commit and Phase 8.5, runs as `
    ```
    choices: ["Use proposed name: <name>", "Edit name (you'll be prompted)", "Cancel"]
    ```
-   *Edit name* asks for the branch name in plain text and confirms it the same way.
+   *Edit name* asks for the branch name in plain text and confirms it the same way. The name, proposed or typed, is held to the class `workflows-core:branch-naming` §1.3 keeps a branch name inside, tested and, where it fails, handled as that section says — the name handed to a program as one single-quoted argument, never written into a here-document — before it is proposed and again on each edit.
    **Cancel** stops the run; where Phase 0 step 4(c) committed a generated profile, it ends with that step's left-on-a-branch notice.
    Fallback default when no convention is found: `<prefix>/<key>-<slug>`, where `<prefix>` comes from `workflows-core:branch-naming` §2 (fallback `docs/`).
 

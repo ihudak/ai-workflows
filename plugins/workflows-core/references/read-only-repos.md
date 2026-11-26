@@ -43,9 +43,12 @@ In order, stopping at the first that succeeds:
    class**, `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$` — the class `specs-repo-git.md` §3.2 holds the specs
    repository's branch names to: git allows `$`, `(`, `)`, `;`, a backtick, a quote, `|` and `&` in a
    branch name, and every command that wrote this one, the probe below first, would run what it holds.
-   Test it with a quoted here-document, `grep -Eqx '[A-Za-z0-9_][A-Za-z0-9._/@+-]*' <<'EOF'`, the name
-   without its `origin/`, `EOF`; where it fails, rung 1 has failed — go on to rung 2, and never print
-   the name. **It succeeds only where the ref it prints exists:**
+   Test it with a program handed the name as one single-quoted argument, each `'` it holds written
+   `'\''`, `<name>` being the name without its `origin/`:
+   `python3 -I -c 'import re, sys; sys.exit(0 if re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9._/@+-]*", sys.argv[1], re.ASCII) else 1)' '<name>'`, which exits 0
+   where the name is in the class — never with a here-document, which a line of a name a person typed,
+   or one a pattern built, could end, running the lines after it. Where it fails, rung 1 has failed —
+   go on to rung 2, and never print the name. **It succeeds only where the ref it prints exists:**
    `git -C "<repo_path>" rev-parse --verify --quiet origin/<name> >/dev/null`, with `origin/<name>`
    what it printed. Where that probe fails, rung 1 has failed; go on to rung 2. A remote that renames
    its default branch — `master` to `main` — and a clone that then fetches with `--prune` leave
@@ -67,7 +70,7 @@ Then record three facts, all pure reads:
 - `git -C "<repo_path>" rev-list --left-right --count <ref>...HEAD` → `behind` then `ahead`, tab-separated
 - `git -C "<repo_path>" rev-parse --abbrev-ref HEAD` → the working-tree branch name — `HEAD`, as for a detached HEAD, where the name is outside the safe class (*Branch names*, below)
 
-**Branch names.** Every branch name a run reads from a repository is held to the safe class rung 1 gives, `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$`: a default branch's, wherever it is resolved, and HEAD's, wherever a command, agent or reference reads it (`branch --show-current`, `symbolic-ref --short HEAD`, `rev-parse --abbrev-ref HEAD`). Test it as rung 1 does, with the quoted here-document, before any command names it. A default branch's name outside the class counts as unresolved, and the reader's own fallback goes on, as rung 1's does. HEAD on a branch whose name is outside it counts as detached: where the reader records or switches back to a detached HEAD's commit, `git -C "<repo_path>" rev-parse HEAD`, it does so here, and where it records `HEAD` or `detached`, so here. Such a name is never printed, nor written into a stop or a report: a field or record that would hold it holds the detached form its reader already uses — the commit, `HEAD` or `detached` — and text that would name it reads `a branch whose name is outside the safe class` in its place.
+**Branch names.** Every branch name a run reads from a repository is held to the safe class rung 1 gives, `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$`: a default branch's, wherever it is resolved, and HEAD's, wherever a command, agent or reference reads it (`branch --show-current`, `symbolic-ref --short HEAD`, `rev-parse --abbrev-ref HEAD`). Test it as rung 1 does, with the program handed the name as one argument, before any command names it. A default branch's name outside the class counts as unresolved, and the reader's own fallback goes on, as rung 1's does. HEAD on a branch whose name is outside it counts as detached: where the reader records or switches back to a detached HEAD's commit, `git -C "<repo_path>" rev-parse HEAD`, it does so here, and where it records `HEAD` or `detached`, so here. Such a name is never printed, nor written into a stop or a report: a field or record that would hold it holds the detached form its reader already uses — the commit, `HEAD` or `detached` — and text that would name it reads `a branch whose name is outside the safe class` in its place.
 
 **A switch takes the name; a read may take the ref.** The chain yields a **ref**: rung 1 prints
 `origin/<name>` — `origin/main` — and rungs 2–3 probe `origin/main` and `origin/master`. A caller that

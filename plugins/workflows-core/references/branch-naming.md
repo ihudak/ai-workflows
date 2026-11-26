@@ -62,7 +62,7 @@ choices: ["Use proposed name: <name>", "Edit name (you'll be prompted)", "Cancel
 
 *Edit name* asks for the branch name in plain text and puts the edited name back to this same confirmation.
 
-**The name stays inside `read-only-repos.md` §3's *Branch names* class**, since every later step — the commit's branch, the push, the pull request — writes it into a command. Before presenting a proposed name, drop from its slug every character outside `a-z`, `0-9` and `-` (a description in another script leaves an ASCII slug, or none); an edited name outside the class is refused, the confirmation asked again with the reason said, and never printed.
+**The name stays inside `read-only-repos.md` §3's *Branch names* class**, since every later step — the commit's branch, the push, the pull request — writes it into a command. Test it as that section's rung 1 does, with a program handed the name as one single-quoted argument, each `'` it holds written `'\''` — never with a here-document, which a line of an edited name, or of one a pattern built, could end, running the lines after it — before a proposed name is presented and again on each edited one. Before presenting a proposed name, drop from its slug every character outside `a-z`, `0-9` and `-` (a description in another script leaves an ASCII slug, or none); a proposed name still outside the class — a documented pattern's own text, or an identity §2 read, can put one there — is neither presented nor printed: the run says why and asks for a name in plain text instead. An edited name outside the class is refused, the confirmation asked again with the reason said, and never printed.
 
 ### 1.4 No documented convention
 
