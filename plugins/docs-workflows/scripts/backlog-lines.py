@@ -147,7 +147,8 @@ STATUS_RESERVED = ("null", "true", "false", "yes", "no", "on", "off", "y", "n") 
 # null, bool, int, float and date, by its type repository's expressions (PyYAML resolves the same less y, n and the
 # spec's wider float), a date's month and day taken at one digit or two as some loaders read one; and YAML 1.2 core's
 # null, bool, int and float. edit writes --walkthrough plain, so such a value would not read back as an id: null, the
-# one that matters most, as no walkthrough at all.
+# one that matters most, as no walkthrough at all. The pattern is a little wider than those forms: it also takes a few
+# spellings of digits, _ and . near them that YAML reads as strings, such as 0_8, as the docstring says.
 NON_STRING_RE = re.compile(
     r"null|Null|NULL"
     r"|y|Y|yes|Yes|YES|n|N|no|No|NO|true|True|TRUE|false|False|FALSE|on|On|ON|off|Off|OFF"
@@ -173,7 +174,8 @@ WHY_BASE = "--base is outside the branch class"
 WHY_STATUS = "--status is outside the status class"
 WHY_PAGE_PATH = "--page-path is outside the page-path class"
 WHY_FROM = "--from is outside the status class"
-WHY_WALKTHROUGH = "--walkthrough is outside the unit-id class, or YAML reads it as no string"
+WHY_WALKTHROUGH = ("--walkthrough is outside the unit-id class, or is a spelling YAML reads as no string, "
+                   "or one near such a spelling")
 WHY_BLOCK = "--block is outside the status class"
 WHY_DIR = "<top>/.dev-workflows is not a real directory (absent, or a symbolic link)"
 WHY_FILE = "the backlog is not a regular file (absent, a symbolic link, or another kind of file)"
