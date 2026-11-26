@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.88.4] — 2026-11-26
+
+DOC-D-G1, sub-project 2, batch 2: two pages name `docs-workflows` 1.45.0's `/docs-workflows:docs-verify`. No command, agent or reference changes. Released with `docs-workflows` 1.45.0 and `workflows-core` 1.101.0; it needs neither, nor they it.
+
+### Changed
+
+- **Pages.** The roles-and-phases page names `/docs-workflows:docs-verify` beside `/docs-workflows:document` and `/docs-workflows:docs-write` in the `documenting` phase; the workflow page's `docs-workflows` paragraph names the pages drafted and verified from the backlog, `/docs-verify` among the commands that emit their own session bookkeeping.
+
 ## [3.88.3] — 2026-11-26
 
 **What changes for you.** `/harvest-decisions` harvests an ARD area file named in letters of another script, in mixed case, or with `.`, `_`, `@` or `+` in its name, and reports one whose name it refuses instead of passing over it in silence. `/create-ard`'s page says that `/dev-workflows:conformance` names the Dev's `/dev-workflows:design` beside your refine for a threat a design returned to you. Install with `dev-workflows` 4.71.3 and `workflows-core` 1.100.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.3 bullet).

@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.71.4] — 2026-11-26
+
+DOC-D-G1, sub-project 2, batch 2: five pages name `docs-workflows` 1.45.0's `/docs-workflows:docs-verify`, and one count that was already short is corrected. No command, agent or reference changes, and nothing a run does or prints. Released with `docs-workflows` 1.45.0 and `workflows-core` 1.101.0; it needs neither, nor they it.
+
+### Fixed
+
+- **The environment page's branch-naming ladder** is applied by ten commands that name branches outside the specs repository, `/docs-workflows:docs-write` and `/docs-workflows:docs-verify` among them, each where it cuts a branch rather than continuing on yours; it said eight, a count `docs-workflows` 1.43.0's `/docs-write` had already made short. Its `REPOS_PATH` paragraph names `/docs-verify` beside `/docs-audit` and `/docs-write` as the commands that match a docs profile's recorded `origin` as `<owner>/<repo>` rather than build the slug→clone map.
+
+### Changed
+
+- **Pages.** The model-routing page counts twenty-six companion commands that classify themselves, thirty-two in all, `/docs-verify` among them; the session-cost page files `/docs-verify` per documentation repository under `documenting`/`dev` and counts seven `docs-workflows` commands; the roles-and-phases and workflow pages name `/docs-verify` in the Dev role, the `documenting` phase and the commands that emit their own session bookkeeping.
+
 ## [4.71.3] — 2026-11-26
 
 **What changes for you.** `/conformance` prints its line about `/product-workflows:create-ard` only where a threat of a threat model it read rests on the ARD Rule the line is about, or a threat model it could not use may, and now also where the run takes a decision a refine would see out of the default branch's record. On a run that hands a threat mitigation, every tracer's section, not a mitigation's alone, is held back where it holds a security finding id or a findings-register path its tracer's handoff does not hold and the code it traced does not hold as a path. On a PRD run, *Fix the code* on a PRD-level ARD Rule names the PRD's only Epic, or asks which. A threat returned to the architect names the Dev's `/design` too, and a design's returned entry whose threat no refine lists goes to the Dev. An ARD area file named in letters of another script is traced. Needs `workflows-core` 1.100.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.3 bullet).
