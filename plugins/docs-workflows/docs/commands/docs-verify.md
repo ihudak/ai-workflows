@@ -34,7 +34,7 @@ All three run flags apply. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips the 
 - **The page's evidence.** The page's own `evidence:` frontmatter names what it rests on: code in a repository the backlog's sources record, an architecture decision record under the specifications tree, or both. Each entry is held to a plain form before anything reads it, and one that is not refuses the unit by its position.
 - **The code repositories that evidence names.** Each is found as `/docs-write` finds one — its recorded path, else its origin under `$REPOS_PATH`, else by asking you — and counts as a repository only where it holds its own `.git`. One outside `$REPOS_PATH` is read only once you have agreed to its path. Each is scanned at its default branch, and that commit is the one the page is verified against.
 - **`$SPECS_PATH`**, for a page whose evidence is an architecture decision record, and for the run's own bookkeeping. The record is read at the specs repository's default branch, never at the commit the page recorded and never from the working tree.
-- **Room in the session's temporary directory** for an export of each repository's commit. **A limit:** a file above 1 MiB is left out of the export, and a repository above 50,000 files or 512 MiB of files to export is not read at all — the unit then stays `drafted` this run.
+- **Room in the session's temporary directory** for an export of each repository's commit. **A limit:** a file above 1 MiB is left out of the export, and a repository above 50,000 files or 512 MiB of files to export is not read at all — the unit then stays `drafted` this run. The page's evidence may record at most twenty commits for one repository, and the exports at those older commits are held to the same limits together, past which their comparison is left out of the report.
 - **The tools the profile's build and lint commands run**, as for `/docs-write`.
 
 ## Phases
@@ -49,6 +49,7 @@ flowchart TD
     p0 --> p1["Phase 1 — Select the unit: drafted, not blocked, an engineering page that is tagged, committed and still marked"]
     p1 -.->|"the named unit refused, or nothing actionable"| p12
     p1 --> p2["Phase 2 — Resolve the page's evidence: each code repository and decision record"]
+    p2 -.->|"an evidence entry refused, or Cancel at a missing repository"| p12
     p2 --> p3["Phase 3 — Consent: everything the run will read and execute"]
     p3 -.->|"Cancel — nothing written"| p12
     p3 --> p4["Phase 4 — Branch: continue on the branch or cut one, then re-check the unit and its page there"]
@@ -56,6 +57,7 @@ flowchart TD
     p4 --> p5["Phase 5 — Read: scan and export each repository, check the canary, claim-reader @Opus, ask about each disagreement, then the readings question"]
     p5 -.->|"something not read, an export or canary failure, or Cancel — nothing written"| p12
     p5 -.->|"a claim unresolved — the record commit"| p11
+    p5 -.->|"an unusable reading — nothing written"| p11
     p5 --> p6["Phase 6 — Apply: doc-writer @Opus, the frontmatter held, the page-level marker removed"]
     p6 --> p7["Phase 7 — Style: docs-style-checker, doc-fixer, one re-run"]
     p7 --> p8["Phase 8 — Build: every build the consent showed"]
@@ -100,12 +102,12 @@ flowchart TD
 
 **The style check, the build and the review**, as for [`/docs-write`](docs-write.md): the build decides whether the unit can move; the review is Opus, its findings triaged before any fix, with one fix cycle and one re-review. A finding on how a reading was applied goes back to `doc-writer`; a fix that would add or remove a claim, a sentence or a section — a missing section the repository's guidance requires, for one — goes to no agent, since a verified page must say only what was read: you are asked about it, to defer it or to accept it with a rationale.
 
-**What the run checks that no agent can.** Before and after every writing agent, it reads the working tree and ends the unit on any file changed other than the page, on any change to the page's frontmatter other than its evidence and review-by date, or on its internal marker moved. The not-yet-verified marker is removed by the run itself, only after the readings are applied, and only where no other marker is left on the page.
+**What the run checks that no agent can.** Before and after every writing agent, it reads the working tree and ends the unit on any file changed other than the page, on any change to the page's frontmatter other than its evidence and review-by date, or on its internal marker moved. Between its own steps it holds the page to what its last step left there — from the page you consented to, through the reader's copy, to the commit — and ends the unit where something else changed it. The not-yet-verified marker is removed by the run itself, only after the readings are applied, and only where no other marker is left on the page. A style violation you fix by hand, when the run offers it, is shown to the reviewer as your fix, and must stay within the wording of the sentence the violation names.
 
 ## Outputs
 
 - **One commit** on the run's branch holding the verified page — each claim confirmed or rewritten to what the code says, its evidence advanced to the commits read, its review-by date moved on, the not-yet-verified marker gone — and the backlog's move of the unit to `verified`. The message is `docs: verify <unit-id> (<type>, <audience>)`, or your profile's commit convention where it takes only a summary.
-- **Or a record commit** where a claim could not be resolved — a claim no reading settles, a file the evidence names gone from today's commit, or a disagreement you left undecided: the page is untouched, the unit stays `drafted`, and its `blocked_by` takes `claims-unresolved`, so `--next` passes it over until you clear it. The message is `docs: record <unit-id> (<type>, <audience>)`. The report lists each claim and why.
+- **Or a record commit** where a claim could not be resolved — a claim no reading settles, a file the evidence names gone from today's commit, or a disagreement you left undecided: the page is untouched, the unit stays `drafted`, and its `blocked_by` takes `claims-unresolved`, so `--next` passes it over until you clear it. The message is `docs: record <unit-id> (<type>, <audience>)`. The report lists each claim and why, and each evidence entry whose file is gone from today's commit, by its place in the page's `evidence:` — correct or remove that entry, commit the page, clear the token and run again.
 - **One push offer** where the run committed, never forced. No pull request is opened.
 - **A pull-request draft, printed in the report** and written to no file: the unit, its readings, each disagreement you decided, the review verdict and its triage, the build results, and the deferred items — filled into the documentation repository's own pull-request template where it has one, read as data.
 - **A session cost entry and any feedback**, filed under `$SPECS_PATH/documentation/<docs-repo-slug>/`, as for `/docs-write`. See [Session cost](../reference/session-cost.md).
@@ -120,13 +122,17 @@ flowchart TD
 - `DOCS_VERIFY_BACKLOG_UNREADABLE` / `DOCS_VERIFY_BACKLOG_SHAPE` / `DOCS_VERIFY_UNKNOWN_SCHEMA` / `DOCS_VERIFY_DUPLICATE_ID` — the backlog's reader could not run, a line is outside the shape it reads, its schema version is not one this release reads, or two units share an id.
 - `DOCS_VERIFY_NO_MARKER` — the plugin's own files are out of step: the not-yet-verified marker could not be read from them. Update the plugin.
 - `DOCS_VERIFY_NO_UNIT`, `DOCS_VERIFY_STATUS`, `DOCS_VERIFY_BLOCKED`, `DOCS_VERIFY_SURFACE`, `DOCS_VERIFY_RELEASE_UNIT`, `DOCS_VERIFY_TYPE` — the named unit cannot be verified, and the line says what to change. A `missing` unit's line names any unmerged branch that drafted it.
-- `DOCS_VERIFY_PAGE`, `DOCS_VERIFY_PAGE_TAGGED`, `DOCS_VERIFY_NO_PAGE_MARKER` — the unit's page is not set, not a plain file, not tagged with the unit's id, not committed as it stands, or carried by a second page too; or it no longer opens with the not-yet-verified marker, which is what a page a person verified by hand looks like — move that unit to `verified` by hand.
+- `DOCS_VERIFY_PAGE`, `DOCS_VERIFY_PAGE_TAGGED`, `DOCS_VERIFY_NO_PAGE_MARKER` — the unit's page is not set, not a plain file, not tagged with the unit's id, not committed as it stands, or carried by a second page too — or git could not read part of the tree to tell; or it no longer opens with the not-yet-verified marker, which is what a page a person verified by hand looks like — move that unit to `verified` by hand.
 - `DOCS_VERIFY_USER_UNIT` — a user page, which this release does not walk: verify it by hand as [The documentation route](../docs-workflow.md) says, or wait for the next release.
 - `DOCS_VERIFY_EVIDENCE` / `DOCS_VERIFY_ARTIFACT` — an entry of the page's `evidence:` is outside its form, names a repository the backlog does not record or one that is not a clone, or rests on a decision record the run cannot read at the specs default branch.
 - `DOCS_VERIFY_NO_BASE` / `DOCS_VERIFY_NO_CANDIDATE` — `--next` found no default branch to compare other branches' backlogs against (name the unit instead), or no actionable unit.
 - `DOCS_VERIFY_UNIT_CHANGED` / `DOCS_VERIFY_PROFILE_CHANGED` — on the run's branch the unit, its page or the profile is not what the consent showed. Cutting a new branch from the default branch while the branch that drafted the unit is unmerged gives the first: the unit is still `missing` there. Continue on the drafting branch instead.
 - `DOCS_VERIFY_EXPORT` — an export of a repository's commit could not run, or a search for the canary files the run planted came back without one of them. The canary means the search tools cannot see some of the exported files — a hidden directory, or an ignore file somewhere above the session's temporary directory — so the run stops before any claim is graded, and nothing is written.
-- `DOCS_VERIFY_BACKLOG_EDIT` — the backlog's move or record could not be finished. The page is restored, and the backlog is restored from the copy taken before the edit only where the reader says its own undo failed; otherwise it is left as it is, and the report names the copy for you to compare.
+- `DOCS_VERIFY_PAGE_CHANGED` — the page changed under the run, after you consented: by your hand, another session or a build. Nothing the run read or wrote for it is applied, and the page as it stood is kept, as below.
+- `DOCS_VERIFY_SCRATCH` — the run could not make a file or directory in the session's temporary directory. Nothing more is written; make room there, or start a new session.
+- `DOCS_VERIFY_BACKLOG_EDIT` — the backlog's move or record could not be finished. The page is restored as below, and the backlog is restored from the copy taken before the edit only where the reader says its own undo failed; otherwise it is left as it is, and the report names the copy for you to compare.
+
+**A unit that ends after the run changed its page keeps the page.** Before the page is restored to what it was when you consented, the page as it stood — the readings applied, a fix you made by hand, anything else written there — is moved under `.dev-workflows/unfinished/<unit-id>/`, or the next free `-2`, `-3` directory, at its own path; nothing is overwritten, and the report names where it went. Where it cannot be moved there, the page is left as it stands, and the report says so.
 
 **Something not read leaves no trace.** A repository you skip, one over the export's limits, an evidence file the export left out, or a claim not found in a repository whose export left files out: the unit stays `drafted`, no token is written and nothing is committed, and the report says what was not read and why. A later run that can read it may resolve what this one could not.
 
@@ -135,7 +141,7 @@ flowchart TD
 **Limits.**
 
 - **A session that dies before its report leaves the export behind** — the source of each repository the run read, under the session's temporary directory, in a directory named `dv-docs-verify-export-` and six characters. The run removes it at its report; remove it yourself where a run never got there.
-- **Where the session names no scratchpad directory**, the export lies in the system's temporary directory, outside the project, and the agents' reads there may each ask for your permission. Refusing one leaves the reader's search blind, which stops the run before any claim is graded.
+- **Where the session names no scratchpad directory**, the export lies in the system's temporary directory, outside the project, and the agents' reads there may each ask for your permission. Refusing one of the reader's — at its first search or any later one — ends its reading unfinished, and the unit ends with nothing written rather than graded on what the reader could see.
 - **`--next` and an unpushed default branch.** Where your local default branch holds commits its remote does not, a draft branch cut from those commits still counts as having moved its unit, so `--next` passes that unit over. Push the default branch, or name the unit.
 - **A page that quotes the not-yet-verified marker in inline code** cannot be verified by this command: the run cannot tell a quotation there from a marker left on a claim, so it stops rather than remove one. Verify such a page by hand.
 
