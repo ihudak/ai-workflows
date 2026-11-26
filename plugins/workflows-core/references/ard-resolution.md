@@ -37,7 +37,9 @@ convention live in ONE place.
    with `git -C "$SPECS_PATH" -c core.quotePath=false ls-tree --name-only "<default-ref>" -- "./<folder>/" 2>/dev/null`,
    `<folder>` relative to `$SPECS_PATH`: a filename above that the ref holds and the working tree
    does not is a candidate too. **A candidate is found by its name, compared as text** — `ard.md`,
-   or a name that begins `ard-` and ends `.md`, read off a line of that listing that is, whole,
+   or a name that begins `ard-` and ends `.md` and is not `ard-seed.md` (the seed
+   `/product-workflows:brd-intake --sort-existing` writes, never an ARD: `/product-workflows:create-ard`
+   Phase 0 step 4), read off a line of that listing that is, whole,
    `<folder>/` followed by one path component, or off the working tree's listing of the folder's
    files, `(cd "$SPECS_PATH" && find "./<folder>" -mindepth 1 -maxdepth 1 -type f) 2>/dev/null | LC_ALL=C sort`.
    A name of the second kind is held to `addressing.md` §2's class of a folder's name before any

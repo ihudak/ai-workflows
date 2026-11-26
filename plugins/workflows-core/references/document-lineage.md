@@ -58,7 +58,7 @@ The current copy of an upstream is read from the default branch (`<default-ref>`
 | epic | `epic.md` | none — per section | `## Engineering review`, `- [ ]`/`- [x]` lines | `/product-workflows:epics` | yes | — |
 | design | `design.md` | none — per section | `## Engineering review`, `- [ ]`/`- [x]` lines, the `Version` and `Open questions` header lines | `/dev-workflows:design` | yes | — |
 | prd | `prd.md` | `[US#n]`, `[AC#n]`, `[SM#n]`, `[SMC#n]`, `[UC#n]`, `[FR#n]` | `## Engineering review`, `- [ ]`/`- [x]` lines | `/product-workflows:update-prd` | yes | consumes `product` |
-| ard | `ard.md`, `ard-<area>.md` | `[AD#n]` | `## Engineering review`, `- [ ]`/`- [x]` lines | `/product-workflows:create-ard` | yes | consumes `architecture` |
+| ard | `ard.md`, `ard-<area>.md` — not `ard-seed.md`, a seed, which matches no row | `[AD#n]` | `## Engineering review`, `- [ ]`/`- [x]` lines | `/product-workflows:create-ard` | yes | consumes `architecture` |
 | threat-model | `threat-model.md` | `[TH#n]` | `## Engineering review`, `- [ ]`/`- [x]` lines | `/product-workflows:create-ard` | yes | consumes `architecture` |
 | grounding | `code-grounding.md`, `design-grounding.md` | `[CG#n]`, `[DG#n]` | `consumed_by:` lines; `outcome` and `notes` fields; `## Documentation divergences`, `## Frame sets covered` and a run's dated section's text; baseline findings, by `baselines.md` | `/product-workflows:prd-ground` | yes | each record's `altitude:`; `## Derivation matrix` `implementation` |
 | decisions | `decisions.md` | `[VD#n]`, `[CD#n]`, `[AS#n]` | `consumed_by:` lines | `/product-workflows:brd-interview` | yes | each record's `altitude:` |
