@@ -240,10 +240,10 @@ decision never stands on a basis that is gone.
 
 ## 9. The tail table
 
-Where more questions remain than a sitting's budget allows, those an earlier decision determines,
-or whose recommendation the planner rates `high`, may be put as **one table**: each row the
-question, the recommended answer and its reason; accept all, or name the exceptions. The table
-counts as one question of the budget. Each accepted row is recorded as confirmed in a table
+Where more questions remain than a sitting's budget allows, those whose recommendation the planner
+rates `high` may be put as **one table**: each row the question, the recommended answer and its
+reason; accept all, or name the exceptions. A question a decision on file determines is an applied
+answer (§2), never a row. The table counts as one question of the budget. Each accepted row is recorded as confirmed in a table
 (`table`, §12), so a later reader can tell it was not asked singly; each exception named returns to
 the queue and is asked singly.
 

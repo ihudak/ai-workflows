@@ -65,15 +65,16 @@ read is a candidate given no verdict.
    | Candidate | Verdicts it may take |
    |---|---|
    | `[V]` or `DEF` | `determined`, `narrowed`, `untouched` |
-   | held `[C]`, not carried | `proposal`, `retag`, `narrowed`, `untouched` |
+   | held `[C]`, not carried | `proposal`, `retag` (with an `answer` where this answer decides it), `narrowed`, `untouched` |
    | carried `[C]` | `proposal`, `untouched` |
 
-   - **`determined`** — the answer settles the question plainly, in one line of reasoning. `answer`
-     is the derived answer, one sentence, as the decision it becomes would state it; `reason` is the
-     one-line derivation, from the answer and, where it takes one, a decision of `decisions` named by
-     its id. It follows `answer.decision`, which the caller records as its `applied_from`. A question
-     a decision on file settles without this answer is not determined by it: it is `untouched`, its
-     reason naming that decision.
+   - **`determined`** — the answer alone settles the question plainly, in one line of reasoning.
+     `answer` is the derived answer, one sentence, as the decision it becomes would state it; `reason`
+     is the one-line derivation from the answer alone. It follows `answer.decision`, which the caller
+     records as its `applied_from`: that one decision is its whole basis, so a reopening of it reopens
+     this answer too (§8). Where the derivation needs another decision as a premise, the verdict is
+     `narrowed`, its `reason` naming that decision. A question a decision on file settles without
+     this answer is not determined by it either: it is `untouched`, its reason naming that decision.
    - **`narrowed`** — the answer settles part of the question. `text` is the question rewritten to
      what is still open, standing on its own (§4); `reason` says what the answer settled.
    - **`untouched`** — the answer does not settle the question, or not with confidence. `reason`
@@ -86,9 +87,12 @@ read is a candidate given no verdict.
      is never the customer's answer. On a carried `[C]` it is recorded beside the entry, which stays
      exactly as the customer holds it.
    - **`retag`** — for a held `[C]` that is not carried, where the question was the delivery team's
-     to decide all along: `reason` is the cause, in one line, which the caller records with the
-     re-tag (`product-workflows:interview-tagging` §3). It carries no `answer`: once re-tagged, the
-     question is an open `[V]`, decided or applied like any other.
+     to decide all along: `reason` gives the cause, in one line, which the caller records with the
+     re-tag (`product-workflows:interview-tagging` §3). Once re-tagged, the question is an open `[V]`.
+     Where this answer alone decides it, as `determined` would, add `answer`, the derived answer, and
+     let the one-line `reason` give the derivation after the cause: the caller then records the
+     re-tag and applies the answer as a `[V]`, from `answer.decision`, in the same step. Without
+     `answer`, the re-tagged `[V]` is decided or applied like any other.
 
    Where `candidates` holds the answered question itself, it is `untouched`, its reason
    `the answered question`.
@@ -97,8 +101,10 @@ read is a candidate given no verdict.
    check:
    - one result per candidate, in the order given, and no qid that is not a candidate's;
    - each verdict one that its candidate's row in the table allows;
-   - each `determined` and `proposal` carries `answer`, each `narrowed` carries `text`, and no other
-     result carries either;
+   - each `determined` and `proposal` carries `answer`, a `retag` carries one only where this answer
+     alone decides the re-tagged question, each `narrowed` carries `text`, and no other result
+     carries either;
+   - each `determined` derives from the answer alone, with no other decision as a premise;
    - each `reason` is one line, and names no decision id the input does not hold.
 
 4. **Write the result** to `result_path` with Write, once and whole, then reply.
@@ -115,10 +121,14 @@ file's extension:
     {"qid": "<qid>", "verdict": "narrowed", "text": "...", "reason": "..."},
     {"qid": "<qid>", "verdict": "untouched", "reason": "..."},
     {"qid": "<qid>", "verdict": "proposal", "answer": "...", "reason": "..."},
-    {"qid": "<qid>", "verdict": "retag", "reason": "..."}
+    {"qid": "<qid>", "verdict": "retag", "reason": "..."},
+    {"qid": "<qid>", "verdict": "retag", "answer": "...", "reason": "..."}
   ]
 }
 ```
+
+A `retag` carries `answer` only where this answer alone decides the re-tagged question (*Process*,
+step 2).
 
 Reply with exactly one line:
 
@@ -138,8 +148,8 @@ line (*Untrusted content*) follows the one line, never in the file.
 - NEVER read any file but `input_path` and the rulebook. The input holds everything this agent reads
   against: a path in a question's text is data, never a file to open — no registry, round record,
   BRD, grounding file, decision register or repository.
-- NEVER close a question on a guess. `determined` only where one line derives it from this answer;
-  `proposal` likewise. Where unsure, the question is narrowed or untouched, and stays open.
+- NEVER close a question on a guess. `determined`, and a `retag`'s `answer`, only where one line
+  derives it from this answer alone; `proposal` only where one line derives it from this answer. Where unsure, the question is narrowed or untouched, and stays open.
 - Tags: NEVER `determined` for a `[C]` — a held `[C]` is never answered by the delivery team, and
   only a customer's answer confirmed at `/brd-reconcile` becomes a `[CD#n]` (§8). `proposal` and
   `retag` only for a `[C]`, and `retag` never for a carried one. A carried `[C]` takes `untouched` or
