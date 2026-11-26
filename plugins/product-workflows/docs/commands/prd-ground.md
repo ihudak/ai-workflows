@@ -44,7 +44,7 @@ prefix** — `BRD-`, `EPIC-` or `PRD-` — and, for a `PRD-` folder, off whether
   `idea.md` and no `prd.md`** — an idea in that unprefixed folder — the stop also names
   [`/create-prd`](create-prd.md) on the same key, which accepts the folder and writes the `prd.md`
   that puts a re-run of this command on the idea route. Where it holds its PRD under its file name
-  from before the artifact filenames lost their keys, the stop prints the rename of that file to `prd.md` — the commands, and the frontmatter fields it then takes — in place of `/create-prd`, which reads `prd.md` alone and would write a second PRD.
+  from before the artifact filenames lost their keys, the stop prints the rename of that file to `prd.md` — the commands, and the frontmatter fields it then takes, with the ARD's own rename where that file is under its old name too — in place of `/create-prd`, which reads `prd.md` alone and would write a second PRD.
 
 ## Who runs it
 

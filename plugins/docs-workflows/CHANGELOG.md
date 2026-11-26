@@ -12,6 +12,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 ### Fixed
 
 - **`DOCUMENT_FOLDER_NOT_PLACED` and `RELEASE_NOTES_FOLDER_NOT_PLACED`.** Their remedy prints `workflows-core:addressing` §4.1's *The rename*, naming no run, where the folder holds its PRD under its pre-rename file name and no `prd.md`; it named `/product-workflows:create-prd`. On an `@<path>`, which holds no key to make that test with, the run it names is followed by *The rename*'s `@<path>` clause. Both pages say so.
+- **`references/docs-iteration/backlog-run.md` §3's `ARTIFACT_PATH`** admits each folder on the path in `workflows-core:addressing` §2's class — letters, digits and combining marks of any script — so `/docs-write` no longer refuses an `ard.md` in a folder `/product-workflows:brd-intake` named from a heading in another script, with a reason saying it is no `ard.md` under the specifications tree. The class test makes it without a regular expression, and says that a value is checked for a `'` before it is handed to the test as one single-quoted argument. `DOCS_WRITE_ARTIFACT`'s reason names the class and the rename.
 
 ## [1.44.0] — 2026-11-26
 

@@ -329,10 +329,14 @@ and nothing downstream can tell the difference afterwards.
        new key instead. Substitute `<what it carries>` with the folder's top-level files and
        subdirectories, as read:
        `BRD_INTERVIEW_EMPTY_INVENTORY: <BRD-KEY> resolves to <path>, which carries <what it carries> and no brd-link.md naming a parent: — it is not a slice carved from a customer's BRD, and not a BRD /product-workflows:brd-intake would re-run over, since that command refuses any folder that is not a BRD container. There is nothing to ground and no question this command could ask; nothing was written. Do not run /product-workflows:prd-ground, which refuses this folder before it reads any inventory. To intake a customer's BRD, run '/product-workflows:brd-intake <NEW-KEY> @<brd-file>' with a key no folder under $SPECS_PATH/specifications/ asserts; this folder is left exactly as it stands.<where the folder holds its PRD under its pre-rename file name and no prd.md, append workflows-core:addressing §4.1's The rename, its way on run '/product-workflows:create-ard <BRD-KEY>' or '/product-workflows:specify <BRD-KEY>'; otherwise, where the folder holds an idea.md and no prd.md, append:> It holds an idea.md and no prd.md, so the idea route goes on from it: run '/product-workflows:create-prd <BRD-KEY>', merge its handoff, then '/product-workflows:create-ard <BRD-KEY>' or '/product-workflows:specify <BRD-KEY>' — each gates prd.md with require-on-main.`
-       The appended sentence is the legacy unprefixed folder holding only an `idea.md` — an idea
-       handed off before the kind prefixes, which step 5b leaves undecided — and `/create-prd`
-       accepts it (`workflows-core:addressing` §4.1, §5), so the fresh intake is not its only
-       exit.
+       Either appended text is a legacy unprefixed folder's — an idea handed off before the kind
+       prefixes, which step 5b leaves undecided — so the fresh intake is not its only exit. The
+       second, `It holds an idea.md and no prd.md …`, is a folder holding an `idea.md` and no PRD
+       under any name: `/create-prd` accepts it (`workflows-core:addressing` §4.1, §5). The first,
+       §4.1's *The rename*, is a folder holding its PRD under its pre-rename file name — with an
+       `idea.md` or without one — which `/create-prd` would never read, writing a second PRD beside
+       it, so the stop prints the rename that makes it `prd.md`, and names `/create-ard` or
+       `/specify` as the way on.
      - **`parent: <PARENT-KEY>` present, and no `brd/brd-inventory.md` in the folder** — a slice
        with no inventory file at all, which is not the same as one whose inventory holds no row
        (below). Two causes reach it, and the remedy table cited below tells them apart by this slice's

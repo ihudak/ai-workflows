@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.13.1] — 2026-11-26
+
+**What changes for you.** `/scan`'s reservations test each run record's file name before they copy it from another branch, so a file name holding a command substitution no longer runs it. Needs `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).
+
+### Fixed
+
+- **`/scan` Phase 0 step 6, the reservations.** Its listing of a `session/*` branch's `security/<repo-slug>/runs/` pins `-c core.quotePath=false`, and each record's file name is held to `workflows-core:addressing` §2's class — checked for a `'`, then handed to that section's `python3 -I -c` program — before the test of its path or the `git show` that copies it; that `git show`'s object is now double-quoted. A name outside the class, or a line in git's quoted form, is not copied, and the report's `### Register` names it by its position in that branch's listing, never by its name.
+
 ## [0.13.0] — 2026-11-25
 
 `/scan` resumes a stopped run. **What changes for you.** `/scan` keeps its working state in a run folder outside every repository, and running it again on the same machine offers to continue it or start over. A resumed run records a scan report already written without scanning again, reuses your triage answers, and makes each later step once: the copy into the register, the patch request, the register commit, the unit note, the maintenance proposals, the follow-ups, the cost entry and the resume pointer. Needs `workflows-core` 1.100.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.0 bullet). The page has a *Stopping and resuming* section.
