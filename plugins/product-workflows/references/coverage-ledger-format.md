@@ -71,7 +71,7 @@ key: <this ledger's BRD's key>
 | id | text | disposition | defects | evidence |
 |---|---|---|---|---|
 | [BR#1] | The monthly report lists every invoice. | unallocated | [DEF#1] | |
-| [BR#2] | Every monthly report must include these fields: … Invoice number | covered-by: EPIC-008-01 | [DEF#2] | |
+| [BR#2] | Every monthly report must include these fields: … Invoice number | covered-by: EPIC-008-01 | | |
 ````
 
 `kind: coverage-ledger` names this document, not the folder: a kind outside `brd`, `prd` and `epic`,

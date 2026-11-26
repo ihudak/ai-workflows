@@ -424,7 +424,8 @@ In `allocate-only` mode the run writes exactly the two files above, `coverage-le
   (`split_mode: full` only),
   `BRD-<KEY>-<slug>/PRD-<CHILD-KEY>-<child-slug>/`, each holding three files: `brd-link.md` naming its
   parent and its claimed `[BR#n]` rows; `brd/brd-inventory.md`, the claimed rows copied verbatim
-  from this BRD's inventory under a header naming the parent's source document, every
+  from this BRD's inventory under a header naming the parent's source document — with each of its
+  restatement notes whose two rows the child both claims — every
   `source_anchor` in it still resolving against the parent's files — its `brd/source/`,
   `brd/source-external/` or `brd/brd-figures.md`, by the anchor's form; and its own `coverage-ledger.md` with
   every row `unallocated`. The claim list is **provisional** until the walk ends and Phase 4's Step 3
@@ -480,7 +481,7 @@ with a "nothing to commit" report on the no-op path, and on a reconcile-path run
   superseded by another `[BR#n]`. *Assign to a named slice* then asks for the slice's key as a
   question of its own, never folded into the row's picker: a picker of the children this run keyed
   or found nested, less any barred for the row, with the child the row's confirmed group was keyed into
-  first, marked recommended where the instruction placed the row there; where more than four are eligible it shows three and names the rest
+  first, marked recommended where the instruction placed the row there. A row the inventory notes as a restatement is shown with the other row of the pair, and where no placement names a child, the slice that already covers that other row comes first, recommended, so the pair stays in one slice. Where more than four are eligible it shows three and names the rest
   in its last option, a typed key reaches any of them and is checked against them, and where only one
   is eligible it is taken without asking. A child whose own ledger holds an **orphan row** for that `[BR#n]`
   — a row for a requirement it no longer claims, recording a claim a walk withdrew from it — is never
