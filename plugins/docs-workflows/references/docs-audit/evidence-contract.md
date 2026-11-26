@@ -104,7 +104,7 @@ captures:
 
 ## 5. Execution — a checklist now, a driver later
 
-**v1 execution is a rendered numbered checklist walked by a person, and it is the execution model this family ships** — v2 changes who does the walking and nothing else. The steps are printed in order with their `expect` beside each one, and the person answers each in turn. **No command in this increment renders that checklist**: `/docs-verify` verifies an engineering page alone in this increment, reading its claims in the code, so the checklist is one a person builds from the file and the answers go back into the file by hand. Per step the person answers one of three:
+**v1 execution is a rendered numbered checklist walked by a person, and it is the execution model this family ships** — v2 changes who does the walking and nothing else. The steps are printed in order with their `expect` beside each one, and the person answers each in turn. **No command in this increment renders that checklist**: `/docs-verify` verifies an engineering page alone in this increment, reading its claims in the code and in its ARD, so the checklist is one a person builds from the file and the answers go back into the file by hand. Per step the person answers one of three:
 
 | Answer | Means | Also records |
 |---|---|---|
