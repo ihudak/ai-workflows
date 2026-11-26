@@ -208,8 +208,9 @@ fi
 # The open-bracket alternations, the last two, take a dash form after a `[` that no `]`
 # closes -- `[DT-3 here`, or `[US-4` ending a line -- which the bracketed alternations
 # (they need the `]`) and the bare ones (they refuse a `[` before the id) both passed.
-# What follows the id there is neither `]`, a letter, a digit nor `_`, as on the bare
-# alternations, so `[US-12]` is never read as `[US-1` and `[AD-Next` is no ID. They joined
+# What follows the id there is neither a letter, a digit nor `_`, as on the bare
+# alternations, nor `]`, which the bracketed ones take, so `[US-12]` is never read as
+# `[US-1` and `[AD-Next` is no ID. They joined
 # with every prefix when nothing the gate scans wrote such a form (0 hits, 2026-11-26);
 # scripts/fixtures/prd-bad-open-bracket.md names each prefix in it, and two ending a line.
 #
