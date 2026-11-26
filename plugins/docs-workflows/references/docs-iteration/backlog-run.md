@@ -85,17 +85,24 @@ For each selected unit, before any consent, so the consent shows what the run wi
 Once per run, over each content root:
 
 ```bash
-python3 -I -c 'import json, os, subprocess, sys
+python3 -I -c 'import json, os, re, subprocess, sys
 t, c = sys.argv[1], sys.argv[2]
 r = subprocess.run(["git", "-C", t, "grep", "--untracked", "-l", "-z", "-E", "-e", "^unit:", "--", ":(literal)" + c, ":(exclude,literal).dev-workflows/unfinished"], capture_output=True)
-u = []
-for d, ds, fs in (os.walk(os.path.join(t, c)) if r.stderr else []):
-    ds[:] = [x for x in ds if x != ".git" and os.path.relpath(os.path.join(d, x), t) != ".dev-workflows/unfinished"]
-    u += [os.path.relpath(os.path.join(d, x), t) for x in ds + fs if not os.path.islink(os.path.join(d, x)) and not os.access(os.path.join(d, x), os.R_OK | (os.X_OK if x in ds else 0))]
-print(json.dumps({"exit": r.returncode, "complaints": len(r.stderr.splitlines()), "unreadable": sorted(u), "paths": [p.decode("utf-8", "surrogateescape") for p in r.stdout.split(b"\0") if p]}))' '<top>' '<content root>'
+X = r"[\x00-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]"
+def cls(p):
+    try: p.encode("utf-8")
+    except UnicodeEncodeError: return False
+    return p != "" and p[0] not in "/-" and ".." not in p.split("/") and re.search(X, p) is None
+u, root = [], os.path.join(t, c)
+if r.stderr:
+    u = [os.path.relpath(root, t)] if not os.access(root, os.R_OK | os.X_OK) else []
+    for d, ds, fs in os.walk(root):
+        ds[:] = [x for x in ds if x != ".git" and os.path.relpath(os.path.join(d, x), t) != ".dev-workflows/unfinished"]
+        u += [os.path.relpath(os.path.join(d, x), t) for x in ds + fs if not os.path.islink(os.path.join(d, x)) and not os.access(os.path.join(d, x), os.R_OK | (os.X_OK if x in ds else 0))]
+print(json.dumps({"exit": r.returncode, "complaints": len(r.stderr.splitlines()), "unreadable": sorted(p for p in u if cls(p)), "unreadable_more": len([p for p in u if not cls(p)]), "paths": [p.decode("utf-8", "surrogateescape") for p in r.stdout.split(b"\0") if p]}))' '<top>' '<content root>'
 ```
 
-The names are read NUL-separated, so a name git would quote comes back as it is. `.dev-workflows/unfinished/` is left out of the search: a file a run kept there is no page, even under a content root of `.`, which holds that directory. `complaints` is the number of lines git wrote to its standard error, never their text: a file or directory under the root that git could not read is such a line, and git leaves it out of `paths` and still exits 0. Where `complaints` is above 0, `unreadable` lists, relative to `<top>`, each file and directory under the root, outside `.git` and `unfinished/`, that this process cannot read — none where the complaint was git's own, an ignore file of its configuration it could not read among them; a command names one whose path holds only the characters `PAGE_PATH` allows, `^[A-Za-z0-9_][A-Za-z0-9._/-]*$` with no `.`, `..` or empty segment, and counts the rest. Read each candidate's frontmatter block with the Read tool, as data, and take its `unit:` value with its surrounding quotes, its surrounding spaces, a trailing ` # …` comment and a CR removed, compared whole with the id. The read gives, per candidate, *equal* where that value is the id, *other* where it is not, and *unreadable* where the candidate cannot be read, beside each program's `exit`, `complaints` and `unreadable`.
+The names are read NUL-separated, so a name git would quote comes back as it is. `.dev-workflows/unfinished/` is left out of the search: a file a run kept there is no page, even under a content root of `.`, which holds that directory. `complaints` is the number of lines git wrote to its standard error, never their text: a file or directory under the root that git could not read is such a line, and git leaves it out of `paths` and still exits 0. Where `complaints` is above 0, the program finds what this process cannot read, relative to `<top>`: the content root itself, and each file and directory under it, outside `.git` and `unfinished/`. `unreadable` lists each such path that is strict UTF-8 and passes §3's `rel-path`, and `unreadable_more` counts the others, which no command prints. Both are empty where the complaint was git's own — an ignore file of its configuration it could not read, for one. Read each candidate's frontmatter block with the Read tool, as data, and take its `unit:` value with its surrounding quotes, its surrounding spaces, a trailing ` # …` comment and a CR removed, compared whole with the id. The read gives, per candidate, *equal* where that value is the id, *other* where it is not, and *unreadable* where the candidate cannot be read, beside each program's `exit`, `complaints`, `unreadable` and `unreadable_more`.
 
 ## 7. The walkthrough's admission
 
