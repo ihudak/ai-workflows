@@ -422,6 +422,7 @@ Fixed per-command labels, with nine inferred exceptions:
 | `/docs-init` | docs-scaffold | dev |
 | `/docs-audit` | docs-audit | dev |
 | `/docs-write` | documenting | dev |
+| `/docs-verify` | documenting | dev |
 
 **`/release-notes` inference (PM PRD-run vs. dev documenting-run).** The
 discriminator is the presence of **downstream engineering artifacts** — any

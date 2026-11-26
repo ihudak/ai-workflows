@@ -213,7 +213,7 @@ Answers go back into the walkthrough file, on the step they belong to, and **eac
 
 **`verified → published` has no command behind it, now or later** — that transition is a branch merged and a site deployed, which happens in your repository. It is worth knowing which arrow that is, because `published` is the state the coverage fraction counts, and there is deliberately no arrow from `drafted` straight to it: if there were, the grid could go green over pages the family knows it never walked.
 
-*Later: `/docs-verify` is planned to render the checklist, take the answers and write them back. No such command exists yet.*
+*For an engineering page, [`/docs-verify`](commands/docs-verify.md) makes this reading by command, removes the markers and moves the unit to `verified`. A user page is still walked by hand: no command renders its checklist or takes its answers yet.*
 
 ---
 

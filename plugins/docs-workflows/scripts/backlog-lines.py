@@ -1684,12 +1684,16 @@ BF_PATH = os.path.join(HERE, os.pardir, "references", "docs-audit", "backlog-for
 FH_PATH = os.path.join(HERE, os.pardir, "references", "finish-and-handoff.md")
 VIS_PATH = os.path.join(HERE, os.pardir, "references", "docs-workflow", "visibility.md")
 DW_PATH = os.path.join(HERE, os.pardir, "commands", "docs-write.md")
+DV_PATH = os.path.join(HERE, os.pardir, "commands", "docs-verify.md")
 BR_PATH = os.path.join(HERE, os.pardir, "references", "docs-iteration", "backlog-run.md")
 BF_LEAD = "**The line shape a backlog run reads.**"
 # backlog-run.md's two marker programs, section 10.1's read and section 10.2's test, find the page-level marker in
-# evidence-contract section 3 by this phrase; /docs-write runs them at its Phase 0 and Phase 9.
+# evidence-contract section 3 by this phrase; /docs-write runs them at its Phase 0 and Phase 9, and /docs-verify at
+# its Phase 0 and its Phases 1 and 4. docs-verify.md's own marker program, which removes the marker, finds it by the
+# same phrase.
 EC_MARKER_PHRASE = "this page-level marker, character for character: "
-# An internal page's first line after its frontmatter, which backlog-run.md's section 10.2 program matches as page text.
+# An internal page's first line after its frontmatter, which backlog-run.md's section 10.2 program, and docs-verify.md's
+# marker program and frontmatter program, match as page text.
 VISIBILITY_MARKER = "<!-- docs-visibility: internal -->"
 MINI = ("schema_version: 1\n"                          # 1
         "units:\n"                                     # 2
@@ -2418,9 +2422,10 @@ def case_edit_undo_failed(tmp):
 def case_marker_phrase_pinned(tmp):
     """The backlog runs read the page-level marker out of evidence-contract section 3 by one phrase, in
     backlog-run.md's two programs -- section 10.1's read and section 10.2's test, which /docs-write runs at its Phase 0
-    and at its Phase 9. The phrase stands in that section directly before the marker, once, and in each of the two
-    programs, so a reword of either side turns the build red, not a run after its review; docs-write.md holds no
-    program of its own that searches by it."""
+    and at its Phase 9, and /docs-verify at its Phase 0 and its Phases 1 and 4 -- and in docs-verify.md's one program
+    of its own, the marker program that removes it at its Phase 6 and tests for it at its Phase 10. The phrase stands
+    in that section directly before the marker, once, and in each of the three programs, so a reword of either side
+    turns the build red, not a run after its review; docs-write.md holds no program of its own that searches by it."""
     with open(os.path.join(HERE, os.pardir, "references", "docs-audit", "evidence-contract.md"), encoding="utf-8") as fh:
         ec = fh.read()
     sec = ec[ec.index("\n## 3. "):ec.index("\n## 4. ")]
@@ -2435,6 +2440,11 @@ def case_marker_phrase_pinned(tmp):
     with open(DW_PATH, encoding="utf-8") as fh:
         dw = fh.read()
     _eq(dw.count("character for character: `("), 0, "docs-write holds no program of its own that searches by it")
+    with open(DV_PATH, encoding="utf-8") as fh:
+        dv = fh.read()
+    _eq(dv.count('r"' + EC_MARKER_PHRASE + '`(\\[NEEDS CLARIFICATION: [^`]*\\])`"'), 1,
+        "docs-verify's marker program searches by the phrase, byte for byte")
+    _eq(dv.count("character for character: `("), 1, "docs-verify holds that one program searching by it, and no other")
 
 
 def case_edit_undo_failed_over_another_writer(tmp):
@@ -3454,9 +3464,11 @@ def case_export_blob_absent(tmp):
 
 
 def case_visibility_marker_pinned(tmp):
-    """The visibility marker is page text backlog-run.md's section 10.2 program matches, which /docs-write runs at its
-    Phase 9: visibility.md section 5 states it on a line of its own, once, backlog-run.md holds it as the program's
-    Python literal, once, and docs-write.md, which holds no copy of that program, holds the literal nowhere."""
+    """The visibility marker is page text three programs match: backlog-run.md's section 10.2 program, which
+    /docs-write runs at its Phase 9 and /docs-verify at its Phases 1 and 4, and docs-verify.md's marker program and
+    frontmatter program, which /docs-verify runs from its Phase 6 to its Phase 10. visibility.md section 5 states it
+    on a line of its own, once; backlog-run.md holds it as its program's Python literal, once, and docs-verify.md as
+    its two programs', twice; and docs-write.md, which holds no copy of a program, holds the literal nowhere."""
     with open(VIS_PATH, encoding="utf-8") as fh:
         vis = fh.read()
     sec = vis[vis.index("\n## 5. "):vis.index("\n## 6. ")]
@@ -3467,6 +3479,9 @@ def case_visibility_marker_pinned(tmp):
     with open(DW_PATH, encoding="utf-8") as fh:
         dw = fh.read()
     _eq(dw.count('"' + VISIBILITY_MARKER + '"'), 0, "docs-write holds the marker's literal nowhere")
+    with open(DV_PATH, encoding="utf-8") as fh:
+        dv = fh.read()
+    _eq(dv.count('"' + VISIBILITY_MARKER + '"'), 2, "docs-verify's marker and frontmatter programs hold its literal")
 
 
 def case_shape_paragraph_pinned(tmp):

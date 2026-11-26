@@ -25,6 +25,7 @@ flowchart TD
     end
     subgraph MANUAL["Implement the backlog — drafting by command, the rest manual today"]
         docswrite["/docs-workflows:docs-write"]:::docs
+        docsverify["/docs-workflows:docs-verify"]:::docs
         units["Manual: select unit, write, verify and publish"]:::manual
         direct["/docs-workflows:document (direct — optional prose help)"]:::docs
     end
@@ -49,6 +50,8 @@ flowchart TD
     audit -->|.dev-workflows/docs-backlog.yml| units
     audit -->|"a unit of .dev-workflows/docs-backlog.yml"| docswrite
     docswrite -.->|"a drafted page, its unit moved to drafted — walk it, then publish"| units
+    docswrite -->|"a drafted engineering page"| docsverify
+    docsverify -.->|"a verified page, its unit moved to verified — publish it"| units
     units -.->|action: optional prose edit| direct
     direct -.->|edited pages — unit tracking stays manual| units
     units -.->|action: periodic --refresh| audit
