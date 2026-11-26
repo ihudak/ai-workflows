@@ -76,7 +76,8 @@ refused or, for a key the entry lacks, the entry's first; on exit 4 {"undone": "
 The arguments are tested before anything is read or run: --id against the unit-id class; --walkthrough against the
 same class, less every value YAML reads, written plain as edit writes it, as something other than a string -- a null,
 boolean, integer, float or date of YAML 1.1 or of YAML 1.2's core schema, such as null, true, y, 017, 0x1f, 1_000,
-1.5, 1e3 or 2026-11-18 -- which would not read back as an id, null as no walkthrough at all; --base against the branch
+1.5, 1e3 or 2026-11-18 -- which would not read back as an id, null as no walkthrough at all (the refusal is a little
+wider, refusing a few spellings of digits, _ and . that YAML reads as strings, such as 0_8 or 2026-1-5); --base against the branch
 class; --status, --from and --block against ^[a-z][a-z-]{0,31}$, less the words YAML reads as something other than a
 string (null, true, false, yes, no, on, off, y, n); --page-path against ^[A-Za-z0-9_][A-Za-z0-9._/-]*\.md$ with no
 empty, . or .. segment; --repo, a directory, which moved and edit also hold to being a git work tree's top level.
@@ -1089,8 +1090,8 @@ def _status(s):
 
 
 def _walkthrough(s):
-    """The unit-id class, less every value YAML reads, written plain, as something other than a string:
-    --walkthrough."""
+    """The unit-id class, less every value YAML reads, written plain, as something other than a string, and a few
+    spellings of digits, _ and . that YAML reads as strings: --walkthrough."""
     return _unit_id(s) and NON_STRING_RE.fullmatch(s) is None
 
 
