@@ -13,12 +13,11 @@ A backlog run's command reads this file whole, with the Read tool, before it res
 - *the scan phase* — its phase that dispatches `code-scanner` and handles each return.
 - *the consent* — its question that shows, before any scan, what the run will read and execute.
 - *the reach set* — the paths a writing agent may change for a unit.
-- *the gate registry* — the section of `<plugin root>/references/gate-ledger.md` that registers the run's gates.
 - `<plugin root>` — the value `${CLAUDE_PLUGIN_ROOT}` arrives as in the command's own body. This file, read with the Read tool, keeps `${CLAUDE_PLUGIN_ROOT}` unexpanded, so it writes `<plugin root>` instead — single-quoted in its programs, `'<plugin root>/…'`, as §2 quotes every value — and the command writes its own value in.
 
 *The finish* is `<plugin root>/references/finish-and-handoff.md` §6, its subsections cited as §6.1 to §6.6 of that file. Every other name this file uses and does not define — `<top>`, `<default-ref>`, `specs_git`, the run's content roots, the stop route, a unit's created paths — is its command's.
 
-A section gives a step and what the step finds. What a command does with that — its stop line, a unit's end, what it marks and what its report says — is in the command, and this file restates no step a command's own phases hold.
+A section gives a step and what the step finds. Where a section names a stop, a refusal or a unit's end, the `<RUN>` line printed for it and what follows it — where it takes the run, what the command marks and what its report says — are the command's, and this file restates no step a command's own phases hold.
 
 ## 2. Untrusted input
 
@@ -97,15 +96,15 @@ Each admitted artifact entry is read at `<default-ref>` alone, by the commit it 
 
 ## 9. Copies and the writing agents' reach
 
-**Copies.** Before its first edit of a file for a unit — each file its command names, before its first edit of it for the unit — the run copies it into its scratch directory, made once per run with `command mktemp -d -t <run>-XXXXXX` (`workflows-core:run-flags` §7 sets where), as `command cp -- '<top>/<path>' '<scratch>/<unit id>/<n>'`, `<n>` a counter, never a name from the file, after `command mkdir -p -- '<scratch>/<unit id>'`. §6.4 of the finish restores from these copies with `command cp --`; a file the run created is moved, never deleted.
+**Copies.** Before its first edit of a file for a unit — each file its command names — the run copies it into its scratch directory, made once per run with `command mktemp -d -t <run>-XXXXXX` (`workflows-core:run-flags` §7 sets where), as `command cp -- '<top>/<path>' '<scratch>/<unit id>/<n>'`, `<n>` a counter, never a name from the file, after `command mkdir -p -- '<scratch>/<unit id>'`. §6.4 of the finish restores from these copies with `command cp --`; a file the run created is moved, never deleted.
 
-**The writing agents' reach.** Immediately before each `doc-writer` and `doc-fixer` dispatch of a unit, read the tree of `<top>` — and, where the session's working directory lies in a git work tree whose top level neither is `<top>` nor lies inside it, that work tree too — each into a fresh `command mktemp -t <run>-snap-XXXXXX` file: `python3 '<plugin root>/scripts/tree-snapshot.py' snapshot --dir '<tree top>' > '<snap>'`. As soon as the dispatch returns, read each again into a fresh file and compare, `python3 '<plugin root>/scripts/tree-snapshot.py' compare '<before>' '<after>'`. **Any path changed or created but the reach set ends the unit**, the report naming each; a read or a compare that fails ends it too; and each path the comparison reports created inside `<top>` joins the unit's created paths. The agent's own `files_written`, or its Fix Report, is the second test: a path it names that is neither ends the unit the same way.
+**The writing agents' reach.** Immediately before each `doc-writer` and `doc-fixer` dispatch of a unit, read the tree of `<top>` — and, where the session's working directory lies in a git work tree whose top level neither is `<top>` nor lies inside it, that work tree too — each into a fresh `command mktemp -t <run>-snap-XXXXXX` file: `python3 '<plugin root>/scripts/tree-snapshot.py' snapshot --dir '<tree top>' > '<snap>'`. As soon as the dispatch returns, read each again into a fresh file and compare, `python3 '<plugin root>/scripts/tree-snapshot.py' compare '<before>' '<after>'`. **Any path changed or created but the reach set ends the unit**, the report naming each; a read or a compare that fails ends it too; and each path the comparison reports created inside `<top>` joins the unit's created paths. The agent's own `files_written`, or its Fix Report, is the second test: a path it names that is outside the reach set ends the unit the same way.
 
 ## 10. The page-level marker programs
 
 ### 10.1 The read
 
-This program, run as it stands:
+This program, run as it stands but for `<plugin root>`, which the citing command replaces with its own root, single-quoted:
 
 ```bash
 python3 -I -c 'import re, sys; sys.exit(0 if re.search(r"this page-level marker, character for character: `(\[NEEDS CLARIFICATION: [^`]*\])`", open(sys.argv[1], encoding="utf-8").read()) else 1)' '<plugin root>/references/docs-audit/evidence-contract.md'
