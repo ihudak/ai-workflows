@@ -167,6 +167,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:security-register-format` — the security findings register: its layout, run records, statuses, roles and the rules `register.py` applies, and §7's weakness classes → `security-workflows.md`
 - `workflows-core:threat-model-format` — the ARD threat model: `threat-model.md`'s sections, a threat's fields and its one disposition, the decision-pair and cross-folder forms, `[TH#N]` identity, the check, an agent's reply → `threat-model.md`
 - `workflows-core:doc-structure-conventions` — traceability boundary, callout scope and adjacency, component-pattern fidelity → `workflows-core.md`
+- `workflows-core:question-budget` — how the BRD route asks people questions, and §13's customer block → `workflows-core.md`
 - `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core-triage.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`
 - `workflows-core:phase-handoff` — `handoff-to-main`, `require-on-main`, `branch-check`, the branch-prefix authority, the handoff consent choice → `workflows-core-handoff.md`

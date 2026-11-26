@@ -108,6 +108,13 @@ before answering. **The denominator is the cap, not a plan**: a bounded grill th
 nothing else. (The rendered-question idea is ported from upstream; its own format numbers a whole round,
 which does not apply here — see below.)
 
+**The BRD route's question sittings rank and number by this file without being grills.**
+`${CLAUDE_PLUGIN_ROOT}/references/question-budget.md` ranks a sitting's questions by Impact ×
+Uncertainty after how many questions an answer would close — one ranking rule, never two — and
+numbers them against its budget, `Q<n>/<budget>`, as a bounded grill numbers against its cap. The
+tables and the end-of-sitting list it puts several items in are its own rules, never this file's
+one-question-at-a-time Mechanics.
+
 ## Ambiguity taxonomy (gap-categories, altitude-aware)
 
 Categories the grill scans to *find* gaps — they feed the existing **Impact × Uncertainty** ranking of what to ask. This is **not** a user-facing menu and adds **no** mandatory questions: bounded callers still cap at their stated bound; relentless callers still stop at convergence. Scale the categories to the caller's altitude:
