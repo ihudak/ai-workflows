@@ -229,11 +229,24 @@ def _cat_blob(specs, blob):
     return out.decode("utf-8", "replace") if rc == 0 else None
 
 
-def _hash_bytes(specs, data):
-    rc, out = _git(specs, "hash-object", "--stdin", data=data)
+def _hash_bytes(specs, data, path=None):
+    """The blob id of data: as git would store it at path (relative to specs) where one is given -- that path's clean
+    filter and line-ending conversion applied -- else of the bytes as they are."""
+    rc, out = _git(specs, "hash-object", "--stdin", *(["--path", path] if path else []), data=data)
     if rc != 0:
         raise LineageError("git hash-object failed")
     return out.decode().strip()
+
+
+def _disk_blob(specs, ref, path, data):
+    """A --from-disk input's blob: the one git would store for the bytes read at path, save where those bytes are
+    ref's own blob at path, which is then that blob. hash-object reads no index, so under core.autocrlf or
+    text=auto it converts a CRLF copy of a blob committed with CRLF, which git's checkout and status leave as is."""
+    stored = _hash_bytes(specs, data, path)
+    at_ref = _blob_at(specs, ref, path)
+    if at_ref is not None and stored != at_ref and _hash_bytes(specs, data) == at_ref:
+        return at_ref
+    return stored
 
 
 # --------------------------------------------------------------------------- the record
@@ -364,7 +377,7 @@ def _write_record(doc, upstreams=None, accepted=None):
 
 def capture(specs, ref, from_ref, from_disk):
     """Each input's path, blob id of the bytes read, and Version: from_ref read at ref, from_disk as
-    the working tree holds it."""
+    the working tree holds it, hashed as git would store it at its path (_disk_blob)."""
     out = []
     for path in from_ref:
         blob = _blob_at(specs, ref, path)
@@ -379,7 +392,7 @@ def capture(specs, ref, from_ref, from_disk):
                 data = fh.read()
         except OSError as exc:
             raise LineageError(f"cannot read {path}: {exc}")
-        out.append({"path": path, "blob": _hash_bytes(specs, data),
+        out.append({"path": path, "blob": _disk_blob(specs, ref, path, data),
                     "version": _version_any(path, data.decode("utf-8", "replace"))})
     return out
 
@@ -804,6 +817,51 @@ def test_capture_ref_and_disk():
         _check("capture disk blob", got[1]["blob"] == disk, str(got))
         _check("capture version", got[0]["version"] is None)
     _with_repo(body)
+
+
+def _crlf_copy(r, rel, text):
+    with open(os.path.join(r.root, rel), "w", encoding="utf-8", newline="") as fh:
+        fh.write(text.replace("\n", "\r\n"))
+
+
+def test_capture_disk_converted_as_stored():
+    """document-lineage §5 step 1: a --from-disk input is hashed as git stores it at its path, so a CRLF working copy
+    of an LF blob -- under core.autocrlf=true, or under a `text eol=crlf` attribute with core.autocrlf=false --
+    names the default branch's blob, and so does a copy git would convert differently from what it committed."""
+    def autocrlf(r):
+        r.run("config", "core.autocrlf", "false")
+        r.write(r.prd, PRD)
+        r.commit()
+        r.run("config", "core.autocrlf", "true")
+        _crlf_copy(r, r.prd, PRD)
+        got = capture(r.root, "main", [], [r.prd])
+        _check("autocrlf: the default branch's blob", got[0]["blob"] == r.run("rev-parse", f"main:{r.prd}"), str(got))
+        _crlf_copy(r, r.prd, PRD.replace("within one minute", "within two minutes"))
+        got = capture(r.root, "main", [], [r.prd])
+        stored = r.run("hash-object", "--", r.prd)
+        _check("autocrlf: a changed copy, as git would store it", got[0]["blob"] == stored != r.run("rev-parse", f"main:{r.prd}"), str(got))
+    _with_repo(autocrlf)
+
+    def attribute(r):
+        r.run("config", "core.autocrlf", "false")
+        r.write(".gitattributes", "* text eol=crlf\n")
+        r.write(r.prd, PRD)
+        r.commit()
+        _crlf_copy(r, r.prd, PRD)
+        got = capture(r.root, "main", [], [r.prd])
+        _check("eol attribute: the default branch's blob", got[0]["blob"] == r.run("rev-parse", f"main:{r.prd}"), str(got))
+    _with_repo(attribute)
+
+    def crlf_blob(r):
+        # A blob committed with CRLF: git's checkout and status leave a CRLF copy of it as it is under
+        # core.autocrlf, while hash-object, which reads no index, would convert it -- the bytes are the blob's own.
+        r.run("config", "core.autocrlf", "false")
+        _crlf_copy(r, r.prd, PRD)
+        r.commit()
+        r.run("config", "core.autocrlf", "true")
+        got = capture(r.root, "main", [], [r.prd])
+        _check("CRLF blob: the default branch's blob", got[0]["blob"] == r.run("rev-parse", f"main:{r.prd}"), str(got))
+    _with_repo(crlf_blob)
 
 
 def test_capture_several_paths_per_flag():
