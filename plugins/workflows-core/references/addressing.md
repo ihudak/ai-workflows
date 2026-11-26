@@ -241,32 +241,49 @@ the collision.
 **The class of a folder's name — a read-side guard, not a naming rule.** A folder's name, read back
 from the tree, is data: the family's commands wrote it, or a person did, and a command that builds a
 shell command from it would run a `$(`, a backtick or a quote it held. So a caller that cites this
-paragraph holds such a name to one class before any command is built from it:
+paragraph holds such a name to one class before any command is built from it. **A name is in the
+class** where it is not empty, its first character is `_` or a letter or digit of any script, and
+every later character is a letter, a digit or a combining mark of any script, or one of
+`. _ @ + -` — in regular-expression terms, matched whole:
 
 ```
-^[A-Za-z0-9_][A-Za-z0-9._@+-]*$
+^[\p{L}\p{N}_][\p{L}\p{N}\p{M}._@+-]*$
 ```
 
-matched whole — letters, digits and `. _ @ + -`, the first a letter, a digit or `_`:
-`workflows-core:read-only-repos` §3's branch-name class without `/`, since a name is one path
-component. A name inside it holds no character a shell acts on inside double quotes or single ones.
-**The caller tests the name as text, whole, as it read it** — a line of a listing, each line ending
-at a line feed — never by handing the name to a command to test, which would be a command built from
-it. **A folder whose name is outside the class is named in words and never read** — by its
-position in the listing, or as a folder named outside this class, never by its name: nothing is
-built from its name, and the caller says what it therefore leaves out. The reserved
-subdirectory names above are no folders' names and are passed over before the test, untested and unnamed
-— `Doc screenshots/` holds a space. A name a command creates is not tested here.
+**Test it with this program**, which needs no `grep` that knows Unicode classes, the name handed to
+it as one single-quoted argument, never in a here-document, which a line of the name could end; it
+exits 0 where the name is in the class, 1 otherwise:
+
+```
+python3 -I -c 'import sys, unicodedata as u; n = sys.argv[1]; sys.exit(0 if n and (n[0] == "_" or n[0].isalnum()) and all(c.isalnum() or c in "._@+-" or u.category(c).startswith("M") for c in n) else 1)' '<name>'
+```
+
+`str.isalnum()` holds for exactly the letters and digits of Unicode's `L` and `N` categories, and a
+category opening `M` is a combining mark. **First, as text, the name is checked for a `'`**, the one
+character that ends a single-quoted word: a name holding one is outside the class and is never
+handed to the program, nor is any other command built from it. A name read from a listing holds no
+line feed, since a line of a listing ends at one. **Why a name in the class is safe in a command**,
+single-quoted or double-quoted: no shell metacharacter, quote, backslash or `$` passes, nor any
+whitespace, nor a control or format character (categories `Cc` and `Cf`, a bidirectional override
+among them); every character it admits outside ASCII is encoded in bytes no shell treats as syntax;
+and its first character is never `-`, which a command would read as an option, nor `.`, so it is
+never `.` or `..`. **A folder whose name is outside the class is named in words and never read** —
+by its position in the listing, or as a folder named outside this class, never by its name: nothing
+is built from its name, and the caller says what it therefore leaves out. Where git lists the names,
+the listing pins `-c core.quotePath=false`, so a name holding a letter outside ASCII prints as it
+stands, not in git's quoted form; a name holding a control character, `"` or `\` is still printed
+quoted, opening `"`, and is outside the class. The reserved subdirectory names above are no folders'
+names and are passed over before the test, untested and unnamed — `Doc screenshots/` holds a space.
+A name a command creates is not tested here.
 
 **What it covers, and what it does not.** Every name `<KIND>-<KEY>-<slug>` whose slug holds only
-ASCII letters, digits and `-` is inside it, and so are §5's legacy `<KEY>_<slug>` and `<KEY>-<slug>`
-of that slug. A slug is not always ASCII:
-`/product-workflows:brd-intake` keeps a heading's letters of any script in a BRD folder's slug, so
-that folder and every slice nested in it carry a component outside the class. **So the class is
-tested on a name a caller reads from a listing of a folder's contents — a folder's directly under
-the one its address resolved, or a file's in such a folder — and never on the path its own address resolved** (§3), which stands
-in its commands, double-quoted, as before: testing that path would refuse every slice of such a BRD.
-The callers that cite this paragraph say which names they test.
+letters, digits and combining marks of any script and `-` is inside it — the slug
+`/product-workflows:brd-intake` derives from a heading in another script, `zahlungsauslösung-anforderungen`
+for one, among them — and so are §5's legacy `<KEY>_<slug>` and `<KEY>-<slug>` of such a slug. **It
+is tested on a name a caller reads from a listing of a folder's contents** — a folder's directly
+under the one its address resolved, or a file's in such a folder — **and not on the path a run's own
+address resolved** (§3), which stands in its commands, double-quoted, as it did before the class was
+stated. The callers that cite this paragraph say which names they test.
 
 ## 3. Resolution
 
