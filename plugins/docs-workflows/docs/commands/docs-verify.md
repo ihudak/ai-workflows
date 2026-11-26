@@ -10,7 +10,7 @@ It classifies each unit as **MODERATE** — one drafted page, its claims read in
 
 **An engineering page only, in this release.** A user page — one a person verifies by walking it — is refused, with a line naming the by-hand route; the next release walks it here. An engineering page is read, not walked: an agent reads each claim in the code the page's evidence names, at today's commit of its repository, and in the page's architecture decision record at the specs repository's default branch.
 
-**What `verified` means here.** Every claim on the page was read at today's commit and either confirmed or rewritten to what the code says, every marker is gone, and the page's evidence records the commits that were read. A page that cannot reach that stays `drafted`.
+**What `verified` means here.** Every claim on the page was read at today's commit and either confirmed or rewritten to what the code or its decision record says, every marker is gone, and the page's evidence records the commits that were read. A page that cannot reach that stays `drafted`.
 
 ## Synopsis
 
@@ -98,7 +98,7 @@ flowchart TD
 
 **The reading.** Each repository is scanned at its default branch, and that commit — today's — is exported, with the commits the page's evidence recorded, into a scratch directory as plain files. `claim-reader` reads the page's claims there with searches and reads alone: it can run nothing and write nothing. Before it grades anything it, and the run where the session has the same search tools, look for two canary files the run planted in the export — one in a hidden directory, one where ordinary ignore rules point. A search that cannot see both would miss a file a claim rests on, so the run stops rather than grade on a partial view. Each reading's line, quote and source file is then checked against the page and the export's own file list before you see it.
 
-**Your two questions.** Where a decision record and the code say a claim differently, you decide, one claim at a time: document it as the code reads, or leave it undecided, which keeps the unit `drafted`. Then one question shows every claim the code states otherwise, with the code's words and where it read them, before anything on the page changes.
+**Your two questions.** Where a decision record and the code say a claim differently, you decide, one claim at a time: document it as the code reads, or leave it undecided, which keeps the unit `drafted`. Then one question shows every claim the code or the decision record states otherwise, with its words and where they were read, before anything on the page changes.
 
 **The style check, the build and the review**, as for [`/docs-write`](docs-write.md): the build decides whether the unit can move; the review is Opus, its findings triaged before any fix, with one fix cycle and one re-review. A finding on how a reading was applied goes back to `doc-writer`; a fix that would add or remove a claim, a sentence or a section — a missing section the repository's guidance requires, for one — goes to no agent, since a verified page must say only what was read: you are asked about it, to defer it or to accept it with a rationale.
 
@@ -106,8 +106,8 @@ flowchart TD
 
 ## Outputs
 
-- **One commit** on the run's branch holding the verified page — each claim confirmed or rewritten to what the code says, its evidence advanced to the commits read, its review-by date moved on, the not-yet-verified marker gone — and the backlog's move of the unit to `verified`. The message is `docs: verify <unit-id> (<type>, <audience>)`, or your profile's commit convention where it takes only a summary.
-- **Or a record commit** where a claim could not be resolved — a claim no reading settles, a file the evidence names gone from today's commit, or a disagreement you left undecided: the page is untouched, the unit stays `drafted`, and its `blocked_by` takes `claims-unresolved`, so `--next` passes it over until you clear it. The message is `docs: record <unit-id> (<type>, <audience>)`. The report lists each claim and why, and each evidence entry whose file is gone from today's commit, by its place in the page's `evidence:` — correct or remove that entry, commit the page, clear the token and run again.
+- **One commit** on the run's branch holding the verified page — each claim confirmed or rewritten to what the code or its decision record says, its evidence advanced to the commits read, its review-by date moved on, the not-yet-verified marker gone — and the backlog's move of the unit to `verified`. The message is `docs: verify <unit-id> (<type>, <audience>)`, or your profile's commit convention where it takes only a summary and holds no apostrophe, line break, control character or bidirectional control — a convention that does not keeps the `docs:` form, and the report says so.
+- **Or a record commit** where a claim could not be resolved — a claim no reading settles, a file the evidence names gone from today's commit, or a disagreement you left undecided: the page is untouched, the unit stays `drafted`, and its `blocked_by` takes `claims-unresolved`, so `--next` passes it over until you clear it. The message is `docs: record <unit-id> (<type>, <audience>)`, or the convention as above. The report lists each claim and why, and each evidence entry whose file is gone from today's commit, by its place in the page's `evidence:` — correct or remove that entry, commit the page, clear the token and run again.
 - **One push offer** where the run committed, never forced. No pull request is opened.
 - **A pull-request draft, printed in the report** and written to no file: the unit, its readings, each disagreement you decided, the review verdict and its triage, the build results, and the deferred items — filled into the documentation repository's own pull-request template where it has one, read as data.
 - **A session cost entry and any feedback**, filed under `$SPECS_PATH/documentation/<docs-repo-slug>/`, as for `/docs-write`. See [Session cost](../reference/session-cost.md).
@@ -151,7 +151,7 @@ flowchart TD
 /docs-workflows:docs-verify --next
 ```
 
-Resolves the documentation repository, takes the highest-priority drafted engineering unit no other branch has already moved, resolves its page's evidence, and asks once. Then it continues on the drafting branch or cuts a new one, scans and exports each repository, has `claim-reader` read every claim, and shows you the claims the code states otherwise. Once you take the readings, it applies them, removes the marker, style-checks, builds and reviews the page, and commits the page and the unit's move to `verified` in one commit — and offers to push.
+Resolves the documentation repository, takes the highest-priority drafted engineering unit no other branch has already moved, resolves its page's evidence, and asks once. Then it continues on the drafting branch or cuts a new one, scans and exports each repository, has `claim-reader` read every claim, and shows you the claims the code or the decision record states otherwise. Once you take the readings, it applies them, removes the marker, style-checks, builds and reviews the page, and commits the page and the unit's move to `verified` in one commit — and offers to push.
 
 ```
 /docs-workflows:docs-verify AUTH-REF-3 --docs-repo /workspace/docs
