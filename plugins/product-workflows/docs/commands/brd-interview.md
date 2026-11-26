@@ -265,7 +265,7 @@ subagent is dispatched — every finding this command reads was already independ
   `brd-link.md`, the fix is a fresh intake under a new key — and, where the folder holds an `idea.md` and
   no `prd.md` (an idea in a legacy, unprefixed folder), also [`/create-prd`](create-prd.md) on
   the same key, which accepts the folder, then — once its handoff is merged, since both gate
-  `prd.md` on the default branch — [`/create-ard`](create-ard.md) or [`/specify`](specify.md). Such a folder carries neither a coverage ledger nor an inventory,
+  `prd.md` on the default branch — [`/create-ard`](create-ard.md) or [`/specify`](specify.md); where it holds its PRD under its file name from before the artifact filenames lost their keys, the stop prints the rename of that file to `prd.md` — the commands, and the frontmatter fields it then takes, with the ARD's own rename where that file is under its old name too — in place of `/create-prd`, which reads `prd.md` alone and would write a second PRD. Such a folder carries neither a coverage ledger nor an inventory,
   so it is no BRD container, and [`/brd-intake`](brd-intake.md) refuses to re-run over it (`BRD_INTAKE_NOT_A_BRD`).
 - **Every finding verified.** A finding with no recorded verifier outcome is not evidence, and a
   decision's `evidence` list is a list of findings — so any such finding on file stops the run with

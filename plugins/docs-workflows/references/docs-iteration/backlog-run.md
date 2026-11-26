@@ -29,7 +29,7 @@ These names are used throughout:
 
 - `UNIT_ID` `^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$` — a unit id, a walkthrough id, an image slot.
 - `PAGE_PATH` `^[A-Za-z0-9_][A-Za-z0-9._/-]*\.md$` with no `.`, `..` or empty segment — a page path relative to `<top>`, which is also written as a plain YAML scalar, a pathspec and a command word. **The page-path test** is `PAGE_PATH`, then: the path opens with `<content root>/` for one of the run's content roots (the command's content roots) — any path does, where that root is `.`; its parent directory's resolved path lies inside that content root's — the containment test of `<top>/<content root>` against `<top>/<its parent directory>` printing `equal` or `inside` — so a committed symbolic link cannot carry it out; and the unit's `visibility: internal` puts it under that root's `internal/`, as `<plugin root>/references/docs-audit/backlog-format.md` §7's pair requires (the internal tree is `<plugin root>/references/docs-workflow/visibility.md` §1's).
-- `ARTIFACT_PATH` `^specifications/[A-Za-z0-9_][A-Za-z0-9._-]*(/[A-Za-z0-9_][A-Za-z0-9._-]*)*/ard\.md$` — the one specs document this run reads.
+- `ARTIFACT_PATH` `^specifications(/<folder>)+/ard\.md$`, each `<folder>` a name in `workflows-core:addressing` §2's class of a folder's name — `^(?!.*\.\.)[\p{L}\p{N}_][\p{L}\p{N}\p{M}._@+-]*$`, letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — so an `ard.md` in a folder `/product-workflows:brd-intake` named from a heading in another script is admitted — the one specs document this run reads. The class test below makes it without a regular expression, since Python's holds no Unicode class.
 - `OBJECT_ID` `^[0-9a-f]{40}([0-9a-f]{24})?$` — a commit.
 - **The branch class** of `workflows-core:read-only-repos` §3's *Branch names*, `^[A-Za-z0-9_][A-Za-z0-9._/@+-]*$`, tested as that section says for a name git printed. A name built for the run's branch or typed for it is tested as §6 of the finish says, and a name an agent returned — `prep.scanned_ref` — by the class test below; each of the three hands the name to its program as one single-quoted argument, so no line of it reaches the shell.
 - **A relative path** — not empty, opening with neither `/` nor `-`, holding no `..` segment and no control character, U+2028, U+2029 or bidirectional control (U+202A–U+202E, U+2066–U+2069).
@@ -37,11 +37,11 @@ These names are used throughout:
 - **A tool** `^[A-Za-z0-9_./][A-Za-z0-9_./@+-]*$` — a tool the toolchain preflight derives from a profile command or a repository file, a path-valued one such as `./node_modules/.bin/vitepress` or `/usr/local/bin/mkdocs` among them: the class only keeps the shell's characters out, since the token is tested, single-quoted after `--`, by `command -v` alone, and the command it opens runs only as the consent showed it.
 - **A command** — a profile command as its YAML decodes, not empty, holding none of those characters: it runs verbatim, so a line break or a bidirectional control would run, or read in the consent, as something other than what it shows.
 
-**The class test** takes the value as one single-quoted argument, so nothing in it can reach the shell; it exits 0 where the value is in the class, and 1 where it is not:
+**The class test** takes the value as one single-quoted argument, so nothing in it can reach the shell — once the value is checked, as text, for a `'`, the one character that would end that argument: a value holding one is in no class and is never handed to the test. It exits 0 where the value is in the class, and 1 where it is not; any other exit means it is not:
 
 ```bash
 python3 -I -c 'import re, sys
-C = {"unit-id": r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", "page-path": r"[A-Za-z0-9_][A-Za-z0-9._/-]*\.md", "artifact-path": r"specifications/[A-Za-z0-9_][A-Za-z0-9._-]*(/[A-Za-z0-9_][A-Za-z0-9._-]*)*/ard\.md", "object-id": r"[0-9a-f]{40}([0-9a-f]{24})?", "branch": r"[A-Za-z0-9_][A-Za-z0-9._/@+-]*", "status": r"[a-z][a-z-]{0,31}", "root-config": r"[A-Za-z0-9_][A-Za-z0-9._-]*\.ya?ml", "tool": r"[A-Za-z0-9_./][A-Za-z0-9_./@+-]*"}
+C = {"unit-id": r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", "page-path": r"[A-Za-z0-9_][A-Za-z0-9._/-]*\.md", "object-id": r"[0-9a-f]{40}([0-9a-f]{24})?", "branch": r"[A-Za-z0-9_][A-Za-z0-9._/@+-]*", "status": r"[a-z][a-z-]{0,31}", "root-config": r"[A-Za-z0-9_][A-Za-z0-9._-]*\.ya?ml", "tool": r"[A-Za-z0-9_./][A-Za-z0-9_./@+-]*"}
 X = r"[\x00-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]"
 k, v = sys.argv[1], sys.argv[2]
 if k == "rel-path":
@@ -50,6 +50,10 @@ elif k == "abs-path":
     ok = v.startswith("/") and re.search(X, v) is None
 elif k == "command":
     ok = v != "" and re.search(X, v) is None
+elif k == "artifact-path":
+    import unicodedata as u
+    s = v.split("/")
+    ok = len(s) >= 3 and s[0] == "specifications" and s[-1] == "ard.md" and all(f and ".." not in f and (f[0] == "_" or f[0].isalnum()) and all(c.isalnum() or c in "._@+-" or u.category(c).startswith("M") for c in f) for f in s[1:-1])
 else:
     ok = re.fullmatch(C[k], v, re.ASCII) is not None and (k != "page-path" or all(s not in ("", ".", "..") for s in v.split("/")))
 sys.exit(0 if ok else 1)' '<class>' '<value>'

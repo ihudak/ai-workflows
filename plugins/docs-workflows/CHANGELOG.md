@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.44.2] — 2026-11-26
+
+**What changes for you.** `/document`'s `DOCUMENT_FOLDER_NOT_PLACED` and `/release-notes`' `RELEASE_NOTES_FOLDER_NOT_PLACED`, on a folder holding its PRD under its file name from before the artifact filenames lost their keys, print the rename that places it, never `/product-workflows:create-prd`, which writes a second PRD there. Needs `workflows-core` 1.100.2 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.2 bullet).
+
+### Fixed
+
+- **`DOCUMENT_FOLDER_NOT_PLACED` and `RELEASE_NOTES_FOLDER_NOT_PLACED`.** Their remedy prints `workflows-core:addressing` §4.1's *The rename*, naming no run, where the folder holds its PRD under its pre-rename file name and no `prd.md`; it named `/product-workflows:create-prd`. On an `@<path>`, which holds no key to make that test with, the run it names is followed by *The rename*'s `@<path>` clause. Both pages say so.
+- **`references/docs-iteration/backlog-run.md` §3's `ARTIFACT_PATH`** admits each folder on the path in `workflows-core:addressing` §2's class — letters, digits and combining marks of any script — so `/docs-write` no longer refuses an `ard.md` in a folder `/product-workflows:brd-intake` named from a heading in another script, with a reason saying it is no `ard.md` under the specifications tree. The class test makes it without a regular expression, and says that a value is checked for a `'` before it is handed to the test as one single-quoted argument. `DOCS_WRITE_ARTIFACT`'s reason names the class and the rename.
+
 ## [1.44.1] — 2026-11-26
 
 Repository data a run reads, kept from running as commands. **What changes for you.** A docs profile's `source_repos[]` path, each clone `/docs-init` lists, `/document` and `/release-notes` map and `diff-summarizer` is handed, and a documentation repository the resolution ladder finds under `$REPOS_PATH`, counts only where it holds a `.git` of its own, and git runs there with `safe.bareRepository=explicit`: a directory laid out as a git directory and committed into a repository runs nothing its committed configuration names. A documentation directory under `$REPOS_PATH` that is not a git clone is no longer found by that search; name it, or use `$DOCS_PATH`. A path such data records is written into a command single-quoted. The toolchain preflight no longer writes a profile's tool name or `cd` directory inside double quotes, where a `$(…)` in it ran as the check ran; a value refused for its characters is named by its field, and the prompt recommends correcting it. The branch name `/docs-init`, `/docs-brand`, `/docs-profile` and `/document` propose or take typed is class-tested as a program's argument. `/docs-write`'s pull-request draft follows the family's template rule, which has no exception now. Update with `workflows-core` 1.100.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.1 bullet).

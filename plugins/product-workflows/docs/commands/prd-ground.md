@@ -43,7 +43,8 @@ prefix** — `BRD-`, `EPIC-` or `PRD-` — and, for a `PRD-` folder, off whether
   key rather than a re-run over this folder, which that command refuses. **Where the folder holds an
   `idea.md` and no `prd.md`** — an idea in that unprefixed folder — the stop also names
   [`/create-prd`](create-prd.md) on the same key, which accepts the folder and writes the `prd.md`
-  that puts a re-run of this command on the idea route.
+  that puts a re-run of this command on the idea route. Where it holds its PRD under its file name
+  from before the artifact filenames lost their keys, the stop prints the rename of that file to `prd.md` — the commands, and the frontmatter fields it then takes, with the ARD's own rename where that file is under its old name too — in place of `/create-prd`, which reads `prd.md` alone and would write a second PRD.
 
 ## Who runs it
 
@@ -265,7 +266,7 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   or changed after the cut stops at the gate, which tells you to merge the default branch in); and otherwise the inventory is restored from the ref that carried it, or reported, since a parent `/brd-split` writes nothing into a slice
   with a file missing and never re-creates one — and on a folder carrying no
   `brd-link.md` it names a fresh intake under a new key, and also `/create-prd` on the same key where the
-  folder holds an `idea.md` and no `prd.md`. An inventory in the folder and on no ref, with a `coverage-ledger.md` there too, stops with
+  folder holds an `idea.md` and no `prd.md`, or the rename of the PRD to `prd.md` where it holds one under its file name from before the artifact filenames lost their keys. An inventory in the folder and on no ref, with a `coverage-ledger.md` there too, stops with
   `PRD_GROUND_INVENTORY_NOT_HANDED_OFF`, whose action is to land it — the stop prints the git
   commands, on a new `brd/` branch where it is uncommitted; where it is committed, on a branch of
   your own or on your local default branch, by pushing that branch, where `origin` does not already
@@ -278,7 +279,7 @@ per repository, ≤4 concurrent, frontmatter-pinned to Opus — no override unle
   means it was never produced or was lost after it was written, and the stop names the producing run by level: a folder carrying no
   `brd-link.md` — no slice, and no container [`/brd-intake`](brd-intake.md) would re-run over — stops with
   `PRD_GROUND_NEEDS_INTAKE`, naming a fresh intake under a new key, and also `/create-prd` on the
-  same key where the folder holds an `idea.md` and no `prd.md`; a
+  same key where the folder holds an `idea.md` and no `prd.md`, or the rename of the PRD to `prd.md` where it holds one under its file name from before the artifact filenames lost their keys; a
   **slice** — recognised by the `parent:` field in its `brd-link.md` — stops with
   `PRD_GROUND_NEEDS_SPLIT`, whose remedy turns on the slice's `claims:` and the parent's ledger — it
   gives the empty-inventory remedy where the slice claims nothing; where none of the rows it claims
