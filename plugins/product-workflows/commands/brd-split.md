@@ -733,7 +733,9 @@ For every slice Phase 2 confirmed:
    `claims:` list above names, copied row-for-row (`id`, `text`, `source_anchor`, `defects`
    verbatim, each cell exactly as it stands in this BRD's file — or, where that file predates the
    layout, as it gives the cell, encoded by `brd-format.md` §2.3 as it is written), in the layout
-   `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §2 fixes, under the frontmatter §2.1 fixes for a
+   `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §2 fixes — the table's rows only, never this
+   BRD's `## Inventory notes`, which a slice's inventory does not carry (§2.1) — under the
+   frontmatter §2.1 fixes for a
    slice — `kind: brd`, the child's `key:`, and the `parent:`/`source:` pair, `source:` naming the
    document this BRD's inventory records in its `document:`, the one its rows were last reconciled
    against — never the one `brd/brd-link-log.md` opens with, which a rename run that stopped before
