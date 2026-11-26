@@ -569,7 +569,7 @@ No navigation is regenerated: the page is not placed, and its `title` never chan
 
 ## Phase 11 — Finish
 
-§6.5 of the finish, once, then §6.6, whose draft — the docs repository's pull-request template, filled, where it carries one — the report prints. §6.5 offers the push only where this run made a commit — the verify commit, or the unresolved exit's `record` commit. The draft's title takes §6.3's subject form with this run's verb, and its items, besides those §6.6 lists that this run has: the backend — an engineering page, read in code; the readings — each claim's outcome and where it was read, each `differs` with the code's phrasing; each `specs-vs-code` decision; and, for a `record` commit, each claim left unresolved and why, and each evidence entry gone at today, by its position and its path, with the change it needs. Each free-text value in it is written as *Untrusted input* says. *Push* runs as §6.5 says; *Skip* and *Cancel* push nothing, and the report follows.
+§6.5 of the finish, once, then §6.6, whose draft — the docs repository's pull-request template, filled, where it carries one — the report prints. §6.5 offers the push only where this run made a commit — the verify commit, or the unresolved exit's `record` commit. Its title and its items are those §6.6 gives a `/docs-verify` draft. Each free-text value in it is written as *Untrusted input* says. *Push* runs as §6.5 says; *Skip* and *Cancel* push nothing, and the report follows.
 
 ---
 

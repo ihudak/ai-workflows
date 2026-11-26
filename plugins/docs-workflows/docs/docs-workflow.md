@@ -176,7 +176,17 @@ Under `in-repo`, `images.max_bytes` (default 300 KB) is the CI budget checked pe
 
 *Later: `/docs-capture` is planned to drive the capture and fill the slots a walkthrough names. No such command exists yet.*
 
-### 6. Verify the marked claims — by hand
+### 6. Verify the marked claims — by command for an engineering page, by hand for a user page
+
+**For an engineering page**, run [`/docs-verify`](commands/docs-verify.md):
+
+```
+/docs-workflows:docs-verify --next
+```
+
+It takes the next `drafted` engineering unit whose `blocked_by` is empty — or name one, `/docs-verify <unit-id>` — and reads each claim on its page in the code, at today's commit of every repository the page's `evidence:` names, and in its architecture decision record at the specs repository's default branch; where an entry records an older commit, the report shows that reading too. It asks once before it scans or exports any repository, showing the page, each repository and decision record it will read and every build and lint command it will run; it asks about each claim the decision record and the code state differently; and it shows you the readings and asks again before it changes anything. Then it rewrites each claim the code reads otherwise to say what was read, removes the page-level marker, holds the page to the style check, the builds and an Opus review, and commits the page with the unit's move to `verified` in one commit on a branch. It offers one push, prints a pull-request draft and opens no pull request.
+
+**Where a claim does not resolve** — the code does not settle it, an evidence path is gone, or the decision record and the code disagree and you leave it undecided — nothing on the page changes: the unit stays `drafted` with `blocked_by: [claims-unresolved]`, that record is committed, and the report lists each claim and why. Edit the page or its source for each claim, correct or remove each evidence entry that is gone, commit, clear the token and run it again — or verify the page by hand, as below, and move the unit by hand. **Where it could not read a repository** the page rests on, it writes no token and commits nothing: make that repository readable and run it again.
 
 **For a user page**, walk the steps in a real environment and answer each one:
 
@@ -203,17 +213,17 @@ Answers go back into the walkthrough file, on the step they belong to, and **eac
     result: { outcome: blocked, note: "payment sandbox would not come up" }
 ```
 
-**For an engineering page**, re-read the code at the ref the evidence entry records, and again at today's commit. There is no environment to stand up and nothing to walk — the reading is the whole of it.
+**For an engineering page you verify by hand**, re-read the code at the ref the evidence entry records, and again at today's commit. There is no environment to stand up and nothing to walk — the reading is the whole of it.
 
 **Then dispose of each marker.** A claim that survives becomes prose and its `[NEEDS CLARIFICATION]` marker comes off, because the claim has been settled. One that does not **stays marked** and ships marked — there is no third disposition, and "the page is being published now, so let us tidy that up" is not one of them.
 
-**A drafted page's own marker comes off once every claim is walked.** A page `/docs-write` drafted carries a marker for the page as a whole, saying it has not been checked against the product: its first body line, or, on an internal page, the line after `<!-- docs-visibility: internal -->`, which stays where it is. Remove the page-level marker once you have walked every claim on the page; until then a `--refresh` that meets the page lands its unit on `drafted`, never `published`.
+**A drafted page's own marker comes off once every claim is walked.** A page `/docs-write` drafted carries a marker for the page as a whole, saying it has not been checked against the product: its first body line, or, on an internal page, the line after `<!-- docs-visibility: internal -->`, which stays where it is. `/docs-verify` removes it in the commit that verifies an engineering page; by hand, remove it once you have walked every claim on the page. Until it is gone, a `--refresh` that meets the page lands its unit on `drafted`, never `published`.
 
-**Then set the status, and the two cases end differently.** A page you resolved every marker on goes `status: verified`, and then `published` when the page actually ships. **A page still carrying a marker takes `drafted` and stops there** — it may be merged and deployed with the marker showing, which is what *ships marked* means, but its unit may not reach `published` by any route: not the ordinary one, which runs through `verified`, and not the `--refresh` reconciliation, which reads the page, finds the marker and lands the unit on `drafted` itself. Resolve the marker and the unit moves on; until then the grid says, correctly, that this one is not finished.
+**Then set the status, and the two cases end differently.** A page you resolved every marker on goes `status: verified` — for an engineering page `/docs-verify` verified, its commit has already made that move — and then `published` when the page actually ships. **A page still carrying a marker takes `drafted` and stops there** — it may be merged and deployed with the marker showing, which is what *ships marked* means, but its unit may not reach `published` by any route: not the ordinary one, which runs through `verified`, and not the `--refresh` reconciliation, which reads the page, finds the marker and lands the unit on `drafted` itself. Resolve the marker and the unit moves on; until then the grid says, correctly, that this one is not finished.
 
 **`verified → published` has no command behind it, now or later** — that transition is a branch merged and a site deployed, which happens in your repository. It is worth knowing which arrow that is, because `published` is the state the coverage fraction counts, and there is deliberately no arrow from `drafted` straight to it: if there were, the grid could go green over pages the family knows it never walked.
 
-*For an engineering page, [`/docs-verify`](commands/docs-verify.md) makes this reading by command, removes the markers and moves the unit to `verified`. A user page is still walked by hand: no command renders its checklist or takes its answers yet.*
+*Later: `/docs-verify` is planned to walk a user page too — to render its checklist, take your answers and write them back. Until it does, a user page is walked by hand, as above.*
 
 ---
 
