@@ -2730,6 +2730,27 @@ def selftest(groups=None):
               "g_correct_root: frontmatter is only what opens a file and closes, never a rule further down (%r)"
               % specs_root_check(loose))
 
+        # g_carrier_filters: addressing §4 — a file named outside §2's class is no carrier, nor is a key: §1's grammar
+        # does not hold; each is passed over and the next file read
+        odd = os.path.join(tmp, "mount-e", "odd")
+        carrier(os.path.join(odd, "PRD-A-4-w", "0$(touch PWN).md"), "A-9")
+        carrier(os.path.join(odd, "PRD-A-4-w", "prd.md"), "A-4")
+        got = specs_root_check(odd)
+        check(_carrier(os.path.join(odd, "PRD-A-4-w")) == ("prd", "A-4") and got["signal"] == "b-sub"
+              and got["subdirs"] == ["PRD-A-4-w"],
+              "g_carrier_filters: a file named outside the class is passed over, prd.md read after it (%r, %r)"
+              % (_carrier(os.path.join(odd, "PRD-A-4-w")), got))
+        nokey = os.path.join(tmp, "mount-e", "nokey")
+        carrier(os.path.join(nokey, "PRD-A-5-v", "a.md"), "A-5'x")
+        carrier(os.path.join(nokey, "PRD-A-5-v", "prd.md"), "A-5")
+        carrier(os.path.join(nokey, "PRD-A-6x-u", "prd.md"), "A-6x")
+        got = specs_root_check(nokey)
+        check(_carrier(os.path.join(nokey, "PRD-A-5-v")) == ("prd", "A-5")
+              and _carrier(os.path.join(nokey, "PRD-A-6x-u")) is None and got["signal"] == "b-sub"
+              and got["subdirs"] == ["PRD-A-5-v"],
+              "g_carrier_filters: a key: failing addressing §1's grammar is no key, the next file read (%r, %r, %r)"
+              % (_carrier(os.path.join(nokey, "PRD-A-5-v")), _carrier(os.path.join(nokey, "PRD-A-6x-u")), got))
+
         # g_reserved
         para = addressing[addressing.index("**Reserved subdirectory names are not folder kinds.**"):]
         para = para[para.index("never resolved by one —"):para.index("None matches")]

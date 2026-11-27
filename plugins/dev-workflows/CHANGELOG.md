@@ -17,6 +17,18 @@ DOC-D-G1, sub-project 2, batch 2: five pages name `docs-workflows` 1.45.0's `/do
 
 - **Pages.** The model-routing page counts twenty-six companion commands that classify themselves, thirty-two in all, `/docs-verify` among them; the session-cost page files `/docs-verify` per documentation repository under `documenting`/`dev` and counts seven `docs-workflows` commands; the roles-and-phases and workflow pages name `/docs-verify` in the Dev role, the `documenting` phase and the commands that emit their own session bookkeeping.
 
+## [4.71.5] — 2026-11-27
+
+**What changes for you.** `/design`, `/implement`, `/ready`, `/conformance` and `/vuln` stop with `ADDRESS_FOLDER_NAME` where the folder their address resolves, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. `/implement` no longer lists, tests or picks an Epic folder named outside that class: it names it by its place in the listing, with the remedy, and goes on with the rest — and such an Epic no longer stops a run on its PRD. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).
+
+### Fixed
+
+- **`/implement` Phase 0, the Epic listing.** Each name the listing of the PRD folder's folders prints is held to `workflows-core:addressing` §2's class before the listing test or any other command is built from it; a folder outside it that may be an Epic folder is named by its position, with its remedy, before the left-out lines, and never listed, tested or picked. Phase 1.7's folder read leaves it out too.
+- **`/implement` Phase 1, a task that names a patch.** The patch path a follow-up's `starting from` clause holds is text a file holds, so it is held to `workflows-core:addressing` §3's *The path's class* before any command names it; a path outside it is a patch that could not be read.
+- **`/conformance` step 1's `@<path>` and `/vuln`'s preflight and Step 1** read an `@<path>` folder's key only after its path has passed `workflows-core:addressing` §3's test, made before any command names it.
+- **`/design`, `/implement`, `/ready` and `/conformance` name `misnamed`** wherever they map `resolve-address`'s statuses — `/implement`'s *two hard stops* are three — and in their *Ending early* lists of address stops; `/design`'s *Another design under this PRD answers it* asks again on a `misnamed` return, as on `ambiguous`; `/ready`'s refusals after its run folder opens are four.
+- **`docs/commands/implement.md` and `docs/reference/environment.md`** describe the stop and the Epic listing's refusal.
+
 ## [4.71.4] — 2026-11-27
 
 **What changes for you.** `/implement` addressed with an `@<path>` to a unit folder outside the specs repository's work tree — a second clone, say — reads that folder's own ARD, never one of the same key under `$SPECS_PATH`, gates nothing there, reports `Lineage: not checked — no specs repository` rather than `Lineage: current`, and follows each command it names by a key with a sentence saying that command finds the folder by its key in `$SPECS_PATH`. A resumed run addressed by an `@<path>` resolves that path again, never the key it found there, so it no longer stops on a key it cannot find, on another tree's folder, or on an `ambiguous` key the path got past. Update with `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).

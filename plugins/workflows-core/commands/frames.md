@@ -73,6 +73,7 @@ Usage: `/frames <KEY>|@<path> [--skip-costs] [--skip-feedback] [--enforce-model=
    - `status: ambiguous` → §3 rule 5's hard stop, naming **every** match and `@<path>` as the way
      through it. Never choose between them.
    - `status: misrooted` → `specs-root-check`'s hard stop, with §3's `SPECS_PATH_INSIDE_TREE` message.
+   - `status: misnamed` → §3's hard stop on a folder's name outside §2's class, with its `ADDRESS_FOLDER_NAME` message.
    - `status: found` → carry `path`, `kind` and `key`. Report `legacy: true` once as deprecated when
      §5's fallback resolved it.
 
@@ -152,7 +153,13 @@ aside — as `inputs_read`, as it reads it, for the handoff contract, which take
 
 1. **List the immediate subdirectories of `<folder>/design/`.** Each one is a frame set. Do not
    recurse: §6.1 fixes one set per *immediate* subdirectory, and a directory nested deeper is part of
-   whatever that set holds, not a set of its own.
+   whatever that set holds, not a set of its own. **Each subdirectory's name is held to
+   `${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §2's class before any command is built from it**,
+   checked as text for a `'`, then with that section's program; one outside it is no set this run
+   indexes, reads or writes into, and is named by its position, with its remedy, in one line, as §2's
+   *A folder refused by its name* says, `<P>` the `design/` folder's path. Step 2 counts only the
+   sets in the class: where every subdirectory is outside it, its second form is printed after their
+   lines.
 
 2. **No `design/` at all, or a `design/` holding no subdirectory → report and stop, having created
    nothing.** This is a clean outcome, not a failure and not a stop worth a hard-stop token:

@@ -70,6 +70,8 @@ flowchart TD
 | 6 — Report | The coverage grid, the top twenty units with their reasons, and the consolidated report. |
 | 7–9 — Emitter tail | Session maintenance and feedback, follow-ups, then cost, the resume pointer, and the terminal bookkeeping commit. |
 
+Phase 2.5 leaves out, and counts in its report, any ARD or release-notes draft whose path holds a folder named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — since the agent that reads it would build a command from that path; it names none of them.
+
 The file is written in Phase 5 rather than Phase 6 because the reviewer reviews a file on disk: it takes the backlog's path, so the backlog has to exist before the gate can run. Nothing else about the order changes — the review still precedes the report, and the survivors it produces are applied to that same file.
 
 ## Gates

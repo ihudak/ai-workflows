@@ -136,6 +136,22 @@
     "fails": "g_file: a regular file"
   },
   {
+    "id": "gate_g_carrier_class",
+    "group": "gate",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "                  if _in_class(n) and os.path.isfile(os.path.join(folder, n))]",
+    "new": "                  if os.path.isfile(os.path.join(folder, n))]",
+    "fails": "g_carrier_filters: a file named outside the class"
+  },
+  {
+    "id": "gate_g_carrier_key",
+    "group": "gate",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "        if _KEY.fullmatch(fm.get(\"key\", \"\")) and fm.get(\"kind\") in FOLDER_KINDS:",
+    "new": "        if fm.get(\"key\") and fm.get(\"kind\") in FOLDER_KINDS:",
+    "fails": "g_carrier_filters: a key: failing"
+  },
+  {
     "id": "land_l_land_absent",
     "group": "land",
     "file": "plugins/workflows-core/scripts/specs-git.py",

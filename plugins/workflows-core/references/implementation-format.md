@@ -316,7 +316,10 @@ it never reached an Epic's `workitem_key`, or an Epic key that does not extend t
 
 **This is a search for tokens the run already holds, never an extraction.** Each key is read off
 its folder's carrier (`references/addressing.md` §4) — an Epic's off the `EPIC-` folder the run
-listed under the PRD folder — and each `workitem_key` off the same folder. Nothing parses an
+listed under the PRD folder, its name held to `references/addressing.md` §2's class before any
+command is built from it, and a folder outside it that may be an Epic folder named by its position,
+with its remedy, its record and its key unread (§2 there, *A folder refused by its name*) — and each
+`workitem_key` off the same folder. Nothing parses an
 identifier out of a commit message, which is the rule `CLAUDE.md` states and the difference between
 resolving and guessing.
 

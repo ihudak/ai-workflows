@@ -95,7 +95,7 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
 
 2. **Resolve the address.** Resolve the single positional `<ADDRESS>` — a `<KEY>`, or an `@<path>`
    naming a folder — with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3).
-   A token `read-key` (§1) finds `invalid` stops with
+   A token `read-key` finds `misnamed` takes `workflows-core:addressing` §3's `ADDRESS_FOLDER_NAME` stop, as its §1 says, never the stop below. A token `read-key` (§1) finds `invalid` stops with
    `PRD_PROPOSAL_NEEDS_KEY: /prd-proposal needs an address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. PRODUCT-1234 or the slice PRODUCT-1234-01) — re-run '/product-workflows:prd-proposal <ADDRESS>'.`
    A key is validated for shape only and checked against nothing (§1) — it names a folder in `$SPECS_PATH`; a whole folder name is matched against that tree's folder names.
    `status: absent` stops with
@@ -139,7 +139,7 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
    restated here.
 
    Enumerate the slices by `/brd-split` Phase 0's **positive test**: an immediate subdirectory
-   carrying a `brd-link.md` whose `parent:` names this BRD. Stop:
+   carrying a `brd-link.md` whose `parent:` names this BRD — each subdirectory's name held to `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it that may be a slice named by its position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1). Stop:
 
    ```
    PRD_PROPOSAL_BRD_NOT_SLICED: <ADDRESS> resolves to a BRD- container at <path>, and an effort proposal for a container is the umbrella rather than a slice's own estimate.
@@ -525,7 +525,10 @@ what can be built, tested and accepted independently.
 1. **The two fixed packages** — a discovery-and-design package first and a test/UAT/release package
    last (§7).
 2. **The middle packages.** Where `EPIC-` folders exist under the resolved folder they seed the
-   clustering; where they do not, nothing is missing and the document says nothing about it. Epics are
+   clustering — each name a listing of its folders prints held to `workflows-core:addressing` §2's
+   class before its `epic.md` is read or any command is built from it, and a folder outside it that
+   may be an Epic folder seeding nothing, named by its position, with its remedy, in one line, as §2's
+   *A folder refused by its name* says, `<P>` the resolved folder's path; where they do not, nothing is missing and the document says nothing about it. Epics are
    never required.
 3. **The defect sweep.** §7 fixes the three sources, what each one admits, and which of them need
    operator confirmation; sweep and union all three, reading that policy there rather than from here.
@@ -849,8 +852,11 @@ Read that as one predicate over the siblings, matching `workflows-core:next-phas
 current proposal, a sibling that was never priced included. Read the other way — dropped unless a
 sibling holds a *stale* one — it would vanish in the commonest case there is. **Current** is
 `/product-workflows:brd-proposal` Phase 3's test, decided as `/product-workflows:brd-proposal`
-Phase 2 decides it (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15.5): a sibling's
-`proposal.md` exists, and
+Phase 2 decides it (`${CLAUDE_PLUGIN_ROOT}/references/proposal-format.md` §15.5): a sibling — a
+slice the positive `brd-link.md` parent test finds under the parent, each subdirectory's name held
+to `workflows-core:addressing` §2's class before any command names it, as §4.1 there holds a
+container's slices, and one outside it counted as not current, never handed to the script, and named
+by its position, with its remedy, beside the option — has its `proposal.md`, and
 `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-record.py" check --specs "$SPECS_PATH" --proposal "<the sibling folder's absolute path>/proposal.md"`
 returns `basis: content` with `current: true` — or, where it returns `basis: none` (a proposal
 written before the record existed, or one whose record does not parse), the times

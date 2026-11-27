@@ -597,7 +597,7 @@ subdir. Walk top-down; stop at the first tier that applies:
 1. `$SPECS_PATH` writable **and** the PRD dir exists (the folder
    the run's own `resolve-address` found for `<KEY>` (`workflows-core:addressing` §3) — or,
    where the run resolved none, the one `resolve-key <KEY>` returns as `found`, its
-   kind-prefixed name or §5's legacy fallback alike; `absent` or `ambiguous` is no
+   kind-prefixed name or §5's legacy fallback alike; `absent`, `ambiguous` or `misnamed` is no
    match here, never a stop — placed by §4.1: a `PRD-` or `BRD-` folder is
    the PRD dir itself, an `EPIC-` folder's is the folder above it) ->
    `<PRD-dir>/dev-workflows/cost/<sid8>.md`. *[primary]*

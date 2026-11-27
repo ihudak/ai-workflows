@@ -64,7 +64,7 @@ feature is described and not at all on what it costs to build — and this run's
 still: the slice proposals, the root ledger and the profile. There is no flag to turn off, no
 `resolve-docs-grounding` call, and no `docs grounding:` line in this command's report.
 
-**Ending early.** Every stop this run takes — each `BRD_PROPOSAL_*` stop (Phase 0's, Phase 2's `BRD_PROPOSAL_NO_SLICES`, Phase 4's `BRD_PROPOSAL_SLICE_NOT_HANDED_OFF`, Phase 5's `BRD_PROPOSAL_NEEDS_PROFILE`, and `BRD_PROPOSAL_RECORD_FAILED` wherever a script fails), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s, a stopping row of Phase 4's `require-on-main` sweep), the `$SPECS_PATH` *Cancel*, Phase 1's model gate — its *Cancel* and its relaunch answer — and every answer in Phase 10 that ends the run (a settle prompt's **Keep the verdict** where it ends the run, its **Cancel**, and the BLOCK escalation's) — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 13's step 4, the cost entry (unless `--skip-costs`), and its step 6, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md`, no follow-ups and no maintenance or feedback step. Three ends keep the route their own text names — the whole emitter tail, as a completed run takes it: Phase 2's **Stop — the umbrella is current**, Phase 3's "Price the slice first" and "Re-price it first", and Phase 6's *End the run* answer. `emit-block` still fires wherever a stop's own text calls it, at the halt — Phase 13's capture-at-block rule names the cause of `BRD_PROPOSAL_RECORD_FAILED` that does. A stopped run's output is the stop message, then the cost and `Specs repo:` lines; the Final report is not printed. A stop after Phase 8 leaves `proposal.md` written and uncommitted: the tail commits only the bookkeeping paths. Phase 11's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the artifacts stay written, and the run goes on through Phases 12 and 13.
+**Ending early.** Every stop this run takes — each `BRD_PROPOSAL_*` stop (Phase 0's, Phase 2's `BRD_PROPOSAL_NO_SLICES` and `BRD_PROPOSAL_SLICE_NAME`, Phase 4's `BRD_PROPOSAL_SLICE_NOT_HANDED_OFF`, Phase 5's `BRD_PROPOSAL_NEEDS_PROFILE`, and `BRD_PROPOSAL_RECORD_FAILED` wherever a script fails), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s, a stopping row of Phase 4's `require-on-main` sweep), the `$SPECS_PATH` *Cancel*, Phase 1's model gate — its *Cancel* and its relaunch answer — and every answer in Phase 10 that ends the run (a settle prompt's **Keep the verdict** where it ends the run, its **Cancel**, and the BLOCK escalation's) — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 13's step 4, the cost entry (unless `--skip-costs`), and its step 6, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md`, no follow-ups and no maintenance or feedback step. Three ends keep the route their own text names — the whole emitter tail, as a completed run takes it: Phase 2's **Stop — the umbrella is current**, Phase 3's "Price the slice first" and "Re-price it first", and Phase 6's *End the run* answer. `emit-block` still fires wherever a stop's own text calls it, at the halt — Phase 13's capture-at-block rule names the cause of `BRD_PROPOSAL_RECORD_FAILED` that does. A stopped run's output is the stop message, then the cost and `Specs repo:` lines; the Final report is not printed. A stop after Phase 8 leaves `proposal.md` written and uncommitted: the tail commits only the bookkeeping paths. Phase 11's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the artifacts stay written, and the run goes on through Phases 12 and 13.
 
 ---
 
@@ -86,7 +86,7 @@ not work: a flag is a token, so `--redo` would arrive as the address.
 
 2. **Resolve the address.** Resolve the single positional `<ADDRESS>` — a `<KEY>`, or an `@<path>`
    naming a folder — with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3).
-   A token `read-key` (§1) finds `invalid` stops with
+   A token `read-key` finds `misnamed` takes `workflows-core:addressing` §3's `ADDRESS_FOLDER_NAME` stop, as its §1 says, never the stop below. A token `read-key` (§1) finds `invalid` stops with
    `BRD_PROPOSAL_NEEDS_KEY: /brd-proposal needs an address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. PRODUCT-1234) — re-run '/product-workflows:brd-proposal <ADDRESS>'.`
    A key is validated for shape only and checked against nothing (§1) — it names a folder in `$SPECS_PATH`; a whole folder name is matched against that tree's folder names.
    `status: absent` stops with
@@ -231,7 +231,21 @@ resolved BRD folder that **contains a `brd-link.md` carrying a `parent:` field n
 exactly the test `commands/brd-split.md` Phase 0 defines and for exactly its reason: **a name match
 is not the test**, and matching by name then reading an absent `brd-link.md` as an empty claim list
 is what lets a folder that is not a child be counted as one. The test also needs no exclusion list,
-since `brd/`, `grounding/` and `dev-workflows/` carry no `brd-link.md` at all.
+since `brd/`, `grounding/` and `dev-workflows/` carry no `brd-link.md` at all. **Each subdirectory's
+name is held to `workflows-core:addressing` §2's class before its `brd-link.md` is read**, checked as
+text for a `'`, then with that section's program, §2's reserved names passed over untested. One
+outside it that may be a slice — one a listing of the BRD folder's files shows holding a
+`brd-link.md`, read as §2's *A folder refused by its name* reads it, its name entering no command —
+may be a slice this run cannot read, and an umbrella that left its numbers out would read
+as the whole BRD's, so it stops the run:
+
+```
+BRD_PROPOSAL_SLICE_NAME: a folder directly under <BRD-KEY>'s folder is named outside workflows-core:addressing §2's class — <its position>; <the remedy> — and may be a slice of it. This run rolled up nothing and wrote no umbrella. Re-run once it is renamed.
+```
+
+`<its position>` and `<the remedy>` are as §2's *A folder refused by its name* gives them, `<P>` the
+BRD folder's path. One outside the class that may not be a slice is passed over, as a folder holding no
+`brd-link.md` is.
 
 Record, per slice: its key, its folder, whether `proposal.md` and `proposal-brief.md` are present,
 and, where `proposal.md` is, whether it is current and the basis that decided it — Phase 3 walks that
