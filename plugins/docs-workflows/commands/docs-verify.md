@@ -25,7 +25,7 @@ Verify a drafted documentation backlog unit: $ARGUMENTS
 
 - **The page's own `evidence:`** is frontmatter any committer edits. Each entry is held to Phase 1 test 6's classes, and each `repo` resolved against the backlog's `sources[]`, before any command names a value of it; an entry that fails refuses the unit by its position, and its value is never printed.
 - **`claim-reader`'s return is held before anything shows or uses it** (Phase 5 step 6): its outcomes to a closed set, each `line` and `quote` to the page's copy, each repository and artifact to those the run handed over, and each source file to the export's own manifest, a known set. Its free text — a quoted claim, an observed or a specified phrasing, a file path it chose, a note — is shown in a question, written into a handoff file and composed into the apply brief as §2 writes a free-text value read from data; it is written so in the report and in the pull-request draft too, each value inside a code span longer than any run of backticks it holds, so that the host the draft is pasted into shows it as text; and it reaches the page only as words, after the readings question has shown every `differs` phrasing to the operator.
-- **No free text reaches a shell line** — no page prose, no quoted claim, no file name the reader returned or an export holds, no other path an agent chose. `claim-reader` holds no shell; the values its return's two tests read reach them through a JSON file the Write tool writes (Phase 5 step 6), never as an argument; and a value read from the page's frontmatter reaches a command only once it has passed its class, single-quoted — each evidence path and commit this run hands `backlog-lines.py export`, and the page's path.
+- **No free text reaches a shell line** — no page prose, no quoted claim, no file name the reader returned or an export holds, no other path an agent chose. `claim-reader` holds no shell; the values its return's two tests read reach them through a JSON file the Write tool writes (Phase 5 step 6), never as an argument; and a value read from the page's frontmatter or the backlog's entry reaches a command only once it has passed its class, single-quoted — each evidence path and commit this run hands `backlog-lines.py export`, and the page's path.
 
 Each agent sees only its own inputs: `code-scanner` one source repository, the unit's titles, type and evidence paths; `claim-reader` its handoff file — the page's copy, the unit, each clone's export at today's commit and at each recorded commit, the canary, each ARD's text at the specs default branch, the scans' returns, and the techniques it follows — and nothing outside the export root; `doc-writer` and `doc-reviewer` the apply brief; `docs-style-checker` and `doc-fixer` the page and their findings, and `doc-fixer` never the answers.
 
@@ -173,7 +173,7 @@ model_routing:
 For the unit — and under `--next` for each candidate in turn, as *The choice* says — before any consent, so the consent shows what the run will read: each entry of the page's `evidence:`, as unit test 6 read it, by its own `kind`. `backlog-run.md` §5's steps 1 and 2 are not run: they sort a unit's evidence from its surface, where a page's entries carry their kind.
 
 - **An `artifact` entry** by §5's step 3. Its refusal: `DOCS_VERIFY_ARTIFACT: <id> rests on a specification this run cannot read at the specs default branch — <$SPECS_PATH is unset or empty: set it to the specs checkout | $SPECS_PATH is no git repository | the specs checkout is blocked or misrooted: the preflight's notice says why | the specs default branch did not resolve>.`
-- **A `code` entry** by §5's steps 4 and 5 — the repository's resolution, the clone test, the specs refusals and admission. Its refusals: `DOCS_VERIFY_EVIDENCE: <id>'s page's evidence entry <k> <names a repository whose recorded path is not an absolute path — re-run /docs-workflows:docs-audit --refresh | names a repository whose recorded path exists and fails the clone test — correct that sources[] entry's path, or re-run /docs-workflows:docs-audit --refresh | resolves to the specs repository, which no scan reads — correct the entry>.` The entries naming one `repo` resolve to one clone. **`--path` values for its export** are the entries' paths, each distinct path once; **its recorded commits** are the entries' `ref`s.
+- **A `code` entry** by §5's steps 4 and 5 — the repository's resolution, the clone test, the specs refusals and admission. Its refusals: `DOCS_VERIFY_EVIDENCE: <id>'s page's evidence entry <k> <names a repository whose recorded path is not an absolute path — re-run /docs-workflows:docs-audit --refresh | names a repository whose recorded path exists and fails the clone test — correct that sources[] entry's path, or re-run /docs-workflows:docs-audit --refresh | resolves to the specs repository, which no scan reads — correct the entry | names a repository no code surface of the backlog records while $SPECS_PATH is unset, so the run cannot tell it from the specs repository — set $SPECS_PATH, or re-run /docs-workflows:docs-audit --refresh>.` The entries naming one `repo` resolve to one clone. **`--path` values for its export** are the entries' paths, each distinct path once; **its recorded commits** are the entries' `ref`s.
 - **A `walkthrough` entry** is read nowhere: the page's `evidence:` keeps it as it stands (`unit-brief.md` §2.1).
 
 Under `<unit-id>` a refusal here stops the run with its line and takes the stop route; under `--next` it passes the candidate over, its line the reason (*The choice*).
@@ -246,7 +246,7 @@ Once the re-check passed. **Nothing here writes into the documentation repositor
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog-lines.py" export --repo '<clone>' --commit '<today>' --out '<export root>/c<k>' --manifest '<export root>/c<k>.files' --whole --path '<evidence path>' …
    ```
 
-   one `--path` per distinct code evidence path of that clone (Phase 2); and, for each distinct commit the clone's entries record other than its today — `<j>` counting them from 1 in the page's order, at most twenty (Phase 1 test 6) — the same with `--commit '<ref>'`, `--out '<export root>/c<k>-r<j>'`, `--manifest '<export root>/c<k>-r<j>.files'`, one `--path` per path an entry records at that commit, and no `--whole`. Every value has passed its class before it is written there: the clone's resolved path `abs-path` and both parts of the clone test (Phase 2), each commit `OBJECT_ID`, each path `rel-path`. Read each exit by the caller's rule in the script's docstring — **an export is usable only on exit 0, with one JSON object of the docstring's shape on stdout and its manifest present**:
+   one `--path` per distinct code evidence path of that clone (Phase 2); and, for each distinct commit the clone's entries record other than its today — `<j>` counting them from 1 in the page's order, at most twenty (Phase 1 test 6) — the same with `--commit '<ref>'`, `--out '<export root>/c<k>-r<j>'`, `--manifest '<export root>/c<k>-r<j>.files'`, one `--path` per path an entry records at that commit, and no `--whole`. Every value has passed its class before it is written there: the clone's resolved path `abs-path` and both parts of the clone test (Phase 2), each commit `OBJECT_ID`, each path `rel-path`. Each export is one Bash call with a timeout of 600000 ms, above the script's own limits, so that a slow export ends by the script's `timeout` refusal and never by the harness cutting the call. Read each exit by the caller's rule in the script's docstring — **an export is usable only on exit 0, with one JSON object of the docstring's shape on stdout and its manifest present**:
    - **0** — usable. Of a today export, keep each `--path`'s state: `exported` is read; `absent` is **an evidence path gone at today** (step 8); `skipped` — a link, a submodule, a name or a file above 1 MiB at that path — is **not read** (step 8). Keep its `skipped` counts, for `claim-reader` and the report.
    - **3** — that commit unread. On a today export, `over-cap`, `timeout`, `blob-absent` or `commit-absent` leaves **that clone not read** (step 8), and `claim-reader` is handed no export of it. On an export at a recorded commit, the reads at that commit are `not read`, which decides nothing; the handoff names the refusal.
    - **Anything else** — 2, a 4, a crash, a stdout that is not one JSON object of that shape, a manifest missing — stops: `DOCS_VERIFY_EXPORT: backlog-lines.py export could not run on clone <k>, <the clone's resolved path>, at <the commit> — <its one stderr line, where it is one line opening backlog-lines: not run ( | it exited <n> with no fixed line>; nothing was graded or written.` Then take the stop route.
@@ -285,7 +285,7 @@ Once the re-check passed. **Nothing here writes into the documentation repositor
   > handoff_file: [the absolute path of <export root>/handoff.yml]"
 
 6. **The return, held** — before anything shows, writes or uses it.
-   - **The canary first.** `canary.grep` and `canary.glob` each list exactly the two canary files, a path printed relative read against the session's working directory. Otherwise — a `BLOCKED` return whose canary missed a file, and a return that reports no canary, among them — stop: `DOCS_VERIFY_EXPORT: the search tools did not find <each canary file the reader's searches did not report> under the export root — a hidden directory or an ignore rule there would hide files from the claim reader, so no reading was used and nothing was written.` Then take the stop route; the report quotes the return's `notes`.
+   - **The canary first.** `canary.grep` and `canary.glob` each list exactly the two canary files, a path printed relative read against the session's working directory. Otherwise — a `BLOCKED` return whose canary missed a file, and a return that reports no canary, among them — stop: `DOCS_VERIFY_EXPORT: the claim reader's searches did not report <each canary file not reported> under the export root — <its return is BLOCKED and neither list holds a file: a search or a read it made was refused or failed, as its notes say | a hidden directory or an ignore rule there would hide files from it>, so no reading was used and nothing was written.` The first reason is taken where `status` is `BLOCKED` and `canary.grep` and `canary.glob` are both empty or absent — a test of those fields, never of the notes' text; the second otherwise. Then take the stop route; the report quotes the return's `notes`.
    - **Then the return.** `status` is `DONE` — any other `BLOCKED` is unusable — and `claims` is a list of at least one claim, since every page this run verifies states something. For each claim:
      - `outcome` is one of `confirmed`, `differs`, `unresolvable` and `specs-vs-code`, and `at_ref` one of `held`, `differed`, `absent` and `not read`;
      - it carries the fields its outcome takes, and no other: `source` for every outcome but `unresolvable`, which carries `source: null` and `why`; `observed` for `differs` and `specs-vs-code`; `specs` for `specs-vs-code`, whose `source` is a `code` source, the code's side; `why` is `{kind, note}`, `kind` one of `not-found`, `ambiguous`, `unsettled` and `path-gone`;
@@ -301,49 +301,51 @@ Once the re-check passed. **Nothing here writes into the documentation repositor
    **The claim test** — given the held file and the page's copy — prints the positions of the claims that fail, and exits 0 only where `claims` holds at least one and none fails: `line` a whole number from 1 to the copy's line count, and `quote` not blank, holding no line feed, carriage return or NUL, and standing on that line, character for character:
 
    ```bash
-   python3 -I -c 'import json, sys
-   h = json.load(open(sys.argv[1], encoding="utf-8"))
-   L = open(sys.argv[2], "rb").read().decode("utf-8").split("\n")
-   c = h.get("claims") if isinstance(h, dict) else None
-   def ok(x):
-       if not (isinstance(x, list) and len(x) == 2 and type(x[0]) is int and isinstance(x[1], str)): return False
-       n, q = x
-       return 1 <= n <= len(L) and q.strip() != "" and not any(ch in q for ch in "\n\r\0") and q in L[n - 1].rstrip("\r")
-   c = c if isinstance(c, list) else []
-   bad = [i + 1 for i, x in enumerate(c) if not ok(x)]
-   print(json.dumps(bad))
-   sys.exit(0 if c and not bad else 1)' '<export root>/held.json' '<export root>/page.md'
+   python3 -I -c 'if 1:
+       import json, sys
+       h = json.load(open(sys.argv[1], encoding="utf-8"))
+       L = open(sys.argv[2], "rb").read().decode("utf-8").split("\n")
+       c = h.get("claims") if isinstance(h, dict) else None
+       def ok(x):
+           if not (isinstance(x, list) and len(x) == 2 and type(x[0]) is int and isinstance(x[1], str)): return False
+           n, q = x
+           return 1 <= n <= len(L) and q.strip() != "" and not any(ch in q for ch in "\n\r\0") and q in L[n - 1].rstrip("\r")
+       c = c if isinstance(c, list) else []
+       bad = [i + 1 for i, x in enumerate(c) if not ok(x)]
+       print(json.dumps(bad))
+       sys.exit(0 if c and not bad else 1)' '<export root>/held.json' '<export root>/page.md'
    ```
 
    **The source test** — given the held file and `<export root>` — prints, per entry of `sources`, the repository path its `file` maps to, or `null` where it fails, and exits 0 only where `sources` holds at least one and none fails. It runs only where the return holds a `code` source; readings that rest on ARDs alone have none to test:
 
    ```bash
-   python3 -I -c 'import json, os, re, stat, sys
-   X = r"[\x00-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]"
-   h = json.load(open(sys.argv[1], encoding="utf-8"))
-   root = sys.argv[2].rstrip("/")
-   def one(x):
-       if not (isinstance(x, list) and len(x) == 3 and type(x[0]) is int and x[0] >= 1 and isinstance(x[1], str) and isinstance(x[2], str)): return None
-       k, f, ln = x
-       pre = "%s/c%d/" % (root, k)
-       n = open("%s/c%d.files" % (root, k), "rb").read().split(b"\0")
-       if not f.startswith(pre) or n[-1] != b"" or len(n) % 2 != 1: return None
-       r = dict(zip(n[0:-1:2], n[1:-1:2])).get(os.fsencode(f[len(pre):]))
-       m = re.fullmatch(r"([0-9]{1,7})-([0-9]{1,7})", ln, re.ASCII)
-       if r is None or m is None: return None
-       r, p = r.decode("utf-8"), pre + f[len(pre):]
-       if r == "" or r[0] in "/-" or ".." in r.split("/") or re.search(X, r) or not stat.S_ISREG(os.lstat(p).st_mode): return None
-       t = open(p, "rb").read()
-       c = t.count(b"\n") + (1 if t and not t.endswith(b"\n") else 0)
-       return r if 1 <= int(m.group(1)) <= int(m.group(2)) <= c else None
-   def safe(x):
-       try: return one(x)
-       except Exception: return None
-   s = h.get("sources") if isinstance(h, dict) else None
-   s = s if isinstance(s, list) else []
-   out = [safe(x) for x in s]
-   print(json.dumps(out))
-   sys.exit(0 if out and None not in out else 1)' '<export root>/held.json' '<export root>'
+   python3 -I -c 'if 1:
+       import json, os, re, stat, sys
+       X = r"[\x00-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069]"
+       h = json.load(open(sys.argv[1], encoding="utf-8"))
+       root = sys.argv[2].rstrip("/")
+       def one(x):
+           if not (isinstance(x, list) and len(x) == 3 and type(x[0]) is int and x[0] >= 1 and isinstance(x[1], str) and isinstance(x[2], str)): return None
+           k, f, ln = x
+           pre = "%s/c%d/" % (root, k)
+           n = open("%s/c%d.files" % (root, k), "rb").read().split(b"\0")
+           if not f.startswith(pre) or n[-1] != b"" or len(n) % 2 != 1: return None
+           r = dict(zip(n[0:-1:2], n[1:-1:2])).get(os.fsencode(f[len(pre):]))
+           m = re.fullmatch(r"([0-9]{1,7})-([0-9]{1,7})", ln, re.ASCII)
+           if r is None or m is None: return None
+           r, p = r.decode("utf-8"), pre + f[len(pre):]
+           if r == "" or r[0] in "/-" or ".." in r.split("/") or re.search(X, r) or not stat.S_ISREG(os.lstat(p).st_mode): return None
+           t = open(p, "rb").read()
+           c = t.count(b"\n") + (1 if t and not t.endswith(b"\n") else 0)
+           return r if 1 <= int(m.group(1)) <= int(m.group(2)) <= c else None
+       def safe(x):
+           try: return one(x)
+           except Exception: return None
+       s = h.get("sources") if isinstance(h, dict) else None
+       s = s if isinstance(s, list) else []
+       out = [safe(x) for x in s]
+       print(json.dumps(out))
+       sys.exit(0 if out and None not in out else 1)' '<export root>/held.json' '<export root>'
    ```
 
 7. **A specification against the code.** Each `specs-vs-code` claim — an ARD and the code saying it differently — is the operator's to settle, one question per claim, never this run's: the question's own text gives the claim's `quote`, the code's phrasing (`observed`) with its repository path and lines, and the ARD's (`specs`) with its path, each written as `backlog-run.md` §2 writes a free-text value read from data:
@@ -714,7 +716,7 @@ Otherwise (not skipping), invoke `Skill(skill: "workflows-core:reference", args:
 - ALWAYS hold the backlog and the profile to §6.1 of the finish before the branch step, and the unit, its page — by *The page's blob* — and the profile on the run's branch to what the consent showed
 - NEVER put a value read from the backlog, the profile, a page, a ref name or an agent's return into a path, a ref, a name or a command before its class test or its resolution against a known set; ALWAYS single-quote it, after `--` where the command takes one; the profile's build and lint commands are the one named exception, shown verbatim in the consent before they run
 - NEVER make a unit id a key: it enters no run key set, commit key or `[<key>]` subject, and fills no key placeholder
-- NEVER read `$SPECS_PATH` but an `ard.md` under its specifications tree at the commit `<default-ref>` names, by `git -C "$SPECS_PATH" show`; NEVER make `$SPECS_PATH`, a path inside it, or a clone whose tree holds it, a scan or an export target
+- NEVER read `$SPECS_PATH` but an `ard.md` under its specifications tree at the commit `<default-ref>` names, by `git -C "$SPECS_PATH" show`; NEVER make `$SPECS_PATH`, a path inside it, or a clone whose tree holds it, a scan or an export target; and where `$SPECS_PATH` is unset or empty, NEVER scan or export a clone whose `sources[]` entry no code-kind surface's evidence names (`backlog-run.md` §5 step 5)
 - NEVER name a path in a git call as a source repository before `test -e '<path>/.git'` has succeeded on it, NEVER take one that fails the clone test as a clone, and ALWAYS run git in a clone, or in a path tested as one, as `git -c safe.bareRepository=explicit -C '<path>'`
 - ALWAYS read a source repository's code through its export alone — `backlog-lines.py export`, by object id, into `<export root>` under `workflows-core:run-flags` §7's directory, with the root's `.ignore` and `.rgignore` written first — and NEVER read a partial export: one is usable only on exit 0 with its manifest present
 - NEVER grade a claim on a search that cannot see the canary: the reader's two canary searches, and this run's where the session holds the tools, list exactly the two canary files, or the run stops before any claim is graded
