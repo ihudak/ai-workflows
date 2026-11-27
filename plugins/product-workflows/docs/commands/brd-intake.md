@@ -288,8 +288,9 @@ slice's `/brd-reconcile`, which waits at its gate on the defect log.
   - **The rest is grouped and ranked.** `question-planner` puts candidates with a common cause —
     one term used in two senses across a dozen rows — as one question, and ranks the queue so the
     least certain, and those touching the most rows, come first. Where more remain than the budget
-    allows, those it is confident of may be put as one table to accept, or to name the exceptions
-    in, which are then asked singly.
+    allows, those the reader was most sure of, and whose recommendation the planner puts forward
+    too, may be put as one table to accept, or to name the exceptions in, which are then asked
+    singly; nothing raised from documentation, or that the reader was less sure of, goes in it.
   - **Each question stands on its own.** It opens *This is about the wording of requirement
     [BR#n] in the BRD.*, quotes the row, says what the reader saw — the two readings side by side,
     what two rows clash over, what cannot be measured, the implementation detail a row prescribes —
@@ -339,7 +340,7 @@ A session can end in the middle of the defect walk — you stop between two sitt
 
 - **Your answers.** Every answer in the defect walk is recorded as you give it, before the next question is shown, so a resumed run goes on at the next question you have not answered, in the sitting you were in — or, after *Stop here and continue later*, the next one. A *Cancel* is never recorded, so a resume asks that question again.
 - **Agent results.** `brd-reader`'s and `question-planner`'s results are saved once the run has gone on with them, and reused while the dispatch it would make now is the same — the same files, byte for byte, and the same agent instructions and model. The final report of a resumed run says what it reused, on one `Resumed:` line.
-- **What the run already wrote.** Once Phase 3 has written the inventory, a resumed run does not read the source again — it would take its own inventory for an earlier intake's — and goes on from what it recorded then; where the earlier session stopped before that write, the run goes through Phases 1 to 3 again, re-using every copy and transcription already there. Once the walk has written the defect log, a resumed run does not walk again.
+- **What the run already wrote.** Once Phase 3 has written the inventory, a resumed run does not read the source again — it would take its own inventory for an earlier intake's — and goes on from what it recorded then; where the earlier session stopped before that write, the run goes through Phases 1 to 3 again, re-using every copy and transcription already there. Once the walk has written the defect log, a resumed run does not walk again. Your handoff choice is recorded too, and the handoff, the session maintenance, the feedback, the cost entry and the resume pointer are each recorded once made, so a resumed run never branches, pushes, opens a pull request or writes a cost entry twice.
 
 Another session that resumes the run, or starts it over, takes it over: the first one stops at its next step with `BRD_INTAKE_RUN_TAKEN_OVER` and writes nothing more — no cost entry, no terminal commit and no final report. A run that finishes removes its folder; one that stops keeps it.
 

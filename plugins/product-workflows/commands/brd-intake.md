@@ -168,11 +168,13 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--budget <N>] [--sort-existing <dir>]
 
    **Check the branch the run stands on.** Where the folder was found, execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on it, with `prefix: brd`, before the re-run block below reads it; a stop it makes ends the run here. A folder this run derives has nothing on any branch to compare.
 
-   **Open the run folder**, now that every refusal above has had its chance and the key, the folder and the flags are known, and before the re-run confirmation below, which stands after it. Execute `open-run` (`Skill(skill: "workflows-core:reference", args: "run-folder open-run")`) with `--command product-workflows.brd-intake`; `--key <BRD-KEY>`, the key step 1 read — on a BRD this run creates as well, since Phase 2's first write makes the folder that same key resolves to when the command is run again; `--specs "$SPECS_PATH"`; no `--workdir`, since the run works the same from any directory; and `--args '<the arguments>'` — every token of `$ARGUMENTS` as typed, run flags included, but the one step 1 read as the address and a key it dropped as that address typed twice, in their order, joined by single spaces. The run carries `run_folder` from here on, and `run_resumed` where it resumed (`workflows-core:run-folder` §2). What it keeps there is Phase 4's defect walk and what the walk is built from — `brd-reader`'s and `question-planner`'s results, the walk's registry and recorded answers, and the two writes that bound the walk, Phase 3's `p3-write` and Phase 4's `p4-write` — so a run stopped mid-walk, by the operator's choice between sittings, at a compaction or at a restart, resumes at its next unanswered question with every answer kept (`workflows-core:question-budget` §12). On `unfinished`, `open-run`'s question takes this line: `Resuming keeps every answer the defect walk recorded; where the inventory was already written, Phases 1 to 3 are not run again.` It runs no `changed-agents`: it saves at most three results, each redone when its dispatch comes where its agent file or model changed.
+   **Open the run folder**, now that every refusal above has had its chance and the key, the folder and the flags are known, and before the re-run confirmation below, which stands after it. Execute `open-run` (`Skill(skill: "workflows-core:reference", args: "run-folder open-run")`) with `--command product-workflows.brd-intake`; `--key <BRD-KEY>`, the key step 1 read — on a BRD this run creates as well, since Phase 2's first write makes the folder that same key resolves to when the command is run again; `--specs "$SPECS_PATH"`; no `--workdir`, since the run works the same from any directory; and `--args '<the arguments>'` — every token of `$ARGUMENTS` as typed, run flags included, but the one step 1 read as the address and a key it dropped as that address typed twice, in their order, joined by single spaces. The run carries `run_folder` from here on, and `run_resumed` where it resumed (`workflows-core:run-folder` §2). What it keeps there is Phase 4's defect walk and what the walk is built from — `brd-reader`'s and `question-planner`'s results, the walk's registry and recorded answers, the two writes that bound the walk, Phase 3's `p3-write` and Phase 4's `p4-write`, and the steps after it that a replay would repeat, Phase 7's handoff and Phase 9's maintenance, feedback, cost entry and pointer, each guarded as an effect — so a run stopped mid-walk, by the operator's choice between sittings, at a compaction or at a restart, resumes at its next unanswered question with every answer kept (`workflows-core:question-budget` §12). On `unfinished`, `open-run`'s question takes this line: `Resuming keeps every answer the defect walk recorded; where the inventory was already written, Phases 1 to 3 are not run again.` It runs no `changed-agents`: it saves at most three results, each redone when its dispatch comes where its agent file or model changed.
 
    **Taken over.** Wherever a call of the script exits 9 from here on, or a call that only reads exits 2 with `run folder no longer exists` (`workflows-core:run-folder` §2), stop at once — save in `close-run` (Phase 9), which says what the run does: `BRD_INTAKE_RUN_TAKEN_OVER: another session (<id>) took this run over — stopping without writing.` `<id>` is the session the script's stderr line names; where that line says the folder was removed, or no longer exists, print `BRD_INTAKE_RUN_TAKEN_OVER: another session started this run over or finished it — stopping without writing.` instead. This stop takes no tail at all: no maintenance, feedback, cost entry or `commit-artifacts`, no `emit-block`, no `Run folder kept:` line and no Final report.
 
    **Phases.** As the run reaches each phase from Phase 1 on, log it first: `phase <folder> <n>`, `<n>` its number (`2.5` for Phase 2.5). Where `run_folder` is `unavailable`, every step that names the folder acts as it did before this command kept one, and a write this command makes into the folder itself that fails is met as a call's exit 2 (`workflows-core:run-folder` §2): its `NOTE:` printed with the shell's error line, and the step going on as it would without the folder.
+
+   **A run Phase 7 finished.** On a run that resumed, read `effect <folder> p7-handoff state` first (Phase 7, *Guarded*). Where it reads `done`, **Phases 1 to 7 do not run, and neither does the re-run confirmation below**: an earlier session of this run wrote the files and handed them off, or recorded the handoff declined. Run Phase 1.5 and go on at Phase 8, taking Phase 7's `Phase handoff:` line from fact `phase7`, and the Final report's items from Phases 1 to 4 from Phase 3's record and `<folder>/scratch/p4/report.md` wherever each stands — where neither does, as after an `EMPTY` read, the report says that an earlier session of this run wrote and handed off the files, naming them by that outcome line. Otherwise the paragraph below decides.
 
    **A run Phase 3 wrote.** On a run that resumed, read `effect <folder> p3-write state` (Phase 3, *Guarded*):
    - `none` — go on, to the re-run confirmation below and then Phase 1. What an earlier session of this run wrote before Phase 3's write — Phase 2's header or `document:` line, its copies and its link log, Phase 2.5's figures file — each phase meets as it meets any file already there: a copy whose bytes already stand is not written again, and a transcription whose image is unchanged is re-used.
@@ -1429,8 +1431,11 @@ cannot resume from. Every call is
 `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/question-registry.py" <subcommand> --registry '<that path>' …`,
 its stdin a quoted here-document, and its exits are met as §12 says: on 3, the input is rebuilt and
 sent once more, and a second refusal is reported in the Final report as a defect of the run, the
-candidate left as it was; on 2, nothing more is asked, *The write* runs with the answers this
-session holds, and the Final report names the registry as the cause.
+candidate left as it was — and, where the refused call was an event on a candidate, that candidate
+put in this session's **skip set**: no later step sends it another event or puts its question, so a
+candidate the registry keeps refusing is never asked round and round; on 2, nothing more is asked,
+*The write* runs with the answers this session holds, and the Final report names the registry as
+the cause.
 - **Where the file already stands** — a resumed run's — it is reused as it stands, and `init` is
   never called: the questions and answers it records are this run's, and the walk goes on from them.
 - **Otherwise make it**: `init`, its stdin `{"budget": <the budget in force>, "questions": [...]}`,
@@ -1511,7 +1516,11 @@ A `duplicate` takes one line per row `[BR#m]` it names, `[BR#n]` the row it is r
 note *The write* would record — and a pair a note or an entry on file already joins ends its line
 with `— already settled`, recording nothing new. Each section of the list is left out where it holds
 no line. The shown text is built from every such candidate the walk takes, whatever the registry
-now says of it, so a resumed run reuses the answer.
+now says of it, so a resumed run reuses the answer. **Once every event below is recorded, set fact
+`walk-list-done` to `yes`; a resumed run that finds it set skips the list whole** — its answer is
+acted on already, and a listed candidate open now was reopened since, at an end-of-sitting list,
+which must stand. One that finds it unset acts on the reused answer for each listed candidate still
+open: no end-of-sitting list can have come between, since none is shown before this fact is set.
 - ***All fine as listed*** — each listed candidate still open is recorded: an `unsourced` one as
   event `auto`, decision `confirmed`, logged at *The write* with its reason; a `duplicate` one as
   event `table`, decision `noted-in-inventory`, which *The write* turns into its `restates` notes.
@@ -1548,16 +1557,23 @@ Then:
   answer for the group could log a defect on file twice; a group left with one candidate is no
   group. The group is named by the first qid left in its `covers`:
   `merge --into <that qid> --from <the rest, comma-separated> --reason '<its reason>' --sitting 1`,
-  without which `next` would return the others singly; a group none of whose other qids is still
-  open — a resumed run's, already merged — is skipped. Its `text` is the question's plain line
-  below, and its answer is each candidate's it covers;
+  without which `next` would return the others singly; a group any of whose other qids the
+  registry already records merged into its qid is skipped — a resumed run's, whose earlier session
+  recorded that merge before it stopped. Its `text` is the question's plain line below, and its
+  answer is each candidate's it covers;
 - **the ranks**: `rank`, its stdin the result's `ranks` — the rank the result gives a group given
   as well to each candidate taken out of it and to the qid that now names it, where that changed —
-  less every qid no longer open;
-- **the table**: the result's `plan.table` rows, less any row a candidate named from the list
-  takes, any whose question would carry an *On file* or *Settled* line, and any whose `answer` is
-  neither *Ask the customer about this* nor *The wording is clear — nothing to ask* — each of those
-  is asked singly instead — are sitting 1's tail table.
+  less every qid no longer open; then set fact `walk-plan-done` to `yes`. **A resumed run that
+  finds it set records no merge and no rank**: both were recorded, and a candidate open now that a
+  group covered was reopened since, at an end-of-sitting list, which must stand — merging it again
+  would undo that answer. Where it is unset, no end-of-sitting list can have come between;
+- **the table**: the result's `plan.table` rows are sitting 1's tail table, **keeping only a row
+  whose candidate — every candidate it covers, for a group — carries `confidence` `high`, and whose
+  `answer` is the recommendation its question carries** (*The recommendation*; a group's) — §9's
+  rule that the table holds only what is rated `high`, and no row the agent's own question would
+  call uncertain: a candidate raised from documentation, which carries no `confidence`, is never a
+  row. A row a candidate named from the list takes, and one whose question would carry an *On file*
+  or *Settled* line, is left out too. Each row left out is asked singly instead.
 
 **The tail table** (§9) — in sitting 1 only, where it holds a row, before the first question asked
 singly; gate id `walk-table`; it counts one question:
@@ -1571,6 +1587,10 @@ choices: ["All fine as listed (Recommended)", "Let me name the ones to look at (
 A group's row names every row its candidates are raised on, as its question's first line does
 (below), and gives its `text` in place of the *What I saw* line.
 
+**Once every event below is recorded, set fact `walk-table-done` to `yes`; a resumed run that
+finds it set skips the table whole**, as the list's fact says of the list, and one that finds it
+unset acts on the reused answer for each row still open.
+
 - ***All fine as listed*** — each row still open is recorded as event `table`, decision
   `confirmed` where its answer is *Ask the customer about this* and `not-logged` where it is *The
   wording is clear — nothing to ask*, with `"answer"` the row's answer and `"reason"` its reason.
@@ -1578,8 +1598,9 @@ A group's row names every row its candidates are raised on, as its question's fi
   and is asked singly, by its rank, and every other is recorded as on *All fine as listed*.
 - **A typed answer is read as the option it expresses** (§4).
 
-**Then ask one question at a time.** While the sitting has budget left, take the first qid
-`next --limit 1` prints — the open candidates in the planner's rank order (§6) — and put it in §4's
+**Then ask one question at a time.** While the sitting has budget left, take the first qid not in
+the skip set that `next --limit <the number of candidates the walk takes>` prints — every open
+candidate, in the planner's rank order (§6) — and put it in §4's
 shape, gate id `walk-<its qid, its / written ->` (`walk-cand-12`), counting one. Each `[BR#n]` in
 it is as Phase 3 numbered it, each row's text read off the inventory and decoded
 (`brd-format.md` §2.3), and each claim about a row checked against that row before the question is
@@ -1678,13 +1699,20 @@ candidate is about.
   plain text, is asked only where the text maps to no option, and **the same dialog is never put
   twice** for one candidate.
 
-**At the budget.** Once the sitting has spent its budget and `next --limit 1` still prints a qid,
-the sitting ends: show its end-of-sitting list (below), then ask, saying how many candidates are
-still open and that every answer given so far is kept:
+**At the budget.** Once the sitting has spent its budget and that call still prints a qid not in
+the skip set, the sitting ends: show its end-of-sitting list (below), then ask, saying how many
+candidates are still open and that every answer given so far is kept, each option with what it does
+(§4):
 
 ```
 choices: ["Continue with the next sitting now (Recommended)", "Stop here and continue later", "Send the rest on as open defects, unreviewed"]
 ```
+
+**Each option carries this description**, `<k>` the number of candidates still open outside the
+skip set and `<budget>` the budget in force:
+- *Continue with the next sitting now* — "Asks up to <budget> more, in the order the rest are ranked. Every answer so far is kept, and nothing is logged until the walk ends."
+- *Stop here and continue later* — "Ends this run with nothing logged yet. Running the command again resumes at the next question, every answer so far kept." — and, where the run folder is unavailable, "Ends this run with nothing logged. This run keeps no run folder, so the next run asks every question again." in its place.
+- *Send the rest on as open defects, unreviewed* — "Logs each of the <k> left as an open [DEF#n] marked not reviewed at intake, with no question to you. The interview later asks the customer about each, save an unsourced one."
 
 It is not recorded through `run-gate`, since what each answer does is recorded, so a resumed run
 never meets it twice for one sitting:
@@ -1698,15 +1726,17 @@ never meets it twice for one sitting:
   run walks every candidate again — and end that stop with
   `This run kept no run folder, so the next run walks every candidate again.` in place of its last
   sentence.
-- ***Send the rest on as open defects, unreviewed*** — record each candidate still open as event
-  `deferred`, decision `sent-on-unreviewed`, and end the walk. It is never recommended and never
+- ***Send the rest on as open defects, unreviewed*** — record each candidate still open, outside
+  the skip set, as event `deferred`, decision `sent-on-unreviewed`, and end the walk. It is never recommended and never
   taken by default (§3): an open `ambiguity`, `conflict`, `untestable` or `scope-leak` defect
   becomes a question to the customer, and an agent's hypothesis nobody looked at reaches them only
   by this explicit choice.
-- **A typed answer is read as the option it expresses** (§4); one expressing none is asked again.
+- **A typed answer is read as the option it expresses** (§4), its other words kept; one clarifying
+  question, in plain text, is asked only where it maps to no option, and the same dialog is never
+  put twice.
 
-**When the queue is empty** — `next --limit 1` prints nothing — show the sitting's end-of-sitting
-list, and go to *The write*.
+**When the queue is empty** — the call above prints no qid outside the skip set — show the
+sitting's end-of-sitting list, and go to *The write*.
 
 **The end-of-sitting list** (§10), at the end of every sitting and before the after-budget question
 or *The write*: `sitting-list --sitting <the sitting>`. Where it prints nothing, nothing is shown.
@@ -1877,6 +1907,28 @@ read at its own step 8, never a `require-on-main` gate (steps 6 and 7 run only i
 choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]
 ```
 
+Where the run folder is open, the question goes through `run-gate`
+(`Skill(skill: "workflows-core:reference", args: "run-folder run-gate")`), gate `p7-handoff`, its
+shown text the array, then the line §4.3 puts above it, where one applies. Its *Cancel* declines the
+handoff and the run goes on, so it is recorded as any other answer.
+
+**Guarded, where the run folder is open.** Once the question has its answer, whichever it is,
+acting on it is effect `p7-handoff` (`Skill(skill: "workflows-core:reference", args: "run-folder run-effect")`),
+so a resumed run never hands off twice. Read `effect <folder> p7-handoff state`. On `none`:
+`effect <folder> p7-handoff start`; act on the answer as below — on the first choice,
+`handoff-to-main`; then record its `Phase handoff:` outcome line, the *Declined by the user* row's
+on either other answer (`workflows-core:phase-handoff` §4.1), as
+`fact <folder> phase7 --set '<the line>'`, and `effect <folder> p7-handoff done`. On `started` — an
+earlier session began acting on the answer and never recorded its end — act on it again, as below:
+`handoff-to-main` reuses the branch that session made or found — the one fact `p7-handoff-branch`
+records where it is still unmerged, a suffix rule 4 gave it included, and otherwise its intended
+name (`workflows-core:phase-handoff` §2.2 rule 3 and *The branch an earlier session cut, on a
+resumed run*) — and opens the pull request for a push that session made and opened none for (§2.6's
+*An earlier session's push*), each of which applies because this effect was found `started`; that is
+its re-run handling, so nothing is committed or opened twice; then record the fact and `done` as on
+`none`. A run whose effect reads `done` does not reach this phase (Phase 0 step 7, *A run Phase 7
+finished*). Where the run folder is unavailable, the phase runs as before.
+
 On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: brd`, `feature_folder` as resolved in Phase 0, `deliverable_paths` = **every file under
 `<BRD-dir>` this run captured or wrote** — a file counting as captured whether this run copied its
 bytes or found an identical copy already standing, which covers both collision rule 1's re-use and a
@@ -1890,7 +1942,9 @@ two directories and named one literal path each: nothing else in the plugin ever
 undeclared it stays untracked and the specs-repo preflight reports it as an unrelated dirty path
 (`workflows-core:specs-repo-git` §3.3 G1) on every later run),
 `title: <BRD-KEY> Intake BRD source and requirement inventory`, `inputs_read` = the files Phase 0
-step 6's *Record what the run reads* noted, and `body_facts` = the requirement
+step 6's *Record what the run reads* noted, `branch_fact: p7-handoff-branch` where the run folder
+is open (`workflows-core:phase-handoff` §2.9: the branch §2.2 settles is recorded as that fact
+before anything is pushed), and `body_facts` = the requirement
 count, the confirmed-defect count by class, and whether Phase 6 wrote seeds; emit its §4.1 outcome
 line in the final report.
 
@@ -2019,6 +2073,22 @@ between sittings. `BRD_INTAKE_DISPATCH_FAILED` does fire it, as its own text say
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
+**Guarded, where the run folder is open** (Phase 0 step 7), on a run that finishes — the tail
+before `close-run`, never a stop's. Step 1 — `impl-maintenance`, or under `--skip-feedback`
+`defect-reporter` — is effect `tail-maintenance`
+(`Skill(skill: "workflows-core:reference", args: "run-folder run-effect")`), its dispatch unsaved
+(`run-dispatch`): the agent's whole return is written with
+`put <folder> 'scratch/tail-maintenance/report.md' --from -` as it returns, the file `emit-auto`
+and `emit-bugs` read (`workflows-core:feedback-emission`, `emit-auto`, *Guarded*). Found `started`,
+it is dispatched again where that file does not stand — neither agent writes anything — then
+`done`; found `done`, nothing is dispatched. Whether `emit-bugs` is called is read from that file's
+Defects list, never from memory. Step 2's `emit-auto`, or `emit-bugs` in its place, is effect
+`tail-emit-auto` there; step 3's `emit-cost` is effect `tail-cost` (`workflows-core:cost-emission`);
+and step 4's pointer is effect `tail-resume-pointer`, guarded by the resume-pointer entry point it
+runs. Each guard is its reference's, and on an effect an earlier session finished returns the line
+its fact holds, so a resumed run writes no second entry. Where the run folder is unavailable, this
+phase runs as below, unguarded.
+
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model:
    `<detection_model — §2.1 Sonnet chain>`) with a compact handoff: command `/brd-intake`; what was
    produced (the copied source and the files it links, the figures transcriptions, the inventory,
@@ -2100,8 +2170,8 @@ and why — `account`'s other terms, `dropped`, `applied` and the two `retagged`
 which never drops, applies or retags a candidate, and are added to the line only where not 0 —
 every term 0 where the walk made no registry — and where `account` exits 4, the sum does not close, reported as a defect of this run
 with the counts it printed (§11); where the registry exited 2, that the walk ended for it, and
-which candidates it left unasked (§12); a registry refusal sent twice, as a defect of this run
-(Phase 4); and, on a run that resumed, `run-dispatch`'s `Resumed:` line (Phase 0 step 7); the `docs grounding:` line from
+which candidates it left unasked (§12); a registry refusal sent twice, as a defect of this run,
+with each candidate it put in the skip set, by class and row, left open and unlogged (Phase 4); and, on a run that resumed, `run-dispatch`'s `Resumed:` line (Phase 0 step 7); the `docs grounding:` line from
 Phase 1 verbatim, and — when it was ON — the `docs_references` list of requirements the shipped
 documentation describes as already built, flagged for `/prd-ground` to check against code; whether
 Phase 6 wrote seeds and which; resolved model routing (+ any Opus degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); every agent's
