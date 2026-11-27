@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.88.5] — 2026-11-27
+## [3.88.6] — 2026-11-27
 
-**What changes for you.** Every command that resolves an address stops with `ADDRESS_FOLDER_NAME` where the resolved folder, or one above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. `/specify` and `/epics` leave an Epic folder named outside that class out of their Epic set, naming it by its place in the listing with the remedy, and such an Epic no longer stops a run on its PRD; every refusal that names a BRD's slices names such a folder that may be a slice by its position in place of a slice; and `/brd-split`, `/brd-proposal` and the flag sweeps, which would otherwise read a BRD's children with one unseen, stop on one that may be a slice, `/brd-reconcile`'s propagation sweep on a dependent it cannot read. Needs `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
+**What changes for you.** Every command that resolves an address stops with `ADDRESS_FOLDER_NAME` where the resolved folder, or one above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. `/specify` and `/epics` leave an Epic folder named outside that class out of their Epic set, naming it by its place in the listing with the remedy, and such an Epic no longer stops a run on its PRD; every refusal that names a BRD's slices names such a folder that may be a slice by its position in place of a slice; and `/brd-split`, `/brd-proposal` and the flag sweeps, which would otherwise read a BRD's children with one unseen, stop on one that may be a slice, `/brd-reconcile`'s propagation sweep on a dependent it cannot read. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).
 
 ### Fixed
 
@@ -20,6 +20,15 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **The nine commands that read an `@<path>` folder's key before resolving** — `/brd-split`, `/brd-intake`, `/brd-interview`, `/brd-package`, `/brd-reconcile`, `/create-prd`, `/idea`, `/prd-ground` and `/update-prd` — hold its path to the class first, before any command names it, the directory test included.
 - **Every command that maps `read-key`'s or `resolve-address`'s statuses names `misnamed`** — a stop, never `absent` and never the key-grammar stop — and `/idea`'s *two hard stops* are three; `references/coverage-ledger-format.md` §6.2 takes a delegated row's `misnamed` BRD as `unresolved`.
 - **`docs/commands/specify.md`, `docs/commands/epics.md`, `docs/commands/brd-split.md`, `docs/commands/brd-proposal.md` and `docs/reference/environment.md`** describe the stops and the refusals.
+
+## [3.88.5] — 2026-11-27
+
+**What changes for you.** `/harvest-decisions` passes over `ard-seed.md`, the seed `/brd-intake --sort-existing` writes, wherever it stands: it mints no team record from a slice's seed and reports no BRD folder's seed as an unparseable ARD. Update with `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
+
+### Fixed
+
+- **`scripts/architecture-harvest.py`'s `--layout prd`** matched `ard-seed.md` as an `ard-<area>.md`: in a BRD folder it reported the seed `unparseable`, as an ARD outside a `PRD-` or `EPIC-` folder, and in a `PRD-` slice it harvested it as the area `seed` where it held `## Architecture decisions`, and reported it otherwise. `PRD_ARD_RE` now refuses the exact name, so discovery and the citation scan read the seed as any other markdown file. `--selftest` gains a BRD folder's seed, a slice's seed with decisions and one without, and `ard-seeds.md`, which is still harvested as an area.
+- **Pages.** The `/harvest-decisions` page says `ard-seed.md` is never an ARD.
 
 ## [3.88.4] — 2026-11-26
 

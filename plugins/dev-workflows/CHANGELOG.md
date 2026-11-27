@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.71.4] — 2026-11-27
+## [4.71.5] — 2026-11-27
 
-**What changes for you.** `/design`, `/implement`, `/ready`, `/conformance` and `/vuln` stop with `ADDRESS_FOLDER_NAME` where the folder their address resolves, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. `/implement` no longer lists, tests or picks an Epic folder named outside that class: it names it by its place in the listing, with the remedy, and goes on with the rest — and such an Epic no longer stops a run on its PRD. Needs `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
+**What changes for you.** `/design`, `/implement`, `/ready`, `/conformance` and `/vuln` stop with `ADDRESS_FOLDER_NAME` where the folder their address resolves, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. `/implement` no longer lists, tests or picks an Epic folder named outside that class: it names it by its place in the listing, with the remedy, and goes on with the rest — and such an Epic no longer stops a run on its PRD. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).
 
 ### Fixed
 
@@ -16,6 +16,17 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`/conformance` step 1's `@<path>` and `/vuln`'s preflight and Step 1** read an `@<path>` folder's key only after its path has passed `workflows-core:addressing` §3's test, made before any command names it.
 - **`/design`, `/implement`, `/ready` and `/conformance` name `misnamed`** wherever they map `resolve-address`'s statuses — `/implement`'s *two hard stops* are three — and in their *Ending early* lists of address stops; `/design`'s *Another design under this PRD answers it* asks again on a `misnamed` return, as on `ambiguous`; `/ready`'s refusals after its run folder opens are four.
 - **`docs/commands/implement.md` and `docs/reference/environment.md`** describe the stop and the Epic listing's refusal.
+
+## [4.71.4] — 2026-11-27
+
+**What changes for you.** `/implement` addressed with an `@<path>` to a unit folder outside the specs repository's work tree — a second clone, say — reads that folder's own ARD, never one of the same key under `$SPECS_PATH`, gates nothing there, reports `Lineage: not checked — no specs repository` rather than `Lineage: current`, and follows each command it names by a key with a sentence saying that command finds the folder by its key in `$SPECS_PATH`. A resumed run addressed by an `@<path>` resolves that path again, never the key it found there, so it no longer stops on a key it cannot find, on another tree's folder, or on an `ambiguous` key the path got past. Update with `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
+
+### Fixed
+
+- **`/implement` on a unit folder outside the specs repository's work tree.** Phase 0 read the unit's pair as row H, but Phase 1.8's `ard-resolution` call passed the PRD folder's key alone, so the resolution found a folder of that key under `$SPECS_PATH` — another tree's ARD, or none — and the lineage check, whose `docs` are only the documents the gate passed, checked nothing and reported `Lineage: current`. Phase 1.8 now passes `folder`, the unit's folder; *Check the chain under the in-scope documents* is skipped there, the line `Lineage: not checked — no specs repository` carried in run-state `lineage` with no check file; Phase 1's multi-component check reads its file rows `unmanaged`, as `workflows-core` 1.100.5's `components` §6 returns them; and every command a stop, a question or the `### Next step` names by a key is followed by the outside sentence Phase 0 gives, save a re-run of `/dev-workflows:implement <ADDRESS>`.
+- **A resumed run addressed by an `@<path>`.** *Resuming* step 2 re-resolved the run-state file's `key` as a typed `<KEY>`: with `$SPECS_PATH` unset it met the `<KEY>` stop, with no folder of that key `absent`, and with another tree's folder its "moved or renamed" stop — and, inside the tree, an `@<path>` that got past `ambiguous`, or named a legacy unprefixed folder beside a prefixed one asserting the key, stopped again; step 7 then ran `require-on-main` on an outside folder's recorded paths. A new run-state key, `address` (`{"path", "outside"}`, `scripts/run-state.py`'s `KEYS` and `FILLED`), records the `@<path>` and whether the unit's folder lies outside the work tree; step 2 resolves that path and takes `unit_folder` under it by its carrier, never by the key, and makes the outside test again; step 6 places that folder, which `branch-check` passes; step 7 gates no path inside an outside folder; step 8 checks no lineage there; and the `### Next step` reads `address.outside`. `run-state.py --selftest` gains the key's checks, 252 to 258.
+- **Phase 0's and Phase 1's multi-component tests** read an outside PRD folder's own ARD, through `workflows-core` 1.100.5's `components` §3, and the Phase 0 paragraph says so.
+- **Pages.** The `/implement` page says what such a run reads, checks and prints, and how a resume resolves an `@<path>`.
 
 ## [4.71.3] — 2026-11-26
 

@@ -7,7 +7,7 @@ paths:
 
 # Plugin updates — which plugins to update together (continued, 1.92.0 to 1.97.0)
 
-This file continues `.claude/rules/plugin-updates-coupling.md`, whose `paths:` it shares and whose rules bind it: the bullets for `workflows-core` 1.92.0 to 1.97.0, moved here to keep that file under 20,000 characters — those for 1.92.0 to 1.96.0 when `.claude/rules/plugin-updates-coupling-history-4.md`, which holds the ones before them, had no room for them, and those for 1.96.1 and 1.97.0 later, since this file had room. New bullets go to `plugin-updates-coupling.md`.
+This file continues `.claude/rules/plugin-updates-coupling.md`, whose `paths:` it shares and whose rules bind it: the bullets for `workflows-core` 1.92.0 to 1.97.0, moved here to keep that file under 20,000 characters when `.claude/rules/plugin-updates-coupling-history-4.md`, which holds the ones before them, had no room for them. New bullets go to `plugin-updates-coupling.md`.
 
 ## Releases to update together
 

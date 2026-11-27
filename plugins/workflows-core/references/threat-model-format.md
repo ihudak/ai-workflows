@@ -11,7 +11,7 @@ Single source of truth for `threat-model.md`, the threat model an ARD may carry:
 ## 1. What it is and where it lives
 
 - **One per folder.** `threat-model.md` sits beside the folder's ARD files and covers all of them — its `ard.md` and any `ard-<area>.md` — in a PRD folder, an Epic folder or a BRD-route slice.
-- **Never named `ard-*.md`.** Three readers take such a file, its name in `workflows-core:addressing` §2's class, as a per-area ARD: `workflows-core:ard-resolution`, the lineage kind table's `ard` row (`workflows-core:document-lineage` §4), and `product-workflows`' `scripts/architecture-harvest.py`, which would mint team records from it.
+- **Never named `ard-*.md`.** Three readers take such a file, its name in `workflows-core:addressing` §2's class and not `ard-seed.md` (a seed, which `/product-workflows:create-ard` reads as an ARD's input, never as an ARD), as a per-area ARD: `workflows-core:ard-resolution`, the lineage kind table's `ard` row (`workflows-core:document-lineage` §4), and `product-workflows`' `scripts/architecture-harvest.py`, which would mint team records from it.
 - **Never under `$SPECS_PATH/security/`**, which is kept for a team's own documents and the findings register.
 - **`kind: threat-model` names no folder kind**, so `workflows-core:addressing` §4 passes the file over as the folder's carrier.
 - **Unknown frontmatter keys are kept.** A run that builds on the folder's model keeps every frontmatter key it does not recognise, in place and unmodified, as `product-workflows:ard-format` keeps an ARD's. Where *Start fresh* discards the model — the default branch holding none of the folder's ARD files and no `threat-model.md` (§5) — the old file goes whole, its keys included.

@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.44.4] — 2026-11-27
+## [1.44.5] — 2026-11-27
 
-**What changes for you.** `/document` and `/release-notes` stop with `ADDRESS_FOLDER_NAME` where the folder their address resolves, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name; an Epic folder named outside that class under the PRD folder is named by its place in the listing, with the remedy, and read nowhere in the run. `/docs-audit` leaves out, and counts, any ARD or release-notes draft whose path holds such a folder. Needs `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
+**What changes for you.** `/document` and `/release-notes` stop with `ADDRESS_FOLDER_NAME` where the folder their address resolves, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name; an Epic folder named outside that class under the PRD folder is named by its place in the listing, with the remedy, and read nowhere in the run. `/docs-audit` leaves out, and counts, any ARD or release-notes draft whose path holds such a folder. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).
 
 ### Fixed
 
@@ -15,6 +15,17 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`/docs-audit` Phase 2.5** holds each enumerated path's folder names to the class, as `addressing` §3's *The path's class* does, and leaves one outside it out, counting it in the report.
 - **`doc-planner`** reads only the Epic folders `folder_read`'s Epic set names, which `/document` builds from its tested listing; it runs no test of its own, having no shell.
 - **`docs/commands/document.md`, `docs/commands/release-notes.md`, `docs/commands/docs-audit.md` and `docs/reference/environment.md`** describe it.
+
+## [1.44.4] — 2026-11-27
+
+**What changes for you.** `/docs-write <unit-id>` on a branch the default branch has moved that unit past stops before its consent, `DOCS_WRITE_BASE_MOVED`, rather than asking whether to continue and drafting the unit a second time when you do — on your own branch saying to merge the default branch in, and on the default branch or a detached HEAD, where the run would have found the unit no longer missing, saying to pull it. The default branch includes your local one where it holds commits `origin`'s lacks, so a unit drafted and merged on your local default branch and not pushed is no longer drafted again on a branch cut before it — `--next` and `--batch` pass it over too.
+
+### Fixed
+
+- **`/docs-write`: a `<unit-id>` run on a unit the base moved.** `--next` and `--batch` passed such a unit over, but a `<unit-id>` run only had `finish-and-handoff` §6.2's adopt question name it, and *Continue on <branch>* drafted it a second time, its page beside, or in conflict with, the one the base holds. Phase 1 now stops there, naming each base that moved it and, by where HEAD stands, saying to merge that base into the branch, or, on the base itself or a detached HEAD, to pull the base and run again from it; §6.2 says no such unit reaches its question, which names only the case `moved` cannot tell. Refusing *Continue* was not taken: a cut reads the base's backlog, where the unit is no longer `missing`, so every answer of that question would end with nothing drafted.
+- **`backlog-lines.py`'s `moved` reads the local `<base>`.** A move made on the local `<base>` that `origin/<base>` lacks was never seen. Where the base resolved as `origin/<base>` and the local `<base>` is no ancestor of it, and HEAD is not on it, it is read by the base's rule — its status differing from the working one and from every merge base of HEAD with it — and named `<base>`, after the base; unreadable where that cannot be told. A local `<base>` that is an ancestor of `origin/<base>` holds no move `origin/<base>` lacks and is not read, which keeps it from naming a draft `origin/<base>` has since reset. A move only the local `<base>` still holds — `origin/<base>` force-pushed without it, or a local merge of a branch whose pull request closed — is named too, a limit its docstring states.
+- **`moved` prints a `base` member**, the part of `moved` and `unreadable` the base and the local `<base>` give, which `/docs-write` and §6.2 read: they told a base by its printed name, so a local branch named `origin/main`, where no remote-tracking ref shadows it, read as the base. The self-test grows from 83 cases to 91.
+- **Pages.** The `/docs-write` page, its failure modes and the route page say the same.
 
 ## [1.44.3] — 2026-11-26
 

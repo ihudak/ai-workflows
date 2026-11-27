@@ -223,6 +223,7 @@ KEYS = [
     ("phase", "Phase 1.4"), ("step", None), ("stopping", None),
     ("mode", None), ("key", None), ("source", None),
     ("focus_key", None), ("unit_key", None), ("workitem_key", None), ("unit_folder", None),
+    ("address", {"path": None, "outside": None}),
     ("run_flags", None), ("run_environment", None), ("specs_git", None), ("specs_merged_branch", None),
     ("lineage", None),
     ("inputs_read", []),
@@ -255,7 +256,7 @@ KEYS = [
 KEYS_LINE = " ".join(k + ("{%s}" % " ".join(d) if isinstance(d, dict) else "") for k, d in KEYS)
 # The keys added since format 2, which a file an earlier format-2 release wrote can lack: load gives
 # each one it lacks its KEYS default. No other key is filled -- `format` least of all.
-FILLED = ("fable_escalation",)
+FILLED = ("fable_escalation", "address")
 
 
 class Fail(Exception):
@@ -2211,6 +2212,22 @@ def selftest():
         code, out = call(["peek"], repo=g, session="H")
         check("no fill outside FILLED: read of another key the file lacks still exits 3", codes == [3, 3]
               and code == 0 and "phase" not in json.loads(out) and "clean_finish" not in json.loads(out))
+        # ---- address: how a keyed run was addressed, filled for a file an earlier format-2 release wrote ----
+        AD0 = {"path": None, "outside": None}
+        check("KEYS holds address after unit_folder", "address" in ks
+              and ks.index("address") == ks.index("unit_folder") + 1 and dict(KEYS)["address"] == AD0)
+        check("KEYS_LINE names address{path outside}", " unit_folder address{path outside} " in " %s " % KEYS_LINE)
+        check("FILLED holds address", "address" in FILLED)
+        ad = {"path": "/elsewhere/specifications/PRD-ACME-1-x", "outside": True}
+        code, _ = call(["init"], json.dumps(dict(fresh(), address=ad)), g, session="H")
+        check("init takes address {path, outside}, and it reads back equal", code == 0 and st().get("address") == ad)
+        before = open(gf, "rb").read()
+        code, _ = call(["set", "address", '"/elsewhere"'], repo=g, session="H")
+        check("set refuses address given as a string, writing nothing", code == 3 and open(gf, "rb").read() == before)
+        raw = lacking("address")
+        code, out = call(["read", "address"], repo=g, session="H")
+        check("read of address a file lacks prints its default, writing nothing", code == 0
+              and json.loads(out) == AD0 and open(gf, "rb").read() == raw)
         # the fill acts on an absent key alone: a stored value -- null, an object lacking a member, a wrong
         # type -- is returned as the file holds it, never filled over, so a damaged record still shows
         kept = []
