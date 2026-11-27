@@ -13,6 +13,7 @@
     "docs-init",
     "docs-profile",
     "docs-serve",
+    "docs-verify",
     "docs-write",
     "document",
     "release-notes"

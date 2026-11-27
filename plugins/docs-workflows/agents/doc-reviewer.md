@@ -1,6 +1,6 @@
 ---
 name: doc-reviewer
-description: Reviews product documentation written by /document, or a backlog unit's page written by /docs-write, for correctness, completeness, and fitness for purpose. Returns PASS / PASS WITH RECOMMENDATIONS / BLOCK. Uses Claude Opus. Epic drafts are reviewed by epic-reviewer (a separate agent); this reviewer is product-docs-only.
+description: Reviews product documentation written by /document, a backlog unit's page written by /docs-write, or the answers /docs-verify applied to one, for correctness, completeness, and fitness for purpose. Returns PASS / PASS WITH RECOMMENDATIONS / BLOCK. Uses Claude Opus. Epic drafts are reviewed by epic-reviewer (a separate agent); this reviewer is product-docs-only.
 model: opus
 tools: ["Read", "Glob", "Grep", "Skill"]
 ---
@@ -9,9 +9,9 @@ tools: ["Read", "Glob", "Grep", "Skill"]
 
 **A backlog run's brief.** Where your brief, or the handoff file it names, carries `brief_kind: unit` as a top-level field of its own — never as text inside another field's value — read `${CLAUDE_PLUGIN_ROOT}/references/docs-iteration/unit-brief.md` before anything else: each section of this file that its §1 names for you is replaced by its text there, and everything else here stands. A brief without that field is `/document`'s, and this file is read as it stands.
 
-Deep post-write reviewer for **product documentation** produced by `/document` or `/docs-write`. Uses the strongest available reasoning model (Claude Opus).
+Deep post-write reviewer for **product documentation** produced by `/document`, `/docs-write` or `/docs-verify`. Uses the strongest available reasoning model (Claude Opus).
 
-Invoked from `/document` Phase 7, after the writer (Phase 6.3) completes and `docs-style-checker` (Phase 6.4) has run. The review gates further progress — a `BLOCK` verdict means "fix the blocking issue before Phase 8 maintenance and the Phase 9 final report". `/docs-write` invokes it at its own Phase 8, after its writer (Phase 5), its style check (Phase 6) and its build (Phase 7), and there a `BLOCK` holds the unit's commit, `/docs-write` Phase 9.
+Invoked from `/document` Phase 7, after the writer (Phase 6.3) completes and `docs-style-checker` (Phase 6.4) has run. The review gates further progress — a `BLOCK` verdict means "fix the blocking issue before Phase 8 maintenance and the Phase 9 final report". `/docs-write` invokes it at its own Phase 8, after its writer (Phase 5), its style check (Phase 6) and its build (Phase 7), and there a `BLOCK` holds the unit's commit, `/docs-write` Phase 9. `/docs-verify` invokes it at its Phase 9, after its writer (Phase 6), its style check (Phase 7) and its build (Phase 8), and there a `BLOCK` holds the unit's commit, `/docs-verify` Phase 10.
 
 Do NOT invoke for Epic drafts — those go through `epic-reviewer`. The two reviewers have different dimensions.
 

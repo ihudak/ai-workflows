@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.71.6] — 2026-11-27
+
+DOC-D-G1, sub-project 2, batch 2: five pages name `docs-workflows` 1.45.0's `/docs-workflows:docs-verify`, and one count that was already short is corrected. No command, agent or reference changes, and nothing a run does or prints. Released with `docs-workflows` 1.45.0 and `workflows-core` 1.101.0; its pages need neither, nor they it. 4.71.6 carries 4.71.5, 4.71.4 and 4.71.3, so the 1.100.6, 1.100.5 and 1.100.3 bullets of `.claude/rules/plugin-updates-coupling.md` apply to it, which `workflows-core` 1.101.0, carrying all three, `product-workflows` 3.88.7, carrying 3.88.6, 3.88.5 and 3.88.3, and `docs-workflows` 1.45.0, carrying 1.44.5, meet, beside `security-workflows` 0.13.3 or later, which 1.100.6's bullet names.
+
+### Fixed
+
+- **The environment page's branch-naming ladder** is applied by ten commands that name branches outside the specs repository, `/docs-workflows:docs-write` and `/docs-workflows:docs-verify` among them, each where it cuts a branch rather than continuing on yours; it said eight, a count `docs-workflows` 1.43.0's `/docs-write` had already made short. Its `REPOS_PATH` paragraph names `/docs-verify` beside `/docs-audit` and `/docs-write` as the commands that match a docs profile's recorded `origin` as `<owner>/<repo>` rather than build the slug→clone map.
+
+### Changed
+
+- **Pages.** The model-routing page counts twenty-six companion commands that classify themselves, thirty-two in all, `/docs-verify` among them; the session-cost page files `/docs-verify` per documentation repository under `documenting`/`dev` and counts seven `docs-workflows` commands; the roles-and-phases and workflow pages name `/docs-verify` in the Dev role, the `documenting` phase and the commands that emit their own session bookkeeping.
+
 ## [4.71.5] — 2026-11-27
 
 **What changes for you.** `/design`, `/implement`, `/ready`, `/conformance` and `/vuln` stop with `ADDRESS_FOLDER_NAME` where the folder their address resolves, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. `/implement` no longer lists, tests or picks an Epic folder named outside that class: it names it by its place in the listing, with the remedy, and goes on with the rest — and such an Epic no longer stops a run on its PRD. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).

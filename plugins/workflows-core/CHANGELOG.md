@@ -5,6 +5,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.101.0] — 2026-11-27
+
+DOC-D-G1, sub-project 2, batch 2: the shared references register `/docs-workflows:docs-verify`, which `docs-workflows` 1.45.0 ships. **What changes for you.** A `/docs-verify` run files its cost entry, at the `documenting` stage, and its feedback under its documentation repository, as a `/docs-write` run does; a branch it cuts takes the `docs/` prefix where nothing else names one; and its stash, its scans' escalations, its review's fixes and its routing follow the family's rules, which now name it. The model routing names `claim-reader`'s reading on the Opus chain. Update with `docs-workflows` 1.45.0, and with `product-workflows` 3.88.6, `dev-workflows` 4.71.5 and `security-workflows` 0.13.3 or later, which the earlier bullets 1.101.0 carries name (`.claude/rules/plugin-updates-coupling.md`, its 1.101.0 bullet).
+
+### Added
+
+- **`scripts/command-namespaces.json`** lists `docs-verify` under `docs-workflows`.
+- **`references/cost-emission.md`.** §7 gains `/docs-verify`'s row, `documenting`, `dev`, so thirty-one of the thirty-three commands with a §7 row cite the file from their terminal phase; §8 files its entry under `$SPECS_PATH/documentation/<docs-repo-slug>/`, beside the other five documentation runs that resolve no PRD folder.
+- **`references/feedback-emission.md` §2** files its feedback there too, the same six; the automatic callers are thirty-one.
+- **`references/branch-naming.md`** names `/docs-verify` among its consumers, once per run where it cuts a branch, its prefix row, `docs/`, and its §3 slug, `docs-verify-<id>`.
+- **`references/model-routing/classification.md` §9.2: the synthesis row names `claim-reader`'s reading of a page's claims**, which a unit's move to `verified` rests on, on §2's Opus chain, so the *Reader* row's §2.1 Sonnet chain is never read to cover it.
+
+### Changed
+
+- **`references/escalation-rules.md`.** Eight stash choices run *Stashing the user's changes*, `/docs-verify` Phase 4 through `docs-workflows:finish-and-handoff` §6.2 the eighth, with `/docs-write`'s pathspec; *Dirty working tree* and *Refresh blocked* name `/docs-verify` Phase 5 among the commands that reproduce a shorter list, for `/docs-write`'s reason; *Repo missing* names its two checks, at its Phase 2 and Phase 5; the branch-prefix list, *The unspent re-review* and *Manual fix notes* name it, its fix cycle sending a finding on an answer's application to `doc-writer` and any other to `doc-fixer`; and the `/document` BLOCK section says it keeps a list of its own for a review left blocked. `reference-parts/escalation-rules/` is regenerated.
+- **`references/finding-triage.md`** gains the `doc-reviewer` → `doc-writer` row (`/docs-verify`, a finding on an answer's application) and names `/docs-verify` on the `doc-reviewer` → `doc-fixer` and style-checker rows; its parts are regenerated.
+- **`references/next-phase-offer.md`** *Not pipeline nodes* names `/docs-verify`, six commands now; its part is regenerated.
+- **`references/source-truth.md`** says that `claim-reader` applies §3 and §4.2's step 4, which `/docs-verify` hands it, and names `/docs-verify` among the dependents' commands that verify user-visible claims.
+- **`references/followup-emission.md`** counts fourteen commands, and **`references/dependencies.md`** all nine of `docs-workflows`' commands and eight of its twelve agents reading the shared corpus; **`references/doc-structure-conventions.md`**, **`references/components.md`** (the slug→clone maps it is not among) and **`references/read-only-repos.md`** (the commands that base a branch in a docs repository), and the agents **`code-scanner`** (its §8.5 callers) and **`doc-fixer`**, name `/docs-verify` where it reads or dispatches them.
+- **Pages.** The family map draws `/docs-verify` in the portal lane, after `/docs-write`, and the agents, grounding, references, session-feedback and roles-and-phases pages name it.
+
+### Fixed
+
+- **`scripts/lineage.py --selftest` no longer fails at random.** Its throwaway repository let each `git commit` start git's detached auto-maintenance. That process's `objects/maintenance.lock` could stand in the *before* snapshot of the nothing-written check in `test_capture_disk_is_what_git_add_stores` and be gone in the *after* one, so the check failed although the capture wrote nothing: 8 of 15 runs on git 2.56.1, and none of 15 with auto-maintenance off. The fixture now sets `maintenance.auto` to `false`. No command's behaviour changes, and the fix adds no case: the self-test counts 67, the case 1.100.5 added among them.
+
+### Fixed — GIT-G1 sentences made false by `/docs-verify`, truth only
+
+Each is a truth edit under the maintainer's 2026-11-17 standing approval for DOC-D-G1, named in the pull request.
+
+- **G3, `references/specs-repo-git.md` §3.1.** `/docs-verify` joins the commands for which the specs repository holds only bookkeeping, which run on with `$SPECS_PATH` unset — the sentence ends "Those three classes are every caller of this entry point".
+- **G4, `references/phase-handoff.md` §5 rule 2.** On a specs tree that is no git repository, `/docs-workflows:docs-verify` refuses there, as `/docs-workflows:docs-write` does, the backlog unit that cites a gated deliverable. `reference-parts/phase-handoff/require-on-main.md` is regenerated.
+- **G1 and G2, the repository's `.claude/rules/workflows-core-git.md`** (not shipped in any plugin): `commit-artifacts` is consumed by thirty-seven commands of the family's forty, seven of `docs-workflows`' nine, its recipe returning the same thirty-seven; and twenty of the thirty-seven resolve or run inside an implementation repository, ten of them also resolving for docs grounding.
+
 ## [1.100.6] — 2026-11-27
 
 A folder's name is held to `addressing` §2's class on the path every resolution returns, not only on a name a listing reads; resolution reads the tree through one program that builds no command from a folder's name; and every shared reference that enumerates the folders under a resolved folder tests each name it reads. **What changes for you.** A command whose address resolves to a folder named outside the class — holding a space, a quote, a `$`, a backtick or any character other than letters, digits and combining marks of any script and `. _ @ + -` — or whose path runs through such a folder, stops with `ADDRESS_FOLDER_NAME`, which names the folder by its place in a listing of the folder above it and never by its name, and reads nothing under it; rename the folder into the class and re-run. A folder named outside the class that merely matches a key's search — an Epic under its PRD — no longer stops anything but a run on its own key: a run on the PRD, or on a sibling, meets it in a listing, which leaves it out and names it by its position with the same remedy. A folder resolution cannot read — one it cannot list, or one holding a file it cannot read where it looks for the folder's key — stops the run the same way and is never taken for one that is not there, and a path holding a line feed or another control character is refused wherever it lies. Needs `dev-workflows` 4.71.5, `product-workflows` 3.88.6, `docs-workflows` 1.44.5 and `security-workflows` 0.13.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).

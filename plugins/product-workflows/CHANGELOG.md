@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [3.88.7] — 2026-11-27
+
+DOC-D-G1, sub-project 2, batch 2: two pages name `docs-workflows` 1.45.0's `/docs-workflows:docs-verify`. No command, agent or reference changes. Released with `docs-workflows` 1.45.0 and `workflows-core` 1.101.0; its pages need neither, nor they it. 3.88.7 carries 3.88.6, 3.88.5 and 3.88.4, so the 1.100.6, 1.100.5 and 1.100.4 bullets of `.claude/rules/plugin-updates-coupling.md` apply to it, which `workflows-core` 1.101.0, carrying all three, `dev-workflows` 4.71.6, carrying 4.71.5 and 4.71.4, and `docs-workflows` 1.45.0, carrying 1.44.5, meet, beside `security-workflows` 0.13.3 or later, which 1.100.6's bullet names.
+
+### Changed
+
+- **Pages.** The roles-and-phases page names `/docs-workflows:docs-verify` beside `/docs-workflows:document` and `/docs-workflows:docs-write` in the `documenting` phase; the workflow page's `docs-workflows` paragraph names the pages drafted and verified from the backlog, `/docs-verify` among the commands that emit their own session bookkeeping.
+
 ## [3.88.6] — 2026-11-27
 
 **What changes for you.** Every command that resolves an address stops with `ADDRESS_FOLDER_NAME` where the resolved folder, or one above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. `/specify` and `/epics` leave an Epic folder named outside that class out of their Epic set, naming it by its place in the listing with the remedy, and such an Epic no longer stops a run on its PRD; every refusal that names a BRD's slices names such a folder that may be a slice by its position in place of a slice; and `/brd-split`, `/brd-proposal` and the flag sweeps, which would otherwise read a BRD's children with one unseen, stop on one that may be a slice, `/brd-reconcile`'s propagation sweep on a dependent it cannot read. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).
