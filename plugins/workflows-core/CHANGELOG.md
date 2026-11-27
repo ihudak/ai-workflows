@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.101.4] — 2026-11-27
 
-DOC-D-G1, sub-project 2, batch 3: the shared references and pages name the walk of a user page that `docs-workflows` 1.46.0's `/docs-workflows:docs-verify` ships. **What changes for you.** Nothing a run does or prints: the shared references and pages that describe `/docs-verify` now account for its walk of a user page — an agent count, a list narrowed to engineering pages, and pages and a sentence saying it walks one — one of them a truth edit for the GIT-G1 owner. Released with `docs-workflows` 1.46.0 and `dev-workflows` 4.71.10; no run decides anything by these words, so neither needs this release, nor it them. 1.101.4 carries 1.101.3, so the 1.101.3 bullet of `.claude/rules/plugin-updates-coupling.md` applies to it.
+DOC-D-G1, sub-project 2, batch 3: the shared references and pages account for the walk of a user page that `docs-workflows` 1.46.0's `/docs-workflows:docs-verify` ships. **What changes for you.** Nothing a run does or prints: the shared references and pages that describe `/docs-verify` now account for its walk of a user page — an agent count, a list narrowed to engineering pages, and pages and a sentence saying it walks one — one of them a truth edit for the GIT-G1 owner. Released with `docs-workflows` 1.46.0 and `dev-workflows` 4.71.10; no run decides anything by these words, so neither needs this release, nor it them. 1.101.4 carries 1.101.3, so the 1.101.3 bullet of `.claude/rules/plugin-updates-coupling.md` applies to it.
 
 ### Changed
 
