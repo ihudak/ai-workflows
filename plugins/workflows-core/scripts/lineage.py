@@ -224,7 +224,15 @@ def _blob_at(specs, ref, path):
     return out.decode().strip() if rc == 0 else None
 
 
+_BLOB = re.compile(r"[0-9a-f]{40}(?:[0-9a-f]{24})?\Z")  # a blob id: SHA-1's 40 lowercase hex, or SHA-256's 64
+
+
 def _cat_blob(specs, blob):
+    """The blob's text, or None where the clone lacks it -- or where blob is not a blob id (_BLOB): a record's blob is
+    committed data, so a value that is not one -- an option, a revision expression such as `main:<path>` -- is never
+    handed to git, which would read another object as the recorded copy (document-lineage §2 step 5)."""
+    if not isinstance(blob, str) or not _BLOB.match(blob):
+        return None
     rc, out = _git(specs, "cat-file", "-p", blob)
     return out.decode("utf-8", "replace") if rc == 0 else None
 
@@ -1145,6 +1153,22 @@ def test_blob_unavailable():
         r.commit()
         res = check(r.root, "main", [r.spec])
         _check("unavailable", len(res["stale"]) == 1 and res["stale"][0]["unavailable"] is True, json.dumps(res))
+    _with_repo(body)
+
+
+def test_blob_outside_class_never_read():
+    """document-lineage §2 step 5: a recorded blob that is not a blob id -- 40 or 64 lowercase hex -- is never handed
+    to git, so a revision expression naming the upstream's current copy, or an option, never reads as that copy: the
+    link is reported moved, its recorded copy unavailable."""
+    def body(r):
+        r.chain()
+        text = r.read(r.spec)
+        for bogus in (f"main:./{r.prd}", "HEAD", "--batch-all-objects", "0123456789ABCDEF0123456789ABCDEF01234567"):
+            r.write(r.spec, re.sub(r"blob: \S+", f"blob: {bogus}", text, count=1))
+            r.commit()
+            res = check(r.root, "main", [r.spec])
+            _check(f"blob {bogus!r} unavailable",
+                   len(res["stale"]) == 1 and res["stale"][0]["unavailable"] is True, json.dumps(res))
     _with_repo(body)
 
 

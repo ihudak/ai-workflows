@@ -325,6 +325,16 @@ Found while fix batch B44 (`dev-workflows` 4.71.3, `workflows-core` 1.100.3, `pr
   - **Until then.** Land the model before the conformance run, or merge the record.
   - **Evidence.** B44's review, finding 6; `conformance.md` Phase 1 (b) step 4 and *The Rules a threat rests on*'s *A limit*.
 
+## From fix batch B50 — any machine
+
+Found while fix batch B50 (`workflows-core` 1.100.7, `product-workflows` 3.88.7, `dev-workflows` 4.71.6) held the branch names a listing prints to `workflows-core:specs-repo-git` §3.2's safe class, re-deriving the listings with `grep -rnE "for-each-ref|branch --list|branch -r\b|branch -a\b|branch --format|show-ref|ls-remote" plugins` and reading each hit.
+
+- **RECORDED-BRANCH-CLASS — a branch name a committed record holds reaches commands untested.** Owner: `workflows-core:implementation-format` §5's `unit-branch` and the merged test, with their consumers `/dev-workflows:implement`, `/dev-workflows:conformance` and `/security-workflows:scan`; `workflows-core:session-hygiene` §1's merged test of each branch a resume pointer's item names. Priority: the maintainer's to schedule. Pre-existing.
+  - **The case.** An `implementation.md` block's `branch:` is text a committed file holds. `unit-branch` steps 2 and 3 and the merged test build `rev-parse --verify --quiet refs/heads/<branch>` and `merge-base --is-ancestor <branch> …` from it, and resolve the tip the content test reads from it, and `/dev-workflows:conformance`'s PRD run resolves the tip from it; nothing holds it to a class first. A resume pointer's item names a specs-repository branch that `session-hygiene` §1 hands to `specs-repo-git` §3.5's `branch-merged`. `/implement` writes `branch:` from `git branch --show-current`, which `read-only-repos` §3's *Branch names* holds to the class, so only a hand edit or a hostile commit puts a name outside it there. It is not a listing, so B50's widening of *Branch names* does not reach it.
+  - **What would fix it.** Each reader holding a recorded branch name to the safe class, tested as `specs-repo-git` §3.2 tests one, before any command names it, with a block whose `branch` is outside it read as one that names no branch.
+  - **Until then.** Review of each pull request into the specs repository is the check.
+  - **Evidence.** B50's re-derivation; `implementation-format.md` §5 steps 2 and 3, and its merged test; `specs-repo-git.md` §3.5's list of `branch-merged` callers.
+
 ## Accepted — known, not to fix
 
 - **Which of the customer's sentences is the reason** a `/brd-reconcile` *Correct it* copies out of the review is a reading no test can make. product-workflows 3.34.5 records every *Correct it* pick in the reconciliation record — the reader's row, the corrected `chosen` and reason, and where in the review each was copied from — so the pick can be checked, as a re-point already is. Nothing further can be done in the command; a reviewer of the record is the check.

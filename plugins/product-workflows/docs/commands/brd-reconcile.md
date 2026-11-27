@@ -56,7 +56,8 @@ raised only about the defects of a requirement the customer withdrew, to close t
   reconciled later supersedes an earlier one's answer wherever the two differ, so a corrected resend
   goes last; a review on a branch of the repository not merged yet stops with
   `BRD_RECONCILE_REVIEW_NOT_MERGED`, naming the branch — a pull request from a fork shows up only once
-  merged. Either way you say which file is
+  merged, and a branch whose name holds a character outside letters, digits and `. _ / @ + -` is not
+  searched, the stop saying how many such branches it left out. Either way you say which file is
   the review — by naming it, or by confirming the one found — and a committed review is moved to its
   canonical name rather than copied, so the folder holds it once. `--sent` needs the path.
 - **`--free-text`** (optional) — you are telling the run the review is prose, so the reader reads it

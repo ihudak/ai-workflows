@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.71.6] — 2026-11-27
+
+**What changes for you.** `/conformance` reads a threat model's acceptance whose review date alone is missing or malformed as `review due`, and no longer withholds *Accept as shipped* from every architecture Rule of that model's folder on its account. `/design` classes such a threat `accepted`, never as a malformed threat put to you as deferred.
+
+### Fixed
+
+- **`/conformance` Phase 1 (b), *Walk-only mitigations*, and Phase 5's rule 1.** Rule 1 read an `Accepted — ` Disposition faulted for its review date alone as readable, `review due`, while *Walk-only mitigations* took it for a Disposition in none of format §4's three forms, making each `[AD#n]` Rule of its folder walk-only. Both now read it as the third form, citing `workflows-core:threat-model-format` §4's *A faulted review date*.
+- **`/design` Phase 2.5 step 7.** Such a threat is classed `accepted`, as format §4 reads it, rather than marked `malformed`.
+- **`docs/commands/conformance.md`** says such an acceptance is a Disposition the run can read.
+
 ## [4.71.5] — 2026-11-27
 
 **What changes for you.** `/design`, `/implement`, `/ready`, `/conformance` and `/vuln` stop with `ADDRESS_FOLDER_NAME` where the folder their address resolves, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. `/implement` no longer lists, tests or picks an Epic folder named outside that class: it names it by its place in the listing, with the remedy, and goes on with the rest — and such an Epic no longer stops a run on its PRD. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).
