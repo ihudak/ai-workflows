@@ -3747,6 +3747,33 @@ def selftest(groups=None):
               and on_origin(r) == head(r) and record(env, "/create-ard") is None,
               "e_declined_only: the no-preflight path, the commit made, the declined append (%r)" % got)
 
+        # e_staged_removal: a session file whose removal is already staged (git rm) and a session file renamed with git
+        # mv: the end's staging takes the staged removal as nothing to do, where git add -A refused it (pathspec did not
+        # match) and every later end printed the commit-failed row, so its commit carries the removal and the new path;
+        # the renamed file's original, which status() does not list in ARTIFACT, is a staged removal of its own at the
+        # next end, which commits it cleanly, leaving no session file uncommitted
+        r, env = world(tmp, "e-staged-removal")
+        fb = "specifications/PRD-ACME-1-x/dev-workflows/feedback/"
+        for name in ("gone.md", "old.md"):
+            r.write(fb + name, "the entry of %s\n" % name)
+        r.commit_all("NOISSUE two session files")
+        r.git("push", "-q", "origin", "main")
+        r.git("rm", "-q", "--", fb + "gone.md")
+        r.git("mv", "--", fb + "old.md", fb + "new.md")
+        seeded = []
+        for k in range(2):
+            seed(env, "/create-prd")
+            got = run_end(env, "/create-prd")
+            seeded.append((got.get("_rc"), got.get("row"), (got.get("line") or "")[:160],
+                           sorted(_commit_paths(r.path, "HEAD")) if got.get("row") == "pushed-default" else []))
+        left = [e for e in r.git("status", "--porcelain", "-z", "--untracked-files=all").split("\0")
+                if "/dev-workflows/" in e]
+        check([s[:2] for s in seeded] == [(0, "pushed-default")] * 2
+              and seeded[0][3] == sorted([fb + "gone.md", fb + "new.md"]) and seeded[1][3] == [fb + "old.md"]
+              and left == [] and on_origin(r) == head(r),
+              "e_staged_removal: a staged removal and a rename's halves, committed by two ends, no commit failing "
+              "(%r, left %r)" % (seeded, left))
+
         # e_silent
         plain = os.path.join(tmp, "e-silent-plain")
         os.makedirs(plain)

@@ -200,6 +200,14 @@
     "fails": "e_declined_escaped:"
   },
   {
+    "id": "end_e_staged_removal",
+    "group": "end",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    r = sb.git(root, \"update-index\", \"--add\", \"--remove\", \"--\", *paths, check=False)  # literal paths: no pathspec",
+    "new": "    r = sb.git(root, \"add\", \"-A\", \"--\", *_literal(paths), check=False)",
+    "fails": "e_staged_removal:"
+  },
+  {
     "id": "gate_g_file",
     "group": "gate",
     "file": "plugins/workflows-core/scripts/specs-git.py",

@@ -23,8 +23,9 @@ loop: a **run-start** flush and branch disposition (`specs-preflight`, §3) and 
    `git -C "$SPECS_PATH" …`. The working directory is NEVER changed. Most
    callers are running inside a *different* repository when these entry points
    fire; a `cd` would corrupt their git state.
-2. **Bounded paths.** Only §2.1 paths are ever staged. `git add -A` is never
-   issued at repository scope — always `git add -A -- <literal paths>`.
+2. **Bounded paths.** Only §2.1 paths are ever staged, each named: nothing is
+   staged at repository scope — §2.1 step 3 stages with
+   `git update-index --add --remove -- <literal paths>`.
 3. **Bounded branches.** Only branches matching `^(idea|prd|ard|spec|epics|design|ready|brd|frames|kb|conformance)/`
    are the plugin's to switch away from or delete (§2.2). They, the default
    branch and §8's session branch are the only branches it pushes, only to
@@ -252,15 +253,21 @@ fragile to express and to review. Steps 1 and 2 are one call, `python3 "${CLAUDE
    its session files are classified OTHER. When the register gains a name, this
    pattern gains it too.
 3. Stage the literal ARTIFACT paths only, those `status`'s `artifact` list names:
-   `git -C "$SPECS_PATH" add -A -- <path> [<path>…]`.
+   `git -C "$SPECS_PATH" update-index --add --remove -- <path> [<path>…]`.
 
-`-A` is used deliberately: `cost-emission.md` §9 relocates a pending cost file
-into a PRD directory and then **deletes** the pending file, and that deletion
-must be staged. `-A` states that intent explicitly, and it was strictly
-required before git 2.0, where `git add <path>` did not stage a deletion. On
-git ≥ 2.0 a plain `git add -- <path>` stages a deletion for a literal path too
-— verified empirically — so keep `-A` for explicitness and for older git, but
-do not justify it by claiming plain `git add` cannot stage the deletion.
+`update-index` is used deliberately. It records each path as the working tree
+holds it — a new file (`--add`), a change, a removal (`--remove`):
+`cost-emission.md` §9 relocates a pending cost file into a PRD directory and
+then **deletes** the pending file, and that deletion must be staged. It takes
+each path as it stands, reading no pattern, and the `--` before them makes git
+read a name opening with `-` as a path. And it takes a path neither the working
+tree nor the index holds — one whose removal is already staged, after a
+`git rm` of a session file, or a renamed session file's original once the run
+that committed the new name has left the removal behind (§2.1 step 1 lists no
+ARTIFACT original) — as nothing to do, where `git add -A -- <path>` refused it
+(`pathspec … did not match any files`, exit 128), the commit failed, and every
+later end printed §6's *Commit failed* row until the removal was committed by
+hand. Step 4's commit by pathspec then carries that staged removal too.
 
 ### 2.2 Branches
 

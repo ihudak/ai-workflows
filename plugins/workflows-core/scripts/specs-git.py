@@ -1073,7 +1073,8 @@ def session_subject(key, command):
 
 def commit_session_files(root, message, on_write=None, on_staged=None, exclude=()):
     """specs-repo-git §2.1 steps 1-3 and §4 step 4: stage the ARTIFACT paths status() lists, less <exclude> (the held
-    files §3.4's flush and §4 step 2 leave out: _held_unchanged), then commit, by pathspec,
+    files §3.4's flush and §4 step 2 leave out: _held_unchanged), with update-index --add --remove, which takes a path
+    whose removal is already staged as nothing to do, where add -A refused it, then commit, by pathspec,
     those git still lists as staged, and bring the index back in step with the new HEAD where a pre-commit hook
     changed what the commit carries, leaving a change somebody else had staged as they staged it. locked where
     index.lock exists, tested before staging; failed where git or a hook refuses (error: the first line of git's error
@@ -1090,7 +1091,7 @@ def commit_session_files(root, message, on_write=None, on_staged=None, exclude=(
         return out
     if on_write:
         on_write()
-    r = sb.git(root, "add", "-A", "--", *_literal(paths), check=False)
+    r = sb.git(root, "update-index", "--add", "--remove", "--", *paths, check=False)  # literal paths: no pathspec
     if r.returncode != 0:
         return dict(out, status="locked") if os.path.lexists(lock) else dict(out, status="failed", error=_first_line(r))
     listed = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames", "--", *_literal(paths)))
