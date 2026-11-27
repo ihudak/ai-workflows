@@ -3046,7 +3046,8 @@ UB_PATH = os.path.join(HERE, os.pardir, "references", "docs-iteration", "unit-br
 WC_PATH = os.path.join(HERE, os.pardir, "agents", "walkthrough-composer.md")
 BF_LEAD = "**The line shape a backlog run reads.**"
 WALK_LEAD = "**The shape a walkthrough is read in.**"
-# The image-slot comment's opening, page text a program matches: unit-brief section 3.3's step 5 gives the comment.
+# The image-slot comment's opening, page text a program matches: unit-brief section 3.3's step 5 gives the comment, and
+# docs-verify.md's slot program finds it on a page by this opening.
 SLOT_COMMENT = "<!-- docs-image-slot: "
 # The rule for when a walkthrough step states a claim, with what an instruction's own effect is, held in two copies:
 # unit-brief section 2.1 and walkthrough-composer's Method step 3. Each copy runs from STATES_LEAD to the first
@@ -6032,14 +6033,28 @@ def case_walk_shape_paragraph_pinned(tmp):
 
 def case_slot_comment_pinned(tmp):
     """The image-slot comment is page text a program matches: unit-brief section 3.3's step 5 gives it, once, as
-    the line doc-writer writes. (Task 3.3's slot program, which carries the literal's opening, joins this case when
-    it lands.)"""
+    the line doc-writer writes, and docs-verify.md's slot program, which /docs-verify runs at its walk to find the
+    slots a page carries, holds its opening as a Python literal, once -- the program building the whole line from it
+    and the slot -- so a reword of either side turns the build red rather than leaving every slot unasked. No other
+    command or reference holds a program that matches it: docs-write.md and backlog-run.md hold the literal nowhere."""
     with open(UB_PATH, encoding="utf-8") as fh:
         ub = fh.read()
     sec = ub[ub.index("\n### 3.3 "):ub.index("\n### 3.4 ")]
     step5 = next(p for p in sec.split("\n\n") if p.startswith("**Step 5 "))
     _eq(step5.count("`" + SLOT_COMMENT + "<slot> -->`"), 1, "section 3.3 step 5 gives the slot comment once")
     _eq(step5.count(SLOT_COMMENT), 1, "and the opening nowhere else in that step")
+    literal = '"' + SLOT_COMMENT + '"'
+    with open(DV_PATH, encoding="utf-8") as fh:
+        dv = fh.read()
+    _eq(dv.count(literal), 1, "docs-verify's slot program holds the opening's literal, once")
+    at = dv.index(literal)
+    start, end = dv.rfind("python3 -I -c '", 0, at), dv.find("'", at)
+    _true(start != -1 and "'" not in dv[start + len("python3 -I -c '"):at] and end != -1,
+          "the literal stands inside a python3 -I -c program")
+    _true(dv[at:end].startswith(literal + " + sys.argv[2] + \" -->\""), "the program builds the whole line from it")
+    for path in (DW_PATH, BR_PATH):
+        with open(path, encoding="utf-8") as fh:
+            _eq(fh.read().count(literal), 0, "%s holds the literal nowhere" % os.path.basename(path))
 
 
 def case_states_definition_pinned(tmp):
