@@ -1,0 +1,24 @@
+---
+paths:
+  - "plugins/product-workflows/**"
+  - "plugins/dev-workflows/commands/design.md"
+  - "plugins/dev-workflows/commands/ready.md"
+  - "plugins/dev-workflows/commands/implement.md"
+  - "plugins/dev-workflows/commands/conformance.md"
+  - "plugins/workflows-core/references/addressing.md"
+  - "plugins/workflows-core/references/cost-emission.md"
+  - "plugins/workflows-core/commands/frames.md"
+  - "plugins/docs-workflows/commands/document.md"
+  - "plugins/docs-workflows/commands/release-notes.md"
+  - "plugins/security-workflows/commands/scan.md"
+---
+
+# BRD route — `/brd-interview`'s map line
+
+Loaded with `.claude/rules/brd-route.md`, whose `paths:` it shares. Split out of `.claude/rules/brd-route.md` to keep that file under 20,000 characters, when `/brd-interview` took the question walk `workflows-core:question-budget` defines; the route's other map lines and its folder-kind invariants are there, and its map names this line in its place; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+
+## Workflow map
+
+```
+/brd-interview       → [`--budget <N>`: 5–50, default 25, a resumed run keeping its registry's] → [require-on-main: grounding/code-grounding.md] → [gates: every finding verified; no ledger row `unallocated`] → [lineage capture; upstream-check on the grounding] → [open the run folder (`workflows-core:run-folder`): a stopped run resumes, its held round taken up whole] → resolve/open the round → generate it: one question per requirement row however many repositories ground it, an unsettled claim asked only where no repository's verified finding settles the row → tag every question → answer each `[G]` from the findings → the question registry (`question-registry.py`, `workflows-core:question-budget` §12) over every `[V]` and `[C]` of the rounds on file → [a resumed run: each held `[C]` a package carried since, marked carried (`carry`)] → question-planner@Opus (workflows-core, `merge`): merges, drops, proposals, and the answers a decision on file already settles — this register's, a sibling slice's or a `depends-on:` BRD's (`applied_from`) → each sitting: question-planner (`plan`: ranks, what a decision settles, the tail table, `code_defects`) → the table, once a sitting, for the tail beyond the budget the planner is sure of → at most a budget of `[V]`s, each `Q<n>/<budget>`, in plain words with a recommendation and its reason, a reason asked only for a choice that carries none → after each answer its coverage, then answer-applier@Opus (workflows-core): each open question it settles recorded applied, one it narrows narrowed, a held `[C]` given a proposed answer or re-tagged `[V]` → [the code-defect question, only on a plan's `code_defects` entry whose intent basis a finding's evidence holds] → the end-of-sitting list: what closed without being asked singly, to accept or reopen → at the budget: the next sitting (recommended), a stop to resume later, or *Defer the rest* with one reason — a deferral naming the held `[C]`s it waits on (`Blocked-on:`) → hold each `[C]` for the customer, a carried one taking a proposal only → write, in this order, code-defect-log.md (where a decision turns on a [CDF#n]) → decisions.md → interview/customer-questions.md → interview/round-N.md, with an account line per tag, the commit point: an item no round record names is a torn write no reader counts (`product-workflows:decision-register-format` §8) → then lines in each other round's record holding a question this run applied, merged, dropped, re-tagged or gave a proposal → apply each [CDF#n] re-disposition the round record names → stamp decisions.md's lineage where this run generated the round (a run with no question too) → [offer to close each `unsourced` [DEF#n] a verified [CG#n] settles: `resolved-by` into the parent's brd/brd-defect-log.md on confirmation, where Phase 0's require-on-main on that log passed] → [handoff-to-main: register + round records + `[C]` question set + that log where written] → impl-maintenance → commit-artifacts   (a resolved root stops with `BRD_INTERVIEW_ROOT_LEVEL`: deciding is slice-only; the final report gives the registry's account of every question)
+```

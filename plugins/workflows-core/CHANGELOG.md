@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.103.0] — 2026-11-27
+
+**What changes for you.** Nothing changes in a command of this plugin. `product-workflows` 3.90.0's `/brd-interview` now asks its questions by `question-budget` and dispatches `question-planner` and `answer-applier`, the caller 1.102.0 named for them; this release brings four texts into line with that command, which needs it (`.claude/rules/plugin-updates-coupling.md`, its 1.103.0 bullet).
+
+### Changed
+
+- **`references/question-budget.md`.** §12 lists `carry`, which `product-workflows`' `question-registry.py` gains in 3.90.0: it marks a held `[C]` carried where a package carried it after it entered the registry, a resumed run calling it once it has undone anything the run did to the question that a carried one may not take; the script then refuses `rank` on it too. §7: a caller runs strategic sittings only where its own text says it does, citing the section; one whose text does not plans no strategic question, and every sitting it opens is one of its detailed walk.
+- **`agents/answer-applier.md`**: the caller records a `retag` verdict as a re-tag where its own rules let it re-tag the question, and may decline one and record the verdict's `answer` as a proposal instead; the verdict is the same either way.
+- **`agents/question-planner.md`** names `/brd-interview` as its caller in modes `merge` and `plan`, and mode `strategic` as a caller's that runs strategic sittings.
+- **`references/phase-handoff.md` §3.4**, the `/brd-package` round row, with its generated `require-on-main` file: `BRD_PACKAGE_ROUND_UNSETTLED` stops on a round holding a deferred question save a `[V]` deferred only on questions held for the customer, which 3.90.0's `/brd-package` admits.
+- **Pages.** The references page says strategic questions come first in a command that runs strategic sittings.
+
+### Known limits
+
+- **1.102.0's limit is lifted, save the strategic mode and §13 (next item)**: `/product-workflows:brd-interview` now follows the rulebook, dispatching `question-planner` in modes `merge` and `plan` and `answer-applier` after each answer it records, so the rulebook, both agents and the agents page describe a caller that uses them.
+- **No command runs a strategic sitting yet**: the planner's mode `strategic` and §7 have no caller until `/brd-interview` adopts them in a later release, and no package prompt carries §13's block yet.
+
 ## [1.102.0] — 2026-11-27
 
 **What changes for you.** Nothing changes in a command of this plugin. It adds the rulebook the BRD route asks people questions by, `question-budget`, and the two agents that plan those questions and apply each answer to the rest, `question-planner` and `answer-applier`. `product-workflows` 3.89.0's `/brd-intake` asks its defect walk's questions by the rulebook and dispatches `question-planner`, and needs this release (`.claude/rules/plugin-updates-coupling.md`, its 1.102.0 bullet).

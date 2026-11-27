@@ -12,7 +12,8 @@ what this agent receives, what it returns and the checks it makes before it writ
 restate the rulebook.
 
 Plan the questions of one sitting, and nothing more. The caller — `/brd-intake`'s defect walk in
-mode `intake`, `/brd-interview` in modes `merge`, `strategic` and `plan` — hands over its run's
+mode `intake`, `/brd-interview` in modes `merge` and `plan`, and in mode `strategic` a caller that
+runs strategic sittings (rulebook §7) — hands over its run's
 questions as a file, and records what this agent returns in the run's registry: each merge, each
 drop, each applied answer and proposal, each strategic question and the ranks (rulebook §12).
 **This agent proposes; it closes nothing.** It never runs the registry script, never reads the registry, and asks no one anything.

@@ -145,16 +145,18 @@ questions strategic first, then by rank, and a sitting asks them in that order, 
 ## 7. Strategic sittings
 
 Strategic sittings are `/brd-interview`'s, and reach the customer through the questions it writes
-(§13); intake's walk groups and budgets its candidates, but plans none.
+(§13); intake's walk groups and budgets its candidates, but plans none. **A caller runs strategic
+sittings only where its own text says it does, citing this section**: one whose text does not plans
+no strategic question, and every sitting it opens is a sitting of its detailed walk.
 
 **The registry is kept whole.** Every detailed question is generated, tagged and merged first;
 strategic questions are planned over the registry and never replace it. Each answer closes the
 registry questions it determines (§8); whatever no answer closes is still there in its detailed
 wording, and is asked in detail afterwards.
 
-**Trigger.** After generation, tagging and merging, where the questions open for a person exceed one
-budget, the run says so before its first question — how many, by tag; the plan, strategic sittings
-first; the dispatches it expects — and plans strategic questions.
+**Trigger**, in a caller that runs them. After generation, tagging and merging, where the questions
+open for a person exceed one budget, the run says so before its first question — how many, by
+tag; the plan, strategic sittings first; the dispatches it expects — and plans strategic questions.
 
 **Planning.** The planner groups open questions into strategic questions, each in §4's shape with
 *Why we ask* and its `covers`, ranked by §6. A strategic question takes the tag of what it covers:
