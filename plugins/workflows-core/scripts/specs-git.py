@@ -1311,8 +1311,10 @@ def _appends(lines, f):
         out += _conflict_clause(lines, "app.session.conflict-origin", "origin/" + branch, sync, v)
         if sync.get("error"):
             out += lines.fill("app.session.sync-error", dict(v, **{"<sync.error>": " ".join(str(sync["error"]).split())}))
+        word = lines.placeholder("app.session.unsettled", "<session/")  # the show's operand, pasted as one shell word
         for path in f.get("unsettled") or []:
-            out += lines.fill("app.session.unsettled", dict(v, **{"<path>": path}))
+            out += lines.fill("app.session.unsettled", dict(v, **{"<path>": path, word: lines.shell_path(
+                "%s:%s" % (branch, path))}))
         if f.get("unsettled"):
             out += T["app.session.unsettled.close"]
         if f.get("stranded"):

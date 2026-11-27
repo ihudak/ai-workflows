@@ -1430,7 +1430,7 @@ def selftest(groups=None):
                          "commits it, and once that is pushed, a later run here merges and pushes")
         unsettled = ("; %s and session/ab's version of it each hold a change the other lacks, so it was left out of this "
                      "commit and is as it was in your working tree — git -C \"/s\" show session/ab:%s shows the branch's "
-                     "version")
+                     "version")  # x.md and y.md: shell-quoted, each is one shell word as it stands
         want = ("; this run created local session/ab at 1234567"
                 "; merging main into session/ab left a.md, b.md unsettled — settle them in its pull request"
                 + origin_clause
@@ -2279,10 +2279,12 @@ def selftest(groups=None):
         got = lines.fill("app.hook-line", {"<path>": ["a.md"], "<sha7>": "abc1234"})
         check(got == "Specs repo: a.md is now committed in abc1234, put there by a pre-commit hook, and not pushed",
               "l_fill_list_marker: a one-item list (%r)" % got)
-        got = "".join(lines.fill("app.session.unsettled", {"<path>": p, "<identity>": "ab", "<SPECS_PATH>": "/s"})
+        word = span("app.session.unsettled", "<session/")
+        got = "".join(lines.fill("app.session.unsettled", {"<path>": p, "<identity>": "ab", "<SPECS_PATH>": "/s",
+                                                           word: shlex.quote("session/ab:" + p)})
                       for p in ("a.md", "b c.md")) + lines.fill("app.session.unsettled.close", {})
         check(got.count("so it was left out of this commit") == 2 and "show session/ab:a.md shows" in got
-              and "show session/ab:b c.md shows" in got and got.endswith("each move of the specs checkout is skipped")
+              and "show 'session/ab:b c.md' shows" in got and got.endswith("each move of the specs checkout is skipped")
               and got.count("once a copy left out is the branch's version") == 1,
               "l_fill_list_marker: unsettled once per path, each with its own show, the close once (%r)" % got)
 
@@ -2729,6 +2731,33 @@ def selftest(groups=None):
         check(lines.artifacts([lit]) == "a\\\\nb.md" and lines.artifacts([lf]) == "a\\nb.md",
               "l_shown_backslash: <artifacts> shows the two names apart (%r, %r)"
               % (lines.artifacts([lit]), lines.artifacts([lf])))
+
+        # l_unsettled_show: the unsettled append's git show names the session branch's revision and path as one shell
+        # word, written by shell_path: pasted into bash against a real git, it shows that branch's blob of a session file
+        # whose path holds a space, one holding $( and a backtick, and one holding a line feed, and runs nothing
+        appends = globals().get("_appends")
+        r = new_repo(tmp, "l-unsettled")
+        held = ["dev-workflows-feedback/my notes.md", "dev-workflows-feedback/$(touch PWN)`touch PWN2`.md",
+                "dev-workflows-feedback/it's\nhere.md"]
+        r.git("switch", "-q", "-c", "session/ab")
+        for k, p in enumerate(held):
+            r.write(p, "branch %d\n" % k)
+        r.commit_all("NOISSUE the session branch's copies")
+        r.git("switch", "-q", "main")
+        f = {"specs": r.path, "default": "main", "default_ref": "main", "session_branch": "session/ab", "mode": "on",
+             "unsettled": held, "sync": {}}
+        got = appends(lines, f) if appends else ""
+        shows = re.findall(r" — (git -C .*?) shows the branch's version", got)
+        here = os.path.join(tmp, "l-unsettled-cwd")
+        os.makedirs(here)
+        check("\n" not in got and len(shows) == len(held),
+              "l_unsettled_show: one git show per unsettled path, the line unbroken (%r)" % got)
+        for k, (p, cmd) in enumerate(zip(held, shows)):
+            ran = subprocess.run(["bash", "-c", cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=here)
+            check(ran.returncode == 0 and ran.stdout == b"branch %d\n" % k and os.listdir(here) == []
+                  and not any(n.startswith("PWN") for n in os.listdir(r.path)),
+                  "l_unsettled_show: the show for %r, pasted into bash, prints session/ab's blob and runs nothing "
+                  "(rc %s, %r, %r, %r)" % (p, ran.returncode, cmd, ran.stdout[:80], ran.stderr[:200]))
 
     def scenarios_gate(tmp):
         with open(SESSION_HYGIENE, encoding="utf-8") as fh:
