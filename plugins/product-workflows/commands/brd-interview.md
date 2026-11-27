@@ -2061,11 +2061,13 @@ registry holds no question, or was lost (its exit 2), it plans nothing: set fact
 
 **First, measure — once.** From the registry file, once *Then merge* has recorded its merges,
 drops and applied answers: `<v>`, the open, uncarried `[V]`s of the round this run works outside
-the skip set — the questions the sittings put to the operator — and `<c>`, the open, uncarried
-`[C]`s of every round, held for the customer (`workflows-core:question-budget` §8, *Reach*), that
-are not themselves strategic and that no strategic question of the registry names in its `covers`,
-whatever its state — those a strategic question already groups are left out, so a slice whose held
-`[C]`s are all grouped plans no strategic `[C]` again. The
+the skip set — the questions the sittings put to the operator; `<h>`, the open, uncarried `[C]`s
+of every round, held for the customer (`workflows-core:question-budget` §8, *Reach*) — every one
+no package has carried yet, strategic ones and those a strategic question groups included;
+and `<c>`, those of the `<h>` that are not themselves strategic and that no strategic question of
+the registry names in its `covers`, whatever its state — those a strategic question already
+groups are left out, so a slice whose held `[C]`s are all grouped plans no strategic `[C]` again.
+**`<c>` is the `[C]` trigger's count alone**: the scale statement below reports `<h>`. The
 trigger is measured per person (§7, *Trigger*): the **`[V]` trigger** fires where `<v>` is above
 the budget in force, and the **`[C]` trigger** where `<c>` is. Record which fired as fact
 `p55-trigger` — `V`, `C`, `V C` or `none` — which every strategic plan of the run reads; a resumed
@@ -2073,8 +2075,8 @@ run that finds it set takes the triggers from it, and counts again only for the 
 
 - **The `[V]` trigger** — set fact `p6-walk` to `strategic`, and print, before the first question,
   on a line of its own:
-  `Questions for a person after merging: <N> ([V] <v>, [C] <c>). Plan: strategic sittings first, then the detailed walk. Expected agent dispatches: question-planner 1 per sitting + answer-applier 1 per answer.`
-  — `<N>` being `<v>` + `<c>`, each the registry's count as the line is printed. Then set fact
+  `Questions for a person after merging: <N> ([V] <v>, [C] <h>). Plan: strategic sittings first, then the detailed walk. Expected agent dispatches: question-planner 1 per sitting + answer-applier 1 per answer.`
+  — `<N>` being `<v>` + `<h>`, each the registry's count as the line is printed. Then set fact
   `p55-scale` to `printed`; a resumed run that finds it set prints nothing, so the line is printed
   once in a run.
 - **The `[C]` trigger alone** — set `p6-walk` to `detailed`, and print, once, under the same fact:
