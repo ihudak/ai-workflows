@@ -132,7 +132,7 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
 
    **The remedy is a directory listing rather than a ledger read** — this remedy opens no coverage
    ledger and does not start now. Enumerate slices by `/brd-split` Phase 0 step 9's **positive
-   test**: an immediate subdirectory carrying a `brd-link.md` whose `parent:` names this BRD — each subdirectory's name held to `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it named by its position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1).
+   test**: an immediate subdirectory carrying a `brd-link.md` whose `parent:` names this BRD — each subdirectory's name held to `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it that may be a slice named by its position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1).
    - **One or more slices** — the ordinary shape, since a split always confirms at least one. Name
      every slice and offer `/product-workflows:epics <SLICE-KEY>` once per slice. That run resolves a
      `PRD-` folder and passes this refusal; whether it then passes *Gate the PRD* and step 1b depends

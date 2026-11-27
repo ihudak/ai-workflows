@@ -90,7 +90,7 @@ Echo the detected mode, then proceed to that mode's phases. The two modes share 
    tree, not a capability this plugin lacks — **so `emit-block` does not fire** on any of them.
    - **A BRD container** — the folder §4.1's container test places — holds no PRD: a BRD's PRDs are
      authored in its `PRD-` slices. List the slices under it by the positive test §4.1 names, each
-     immediate subdirectory carrying a `brd-link.md` whose `parent:` names the container — each subdirectory's name held to `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it named by its position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1). A slice
+     immediate subdirectory carrying a `brd-link.md` whose `parent:` names the container — each subdirectory's name held to `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it that may be a slice named by its position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1). A slice
      is listed by the `key` its own carrier asserts (§4); one whose carrier asserts none is listed by
      its `@<path>` with `(no key — give it a carrier, workflows-core:addressing §5)` and is not
      enterable. Stop:
@@ -872,7 +872,7 @@ Invoke `doc-planner`:
 → Agent (subagent_type: "docs-workflows:doc-planner", model: `<planning_model — §9 / §2 Opus chain; under §10, run_flags.enforced_model>`):
   > "Produce the documentation checklist for the brief:
   >
-  > folder_read: [paste full YAML from Phase 3; when focus_key is set, restrict the folder read to focus_items]
+  > folder_read: [paste full YAML from Phase 3 — its Epic set the Epic folders Phase 0's listing found in workflows-core:addressing §2's class, never one it named by its position; when focus_key is set, restrict the folder read to focus_items]
   > diff_summaries:       [paste array of diff-summarizer outputs from Phase 5]
   > write_targets:        [paste confirmed list from Phase 5.5]
   > screenshots:          [selected candidate paths from Phase 5.6, possibly empty]

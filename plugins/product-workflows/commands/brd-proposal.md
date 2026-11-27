@@ -86,7 +86,7 @@ not work: a flag is a token, so `--redo` would arrive as the address.
 
 2. **Resolve the address.** Resolve the single positional `<ADDRESS>` — a `<KEY>`, or an `@<path>`
    naming a folder — with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3).
-   A token `read-key` (§1) finds `invalid` stops with
+   A token `read-key` finds `misnamed` takes `workflows-core:addressing` §3's `ADDRESS_FOLDER_NAME` stop, as its §1 says, never the stop below. A token `read-key` (§1) finds `invalid` stops with
    `BRD_PROPOSAL_NEEDS_KEY: /brd-proposal needs an address (^[A-Z][A-Z0-9_]*(-\d+)+$, e.g. PRODUCT-1234) — re-run '/product-workflows:brd-proposal <ADDRESS>'.`
    A key is validated for shape only and checked against nothing (§1) — it names a folder in `$SPECS_PATH`; a whole folder name is matched against that tree's folder names.
    `status: absent` stops with
@@ -234,7 +234,9 @@ is what lets a folder that is not a child be counted as one. The test also needs
 since `brd/`, `grounding/` and `dev-workflows/` carry no `brd-link.md` at all. **Each subdirectory's
 name is held to `workflows-core:addressing` §2's class before its `brd-link.md` is read**, checked as
 text for a `'`, then with that section's program, §2's reserved names passed over untested. One
-outside it may be a slice this run cannot read, and an umbrella that left its numbers out would read
+outside it that may be a slice — one a listing of the BRD folder's files shows holding a
+`brd-link.md`, read as §2's *A folder refused by its name* reads it, its name entering no command —
+may be a slice this run cannot read, and an umbrella that left its numbers out would read
 as the whole BRD's, so it stops the run:
 
 ```
@@ -242,7 +244,8 @@ BRD_PROPOSAL_SLICE_NAME: a folder directly under <BRD-KEY>'s folder is named out
 ```
 
 `<its position>` and `<the remedy>` are as §2's *A folder refused by its name* gives them, `<P>` the
-BRD folder's path.
+BRD folder's path. One outside the class that may not be a slice is passed over, as a folder holding no
+`brd-link.md` is.
 
 Record, per slice: its key, its folder, whether `proposal.md` and `proposal-brief.md` are present,
 and, where `proposal.md` is, whether it is current and the basis that decided it — Phase 3 walks that

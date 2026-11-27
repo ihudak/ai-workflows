@@ -47,11 +47,14 @@ touches no filesystem — a pure string test, safe to call before `$SPECS_PATH` 
 in this order, the first that holds winning:
 
 1. **A key.** Where `key-valid <TOKEN>` is `valid`: `key: <TOKEN>`, `prefix: none`.
-2. **A folder's whole name.** Where `$SPECS_PATH/specifications/` is a directory and exactly one
-   directory at most three levels below it is named `<TOKEN>` exactly — §2's reserved names never
-   counted — that folder's path is first held to §3's *The path's class*, and `read-key` returns
-   **`misnamed`** where a component of it is outside the class, reading nothing of the folder;
-   otherwise §4 reads that folder's carrier, and the name begins `<KIND>-<key>-` (§4.1, `<KIND>` one
+2. **A folder's whole name.** Where `$SPECS_PATH/specifications/` is a directory, `<TOKEN>` is in
+   §2's class — checked as text for a `'`, then with §2's program, before any command names it; a
+   token outside it is no folder's whole name, and this reading is not tried — and the resolution
+   program's `name` mode (§3) finds exactly one directory at most three levels below it named
+   `<TOKEN>` exactly — §2's reserved names never counted, nor anything under them — that program
+   holds the folder's path to §3's *The path's class*, and `read-key` returns **`misnamed`** where a
+   component of it is outside the class, no command having named the folder; otherwise the program
+   reads that folder's carrier (§4), and the name begins `<KIND>-<key>-` (§4.1, `<KIND>` one
    of §2's three, `<key>` the key the carrier asserts) or, a legacy name (§5), `<key>-`: `key:` that
    key and `prefix:` that kind, or `none` for a legacy name. A name that begins with neither is §4's
    hard stop on a key that disagrees with its folder name; a folder with no carrier yields nothing
@@ -233,7 +236,7 @@ round is), `dev-workflows/` is `references/specs-repo-git.md` §2.1's, `design/`
 above; a name added here without an authority to cite is a name two files will disagree about.
 `specs-repo-git.md` §2.1's classifier excludes every name in the list but `dev-workflows/`, so that
 a file a run copied in is never committed as a session file, and a name added here is added there too —
-and to `key-summary`'s `RESERVED` set and prefixes (§1), so it never reads a key off a file a run copied in.
+and to the `RESERVED` sets and prefixes of `key-summary` (§1) and of the resolution program (§3), so neither reads a key off a file a run copied in.
 
 **A user whose own key begins with a kind token gets `PRD-PRD-1234-…`.** That is a documented
 consequence of a documented convention, not a defect, and it is not hypothetical: a key like
@@ -258,15 +261,30 @@ it holds no `..` — in regular-expression terms, matched whole:
 it as one single-quoted argument, never in a here-document, which a line of the name could end:
 
 ```
-python3 -I -c 'import sys, unicodedata as u; ns = sys.argv[1:]; ok = lambda n: n != "" and ".." not in n and (n[0] == "_" or n[0].isalnum()) and all(c.isalnum() or c in "._@+-" or u.category(c).startswith("M") for c in n); sys.exit(next((i for i, n in enumerate(ns, 1) if not ok(n)), 0) if ns else 255)' '<name>'
+python3 -I -c 'import os, sys, unicodedata as u
+def ok(a):
+    try:
+        n = os.fsencode(a).decode("utf-8")
+    except UnicodeError:
+        return False
+    return n != "" and ".." not in n and (n[0] == "_" or n[0].isalnum()) and all(c.isalnum() or c in "._@+-" or u.category(c).startswith("M") for c in n)
+ns = sys.argv[1:]
+bad = [i for i, a in enumerate(ns, 1) if not ok(a)]
+if bad:
+    print(bad[0])
+sys.exit(1 if bad else 0 if ns else 2)' '<name>'
 ```
 
-**The name is in the class only where the program exits 0**; any other exit — 1, or 127 where no
-`python3` runs, or any other — means it is outside. **Handed several names**, each as one more
-single-quoted argument after the first — as §3's *The path's class* hands it the components of one
-path — it exits 0 only where every one is in the class, and otherwise with the place, counting from
-1, of the first that is outside it; an exit that names no place — 127, or 255, its exit when handed
-no name — shows none of them in the class. `str.isalnum()` holds for exactly the letters
+**The name is in the class only where the program exits 0**; any other exit — 1, its refusal, 2
+where it was handed no name, 127 where no `python3` runs, or any other — means it is outside.
+**Handed several names**, each as one more single-quoted argument after the first — as §3's *The
+path's class* hands it the components of one path — it exits 0 only where every one is in the
+class. On its refusal, exit 1, it prints on its standard output the place, counting from 1, of the
+first that is outside it — printed, never carried in the exit status, which wraps at 256 and would
+read a name at place 256 as in the class — and any exit but 0 and 1 shows none of them in it. It
+tests a name's bytes, read as UTF-8 (`os.fsencode`), so a Python that decoded its arguments in
+another encoding — a C locale's, on an older Python — still tests the name a listing printed, and a
+name that is not UTF-8 is outside. `str.isalnum()` holds for exactly the letters
 and digits of Unicode's `L` and `N` categories, and a category opening `M` is a combining mark.
 **First, as text, the name is checked for a `'`**, the one character that ends a single-quoted word:
 a name holding one is outside the class and is never handed to the program, nor is any other command
@@ -282,7 +300,8 @@ folder names stays double-quoted in the family's commands** — `"$SPECS_PATH/<p
 shell still acts on a `$`, a backtick, a `"` and a `\`, and a path whose every component is in the
 class holds none of them. **That holds only while every entry point of a folder's name read from the
 tree into a command tests the class**: §3's `resolve-address`, on each component of every path a
-record it returns carries (§3, *The path's class*), and every caller that lists the folders under a
+record it returns carries (§3, *The path's class*), its resolution program reading every other
+folder it meets itself, a command built from no name; and every caller that lists the folders under a
 folder, which tests each name it reads before a command is built from it and cites *A folder refused
 by its name* below — as §4 holds a carrier's file name, and each caller that lists files holds each
 file's. A command built from a folder's name that passed neither test is a defect of the caller that
@@ -312,6 +331,9 @@ is, whole, `./<P>/<its name>/epic.md`; on `<default-ref>`, a line of
 `git -C "$SPECS_PATH" -c core.quotePath=false ls-tree -r --name-only "<default-ref>" -- "./<P>/"`
 that is, whole, `<P>/<its name>/epic.md`. A folder no such line names holds no `epic.md` either
 listing can show, and a caller that says what it leaves out for an Epic leaves it out of that.
+**Whether it may be a slice** — for a caller listing a BRD folder's subdirectories, one holding a
+`brd-link.md` — is read the same way, from the same two listings, `brd-link.md` in place of
+`epic.md`; a folder neither listing shows holding one is no slice, and the caller passes over it.
 
 **What it covers, and what it does not.** Every name `<KIND>-<KEY>-<slug>` whose slug holds only
 letters, digits and combining marks of any script and `-` is inside it — the slug
@@ -324,10 +346,12 @@ command a run builds from its resolved folder, or from a folder above it, is bui
 class. **And it is tested on a name a caller reads from a listing** — of the folders or the files
 under a folder the run holds: under the run's own folder, under the PRD folder above an Epic (an Epic
 run's siblings among them), or under a fixed path such as a register's `runs/`, each caller naming
-which. **It is not tested on what the operator typed**: an `@<path>` to a folder that does not lie
-below `$SPECS_PATH` (§3, *The path's class*), and the token `read-key`'s whole-name reading looks for
-(§1), until that reading has matched a folder, whose path is then tested. Nor on `$SPECS_PATH`
-itself, which the operator set. The callers that cite this paragraph say which names they test.
+which. And it is tested on the token `read-key`'s whole-name reading looks for, before the lookup
+(§1). **It is not tested on an `@<path>` that lies below `$SPECS_PATH` in neither of §3's two forms**
+(*The path's class*): its names are the operator's own, typed or the working directory's, against
+which a relative one is made absolute. Nor on `$SPECS_PATH` itself, which the operator set. A key's
+glob candidates that do not survive its filter are not tested either: the resolution program reads
+them itself, and no command names them (§3, `resolve-key`). The callers that cite this paragraph say which names they test.
 
 ## 3. Resolution
 
@@ -339,10 +363,11 @@ the kind is frequently what decides the run's mode.
 
 0. **Where `$SPECS_PATH` is set, run `specs-root-check` (below) first, whichever form `<ARG>` takes.**
    Its `misrooted` is a hard stop; otherwise take the branch `<ARG>` selects.
-1. **`<ARG>` begins with `@` → the path branch.** Strip the `@`. A directory resolves to itself; a file
-   resolves to its parent directory. Where that folder lies below `$SPECS_PATH`, hold its path to
-   *The path's class* (below) first, returning `status: misnamed` where it is outside. Read the
-   folder's `kind:` and `key:` (§4) and return `form: path`.
+1. **`<ARG>` begins with `@` → the path branch.** Strip the `@`. **Before any command names the
+   path** — the test that tells a file from a directory among them — hold it to *The path's class*
+   (below), returning `status: misnamed` where it is outside. Then a directory resolves to itself and
+   a file to its parent directory; read the folder's `kind:` and `key:` with the resolution program's
+   `carrier` mode (below), which reads §4's carrier itself, and return `form: path`.
 
    **No glob, no tree walk, no ambiguity, and no §5 fallback** — the operator has already answered the
    question resolution exists to ask, and re-deriving an answer they supplied would only introduce a way
@@ -363,48 +388,83 @@ the kind is frequently what decides the run's mode.
    Otherwise `resolve-key <key> [<KIND>]`, `<key>` being the key it read, and return `form: key` with
    its `prefix`. A caller that read its address with `read-key` before resolving passes the key it read, so the token is read, and its line printed, once.
 
+**An `@<path>` a caller reads before it resolves.** A caller that tells an `@<path>` address from
+another `@` token — by whether its path names an existing directory under `$SPECS_PATH/specifications/`
+— or reads its folder's key before it resolves, for its run key set, makes step 1's test first, as
+step 1 makes it: it holds the token's path to *The path's class* before any command names the path,
+the directory test included, and on `misnamed` stops there with that status's stop (below), nothing
+of the folder read. Only then does it test for the directory, and read the key with the resolution
+program's `carrier` mode.
+
 **Every `path` a record carries is in §2's class, each component of it below `$SPECS_PATH`** — save
-an `@<path>` to a folder that does not lie below it (*The path's class*, below). Each branch holds a
-folder to that test before it reads anything of it: the path branch the folder it names (step 1);
-the key branch the folder `read-key`'s whole-name reading matched (§1), each candidate `resolve-key`'s
-glob finds (its step 1a) and each candidate of §5's fallback. Where one is outside the class the
-record is `status: misnamed`, and nothing of that folder, or of any folder under it, has been read.
-So a command a caller builds from a resolved folder's path — or from the PRD folder above an Epic, or
-a slice's `BRD-` folder, each a component of that path — is built from names in the class, and §2
-says why the double quotes it stands in are then safe.
+an `@<path>` that lies below it in neither form (*The path's class*, below). The path branch holds
+its folder to that test before any command names it (step 1); the key branch's resolution program
+holds to it the folder `read-key`'s whole-name reading matched (§1) and each candidate that survives
+`resolve-key`'s filter (its step 1a), every candidate having been read by the program itself, no
+command naming it. Where a folder is outside the class the record is `status: misnamed`, and no
+command has named that folder or any folder under it. So a command a caller builds from a resolved
+folder's path — or from the PRD folder above an Epic, or a slice's `BRD-` folder, each a component of
+that path — is built from names in the class, and §2 says why the double quotes it stands in are then
+safe.
 
 **The path's class.** A folder's path is in the class where every component of it below
-`$SPECS_PATH` is in §2's class. Take its absolute path, drop `$SPECS_PATH` — less any trailing `/` —
-and the `/` after it, and split the rest at each `/`: `specifications`, then each folder below it down
-to the folder itself — on an Epic's path its PRD folder, and on a slice's its `BRD-` folder, among
-them. First check each component as text for a `'`, as §2 does; the first that holds one is outside
-the class, and nothing is handed to the program. Otherwise hand the components, in that order, each
-as one single-quoted argument, to §2's program in one call: exit 0 → the path is in the class; an
-exit `<n>` from 1 to their number → component `<n>` is outside it; any other exit → no component can
-be shown in it. **A path is tested only where it lies below `$SPECS_PATH`** — its absolute path
-beginning, as text, with `$SPECS_PATH` less any trailing `/`, and then a `/`. The key branch looks
-nowhere else. An `@<path>` that lies elsewhere — outside the work tree of the repository
-`$SPECS_PATH` names, which `/product-workflows:specify`, `/product-workflows:create-ard` and
-`/product-workflows:epics` carry as `prd_outside`, or anywhere while `$SPECS_PATH` is unset — is the
-operator's own typed path, and no component of it is tested: a command built from it is built from
-what the operator typed. So is the token `read-key`'s whole-name reading looks for, until that
-reading has matched a folder.
+`$SPECS_PATH` is in §2's class. **Two forms of the path are tested, each compared with
+`$SPECS_PATH` in the same form.** The **lexical** form is the path made absolute against the
+working directory `pwd` prints, its `.` and empty components dropped and each `..` taken with the
+component before it, as text, no symbolic link resolved — the form a record carries, and the one
+every command names the folder by. The **physical** form is the path with every symbolic link
+resolved, as `realpath` prints it. A path lies below `$SPECS_PATH` in a form where, in that form, it
+begins with `$SPECS_PATH` and a `/`; in each form where it does, drop that prefix and split the rest
+at each `/` — `specifications`, then each folder below it down to the folder itself, on an Epic's
+path its PRD folder and on a slice's its `BRD-` folder among them — and test those components. Check
+each as text for a `'` first, as §2 does: the first that holds one is outside the class, and nothing
+is handed to the program. Otherwise hand them, in that order, each as one single-quoted argument, to
+§2's program in one call: exit 0 → in the class; exit 1 → the component at the place it prints is
+outside it; any other exit → none can be shown in it. **The lexical form is tested first, as text**;
+`realpath` is run on the path only once that form has passed or lies below `$SPECS_PATH` nowhere,
+and its output names no folder in any command. **No command names a folder by its physical form**,
+which can hold a name this test never saw — the target of a symbolic link that leads out of
+`$SPECS_PATH`, whose name is tested in neither form. The two forms cover a `$SPECS_PATH` that is
+itself a symbolic link, which an `@<path>` may reach by its target's route: that path lies below it
+physically, and its components there are tested. The key branch needs no physical form: the
+resolution program's candidates are directories and no symbolic link, so below `specifications/`
+their two forms are one.
 
-**`status: misnamed` is a hard stop**, issued here as `ambiguous`'s and `misrooted`'s are, so no
-caller proceeds past it. A caller that maps the record's statuses onto outcomes of its own names
-`misnamed` as this stop, never as `none` or `absent`; a reader whose resolution never stops a run —
-an emitter's tier (`workflows-core:feedback-emission`, `workflows-core:cost-emission`) or
-`workflows-core:pre-lint` — takes it as no match, as it takes `ambiguous`. The stop names the folder
-by its position and never by its name, and prints no command built from its path:
+**A path below `$SPECS_PATH` in neither form is not tested.** That is an `@<path>` outside
+`$SPECS_PATH`: in the layout `specs-repo-git` §3.1 supports, outside the work tree of the
+repository `$SPECS_PATH` names, as `/product-workflows:specify`, `/product-workflows:create-ard` and
+`/product-workflows:epics` carry such a folder in `prd_outside`; in a specs tree inside a larger
+repository — the unsupported layout *specs-root-check* names — anywhere else in that repository too,
+though inside its work tree; and anywhere at all while `$SPECS_PATH` is unset, `@.` among them. Its
+names are the operator's own: typed, or the working directory's, against which a relative path is
+made absolute and which the operator chose — with no `$SPECS_PATH` there is no tree to tell them
+from. A folder below `$SPECS_PATH` is tested even where it lies in another repository nested there,
+which those three commands carry as `prd_outside` too.
 
-`ADDRESS_FOLDER_NAME: <subject> — <its own name | the name of the folder <m> level(s) above it>, at depth <d> below SPECS_PATH (<SPECS_PATH>) — is outside workflows-core:addressing §2's class of a folder's name (letters, digits and combining marks of any script and . _ @ + -, first a letter, a digit or _, no ..), so this run reads nothing under it and stops. Rename that folder into the class, or move it out of SPECS_PATH, then re-run.`
+**`status: misnamed` is a hard stop for every caller that resolves its own address**, issued here as
+`ambiguous`'s and `misrooted`'s are: a caller that maps the record's statuses onto outcomes of its own
+names `misnamed` as this stop, never as `none` or `absent`. **A reader whose resolution never stops
+its run takes `misnamed` as it takes `ambiguous`, never as `found`**, and names it in its own
+mapping: an emitter's tier, as no match (`workflows-core:feedback-emission`,
+`workflows-core:cost-emission`); `workflows-core:pre-lint`, as a hit reported and not fixed;
+`/dev-workflows:design`'s *Another design under this PRD answers it*, which asks again; the run key
+set of `/workflows-core:prompt`, `/workflows-core:prompt-brainstorm` and `/workflows-core:prompt-grill-me`,
+which a key resolving to anything but `found` leaves empty; and `product-workflows:coverage-ledger-format`
+§6.2's delegated rows, `unresolved`. The stop names the folder by its position and never by its name,
+and prints no command built from its path:
+
+`ADDRESS_FOLDER_NAME: <subject> — entry <n> of the checkout's listing of <P>'s folders, at depth <d> below SPECS_PATH (<SPECS_PATH>) — is named outside workflows-core:addressing §2's class of a folder's name (letters, digits and combining marks of any script and . _ @ + -, first a letter, a digit or _, no ..), so this run reads nothing under it and stops. Rename that folder into the class, or move it out of <P>, then re-run.`
 
 `<subject>` is `The folder the address names` on the path branch, `The folder whose whole name was
 typed` from `read-key`'s whole-name reading, and `A folder the search for <KEY> matched` from
-`resolve-key` step 1a or §5's fallback, `<KEY>` the key searched for; `<d>` is the outside component's
-place in *The path's class*'s split, `specifications` being 1, and `<m>` the number of components
-after it — `its own name` where there is none. Where the program's exit named no place, the stop
-reads `ADDRESS_FOLDER_NAME: <subject> could not be shown to have every folder name on its path below SPECS_PATH (<SPECS_PATH>) in workflows-core:addressing §2's class — its test, which needs python3, exited <n> — so this run reads nothing under it and stops. Re-run where python3 runs.`
+`resolve-key`, `<KEY>` the key searched for. `<P>` is the path, relative to `$SPECS_PATH`, of the
+folders before the one outside the class — every one of them in it, `.` where none comes before it —
+and `<d>` that one's place in *The path's class*'s split, `specifications` being 1. `<n>` is its place
+in §2's listing of `<P>`'s folders (*A folder refused by its name*): the resolution program prints
+`<P>`, `<n>` and `<d>`, and on the path branch the caller reads `<n>` off that listing as text, the
+name entering no command. Where the place cannot be read — the folder is a symbolic link, which that
+listing does not print, or the program's exit named no place — the stop reads `<subject> — a folder
+below <P> —` in place of the entry, and, where no place could be read at all, `ADDRESS_FOLDER_NAME: <subject> could not be shown to have every folder name on its path below SPECS_PATH (<SPECS_PATH>) in workflows-core:addressing §2's class — its test, which needs python3, exited <exit> — so this run reads nothing under it and stops. Re-run where python3 runs.`
 
 ### Entry point: `specs-root-check`
 
@@ -602,24 +662,30 @@ resolves no address learns the cause.
 
 ### Entry point: `resolve-key <KEY> [<KIND>]`
 
-Reached through `resolve-address`, whose step 0 has already run `specs-root-check`.
+Reached through `resolve-address`, whose step 0 has already run `specs-root-check`. **Run it as the
+resolution program's `key` mode (below)**, which makes steps 1 to 5 and §5's fallback itself, reading
+every candidate in-process, and prints the record. No command is built from a candidate's name.
 
-1. **Glob `specifications/**/*-<KEY>-*`, bounded at three levels below `specifications/`.** Do not
+1. **Glob `specifications/**/*-<KEY>-*`, bounded at three levels below `specifications/`** —
+   directories only, no symbolic link, no hidden directory, and none of §2's reserved subdirectories
+   nor anything under them, so a frame set under `design/` or a file whose name merely matches is no
+   candidate. Do not
    narrow the glob by `<KIND>`: the folder **prefix** and the asserted **`kind:`** are allowed to
    differ, and on the BRD route they routinely do — `/brd-split` creates a slice as a `PRD-` folder
    whose `brd-link.md` asserts `kind: brd`, so globbing `BRD-<KEY>-*` for `<KIND> = brd` would miss a
    folder that exists, fall through to §5, miss again, and return `absent`. `<KIND>` is applied in
    step 2 instead, against what each candidate asserts.
-1a. **Hold every candidate to §3's *The path's class* before step 2 opens any**, in byte-wise order
-   of path. Where one is outside the class, return `status: misnamed` for the first such, and open
-   none: a candidate that cannot be read cannot be filtered, and passing over one could return
-   `absent` for a folder that exists — which a caller that creates the folder it did not find would
-   then make a second time — or `found` for another folder. A candidate need not assert `<KEY>` to
-   stop the search here, since a folder whose key merely extends `<KEY>` matches the glob too (step
-   2): a folder named outside the class stops the resolution of every key its name matches, until it
-   is renamed.
+1a. **The class, on the survivors alone.** Once step 2 and, where it ran, §5's fallback have kept
+   their candidates, a survivor whose path holds a component outside §2's class makes the record
+   `status: misnamed`, before steps 3 to 5 count anything, and the program names it by its position
+   (§3, `ADDRESS_FOLDER_NAME`). A candidate outside the class that does not survive — a folder whose
+   key merely extends `<KEY>`, an Epic under its PRD among them — is dropped like any other: the program
+   read it, and no command named it. So a folder named outside the class stops the resolution of the
+   key it asserts alone — or, where it asserts none, of each key §5's fallback matches its name
+   against — and a run on its PRD, or on a sibling, goes on to meet it in a listing that refuses it by
+   its position.
 2. **Filter the candidates by what each one asserts.** A glob matches *names*, and a name is not an
-   assertion. Open each candidate and keep only those whose own frontmatter says `key: <KEY>` — and,
+   assertion. Read each candidate's carrier and keep only those whose own frontmatter says `key: <KEY>` — and,
    where `<KIND>` was supplied, whose `kind:` equals it. This is §4's read, applied as a filter rather
    than only to the winner, and it is the only place `<KIND>` narrows anything. **This step is not optional and it is not
    tidiness**: `*-<KEY>-*` matches every folder whose key merely *extends* `<KEY>`, and a child keyed
@@ -640,6 +706,155 @@ Reached through `resolve-address`, whose step 0 has already run `specs-root-chec
 5. **More than one surviving candidate** → `status: ambiguous`, a **hard stop naming every match**. Two
    folders *asserting* one key is a defect in the tree, and choosing between them would pick silently —
    the one failure mode a resolver must never have. Name `@<path>` in the stop as the way through it.
+
+### The resolution program
+
+**The one way a run reads the tree for an address.** It lists and reads the folders itself, so no
+command is ever built from a folder's name it meets, and prints the record's fields, one `<field>: <value>`
+per line, a path only where every component of it is in §2's class. Its arguments are `$SPECS_PATH`,
+the mode, and the mode's one value — a key §1's grammar holds, a token §2's program has passed, or a
+path held to *The path's class* — each in the class or the operator's own, and `<KIND>` (`brd`,
+`prd`, `epic`, or empty) last in `key` mode:
+
+```bash
+python3 -I - "$SPECS_PATH" key '<KEY>' '<KIND>' <<'EOF'
+import os, re, sys, unicodedata
+B = os.fsencode
+RESERVED = {b"brd", b"grounding", b"interview", b"dev-workflows", b"design", b"attachments", b"revisions", b"Doc screenshots"}
+def ok(name):  # §2's class, on a name's bytes decoded as UTF-8
+    try:
+        n = name.decode("utf-8")
+    except UnicodeError:
+        return False
+    return n != "" and ".." not in n and (n[0] == "_" or n[0].isalnum()) and all(c.isalnum() or c in "._@+-" or unicodedata.category(c).startswith("M") for c in n)
+def out(*parts):
+    sys.stdout.buffer.write(b"".join(p if isinstance(p, bytes) else p.encode() for p in parts) + b"\n")
+def dirs(folder):  # its directories, no symbolic link, byte-wise order; [] where unreadable
+    try:
+        return sorted(e.name for e in os.scandir(folder) if e.is_dir(follow_symlinks=False))
+    except OSError:
+        return []
+def reserved(name):
+    return name in RESERVED or name.startswith((b"bundle-", b"customer-sent-"))
+def frontmatter(path):
+    try:
+        with open(path, "rb") as fh:
+            lines = fh.read().decode("utf-8-sig", "replace").split("\n")
+    except OSError:
+        return {}
+    if not lines or lines[0].strip() != "---":
+        return {}
+    fields = {}
+    for line in lines[1:]:
+        if line.strip() == "---":
+            return fields
+        k, sep, v = line.partition(":")
+        if sep and k.strip() in ("key", "kind"):
+            fields[k.strip()] = v.strip().strip("\"'")
+    return {}
+def carrier(folder):  # §4: top-level regular files in byte-wise order, else brd/brd-inventory.md
+    try:
+        files = sorted(e.name for e in os.scandir(folder) if e.is_file(follow_symlinks=False))
+    except OSError:
+        files = []
+    for name in files + [os.path.join(b"brd", b"brd-inventory.md")]:
+        f = frontmatter(os.path.join(folder, name))
+        if f.get("kind") in ("brd", "prd", "epic") and f.get("key"):
+            return f["kind"], f["key"]
+    return None
+def misnamed(root, rel, subject):  # the first component outside the class, named by its position
+    comps = rel.split(b"/")
+    for d, c in enumerate(comps, 1):
+        if not ok(c):
+            parent = b"/".join(comps[:d - 1])
+            n = dirs(os.path.join(root, parent) if parent else root).index(c) + 1
+            out("status: misnamed")
+            out("subject: ", subject)
+            out("parent: ", parent if parent else b".")
+            out("entry: ", str(n))
+            out("depth: ", str(d))
+            return True
+    return False
+specs, mode, arg = B(sys.argv[1]).rstrip(b"/"), sys.argv[2], B(sys.argv[3])
+kind = sys.argv[4] if len(sys.argv) > 4 else ""
+root = os.path.join(specs, b"specifications")
+walk = []  # (rel path below $SPECS_PATH, its name), three levels below specifications/, reserved subtrees passed over
+def descend(rel, depth):
+    for name in dirs(os.path.join(specs, rel)):
+        if reserved(name) or name.startswith(b"."):
+            continue
+        walk.append((rel + b"/" + name, name, depth))
+        if depth < 3:
+            descend(rel + b"/" + name, depth + 1)
+if mode in ("key", "name") and os.path.isdir(root):
+    descend(b"specifications", 1)
+if mode == "key":
+    found, legacy = [], False
+    for rel, name, depth in walk:
+        if b"-" + arg + b"-" in name:
+            c = carrier(os.path.join(specs, rel))
+            if c and c[1] == arg.decode() and (not kind or c[0] == kind):
+                found.append((rel, c))
+    if not found:  # §5: the unprefixed form, the top level first, one level inside only where it kept none
+        for level in (1, 2):
+            for rel, name, depth in walk:
+                if depth == level and re.match(re.escape(arg) + rb"[-_]+.", name):
+                    c = carrier(os.path.join(specs, rel))
+                    if c is None or (c[1] == arg.decode() and (not kind or c[0] == kind)):
+                        found.append((rel, c))
+            if found:
+                legacy = True
+                break
+    for rel, c in found:
+        if misnamed(specs, rel, b"A folder the search for " + arg + b" matched"):
+            sys.exit(0)
+    if not found:
+        out("status: absent")
+    elif len(found) > 1:
+        out("status: ambiguous")
+        for rel, c in found:
+            out("match: ", specs, b"/", rel)
+    else:
+        rel, c = found[0]
+        out("status: found")
+        out("path: ", specs, b"/", rel)
+        out("kind: ", c[0] if c else "")
+        out("key: ", c[1] if c else arg)
+        out("legacy: ", "true" if legacy else "false")
+elif mode == "carrier":  # §3 step 1: the folder an @<path> names, its path already held to the class
+    c = carrier(arg)
+    out("kind: ", c[0] if c else "")
+    out("key: ", c[1] if c else "")
+elif mode == "name":
+    hits = [rel for rel, name, depth in walk if name == arg]
+    if len(hits) != 1:
+        out("status: absent" if not hits else "status: ambiguous")
+    elif not misnamed(specs, hits[0], b"The folder whose whole name was typed"):
+        c = carrier(os.path.join(specs, hits[0]))
+        out("status: found")
+        out("path: ", specs, b"/", hits[0])
+        out("kind: ", c[0] if c else "")
+        out("key: ", c[1] if c else "")
+EOF
+```
+
+- **`key '<KEY>' '<KIND>'`** — `resolve-key`, steps 1 to 5 and §5's fallback. It prints `status:`
+  `found`, with `path:`, `kind:`, `key:` and `legacy:`; `ambiguous`, with one `match:` line for each
+  survivor; `absent`; or `misnamed`, with `subject:`, `parent:` (`<P>`), `entry:` (`<n>`) and `depth:`
+  (`<d>`) for `ADDRESS_FOLDER_NAME`.
+- **`name '<TOKEN>'`** — §1's whole-name reading: `status: found`, with `path:`, `kind:` and `key:`,
+  both empty where the folder has no carrier; `misnamed`, as above; `absent` where no folder has that
+  name; `ambiguous` where more than one has.
+- **`carrier '<folder>'`** — §3 step 1's read of the folder an `@<path>` names, its path already held
+  to the class: `kind:` and `key:`, both empty where it has no carrier. `<folder>` is handed
+  single-quoted, which a path holding no `'` allows — a path below `$SPECS_PATH` holds none, the class
+  having refused it — and an operator's path outside `$SPECS_PATH` that holds a `'` is handed
+  double-quoted, as typed.
+
+It reads names as bytes and writes them as UTF-8, whatever the locale. It walks what `key-summary`
+walks (§1): three levels below `specifications/`, passing over a symbolic link, a hidden directory, an
+unreadable one and every reserved subdirectory (§2) with everything under it. A folder whose name
+matches no form the mode looks for is never read.
 
 ### The resolution record
 
@@ -694,13 +909,14 @@ written down as one there. The rule is:
 >    inventory inside the reserved `brd/` subdirectory — the one file below the top level that is
 >    ever read for this.
 
-**A file's name enters a command only where it is in §2's class.** A reader that opens a folder's
-top-level files with a command — a `head` or a `sed` on `<folder>/<file>` — first checks each name as
-§2 checks a folder's: as text for a `'`, then with its program, which takes them all in one call and
-names the first outside, the names after it handed to it again. A file whose name is outside the
-class is passed over unread, and is no carrier: every carrier the family writes has a fixed name in
-the class. The folder's own path is held to the class before its carrier is read (§3). A program that lists
-and reads the folder itself, as `key-summary`'s does, builds no command from a name.
+**A file's name enters a command only where it is in §2's class.** Resolution reads a carrier
+with its resolution program (§3), which lists and reads the folder itself and builds no command from
+a name, as `key-summary`'s program does (§1). Any other reader that opens a folder's top-level files
+with a command — a `head` or a `sed` on `<folder>/<file>` — first checks each name as §2 checks a
+folder's: as text for a `'`, then with its program, all of them in one call; on its refusal, exit 1,
+the name at the place it prints is outside the class, and the names after it are handed to it again,
+until it exits 0. A file whose name is outside the class is passed over unread, and is no carrier:
+every carrier the family writes has a fixed name in the class.
 
 **Why a kind outside the three is passed over.** A document's `kind:` names what that document is —
 `ard`, `specification`, `design` — and an idea-route PRD folder holding an `ard.md` would otherwise
@@ -823,9 +1039,10 @@ with `— unless the folder holds its PRD as <KEY>_<slug>.md, under its file nam
 at.** Where a refusal names the slices under a container, it finds them by
 `/product-workflows:brd-split` Phase 0 step 9's positive test — each immediate subdirectory carrying
 a `brd-link.md` whose `parent:` names the container — and never by a name match. **Each
-subdirectory's name is held to §2's class before its `brd-link.md` is read**, and one outside it is
-named by its position, with its remedy, as §2's *A folder refused by its name* says, `<P>` the
-container's path, in place of a slice: it may be one, and nothing of it is read.
+subdirectory's name is held to §2's class before its `brd-link.md` is read**, and one outside it
+that may be a slice (§2, *Whether it may be a slice*) is named by its position, with its remedy, as
+§2's *A folder refused by its name* says, `<P>` the container's path, in place of a slice, nothing of
+it read; one that may not be is passed over, as a folder holding no `brd-link.md` is.
 
 ## 5. The legacy layout
 
@@ -833,9 +1050,10 @@ A specs repo written before the kind prefixes existed holds `specifications/<KEY
 slice, or a per-Epic subfolder, one level inside its parent. `resolve-key` therefore falls back to the **unprefixed** form —
 matching `<KEY>{-|_}<slug>/` directly under `specifications/` first and one level inside a folder there
 only where the top level kept no candidate, tolerating a human-adjusted slug and a stray extra `-`/`_`
-immediately after the key, exactly as the pre-prefix resolution did. Its candidates at each of those
-two levels are held to §3's *The path's class* before §4 reads any of them, exactly as `resolve-key`
-step 1a holds the glob's, and one outside it returns `status: misnamed`.
+immediately after the key, exactly as the pre-prefix resolution did. The resolution program reads its
+candidates at each of those two levels itself, as it reads the glob's, and holds the survivors alone
+to §3's *The path's class*, exactly as `resolve-key` step 1a holds the glob's: a survivor outside it
+returns `status: misnamed`.
 
 **It matches on the folder name, and §3 step 2's filter drops only a candidate that asserts a
 different key.** The pre-prefix resolution read no frontmatter at all — `brd-addressing.md` §2 and

@@ -89,7 +89,7 @@ This command makes **no external API calls but two**: key discovery's optional, 
    tree, not a capability this plugin lacks — **so `emit-block` does not fire** on any of them.
    - **A BRD container** — the folder §4.1's container test places — holds no PRD: a BRD's PRDs are
      authored in its `PRD-` slices. List the slices under it by the positive test §4.1 names, each
-     immediate subdirectory carrying a `brd-link.md` whose `parent:` names the container — each subdirectory's name held to `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it named by its position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1). A slice
+     immediate subdirectory carrying a `brd-link.md` whose `parent:` names the container — each subdirectory's name held to `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it that may be a slice named by its position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1). A slice
      is listed by the `key` its own carrier asserts (§4); one whose carrier asserts none is listed by
      its `@<path>` with `(no key — give it a carrier, workflows-core:addressing §5)` and is not
      enterable. Stop:

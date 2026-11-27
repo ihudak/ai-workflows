@@ -7,13 +7,13 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.44.4] — 2026-11-27
 
-**What changes for you.** `/document` and `/release-notes` stop with `ADDRESS_FOLDER_NAME` where the folder their address resolves, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its depth, never by its name; an Epic folder named outside that class under the PRD folder is named by its place in the listing, with the remedy, and read nowhere in the run. `/docs-audit` leaves out, and counts, any ARD or release-notes draft whose path holds such a folder. Needs `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
+**What changes for you.** `/document` and `/release-notes` stop with `ADDRESS_FOLDER_NAME` where the folder their address resolves, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name; an Epic folder named outside that class under the PRD folder is named by its place in the listing, with the remedy, and read nowhere in the run. `/docs-audit` leaves out, and counts, any ARD or release-notes draft whose path holds such a folder. Needs `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
 
 ### Fixed
 
-- **`/document` Phase 0 and `/release-notes` Phase 0 and Phase 1.** Each name a listing of the PRD folder's folders prints is held to `workflows-core:addressing` §2's class before any command is built from it; a folder outside it that may be an Epic folder is named once, by its position, with its remedy, and is no Epic folder of the run's scope — its implementation record, its conformance record, its documents and its keys read nowhere. Their BRD-container stops name a subdirectory outside the class by its position in place of a slice, and both map `misnamed` as a stop.
+- **`/document` Phase 0 and `/release-notes` Phase 0 and Phase 1.** Each name a listing of the PRD folder's folders prints is held to `workflows-core:addressing` §2's class before any command is built from it; a folder outside it that may be an Epic folder is named once, by its position, with its remedy, and is no Epic folder of the run's scope — its implementation record, its conformance record, its documents and its keys read nowhere. Their BRD-container stops name a subdirectory outside the class that may be a slice by its position in place of a slice, and both map `misnamed` as a stop.
 - **`/docs-audit` Phase 2.5** holds each enumerated path's folder names to the class, as `addressing` §3's *The path's class* does, and leaves one outside it out, counting it in the report.
-- **`doc-planner`** reads an `EPIC-*/` subfolder of the spec tree only where its name is in the class.
+- **`doc-planner`** reads only the Epic folders `folder_read`'s Epic set names, which `/document` builds from its tested listing; it runs no test of its own, having no shell.
 - **`docs/commands/document.md`, `docs/commands/release-notes.md`, `docs/commands/docs-audit.md` and `docs/reference/environment.md`** describe it.
 
 ## [1.44.3] — 2026-11-26
