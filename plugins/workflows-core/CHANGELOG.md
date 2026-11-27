@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.101.4] — 2026-11-27
+
+DOC-D-G1, sub-project 2, batch 3: the shared references and pages name the walk of a user page that `docs-workflows` 1.46.0's `/docs-workflows:docs-verify` ships. **What changes for you.** Nothing a run does or prints: sentences that described `/docs-verify` as verifying engineering pages alone now say it walks a user page too, one of them a truth edit for the GIT-G1 owner. Released with `docs-workflows` 1.46.0 and `dev-workflows` 4.71.10; no run decides anything by these words, so neither needs this release, nor it them. 1.101.4 carries 1.101.3, so the 1.101.3 bullet of `.claude/rules/plugin-updates-coupling.md` applies to it.
+
+### Changed
+
+- **`references/dependencies.md`** counts eight of `docs-workflows`' thirteen agents reading the shared corpus, where it said twelve: `walkthrough-composer`, the thirteenth, holds `Read` alone and cites no core reference.
+- **`references/source-truth.md` §2** names `/docs-verify` among the dependents' commands that verify a page's user-visible claims against the source code on an engineering page only — "`/document`, `/release-notes` and, on an engineering page, `/docs-verify` today" — since a walked user page's claims are observed, never read in code.
+- **Pages.** `docs/family-map.md`'s portal lane: `/docs-write` hands `/docs-verify` "a drafted page, its unit moved to drafted", where it said "a drafted engineering page", the manual edge carries "a drafted page /docs-verify cannot verify — verify it by hand, then publish", and its notes say `/docs-verify` verifies a drafted page, where they said an engineering one: it walks a user page with you from a walkthrough it composes or extends, or reads an engineering page's claims in the code, commits a walk that does not finish for its next run to take, and leaves manual only verifying a page it cannot verify, such as an explanation page, and publishing any page. `docs/reference/grounding.md`: `/docs-verify` grounds in code for a drafted engineering page; a user page is walked, and no code is read for it.
+
+### Fixed — a GIT-G1 sentence made false by the walk, truth only
+
+A truth edit under the maintainer's 2026-11-17 standing approval for DOC-D-G1, named in the pull request.
+
+- **`phase-handoff` §5 rule 2 (PH:648), a truth edit for the GIT-G1 owner.** "save by `/docs-workflows:docs-write` and `/docs-workflows:docs-verify`, each of which refuses there the backlog unit that cites the file." became "save by `/docs-workflows:docs-write`, which refuses there the backlog unit that cites the file, and `/docs-workflows:docs-verify`, which refuses there an engineering unit that cites it — a user unit, which it walks, reads no ARD." A user unit's page may cite an ARD in its `evidence:`, which `/docs-verify` neither reads nor refuses there. `reference-parts/phase-handoff/require-on-main.md` is regenerated.
+
 ## [1.101.3] — 2026-11-27
 
 Fix batch B51. **What changes for you.** A handoff stages, accounts for, commits and diffs its declared paths through `specs-git.py`, which hands each to git as data, so a customer's or a designer's file name holding a space, `$(`, a backtick, a quote, a leading `-`, a line feed, a `[` or an opening `:` is staged as itself and runs nothing; and a branch, base or commit an `implementation.md` block records, or a branch a resume pointer's item names, is tested before any command names it. Needs `product-workflows` 3.88.10, `dev-workflows` 4.71.9 and `security-workflows` 0.13.6 to close the class end to end (`.claude/rules/plugin-updates-coupling.md`, its 1.101.3 bullet).

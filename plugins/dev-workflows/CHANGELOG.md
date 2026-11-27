@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.71.10] — 2026-11-27
+
+DOC-D-G1, sub-project 2, batch 3: the roles page names `docs-workflows` 1.46.0's walk of a user page. No command, agent or reference changes, and nothing a run does or prints. Released with `docs-workflows` 1.46.0 and `workflows-core` 1.101.4; its page needs neither, nor they it. 4.71.10 carries 4.71.9, so the 1.101.3 bullet of `.claude/rules/plugin-updates-coupling.md` applies to it, which `workflows-core` 1.101.4, carrying 1.101.3, meets.
+
+### Changed
+
+- **`docs/roles-and-phases.md`**, the Dev role's *Runs*: `/docs-workflows:docs-verify` walks a drafted user page, or reads an engineering page's claims in the code, and moves its unit to `verified`, where it named the read alone.
+
 ## [4.71.9] — 2026-11-27
 
 Fix batch B51 (RECORDED-BRANCH-CLASS). **What changes for you.** `/conformance` and `/implement` test the branch an `implementation.md` block records before they fetch it, and read one outside the safe class as naming no branch, so a hand-edited branch name holding `$(` or a backtick runs nothing. Needs `workflows-core` 1.101.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.3 bullet).
