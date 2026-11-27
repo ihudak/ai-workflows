@@ -653,7 +653,8 @@ the round record*), and where the two disagree the dispositions win.
   produced:
   - **At least one question** → open round 1 and work it, exactly as ever.
   - **No question at all** — no finding whose verdict or verifier outcome leaves the premise open
-    (the first two sources: a premise that moved, and a row no repository in the run settles that
+    (the first two sources: a premise that moved, an absence finding counting only where every
+    finding that settles its row is one, and a row no repository in the run settles that
     holds a finding reading `NOT-PROVABLE`, or one carrying an `unprovable` outcome whatever verdict other than `SUPERSEDED` it keeps), no `will-change`
     horizon, no `[DG#n]` divergence, no `rejected` row not already settled, no `deferred-to` row
     whose consequence is unstated, no open requirement defect this BRD asks, nothing the
@@ -661,10 +662,12 @@ the round record*), and where the two disagree the dispositions win.
     *A decision reopened elsewhere* puts again.
     **The test is the generation's own output, never a gloss on the verdicts**: `SUPERSEDED` raises
     no question and is neither `CONFIRMED` nor a reason to ask one, a `CONFIRMED` finding whose
-    verifier outcome is `unprovable` raises one where no repository settles its row, and a
-    `NOT-PROVABLE` finding raises none where another repository does, so a rule phrased over verdicts
-    and a rule phrased over questions would disagree on a re-grounded corpus, on a verified one, and on
-    one grounded against more than one repository. Zero questions is the branch key. →
+    verifier outcome is `unprovable` raises one where no repository settles its row, a
+    `NOT-PROVABLE` finding raises none where another repository does, and an `AMENDED` or `REWRITTEN`
+    absence finding raises none where another repository's finding on its row is neither an absence
+    finding nor unsettled, so a rule phrased over verdicts and a rule phrased over questions would
+    disagree on a re-grounded corpus, on a verified one, and on one grounded against more than one
+    repository. Zero questions is the branch key. →
     **First run the in-scope scoping the generation depends on**, and where it empties the set take
     `BRD_INTERVIEW_ALL_DELEGATED` and stop: a BRD that kept none of its requirements has nothing of
     its own to decide, that stop forbids a round record outright, and it is reached *instead of* this
@@ -1010,7 +1013,26 @@ grounded BRD*, step 9) — and raise a question wherever they leave something un
 would have to state:
 
 - a `[BR#n]` whose findings are `AMENDED`, `REWRITTEN` or `FALSE-FRIEND` — the premise moved, so what
-  the requirement now asks for is open (`workflows-core:grounding-format` §3);
+  the requirement now asks for is open (`workflows-core:grounding-format` §3). **An absence finding
+  raises nothing here wherever another repository's finding on the row is neither an absence finding
+  nor unsettled**: a sibling has the surface, so the lacking repository's finding records only where
+  the surface lives, not that the premise moved. An **absence finding** is a `[CG#n]` whose own text
+  records that its repository lacks the surface its premise is about, under
+  `workflows-core:grounding-format` §3, *A rule about a surface the commit does not have*: an
+  `AMENDED` carrying that rule's correction, `the surface does not exist at <commit>; the rule is a
+  requirement on new work`, or a `REWRITTEN` whose premise asserted a surface its `commit` does not
+  have, as its own `evidence` or `notes` state. It is read off that finding's `evidence` and
+  `notes`, never inferred — not from its verdict alone, and not from what a sibling's finding shows.
+  A finding is **unsettled** where it reads `NOT-PROVABLE` or carries the outcome `unprovable`; a
+  repository's finding on the row, and what settles the row, are the next bullet's; a superseded
+  finding takes no part. **Where every finding that settles the row is an absence finding, the row
+  raises one question here, never one per repository, carrying them all.** A finding that shows the
+  surface present and behaving otherwise than the premise says is a genuine amendment, never an
+  absence finding, and raises its question here whatever its siblings read. With the next bullet,
+  this keeps a repository's absence — a `NOT-PROVABLE` finding, or an absence finding's `AMENDED` or
+  `REWRITTEN` — from raising a question under either bullet for a row where another repository's
+  finding is neither an absence finding nor unsettled, whichever of the three verdicts grounding
+  gives that absence;
 - a `[BR#n]` whose findings are `NOT-PROVABLE`, or carry the verifier outcome `unprovable` whatever
   verdict other than `SUPERSEDED` they keep, where no repository settles it — grounding could not
   settle it, whether a repository could not or the verifier could not settle the finding, which is
@@ -1021,8 +1043,10 @@ would have to state:
   of repositories; a `[DG#n]` is a frame set's, never a repository's, and settles no row here. A
   repository that lacks the feature therefore raises nothing under this bullet where a sibling
   settles the row, and the rule reads no verdict that absence is given — only whether some
-  repository settles the row. A row no repository settles raises **one** question, never one per
-  repository, carrying every finding on the row that could not settle it. A disputed `contradict`
+  repository settles the row; where that verdict is an absence finding's and a sibling's finding is
+  neither an absence finding nor unsettled, the bullet above keeps it from raising a question there
+  too. A row no repository settles raises **one** question, never one per repository, carrying
+  every finding on the row that could not settle it. A disputed `contradict`
   whose two blind re-derivations disagree is the ordinary way to an `unprovable` outcome: it leaves
   the finding its verdict and evidence beside that outcome (`workflows-core:grounding-format` §8).
   Read off each finding's verdict and its `outcome` alike, never the verdict alone; a superseded
@@ -2155,7 +2179,8 @@ assumption record.
 **`<BRD-dir>/interview/round-<N>.md`** — the round's own record, append-only. **A round 1 that raised no question at all records the walk instead of the questions**: each of the seven sources *Round 1
 is generated from the grounding* names, and what this BRD held under each — **written from what the
 walk found, never from a rule over verdicts**: no finding whose verdict or verifier outcome left
-its premise open (the first two sources: a premise that moved, and a row no repository in the run
+its premise open (the first two sources: a premise that moved, an absence finding counting only
+where every finding that settles its row is one, and a row no repository in the run
 settles that holds a finding reading `NOT-PROVABLE`, or one carrying an `unprovable` outcome whatever verdict other than `SUPERSEDED` it kept), none carrying a
 `will-change` horizon, no design divergence, no `rejected` row not already settled and no
 `deferred-to` row whose consequence is unstated, no open requirement defect this BRD asks, nothing
@@ -2163,7 +2188,9 @@ asserted without evidence — and, where a register was on file before the round
 reopened elsewhere* found no record to put again. Naming the verdicts instead would put a false sentence in the record on
 any corpus holding a `SUPERSEDED` finding, which raises no question and is not `CONFIRMED` either,
 a `CONFIRMED` finding whose outcome is `unprovable`, which raises one where no repository settles its
-row, or a `NOT-PROVABLE` finding on a row another repository settles, which raises none.
+row, a `NOT-PROVABLE` finding on a row another repository settles, which raises none, or an
+`AMENDED` or `REWRITTEN` absence finding on a row where another repository's finding is neither an
+absence finding nor unsettled, which raises none either.
 That is a complete record of a completed walk, which is exactly what the all-delegated stop's
 prohibition on an *empty* record is protecting against. **A later round that unanswered
 code-defect flags alone made askable** (*Resolve the round*, the *Every round is closed* branch)
@@ -2366,27 +2393,33 @@ grounded BRD* phase read, never off prose:
    §4) — is one this BRD's ledger records `covered-here` or `deferred-to`, and not an orphan row
    (*Scope the set*, in *Generate the round's question set*): its requirement is live here, so
    this slice's findings are the ones that settle it;
-3. some repository settles the row, and every finding that settles it agrees: take every `[CG#n]`
+3. some repository settles the row, and every finding the test reads agrees: take every `[CG#n]`
    in this BRD's `grounding/code-grounding.md` whose `claim` opens with that row's `[BR#n]` — each
    grounder writes the requirement id first (`agents/code-grounder.md`) — and that does not read
    `SUPERSEDED`. The reading is the row-level one *Round 1 is generated from the grounding* gives a
    question: a repository settles the row where its verified finding carries a verdict other than
    `NOT-PROVABLE` and a verifier `outcome` other than `unprovable` — its verdict then `CONFIRMED`,
    `AMENDED`, `REWRITTEN` or `FALSE-FRIEND`, one that states what the code does
-   (`workflows-core:grounding-format` §3). At least one finding settles the row, and **each** that
-   does passes: its `horizon` is `current`, and all of them carry the same verdict. A finding that
-   settles nothing — `NOT-PROVABLE`, or carrying the outcome `unprovable` — takes no part, so a
-   repository that lacks the feature never keeps a sibling's finding from settling the row. Any of
-   the four verdicts settles what the defect asks — whether the behaviour the requirement asserts is
-   there; a premise that moved is a question of its own, which the first bullet of *Round 1 is
-   generated from the grounding* raises. The resolution names the lowest-numbered of the findings
-   that settle the row.
+   (`workflows-core:grounding-format` §3). **The test reads every finding that settles the row, save
+   an absence finding wherever another repository's finding on the row is neither an absence finding
+   nor unsettled** — both terms the first bullet of *Round 1 is generated from the grounding*
+   defines: a sibling has the surface, and the lacking repository's finding records only where it
+   lives. At least one finding settles the row,
+   and **each** finding the test reads passes: its `horizon` is `current`, and all of them carry the
+   same verdict. A finding that settles nothing — `NOT-PROVABLE`, or carrying the outcome
+   `unprovable` — takes no part, and nor does an absence finding the test leaves out, so neither
+   keeps a sibling's finding from settling the row; every other finding that settles it is read, a
+   genuine amendment among them, and one whose verdict differs keeps the defect from being a
+   candidate. Any of the four verdicts settles what the defect asks — whether the behaviour the
+   requirement asserts is there; a premise that moved is a question of its own, which the first
+   bullet of *Round 1 is generated from the grounding* raises. The resolution names the
+   lowest-numbered of the findings the test reads.
 
-**Where no finding settles the row, or one that settles it fails, the defect is not a candidate**,
+**Where no finding settles the row, or one the test reads fails, the defect is not a candidate**,
 and the run reports it with each of the row's findings — its verdict, outcome and horizon — and
 why, and writes nothing: a row whose every finding reads `NOT-PROVABLE` or carries the outcome
 `unprovable` — no repository settles it — settled nothing; two verdicts that disagree among the
-findings that settle it — two repositories, say — leave which finding settles it a person's call;
+findings the test reads — two repositories, say — leave which finding settles it a person's call;
 and one carrying `horizon: will-change` is true of the pinned commit while a prerequisite decision
 is about to make it false (`workflows-core:grounding-format` §5), so a resolution resting on it
 would close the defect on ground about to move — the shape `decision-register-format.md` §6 (D19)

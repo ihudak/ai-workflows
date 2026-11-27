@@ -113,14 +113,25 @@ finding holds of it, the re-tag naming it with its verdict and that outcome.
 **Grounding cannot settle a claim only where no repository can.** A row raises a question for an
 unsettled claim only where no repository in the run settles it; a repository settles it where its
 verified finding carries a verdict other than `NOT-PROVABLE` and a verifier outcome other than
-`unprovable`. A BRD grounded against several repositories can hold a finding from each on a row,
-and a repository that lacks the feature raises no such question on its own where a sibling settles
-the row: the rule reads only whether some repository settles it, never the verdict the lacking
-repository's finding is given, so it holds whichever verdict grounding gives that absence. A row no
+`unprovable`. A finding reading `SUPERSEDED` neither raises nor settles anything: its successors are
+read in its place. A BRD grounded against several repositories can hold a finding from each on a
+row, and a repository that lacks the feature raises no such question on its own where a sibling
+settles the row: the rule reads only whether some repository settles it, never the verdict the
+lacking repository's finding is given. **That verdict may itself settle the row** — `AMENDED` or
+`REWRITTEN` under `workflows-core:grounding-format` §3, *A rule about a surface the commit does not
+have* — and the interview then reads it as an **absence finding**, by its own correction or
+evidence, never by inference: an absence finding raises no premise-moved question either while
+another repository's finding on the row is neither an absence finding nor unsettled (`NOT-PROVABLE`,
+or carrying the outcome `unprovable`), and where every finding that settles the row is one, the
+row raises one such question, never one per repository. So where a repository that has the surface
+settles the row, the repositories that lack it raise no question for an unsettled claim or a moved
+premise, whichever verdict — `NOT-PROVABLE`, or an absence finding's `AMENDED` or `REWRITTEN` —
+grounding gives their absence, while a finding showing the surface present and behaving otherwise
+is a genuine amendment and is asked as one. A row no
 repository settles raises one question, never one per repository, carrying every finding on it
 that could not settle it, and a `[G]` is never re-tagged while a sibling's finding settles it
-(`commands/brd-interview.md`, *Round 1 is generated from the grounding* and *Answer every `[G]`
-from the findings*).
+(`commands/brd-interview.md`, *Round 1 is generated from the grounding* — its first two bullets —
+and *Answer every `[G]` from the findings*).
 
 Usually `[V]`, because of what a `NOT-PROVABLE` verdict actually reports where no repository settles
 the row: the code does not answer this, so somebody must now choose. Choosing, with reasons, in a

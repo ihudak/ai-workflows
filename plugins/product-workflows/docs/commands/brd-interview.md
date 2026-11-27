@@ -159,15 +159,30 @@ under-specified and is rewritten — never filed with a guessed tag.
 
 **A requirement whose grounding settled nothing raises a question for a person — one, however many
 repositories it was grounded against.** A row raises a question for an unsettled claim only where no repository in the run settles it; a repository settles it where its verified finding carries a verdict other than `NOT-PROVABLE` and a verifier outcome other than `unprovable`.
-A finding reading `NOT-PROVABLE` — that repository could not settle it — settles nothing, and
-neither does a finding whose verifier outcome is `unprovable`, whatever verdict it keeps other than
-`SUPERSEDED`: where `/prd-ground`'s verifier re-derived the finding twice, blind, and the two
-disagreed, the finding keeps its verdict beside that outcome, and the run reads the outcome as well
-as the verdict, so a requirement nobody could settle is never treated as grounded. A repository
-that lacks a feature its sibling has therefore raises no such question of its own, whichever verdict
-grounding gives that absence, and a row no repository settles raises one question, not one per
-repository. The question arrives at tagging carrying every finding on the row that could not
-settle it, and is tagged `[V]` or `[C]`, never `[G]`.
+A finding reading `SUPERSEDED` takes no part, raising and settling nothing: the finding that
+replaced it is read instead. A finding reading `NOT-PROVABLE` — that repository could not settle
+it — settles nothing, and neither does a finding whose verifier outcome is `unprovable`, whatever
+verdict it keeps other than `SUPERSEDED`: where `/prd-ground`'s verifier re-derived the finding
+twice, blind, and the two disagreed, the finding keeps its verdict beside that outcome, and the run
+reads the outcome as well as the verdict, so a requirement nobody could settle is never treated as
+grounded. A repository that lacks a feature its sibling has therefore raises no such question of
+its own where the sibling settles the row, and a row no repository settles raises one question,
+not one per repository. The question arrives at tagging carrying every finding on the row that
+could not settle it, and is tagged `[V]` or `[C]`, never `[G]`.
+
+**A repository that lacks a surface its sibling has raises no premise-moved question either.**
+Grounding can record that absence as `AMENDED` — a rule about a surface the commit lacks, corrected
+to *the surface does not exist at this commit; the rule is a requirement on new work* — or as
+`REWRITTEN`, where the requirement asserted the surface exists; either settles the row, and either
+would otherwise read as a premise that moved. The command reads such a finding as an **absence
+finding**, by what its own correction or evidence records and never by inference, and an absence
+finding raises nothing while another repository's finding on the row is neither an absence finding
+nor one that settles nothing — that sibling has the surface. So whichever verdict grounding gives
+the absence — `NOT-PROVABLE`, or an absence finding's `AMENDED` or `REWRITTEN` — the lacking
+repository raises no question of either kind for a row a sibling with the surface settles. Where every finding
+that settles the row is an absence finding, the row raises one premise-moved question carrying them
+all, never one per repository. A finding showing the surface present and behaving otherwise than the requirement
+says is a genuine amendment and is asked as before.
 
 All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 12's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins the one dispatched agent in this run — `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the round's reading, tagging and interactive walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
@@ -563,11 +578,14 @@ option is picked.
   verdict, outcome and horizon, where some repository settles the row — the same row-level reading
   a question takes (under *The tag decides who may answer*, above): a code finding of this slice on
   that row, not superseded, carrying a verdict other than `NOT-PROVABLE` and an outcome other than
-  `unprovable` — and every finding that settles it carries a `current` horizon, all of them the same
-  verdict. A finding that settles nothing takes no part, so a repository that lacks the feature
-  never keeps a sibling's finding from settling the row. Where no finding settles the row, or one
-  that settles it fails, the defect is reported instead, with why — a finding a prerequisite
-  decision is about to overturn closes nothing. The
+  `unprovable` — and every finding the test reads carries a `current` horizon, all of them the same
+  verdict. The test reads every finding that settles the row save an absence finding (above) while
+  another repository's finding on the row is neither an absence finding nor one that settles
+  nothing. A finding that settles nothing takes no part, and nor does an absence finding the test
+  leaves out, so neither keeps a sibling's finding from settling the row; any other finding that
+  settles it is read, a genuine amendment among them, and one whose verdict differs keeps the defect
+  open. Where no finding settles the row, or one the test reads fails, the defect is reported
+  instead, with why — a finding a prerequisite decision is about to overturn closes nothing. The
   operator chooses to write
   `resolved-by: <SLICE-KEY>/[CG#n]` for every one, for some, or for none, the value then printed to
   write by hand. Nothing is recommended: whether the finding settles the defect is the operator's to
