@@ -22,7 +22,7 @@ Every other step these commands dispatch — reading, summarising, locating, sca
 
 ## Agents pinned by frontmatter
 
-Four of this plugin's agents carry `model: opus` in their frontmatter — `doc-reviewer`, `docs-audit-reviewer`, `docs-scaffold-reviewer` and `ia-planner` — and one carries `model: sonnet`, `docs-auditor`, which keeps mechanical enumeration off the expensive tier. The other seven carry no pin and take the model the dispatching command passes: `claim-reader`, `diff-summarizer`, `doc-location-finder`, `doc-planner`, `doc-writer`, `docs-style-checker` and `release-notes-writer`. [Agents](agents.md) says which command dispatches each.
+Four of this plugin's agents carry `model: opus` in their frontmatter — `doc-reviewer`, `docs-audit-reviewer`, `docs-scaffold-reviewer` and `ia-planner` — and one carries `model: sonnet`, `docs-auditor`, which keeps mechanical enumeration off the expensive tier. The other eight carry no pin and take the model the dispatching command passes: `claim-reader`, `diff-summarizer`, `doc-location-finder`, `doc-planner`, `doc-writer`, `docs-style-checker`, `release-notes-writer` and `walkthrough-composer`. [Agents](agents.md) says which command dispatches each.
 
 ## On a session below Opus
 
