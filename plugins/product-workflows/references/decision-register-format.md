@@ -606,7 +606,8 @@ means:
 | a `[VD#n]` whose `argumentation` carries no `Reopened` paragraph | its `round: N` | a question in the record carries the state *decided*, *applied* or *confirmed in a table* naming that id |
 | an `[AS#n]` | its `round: N` | the record exists: an assumption is recorded only by the run that generates its round (`commands/brd-interview.md`, *Generate the round's question set*), and that run's write of the record is its first |
 | a `[CDF#n]` (`references/code-defect-log-format.md`) | its `round: N` | one of the record's `code defects:` lines names it raised, or its `code defects on file:` baseline line lists it; or a record that is not itself a torn write cites it in `defects`. A record carrying neither line was written before both existed, and names every `[CDF#n]` of its round — no run that writes to such a record leaves it so (the baseline, below) |
-| an entry in `interview/customer-questions.md` | its heading, `## Round <N>, question <position>` | the question at `<position>` carries the tag `[C]` in its last recorded state — *held for the customer*, or *answered by the customer* |
+| an entry in `interview/customer-questions.md` | its heading, `## Round <N>, question <position>` | the question at `<position>` carries the tag `[C]` in its last recorded state — *held for the customer*, or *answered by the customer* — or the record carries, at that address, the `- **Re-tagged:** [C] → [V]` line the entry carries too (§9) |
+| a `- **Proposed answer:**` or `- **Re-tagged:**` line beneath an entry that is not itself a torn write | its entry's heading | the record carries the same line at the question's address (§9) |
 | a `- **Requirement defect:** [DEF#n]` line on an entry that is not itself a torn write and carries no `- **Re-puts:**` line | its entry's heading | one of the record's `requirement defects:` lines lists that `[DEF#n]` asked, or its `requirement defects on file:` baseline line lists it. A record carrying neither line was written before both existed, and names every such line — no run that writes to such a record leaves it so (the baseline, below) |
 
 **Nothing else is ever a torn write**, and four things in particular are not:
@@ -869,10 +870,14 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
   <rows>` heading opens with, never renumbered. A split question records
   `- **State:** split — <position>a, <position>b, …`, and each part sits under a heading of its own,
   `### <position>a. [<tag>] — <rows>`, beneath it. The heading's tag is the one the question was
-  written with; a re-tag is a state, `- **State:** re-tagged — [V], cause [CG#n] NOT-PROVABLE`, or
-  `… cause [CG#n] <verdict>, outcome unprovable`, and every state after it is the re-tagged
+  written with; a re-tag out of `[G]` is a state, `- **State:** re-tagged — [V], cause [CG#n] NOT-PROVABLE`, or
+  `… cause [CG#n] <verdict>, outcome unprovable`, naming each finding that caused it, and every state after it is the re-tagged
   question's, so the question's tag is the one its last `re-tagged` state names, where it has one —
-  which is how §8 reads *the tag `[C]` in its last recorded state*.
+  which is how §8 reads *the tag `[C]` in its last recorded state*. A held `[C]` re-tagged `[V]`
+  after a delivery-team answer (`references/interview-tagging.md` §3) carries a line instead, which
+  is no state, `- **Re-tagged:** [C] → [V] — <reason>`, written in one write with the
+  `- **Re-puts:** none` line and the state the question then reached as a `[V]`, both beneath it;
+  its tag is `[V]` from that line on.
 - **Each state is a line of its own**, `- **State:** <state> — <what it names>`, in the vocabulary of
   `commands/brd-interview.md`'s *Resolve the round*: a terminal disposition or a holding state. A
   later write appends a new line beneath the question's last one and never edits one, and **the last
@@ -884,12 +889,15 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
   `- **State:** dropped — <reason>`.
 - **`- **Re-puts:**`** stands on every `[V]` and on every question that puts a record again, above
   the question's first state — save on a `[V]` reached by a re-tag or a rewrite, where the write
-  that records it appends the line, reading `none`, beneath that state, and on a `[V]` a release
+  that records it appends the line, reading `none`, beneath that state, or, out of `[C]`, beneath
+  its `- **Re-tagged:**` line, and on a `[V]` a release
   wrote before the line existed, which `commands/brd-interview.md`'s tie picker gives it later.
 - **`- **Blocked-on:** <round>/<position>, …`** stands on the line after a `[V]`'s *deferred* state
   where that deferral waits on the customer's answers to questions held for them, naming each by
   its address; a later deferral of the same question writes its own beneath its own state, and
-  carries the earlier line's addresses onto it where it names none of its own. It is no state, and
+  carries the earlier line's addresses onto it where it names none of its own. It names only
+  questions held for the customer when it is written: one re-tagged `[V]` is left off it, and a
+  deferral left naming none writes no line. It is no state, and
   is read only off a question whose last state is the *deferred* one it follows: by
   `commands/brd-interview.md`'s *Resolve the round*, which puts the question with the customer's
   answer as its recommendation — or records it applied, where a decision on file now settles it —
@@ -913,5 +921,16 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
   the customer is offered are part of the question as it will be put**, a plain list under it on no
   labelled line, which `commands/brd-reconcile.md` records as the answering `[CD#n]`'s
   `options_considered` (§1).
+- **Two lines record what a delivery-team answer did to a held `[C]`**
+  (`workflows-core:question-budget` §8), each beneath the question's last line in its round record
+  and beneath its entry's last line in the question set — save on an entry a package has already
+  carried, which is never edited, so its round record alone carries the line.
+  **`- **Proposed answer:** <text> — follows <decision-id>`** is the answer the delivery team would
+  give, for the customer to confirm or correct, and the decision it follows — a bare id for this
+  register's, the qualified prose spelling `<BRD-KEY> [VD#n]` for another's (§4); it answers
+  nothing, the question stays *held for the customer*, and the last such line is the question's
+  proposal. **`- **Re-tagged:** [C] → [V] — <reason>`** says the question was the delivery team's
+  to decide all along (above): an entry carrying it is no longer a question for the customer.
+  `commands/brd-interview.md`'s *Hold every `[C]`* fixes when each is written.
 - **The scope paragraph, a question's text and a state's explanation are prose** for whoever reads
   the record; no command parses them.

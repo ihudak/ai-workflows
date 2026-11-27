@@ -541,7 +541,9 @@ cannot review, and they will not tell you that — they will review it anyway, b
    precondition for this command is that the interview's open rounds are closed, and read literally
    that is a deadlock: a round holding a `[C]` stays open **until the answer comes back through the
    package**, or its question stops applying (`${CLAUDE_PLUGIN_ROOT}/references/interview-tagging.md` §5), and the package is what
-   this command builds. So the only reading under which the route can run at all is the one taken
+   this command builds. The one other way out, `/brd-interview`'s re-tag of a held `[C]` an answer
+   shows was the delivery team's to decide all along, corrects a mis-tag before any package carries
+   it; it never closes a genuine customer question, so it opens no way around the deadlock. So the only reading under which the route can run at all is the one taken
    here — everything the delivery team can settle is settled, and what remains is exactly the set
    this package is being built to carry. **A `[V]` deferred only on questions held for the customer
    is the same case from the delivery team's side**: what it still owes waits on exactly the answers
@@ -1320,7 +1322,11 @@ withdrawn — the record itself, or the live successor its supersessions lead to
 any other while it is held: a customer's reply is the one thing that can close it, and leaving it
 out would hold its round open for good. `/product-workflows:brd-reconcile` closes it on the first
 review that answers it, whichever way its operator takes that answer (its *Confirm every
-candidate* phase), so once answered it is no longer held and no later package carries it.
+candidate* phase), so once answered it is no longer held and no later package carries it. **Nor is
+an entry carrying a `- **Re-tagged:** [C] → [V]` line held**: an answer showed its question was the
+delivery team's to decide all along, and `/product-workflows:brd-interview` decides or applies it as
+a `[V]` (its *Hold every `[C]`*), so no part of the prompt renders it, as no part renders a `[V]`
+(`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §9).
 
 **Part 7 and part 9 both carry every open `[AS#n]`, and that duplication is deliberate.** They ask
 for different things. Part 7 asks the customer to **decide** — an assumption is corrected in one

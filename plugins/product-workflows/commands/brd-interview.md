@@ -37,7 +37,9 @@ with recorded argumentation, on its own or as a row of a table the operator conf
 operator gave or a decision on file, merged into a question the operator answers, or dropped as no
 answer to it would change anything (*Tag every question*, *The question registry*) — and is **never
 routed to the
-customer** as a business question (§1, D9). A `[C]` is held. The section
+customer** as a business question (§1, D9). A `[C]` is held — never answered by the delivery team,
+though an answer of theirs may put a proposed answer beside it, or show it was theirs to decide all
+along and re-tag it `[V]` (*Hold every `[C]`*). The section
 *How no `[G]` reaches a human* below states the ordering that makes the first of those structural
 rather than aspirational.
 
@@ -94,7 +96,11 @@ them is.
    anything the `[G]` phase re-tagged into `[V]`, which re-enters at tagging and is re-tested there
    before it joins the set (property 4). What the queue is never appended to is a question that
    **has not been through the tagging phase**: no phase adds to it directly, and once this phase
-   opens, nothing is added to it at all, save a question of the set returning to it (below). Stating it as "the `[V]` list alone, never appended to from
+   opens, nothing is added to it at all, save a question of the set returning to it (below), and a
+   held `[C]` of the round that an answer shows was the delivery team's to decide all along,
+   re-tagged `[V]` by §2's own test with its cause recorded (`interview-tagging.md` §3; *Hold every
+   `[C]`*) — a question the tagging phase tagged, whose tag that test corrects, never one that has
+   not been through it. Stating it as "the `[V]` list alone, never appended to from
    another tag" would be false — a re-tagged `[G]` is a question from another tag, and it is
    supposed to arrive — and a guarantee that is false in its own ordinary case is one nobody can
    check the interesting case against. **And a `[V]` the set holds with a terminal disposition
@@ -591,8 +597,8 @@ and nothing downstream can tell the difference afterwards.
    sibling's or a `depends-on:` slice's, and a round record that exists and cannot be read leaves the items it would name
    undecidable, as an unreadable question set does (*Round 1 is generated from the grounding*).
    **Report each torn write in this BRD's folder now**, before anything is written — each record by
-   id, each `[CDF#n]` by id, each entry by its heading and each defect line by its `[DEF#n]` and
-   entry, with the round it claims and whether that round has no record or a record that does not
+   id, each `[CDF#n]` by id, each entry by its heading, each defect line by its `[DEF#n]` and
+   entry, and each proposal or re-tag line (*Hold every `[C]`*) by its entry, with the round it claims and whether that round has no record or a record that does not
    name it — and say that this run removes them if it reaches its handoff. They are
    what a run that stopped before its round record was written left behind, whether an earlier
    version wrote them before its own register phase or this one was interrupted inside it; a record
@@ -748,8 +754,10 @@ the very question this run promised to return to. §5 sides with the holding sta
 an outstanding `[C]` stays open until that answer comes back through the package, or until its
 question stops applying — the record it put again withdrawn, or every requirement defect it carries
 withdrawn with its requirement while it has no record of its own —
-no answer frozen against it and no `Re-puts:` line — and the customer's turnaround is not a reason to declare the round
-finished around them."*
+no answer frozen against it and no `Re-puts:` line — or until, before any package has carried it, a
+delivery-team answer shows it was the delivery team's to decide all along and it is re-tagged `[V]`
+under §3, after which it closes as a `[V]`; and the customer's turnaround is not a reason to declare
+the round finished around them."*
 
 A round is **open** while any question in it lacks a **terminal** disposition, and **closed** once
 every one has one. **A question's state is the last one its record records at that question's
@@ -970,7 +978,7 @@ the round record*), and where the two disagree the dispositions win.
   dispositions and holding states*), and a deferral takes one of two steps:
   - *needs grounding* → `Ground the questions no finding bears on with '/product-workflows:prd-ground <BRD-KEY>'.`;
   - *deferred* — save the last case below — or *untagged* — or *needs grounding*, once grounded → `Resume round <open> with '/product-workflows:brd-interview <BRD-KEY>'.` — the operator answers a deferred question there, an untagged one is rewritten there, and a grounded one is answered there;
-  - *held for the customer* → `Package the held questions with '/product-workflows:brd-package <BRD-KEY>', and record the customer's answers with '/product-workflows:brd-reconcile <BRD-KEY> @<review-file>'.` — no run of this command can close such a question;
+  - *held for the customer* → `Package the held questions with '/product-workflows:brd-package <BRD-KEY>', and record the customer's answers with '/product-workflows:brd-reconcile <BRD-KEY> @<review-file>'.` — no run of this command answers such a question, and one re-tags it `[V]` only where an answer shows it was never the customer's, before any package carries it (*Hold every `[C]`*), which no remedy can order;
   - *deferred*, on a `[V]` whose `- **Blocked-on:**` line names only questions held for the
     customer (*A deferred `[V]` whose wait is over*, below) → the *held for the customer* step, then
     `Resume round <open> with '/product-workflows:brd-interview <BRD-KEY>' once those answers are recorded.` — the package admits such a question, and it waits on what the package carries.
@@ -1068,9 +1076,11 @@ the set: *Put each `[V]` to the operator* puts each with that customer answer as
 recommendation — unless a decision on file now settles it, that `[CD#n]` among them, when the
 question registry records it applied before it is put (*Tag every question*, *Then merge*, or a
 sitting's plan), and the end-of-sitting list shows it. A deferred `[V]` that is not unblocked — some `[C]` it names still held, or
-answered by no `[CD#n]` the register holds `decided` — is put again as any deferred question is,
-its prompt naming each `[C]` it still waits on. Nothing here is written: the question stays
-*deferred* until it is answered.
+answered by no `[CD#n]` the register holds `decided`, or re-tagged `[V]` since (*Hold every `[C]`*)
+— is put again as any deferred question is, its prompt naming each `[C]` it still waits on, and
+each question it named that was re-tagged `[V]`, with the state that question reached, as a wait on
+the customer no longer. Nothing here is written: the question stays *deferred* until it is
+answered.
 
 ---
 
@@ -1718,7 +1728,10 @@ terminal disposition and is not returned to. Taking the first state instead read
 this question's answer and closes a round around a question still in a holding state — the failure
 the terminal/holding distinction exists to prevent. Where the re-tag
 follows a split, the part keeps its letter as well (`5b` stays `5b`). Its durable handle, once it
-produces one, is the `[VD#n]`, `[CD#n]` or `[AS#n]` it becomes.
+produces one, is the `[VD#n]`, `[CD#n]` or `[AS#n]` it becomes. **A held `[C]` an answer re-tags
+`[V]` keeps its number the same way** (*Hold every `[C]`*), its re-tag recorded on a
+`- **Re-tagged:** [C] → [V]` line, which is no state: it is written only together with the state the
+question then reached as a `[V]`, so the last state at its address is always a `[V]`'s.
 
 ---
 
@@ -1755,13 +1768,16 @@ tag, and the disposition it arrived with stands.
 
 **The invariant this phase exists to establish**, and which every later phase depends on: when this
 phase ends, every question in the round carries exactly one tag, and the three sets — `[G]`, `[V]`,
-`[C]` — are fixed for this round. A question that could not be resolved into one of the three is
+`[C]` — are fixed for this round, save the one correction below. A question that could not be resolved into one of the three is
 left in the round in the *untagged* holding state, with what is wrong with it recorded, and the
 round stays open. It is never asked in that state, of anybody.
 
 A question re-tagged later (the *Answer every `[G]` from the findings* phase) re-enters **here**, is
 re-tested against §2, and joins whichever set it now belongs to. It never enters an asking phase by
-any other route.
+any other route. **The one correction made after this phase ends moves a question this phase
+tagged, never one it did not**: a held `[C]` an answer shows was the delivery team's to decide all
+along is re-tagged `[V]` by §2's own test, its cause recorded (`interview-tagging.md` §3), and is
+then decided or applied as a `[V]` (*Hold every `[C]`*, *A held `[C]` an answer reaches*).
 
 ### The question registry
 
@@ -1811,7 +1827,9 @@ registry as the cause.
   as this run now holds it, and of every other round, as its record on file stands, whose last
   state tags it `[V]` or `[C]` — save a split question, whose parts enter in its place, and a `[C]` *answered by the
   customer*, which no state of the registry holds and no answer of this run reaches. Each object
-  carries `qid`, `<round>/<position>` (`2/7`, a split part `2/7b`); `tag`, `"V"` or `"C"`; `text`,
+  carries `qid`, `<round>/<position>` (`2/7`, a split part `2/7b`); `tag`, `"V"` or `"C"` — `"V"`
+  for a question whose record carries a `- **Re-tagged:** [C] → [V]` line (*Hold every `[C]`*),
+  whose last state is a `[V]`'s; `text`,
   the question as it is written, one line; `rows`, each `[BR#n]` it names, a qualified one by its
   bare id; `findings`, each `[CG#n]` and `[DG#n]` it carries; `rank`, its place in the order the
   objects are written, from 0, so that `next` returns the open ones in round and position order;
@@ -1828,6 +1846,9 @@ registry as the cause.
   set can carry the same heading, which marks the question carried when it was not, the safe side —
   and every held `[C]` whose entry is on file enters carried where such a directory, or a markdown
   file in it, exists and cannot be read, since no reading can say which questions it carried.
+  **A held `[C]` whose round record carries a `- **Proposed answer:**` line at its address enters
+  with `"proposed"`**, the text after the label on the last such line, so that no planner proposes
+  it again (*Hold every `[C]`*, *A held `[C]` an answer reaches*).
 
 **Decision ids.** Every `[VD#n]` this run takes — asked, applied, or confirmed in a table — takes,
 as it is recorded, one past the highest `[VD#n]` that `decisions.md` holds, torn writes included
@@ -1836,7 +1857,8 @@ register and the round record* closes any gap an id this run took and an end-of-
 freed would leave.
 
 **A question that puts a record again is put to the person who answers it, and closed no other
-way**: no merge or drop names it, and no answer is applied to it.
+way**: no merge or drop names it, no answer is applied to it, and no proposal or re-tag reaches it,
+its tag never moving.
 Its answer re-decides or supersedes the record its `- **Re-puts:**` line names, and
 `decision-register-format.md` §4 has a re-decision argued against the cause that moved the record,
 which an answer applied from another cannot be — and a question merged or dropped would leave the
@@ -1891,13 +1913,19 @@ drop's reason being the planner's own text, written between single quotes, each 
   the cross-BRD form for a sibling slice's or a `depends-on:` BRD's
   (`decision-register-format.md` §1), which the package's citation check reads as qualified
   (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6.2). One naming a decision the input
-  does not hold is not recorded.
+  does not hold is not recorded;
+- **each proposal** — a held `[C]`, carried or not, for which a decision on file determines what
+  the delivery team would propose (§8): recorded as *Hold every `[C]`* records one (*A held `[C]` an
+  answer reaches*), with `--sitting 1`. One naming a decision the input does not hold is not
+  recorded.
 
-**None is recorded that names a question putting a record again** (above) — or a `[V]` whose `[V]`
+**No merge, drop or applied entry is recorded that names a question putting a record again**
+(above) — or a `[V]` whose `[V]`
 tag is on file with no `- **Re-puts:**` line, which *Put each `[V]` to the operator*'s tie picker
 may yet tie to one — **or a held `[C]` whose entry is already on file in
 `interview/customer-questions.md`**, on either side of a merge: that entry would still reach the
-customer in the next package, merged or dropped or not. An entry naming
+customer in the next package, merged or dropped or not. No proposal is recorded on a question
+putting a record again. An entry naming
 a question the registry already records closed is skipped — a resumed run's, whose earlier session
 recorded it before it stopped. The final report names each one not recorded, with why. Once every
 one is recorded — or once the run goes on with nothing merged — set fact `p4-merge-done` to `yes`;
@@ -1938,12 +1966,15 @@ Three outcomes:
    such a finding — either half — never reaches
    this phase: it carried the findings that raised it into tagging and was tagged for a person there. The question
    is then **re-tagged**, usually to `[V]`, and the re-tag
-   **names that finding as its cause**, with its verdict and, where it is the cause, its
-   `unprovable` outcome (`interview-tagging.md` §3). Re-tagging to `[C]` is the
+   **names as its cause every finding that bears on it and could not settle it** — one, or, where
+   several repositories each hold one, every one of them, as a row no repository settles raises one
+   question carrying every such finding (*Round 1 is generated from the grounding*) — each with its
+   verdict and, where it is the cause, its `unprovable` outcome (`interview-tagging.md` §3).
+   Re-tagging to `[C]` is the
    exception and is correct only when what the repository could not settle turns out to have been a
    business question mistaken for a technical one — "the code does not tell us" is never on its own a
    reason to ask the customer. The original question is terminally disposed as *re-tagged*, naming
-   the finding, and the re-tagged question goes back to the *Tag every question* phase to earn a
+   those findings, and the re-tagged question goes back to the *Tag every question* phase to earn a
    terminal disposition of its own.
 3. **No finding bears on it at all.** Then grounding has not been asked this question yet, and **the
    answer is a grounding pass, not a person.** Record the **holding state** *needs grounding* in the
@@ -1963,7 +1994,9 @@ Three outcomes:
 
 The queue is the `[V]` set the *Tag every question* phase fixed, plus anything the previous phase
 re-tagged into it and which passed back through tagging. Nothing else, and nothing added after this
-phase begins, save a question of that set an end-of-sitting list reopens (below). **A `[V]` already
+phase begins, save a question of that set an end-of-sitting list reopens (below), and a held `[C]`
+of the round this run works that an answer re-tags `[V]` (*Hold every `[C]`*, *A held `[C]` an
+answer reaches*), put in its turn like any `[V]` of the round. **A `[V]` already
 disposed is in that set and not in the queue**: the standing re-decision *A later round is
 generated from what changed* records carries its terminal disposition from generation, or, in a
 round this run resumes, from the resume, and a question that already has one is never asked —
@@ -2073,6 +2106,8 @@ in order:
   question that puts a record again, or a `[V]` whose `[V]` tag is on file with no
   `- **Re-puts:**` line and no tie picker's answer, is recorded (*Then merge*), and one naming a
   question the registry already records closed is skipped;
+- **each `proposals` entry** — recorded as *Then merge* records one, with `--sitting <the
+  sitting>`, none on a question that puts a record again;
 - **the ranks** — `rank`, its stdin the result's `ranks` less every qid no longer open, so that
   `next` prints the questions left in the plan's order;
 - **the table's rows** — the result's `plan.table` rows that *The tail table*'s test (below)
@@ -2081,7 +2116,7 @@ in order:
   folder is unavailable.
 
 Then set fact `p6-plan-done-<sitting>` to `done`. **A resumed run that finds it set records no
-applied entry and no rank** — both were recorded, and a question open now that the plan closed was
+applied entry, no proposal and no rank** — each was recorded, and a question open now that the plan closed was
 reopened since, at an end-of-sitting list, which must stand — and reads the table's rows from
 `scratch/p6/table-<sitting>.json`.
 
@@ -2153,11 +2188,14 @@ phase carries more than one. The prompt carries, in this order:
    frame set, read as *A superseded finding's successors* reads a finding's source (*Generate the
    round's question set*), or `source not on file` where that reading decides none — since a row no
    repository settles raises one question carrying every finding that could not settle it (*Round 1
-   is generated from the grounding*); and, when it got here by a re-tag, the finding that caused
-   the re-tag, `NOT-PROVABLE` or carrying the `unprovable` outcome, so the operator can see that the
-   repository was consulted first and came back empty. A deferred `[V]` put again names each held
+   is generated from the grounding*); and, when it got here by a re-tag, the findings that caused
+   the re-tag, each `NOT-PROVABLE` or carrying the `unprovable` outcome, so the operator can see that the
+   repository was consulted first and came back empty — or, for a held `[C]` an answer re-tagged
+   `[V]` (*Hold every `[C]`*), that answer's `[VD#n]` and the re-tag's cause, so the operator sees
+   why a question once held for the customer is theirs. A deferred `[V]` put again names each held
    `[C]` its `- **Blocked-on:**` line names, and, where *Resolve the round* found it unblocked, each
-   `[CD#n]` that answered them, with its `chosen`. **Every claim the prompt makes about a row, a
+   `[CD#n]` that answered them, with its `chosen`; and each question that line names that a record
+   or this run has re-tagged `[V]` since, with the state it reached. **Every claim the prompt makes about a row, a
    finding or the code is checked against its source before the question is written** (§4).
 3. **The options**, listed in prose above the array (below), each with what it does in one short
    line, which is also its description in the array: an option — "Recorded as a delivery-team
@@ -2375,7 +2413,14 @@ question with that answer as its recommendation, save where a decision on file n
 is over*). **A deferral naming none carries forward the wait it had**: where the question's last
 state on file is a deferral with a `- **Blocked-on:**` line, that line's addresses are written
 under the new deferral too, so a re-deferral never loses what the question waits on; a deferral
-naming none, of a question that carried no such line, writes none. **This is the defer entry of the picker
+naming none, of a question that carried no such line, writes none. **The line names only questions
+held for the customer**: an address whose question an answer re-tags `[V]` (*Hold every `[C]`*) —
+in this run, before the deferral named it or after, or in an earlier run, its record carrying a
+`- **Re-tagged:**` line — is left off the line *Write the register and the round record* writes,
+since that question waits on no customer now and `/product-workflows:brd-package`'s rounds gate
+admits a deferral only while every question its line names is held for the customer. A deferral
+left naming none writes no line, and is one the package waits on until a run puts it again; the
+final report names it. **Deferring is the defer entry of the picker
 above, and the at-budget question's *Defer the rest* (below), and only those two**: *The will-change rule* phase's *Defer it until the prerequisite ships* resolves a
 question that was answered, records the wait on the `[VD#n]` rather than on the question, and keeps
 no round open (that phase says so). **An abort — the harness's free-text option, since the array
@@ -2461,12 +2506,14 @@ questions it might have closed stay open, to be asked.
    `applied`, `decision` the next `[VD#n]`, `applied_from` the answer's `[VD#n]`, `answer` the
    answer's `statement`, `reason` `covered by <round>/<position>`, the answered question's address. A
    free-text answer that chose no option sends those questions to the applier with the rest.
-2. **The applier reads the rest**, where the registry holds an open `[V]` outside the skip set
+2. **The applier reads the rest**, where the registry holds an open `[V]`, or a held `[C]` of any
+   round, carried or not — its `carried` field telling the applier the one rule a carried question
+   takes (§8) — outside the skip set,
    other than a question putting a record again — its `- **Re-puts:**` line, or this run's tie
    picker's answer, naming one — and other than a `[V]` whose `[V]` tag is on file with no such line
    and no such answer, which a later run's tie picker may yet tie (*Tag every question*, *The
    question registry*). Write its input as indented JSON,
-   `{"answer": {"qid": <the answered question's>, "decision": <its [VD#n]>, "statement": …, "chosen": …, "argumentation": …}, "candidates": [each such [V], as the registry file holds it, in the file's order], "decisions": [...]}`,
+   `{"answer": {"qid": <the answered question's>, "decision": <its [VD#n]>, "statement": …, "chosen": …, "argumentation": …}, "candidates": [each such question, as the registry file holds it, in the file's order], "decisions": [...]}`,
    `decisions` being the planner's (*Tag every question*, *Then merge*) followed by each `[VD#n]`
    this run has taken so far, as `{"id", "statement", "chosen", "argumentation"}` — an asked one
    from its file above, an applied one or one confirmed in a table from the registry, its `answer` standing as both `statement`
@@ -2494,11 +2541,15 @@ questions it might have closed stay open, to be asked.
    - **`determined`** — `record --sitting <the sitting>`, event `applied`, `decision` the next
      `[VD#n]`, `applied_from` the answer's `[VD#n]`, `answer` and `reason` the result's;
    - **`narrowed`** — `record --sitting <the sitting>`, event `narrowed`, `text` the result's: the
-     question stays open and is put as that text;
+     question stays open and is put as that text — a held `[C]` only where this run builds its
+     entry (*Hold every `[C]`*, *A held `[C]` an answer reaches*);
+   - **`proposal`** and **`retag`** — on a held `[C]`: recorded as *Hold every `[C]`* records them
+     (*A held `[C]` an answer reaches*), with `--sitting <the sitting>`;
    - **`untouched`** — nothing.
 
    A result naming a question the registry already records closed is skipped — a resumed run's,
-   recorded by the session before it. Once every result is recorded — or once the answer is applied
+   recorded by the session before it — and so is a `retag` naming one it records tagged `[V]`
+   already, the `applied` that follows it then recorded where that question is still open. Once every result is recorded — or once the answer is applied
    no further than its coverage, the dispatch having failed twice — set fact
    `p6-applied-<round>-<position>` to `done`. **A resumed run first finishes every answer an earlier
    session recorded and left unapplied**: before it puts a question, each question the registry
@@ -2613,15 +2664,20 @@ writes nothing either**: it builds each entry and holds it for the *Write the re
 record* phase, which writes it into `<BRD-dir>/interview/customer-questions.md` with the rest of the
 round's deliverables (`decision-register-format.md` §8). An entry held here and never written leaves
 nothing behind; one written before a round record named it would ask the customer a question no
-round recorded asking.
+round recorded asking. So too what an answer does to a held `[C]` — a proposal, a re-tag
+(*A held `[C]` an answer reaches*, the last section of this phase): *Tag every question* and *Put
+each `[V]` to the operator* record each in the question registry as they reach it, by the rules that
+section gives, and the lines it writes are held for that same phase.
 
 For each `[C]` in the round **that carries no entry yet** — every `[C]` of a round this run opened,
 and in a round it resumes or re-opens, each question that became a `[C]` in this run, by a re-tag, a
 split or the round-1 test; a `[C]` an earlier run held keeps the entry it has — **and that the
-question registry does not record merged or dropped** (*Tag every question*, *The question
-registry*), build an entry carrying the rows and findings of each `[C]` merged into it as its own
+question registry does not record merged or dropped, or tagged `[V]` by a re-tag and no longer
+open** (*Tag every question*, *The question registry*; *A held `[C]` an answer reaches*), build an
+entry carrying the rows and findings of each `[C]` merged into it as its own
 (`workflows-core:question-budget` §5), and carrying:
-the question as it will be put, every row it names that this slice does not claim cited as
+the question as it will be put — its text as the question registry holds it, which an answer may
+have narrowed — every row it names that this slice does not claim cited as
 `<PARENT-KEY> [BR#n]` (*A row this slice does not claim*, in *Generate the round's question set*) —
 the entry ships in the package, and `/brd-package` resolves a bare `[BR#n]` against this slice's
 inventory alone; **its round and position, as the entry's own heading and the delimiter between
@@ -2666,6 +2722,8 @@ grounding*), and `/product-workflows:brd-package` renders it into the customer's
 question; and, where a `[G]`
 part of the same original question was answered first, that answer — because the business question
 it leaves is materially different from the one that would have been asked without it (§4).
+**Where the question registry holds a proposal for it, that proposal, on a line of its own labelled
+exactly `- **Proposed answer:**`**, written as *A held `[C]` an answer reaches* fixes.
 **Where the question offers the customer options, they are part of the question as it will be
 put**, listed under it in plain prose, never on a labelled line: `/product-workflows:brd-reconcile`
 records them as the answering `[CD#n]`'s `options_considered`, and a question put as yes or no,
@@ -2674,11 +2732,13 @@ beside the round record that names it.
 
 Each `[C]` is recorded in the round with the **holding state** *held for the customer* — save one
 the registry records merged or dropped, which carries that terminal disposition instead (*Write the
-register and the round record*) and is put to no one. **Holding a
+register and the round record*) and is put to no one, and one re-tagged `[V]` that reached a
+`[V]`'s state, which carries that state instead (*A held `[C]` an answer reaches*). **Holding a
 question is not an answer to it**: the terminal disposition *answered by the customer* is reached
 only when the answer comes back and an operator confirms it, or when `/brd-reconcile` finds the
 question has stopped applying, so a round holding a `[C]` stays open until `/brd-reconcile` closes
-it, as the paragraph after next says.
+it, as the paragraph after next says — or until, before any package carries it, an answer shows it
+was the delivery team's to decide and it is re-tagged `[V]`, to close as a `[V]`.
 
 **No `[CD#n]` is written here, and none may be.** A customer decision enters the register only when
 the customer has actually answered and an operator has confirmed the answer (D14,
@@ -2691,9 +2751,79 @@ is not sending it. A `[C]` this run holds stays held until a package goes out an
 comes back, and the round that contains it stays open throughout (`interview-tagging.md` §5) until
 `/brd-reconcile` ingests that answer and an operator confirms it, or finds the question has stopped
 applying — that command writes the terminal disposition *answered by the customer*, and it is the
-only command that closes such a round. Report
+only command that closes a held `[C]` while it is a `[C]`. The one other way out is this command's
+re-tag, and only before any package has carried the question: where an answer shows it was the
+delivery team's to decide all along, it becomes a `[V]` and closes as one (*A held `[C]` an answer
+reaches*, below), which corrects a mis-tag and never closes a genuine customer question. Report
 that as the plain sequence it is: this run holds, `/brd-package` carries, the customer answers, and
 `/brd-reconcile` records.
+
+### A held `[C]` an answer reaches
+
+`workflows-core:question-budget` §8 is the rule — a held `[C]` is never answered by the delivery
+team; it becomes a **proposal** where a delivery-team answer settles what the team would propose,
+is **re-tagged `[V]`** where the question was the team's to decide all along, and, once **carried**
+(§1: its round and position in a bundle on file, or a bundle file on file that cannot be read), is
+never edited. This section says only what this command records and writes for each.
+`question-planner`'s `proposals` reach a held `[C]` from a decision on file (*Tag every question*,
+*Then merge*; a sitting's plan in *Put each `[V]` to the operator*), and `answer-applier`'s
+`proposal`, `retag` and `narrowed` verdicts reach one after each answer (*Then the answer is applied
+forward*). None reaches a question that puts a record again, whose tag never moves.
+
+- **A proposal** — on a held `[C]`, carried or not: `record --sitting <the sitting>`, its stdin
+  `{"qid": …, "event": "proposed", "answer": "<the proposal's answer> — follows <the decision it follows>"}`,
+  the decision written as its bare id for this register's and as `<BRD-KEY> [VD#n]` — the qualified
+  prose spelling (`decision-register-format.md` §4), never the slash form — for another BRD's, so
+  that the registry's `proposed` holds the line the record takes; for the applier, the decision is
+  the answer's `[VD#n]`, and for the planner, the entry's `applied_from`. A later proposal replaces
+  an earlier one in the registry, and the question stays held: a proposal answers nothing, and only
+  a customer's answer confirmed at `/product-workflows:brd-reconcile` becomes a `[CD#n]`. It is the
+  one event a carried question takes (`workflows-core:question-budget` §12).
+- **A re-tag** — only on a held `[C]` that is not carried, whose entry carries, or is to carry, no
+  `- **Requirement defect:**` line and no `- **Rejected row:**` line — a requirement defect's
+  question is a `[C]` by rule (`interview-tagging.md` §1), and so is a rejected row's, whose
+  acceptance only the customer can give (*Round 1 is generated from the grounding*) — that no
+  question of another round whose last state is *deferred* names on its `- **Blocked-on:**` line,
+  since this run writes nothing more under that deferral and `/product-workflows:brd-package`'s
+  rounds gate would then refuse it for naming a question no longer held — and only
+  where it is a question of the round this run works, or the verdict carries `answer`: first the
+  verdict's reason, with `put <folder> 'scratch/p6/retagged/<round>-<position>.txt' --from -`, the
+  address in lower case — a resumed run reads it there — or held by the run where the run folder is
+  unavailable, since a later event on the question replaces the registry's `reason`; then
+  `record --sitting <the sitting>`, its stdin `{"qid": …, "event": "retagged", "tag": "V", "reason": <the verdict's reason>}`;
+  then, where the verdict carries `answer`, at once `record --sitting <the sitting>`, event
+  `applied`, `decision` the next `[VD#n]` (*Tag every question*, *Decision ids*), `applied_from`
+  the answer's `[VD#n]`, `answer` and `reason` the verdict's. Without `answer` the question is an
+  open `[V]` of the round this run works, and the queue puts it in its turn (*Put each `[V]` to the
+  operator*). A `retag` on any other `[C]` is not recorded, and the final report names it with its
+  reason.
+- **A narrowing** — `narrowed`, as on a `[V]`: the registry then holds the narrowed text, which an
+  entry this run builds takes. An entry on file keeps its text — written once, never rewritten
+  (*One question per row*, in *Resolve the round*) — so the narrowing lasts this run alone, and the
+  final report names it.
+
+**What *Write the register and the round record* writes for them**, each line beneath the
+question's last line at its address in its own round's record, whichever round that is, and — save
+on a carried entry — beneath its entry's last line in `interview/customer-questions.md` where the
+entry is on file, an entry this run builds carrying its proposal already:
+
+- a proposal as `- **Proposed answer:** <text> — follows <decision-id>`, the registry's `proposed`
+  as the run ends, where it differs from the last such line the question's round record carries —
+  so a proposal `init` read from the record is not written twice; one whose decision this run took
+  and an end-of-sitting list then reopened is written nowhere, its basis gone
+  (`workflows-core:question-budget` §8, *When the source moves*).
+  **A carried entry is never touched** (`workflows-core:question-budget` §8): its proposal goes
+  into its round's record alone, beside the entry the customer holds;
+- a re-tag as `- **Re-tagged:** [C] → [V] — <reason>`, the reason kept for it above, and in the
+  round record `- **Re-puts:** none` and the state the question then reached as a `[V]` after it
+  (*Write the register and the round record*, *Every question the registry closed*) — **only
+  together with that state**. A re-tagged question that reached none — the registry lost before it
+  was put, or the question in the skip set — or whose applied answer an end-of-sitting list reopened
+  in a round this run does not work, is written *held for the customer*, as a `[C]` no answer
+  re-tagged is, with no re-tag line, its entry built above where it has none, and the final report
+  names it with the re-tag's reason. No entry is built for a question re-tagged before its entry
+  was written that reached a `[V]`'s state, and an entry on file that carries the re-tag line is no
+  `[C]` question any more: no package renders it.
 
 ---
 
@@ -2798,9 +2928,10 @@ horizons of findings in an `evidence` list and an assumption's list holds none.
 
 **This phase is the one writer of a round's deliverables in this command, and it writes them in one
 order**: `code-defect-log.md` where this round raises an entry, then `decisions.md`, then
-`interview/customer-questions.md` where this round holds a `[C]` or adds a defect line, then
-`interview/round-<N>.md` — and, after it, the record of each other round one of whose questions
-this run closed (*Every question the registry closed*, below) — **last** — the log before the
+`interview/customer-questions.md` where this round holds a `[C]` or adds a defect, proposal or
+re-tag line, then
+`interview/round-<N>.md` — and, after it, the record of each other round this write adds a line to
+(*Every question the registry closed*, *Every held `[C]` an answer reached*, below) — **last** — the log before the
 register, so a decision this round writes never cites a `[CDF#n]` on no file
 (`decision-register-format.md` §8). Then, **fifth and only after the round record names them**, each re-disposition the *Put each `[V]` to the operator* phase took
 is applied to `code-defect-log.md`. **Sixth and last, stamp the register** — on a run that generated
@@ -2842,7 +2973,8 @@ round-1 test reads `requirement defects:` alone.
 removal alone where this round writes nothing else to that file — remove them before appending this
 run's own** — every torn write in this BRD's folder, the ones the *Resolve inputs and gate the
 grounded BRD* phase reported: a torn record from `decisions.md`, a torn `[CDF#n]` from
-`code-defect-log.md`, a torn entry or a torn defect line from `interview/customer-questions.md`;
+`code-defect-log.md`, a torn entry, a torn defect line or a torn proposal or re-tag line from
+`interview/customer-questions.md`;
 and, where a torn `[VD#m]` superseded a record, that record's `Superseded <YYYYMMDD>: by [VD#m]`
 paragraph with it, its `status` restored as §8 says. It is the one deletion this command makes in a
 deliverable — the no-new-round path, which skips this phase, makes the same one — and it deletes
@@ -2929,8 +3061,8 @@ says.
 confirmed in a table in this
 run (*Put each `[V]` to the operator*), the `[VD#n]` it had names no block this write makes — an
 answer it takes later takes the next id (*Tag every question*, *Decision ids*): before the write, every `[VD#n]` this run took above it moves down to
-close the gap, in the order they were taken, and every `applied_from`, every state line this
-write makes and the final report name the moved id. Nothing on file has carried this run's ids
+close the gap, in the order they were taken, and every `applied_from`, every state line and
+`- **Proposed answer:**` line this write makes and the final report name the moved id. Nothing on file has carried this run's ids
 yet, so no id on file is renumbered (§1).
 
 **The register is written on every run that reaches this phase, whether or not the round produced a
@@ -2973,7 +3105,8 @@ line's `flag answered` parts record the answers. Otherwise: every question in th
 was written, its tag, **on every question that puts an existing record again, that record on a
 line of its own labelled exactly `- **Re-puts:** [VD#n]` or `- **Re-puts:** [CD#n]`**, whatever the
 question's tag, **and on every other `[V]` the same line reading `- **Re-puts:** none`**, written
-by the write that first records its `[V]` tag (below), every re-tag with the finding that caused it, every split with the parts it
+by the write that first records its `[V]` tag (below), every re-tag out of `[G]` with the findings that caused it, every
+re-tag out of `[C]` on its `- **Re-tagged:**` line (*Every held `[C]` an answer reached*, below), every split with the parts it
 became, and each question's state **as the record last records it** — a re-tagged question carrying
 two states at one address, the *re-tagged* disposition and whatever the question then reached, of
 which the last governs (*Questions carry no minted identifier*, in *Generate the round's question
@@ -2993,6 +3126,7 @@ hold (Phase 0 step 8c). **`decision-register-format.md` §9 is a worked record**
 question-set entry they share — in the layout this phase writes: each question under a
 `### <position>. [<tag>] — <rows>` heading, each state on a line of its own labelled
 `- **State:**` beneath it, a deferral's `- **Blocked-on:**` line on the line after its state, a
+held `[C]`'s `- **Proposed answer:**` and `- **Re-tagged:**` lines each on a line of its own, a
 later state appended under the last, and the account and `Status:` lines each write adds at the end.
 
 **Every question the registry closed** (*Tag every question*, *The question registry*) in a sitting
@@ -3006,14 +3140,26 @@ record, whichever round that is:
 - confirmed in a table — `- **State:** confirmed in a table — [VD#n]`;
 - answered — `- **State:** decided — [VD#n]`, and deferred — `- **State:** deferred — <reason>`, as
   ever; and under a deferral that named the held `[C]`s it waits on, or carried an earlier line
-  forward, on the next line, those `[C]`s as *Put each `[V]` to the operator* holds them,
+  forward, on the next line, those `[C]`s as *Put each `[V]` to the operator* holds them, less each
+  one re-tagged `[V]` (*Deferring is a recorded holding state*) and no line where that leaves none,
   `- **Blocked-on:** <round>/<position>, …` (`decision-register-format.md` §9), which *Resolve the
   round* reads (*A deferred `[V]` whose wait is over*) and `/product-workflows:brd-package`'s rounds
   gate reads too.
 
-**A question of another round** — one this run applied, or a merge or a drop named —
-is closed in that round's record, appended after the worked round's record is written — after any
-baseline line that record lacks (above): its state line at its address, then that record's
+**Every held `[C]` an answer reached** (*Hold every `[C]`*, *A held `[C]` an answer reaches*) gets
+the lines that section fixes, at its own address in its own round's record, whichever round that
+is, beneath the question's last line: a proposal's `- **Proposed answer:**` line, for a carried
+question as for any other; and a re-tag's `- **Re-tagged:** [C] → [V] — <reason>` line, then
+`- **Re-puts:** none`, then the state line the list above gives the question as a `[V]`, written
+once — the three in one write, never the re-tag line alone. A question the registry records tagged
+`[V]` and first tagged `[C]` is one this run re-tagged. The proposal and re-tag lines go beneath
+its entry's last line in `interview/customer-questions.md` too, where that section says; the
+`- **Re-puts:**` and state lines are the record's alone.
+
+**A question of another round** — one this run applied, re-tagged or recorded a proposal on, or a
+merge or a drop named — gets its lines in that round's record, appended after the worked round's
+record is written — after any baseline line that record lacks (above): its lines at its address,
+then that record's
 `code defects: none` line and a `Status:` line, each as below, and no account line or
 `requirement defects:` line, which are the worked round's. Written after this round's record, a
 stop between the two leaves an applied `[VD#n]` of that round a torn write
@@ -3040,7 +3186,8 @@ moves after it**, the record being append-only. That is the question's first wri
 written `[V]` — a re-put, a standing re-decision, or any other question tagged `[V]` as it is
 generated, added or split off — and otherwise the later write recording it `[V]`: a re-tag from `[G]` (*Answer
 every `[G]` from the findings*), or a rewrite out of *untagged* (*Tag every question*), whose line
-is appended under that state and reads `none`. A question that puts a record again is never
+is appended under that state and reads `none`, or a re-tag out of `[C]` (*Hold every `[C]`*),
+whose line, reading `none`, follows its `- **Re-tagged:**` line. A question that puts a record again is never
 re-tagged, since its tag never moves, so a line written at a re-tag or a rewrite always reads
 `none`. **Save one late write**: a `[V]` whose `[V]` tag a released version wrote before the line
 existed carries none, and gets it, appended under the question, from *Put each `[V]` to the
@@ -3084,7 +3231,7 @@ predates the line and keeps the fallback that branch names.
 
 **Every round record this command writes carries one line accounting for the requirement-defect
 source**, whether or not the round raised a question — save the record of a round this run only
-closes a question of (*A question of another round*, above), which that write gives none, since
+adds a question's lines to (*A question of another round*, above), which that write gives none, since
 round 1's line says the source ran there. It accounts for every open requirement defect
 that joins a row of this BRD's in-scope set and that no slice had asked before this round — each of
 a class grounding cannot settle, **and each defect of any class a rejected row of this BRD carries,
@@ -3157,8 +3304,10 @@ written before these lines existed carries none until a run writes to it, and no
 file is rewritten.
 
 **`<BRD-dir>/interview/customer-questions.md`** — every entry the *Hold every `[C]`* phase built,
-appended after the entries on file, and every defect line *One question per row* decided to add,
-appended to the held entry it joins. Written third, after the register and the log and before the
+appended after the entries on file, every defect line *One question per row* decided to add,
+appended to the held entry it joins, and every `- **Proposed answer:**` and `- **Re-tagged:**` line
+*Hold every `[C]`* holds for an entry already on file, appended beneath that entry's last line —
+never to a carried entry (*A held `[C]` an answer reaches*). Written third, after the register and the log and before the
 round record, so a question reaches the file only in the write that precedes the record naming it.
 Where no `[C]` was held and no line added, the file is not written, save to remove a torn write.
 
@@ -3191,7 +3340,7 @@ because a question is still *untagged* and has not been rewritten yet, or becaus
 for the customer* whose turnaround is slow. Report the round as open or closed accordingly, and when
 open, name which holding state it is waiting on — in the final report, and in the `Status:` line
 that ends this write of the round record (above). The same rule decides the state of each other
-round's record this write closes a question in.
+round's record this write adds a line to.
 
 **Guarded, where the run folder is open** (Phase 0 step 8c). The writes above — every file in its
 order, the re-dispositions applied after the round records, and the register's stamp — are effect
@@ -3199,7 +3348,7 @@ order, the re-dispositions applied after the round records, and the register's s
 resumed run never writes a round's deliverables twice. Compose each file's whole new text first and
 `put` it under `scratch/p9/`: `code-defect-log.md`, `decisions.md` and `customer-questions.md`, each
 where this phase writes it; `round-<N>.md` for the worked round and for each other round this write
-closes a question in; and `code-defect-log.final.md`, the log with the re-dispositions applied,
+adds a line to; and `code-defect-log.final.md`, the log with the re-dispositions applied,
 where this run takes any — with `scratch/p9/report.md`, the final report's items from Phases 0 to 9
 as that section words them, the account `account` printed among them. Then
 `effect <folder> p9-write start`; copy each over its file under `<BRD-dir>` in the order above — the
@@ -3345,9 +3494,9 @@ the `/brd-*` commands share), `feature_folder` as resolved in the *Resolve input
 grounded BRD* phase, `branch_fact: p10-handoff-branch` where the run folder is open
 (`workflows-core:phase-handoff` §2.9: the branch §2.2 settles is recorded as that fact before
 anything is pushed), `deliverable_paths` = every file this run wrote or updated under `<BRD-dir>`
-(`decisions.md`, `interview/round-<N>.md` and each other round's record this run closed a question
-in, `interview/customer-questions.md` when this round held a
-`[C]`, appended a defect line to a held entry already on file or removed a torn write from it, and
+(`decisions.md`, `interview/round-<N>.md` and each other round's record this run added a line to,
+`interview/customer-questions.md` when this round held a
+`[C]`, appended a defect, proposal or re-tag line to a held entry already on file or removed a torn write from it, and
 `code-defect-log.md` when this round raised a `[CDF#n]`, **re-dispositioned one already on file**,
 removed a torn write from it or completed an earlier run's re-disposition in it — a run that only
 re-dispositioned still wrote the file, and leaving it out of the set would hand off a round record
@@ -3364,7 +3513,8 @@ dropped or applied, with what it was merged into, why it was dropped or what it 
 answers and the re-tags with their causes; the `[VD#n]`, `[AS#n]` and `[CDF#n]` ids
 written and every `[CDF#n]` re-dispositioned, each with its old and new disposition, and every
 re-disposition completed for an interrupted run; every torn write removed; the `[C]` count
-held, and every defect line appended to a held entry; every will-change resolution taken; every
+held, and every defect line appended to a held entry; every proposal written beside a held `[C]`,
+and every held `[C]` re-tagged `[V]` with its cause; every will-change resolution taken; every
 held record put again, with the record that superseded it where this round wrote one; every
 reopened record a propagation sweep reverted whose re-put question this round answered, with the
 record that superseded it; every plain
@@ -3661,7 +3811,9 @@ wait to state there either.
 Say plainly what remains, per `Skill(skill: "workflows-core:reference", args: "next-phase-offer brd")`, the *PM — the BRD-to-PRD route* lane — names only,
 never behaviour a command of its own owns: a round still holding a `[C]` stays open, because the
 answer arrives through a package and is recorded by `/product-workflows:brd-reconcile` once it comes
-back — or that command finds the question has stopped applying. A
+back — or that command finds the question has stopped applying; a run of this command re-tags one
+`[V]` only where an answer shows it was never the customer's, before any package carries it, which
+is no step for the operator to take and is named as none. A
 question in the *needs grounding* holding state — the one the *Resolve the round* phase defines as
 movable only by a grounding run — is answered by re-running `/product-workflows:prd-ground <BRD-KEY>`
 and returning to this round, which is a real next step and is named as one. A requirement defect this
@@ -3783,7 +3935,7 @@ re-opened it with the cause recorded; every torn write an interrupted run left, 
 inputs and gate the grounded BRD* phase reported it, and whether this run removed it, with each
 re-decision standing at a round no record names; **the question counts by tag**, `[G]` / `[V]` / `[C]`, and
 every split, with the parts each original became; the `[G]` answers, each naming the
-`[CG#n]`/`[DG#n]` that settled it; **every re-tag, with the finding that caused it — `NOT-PROVABLE`,
+`[CG#n]`/`[DG#n]` that settled it; **every re-tag, with the findings that caused it — each `NOT-PROVABLE`,
 or carrying the `unprovable` outcome, with its verdict** — never a re-tag reported without its cause; every question recorded *needs grounding*, named, with
 `/product-workflows:prd-ground <BRD-KEY>` as the fix; the round's requirement-defect account line,
 and every defect withheld, with its cause — one that belongs to a closed round 1 with its re-open,
@@ -3791,7 +3943,8 @@ and one waiting on an open round with the round it will be asked in; every defec
 appended to its rejected row's held question, naming that question, and every one raised as a
 question of its own because the held entry could not be chosen, naming the candidates;
 the `[VD#n]` decided this run and any question deferred, each with its reason and the held `[C]`s
-its `- **Blocked-on:**` line names; each deferred `[V]` *Resolve the round* found unblocked, with
+its `- **Blocked-on:**` line names, and each deferral whose line lost a question to a re-tag, or
+writes none for that; each deferred `[V]` *Resolve the round* found unblocked, with
 the `[CD#n]`s that unblocked it; **the question registry** (*Tag every question*,
 *The question registry*; *Put each `[V]` to the operator*) — the budget in force; each sitting,
 what it spent and how it ended — its queue empty, or at its budget with the operator going on or
@@ -3800,7 +3953,12 @@ row confirmed and its `[VD#n]`, and each named as an exception; each question
 merged, with what it was merged into and why; each dropped, with its reason; each applied, with its
 `[VD#n]` and the decision it follows, grouped as its end-of-sitting list grouped it; each reopened at
 an end-of-sitting list; each merge, drop or applied entry not recorded, with why; each held `[C]`
-marked carried, and each register or bundle file that could not be read; the account lines, each
+marked carried, and each register or bundle file that could not be read; each proposal recorded
+on a held `[C]` (*Hold every `[C]`*, *A held `[C]` an answer reaches*) — its address, the proposed
+answer and the decision it follows, carried ones marked — and each written nowhere, with why; each
+held `[C]` re-tagged `[V]`, with its cause and the state it reached, each `retag` verdict not
+recorded and each re-tag written as its record had it, with why; each narrowing of a held `[C]`
+whose entry was already on file, which lasted this run alone; the account lines, each
 term listing its questions by round and position, and where `account` exits 4, the gap as a defect
 of this run (`workflows-core:question-budget` §11); each `[VD#n]` id moved to close a gap; a
 `question-planner` or `answer-applier` dispatch that failed twice, a registry refusal sent twice

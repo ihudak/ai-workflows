@@ -16,7 +16,7 @@ once in `workflows-core:grounding-format` §3 — cited here, not restated; requ
 test to a question already routed, and by `commands/brd-package.md`, which routes the `[C]` questions
 into the customer review prompt and reads §5's round vocabulary at its gate, and by
 `commands/brd-reconcile.md`, which writes §5's terminal disposition *answered by the customer* when
-an operator confirms a returned answer, or where the question has stopped applying — a record it put again since withdrawn, or every requirement defect it carries withdrawn with its requirement while it has no record of its own — no answer frozen against it and no `Re-puts:` line — the only command that ever closes a round holding a `[C]`.
+an operator confirms a returned answer, or where the question has stopped applying — a record it put again since withdrawn, or every requirement defect it carries withdrawn with its requirement while it has no record of its own — no answer frozen against it and no `Re-puts:` line — the only command that closes a held `[C]` while it is a `[C]`; the one other way a round holding a `[C]` closes is `commands/brd-interview.md` re-tagging that `[C]` `[V]` under §3, before any package has carried it, where a delivery-team answer shows it was the delivery team's to decide all along.
 `commands/create-prd.md` applies §2's test outside any round, to triage a gap its grill could not
 close by who could settle it, and `agents/customer-review-reader.md` cites §2 for why an escalated
 `[SR#n]` reaches the customer under its own id rather than as a `[C]`.
@@ -141,16 +141,33 @@ business question that was mistaken for a technical one, not merely a technical 
 turned out to be hard. "The code does not tell us" is never on its own a reason to ask the
 customer.
 
-**Every re-tag records its cause.** The `NOT-PROVABLE` finding is that cause, and the re-tagged
-question names it. Without the naming, the trail from "we asked the code" to "we asked a person"
-disappears, and a reader months later sees only a `[V]` that looks as though it was always a `[V]` —
+**Every re-tag records its cause.** The finding that could not settle the question is that cause —
+every such finding bearing on it, where several repositories each hold one, since a row no
+repository settles raises one question carrying them all — and the re-tagged question names each,
+with its verdict and, where it is the cause, its `unprovable` outcome. Without the naming, the
+trail from "we asked the code" to "we asked a person" disappears, and a reader months later sees only a `[V]` that looks as though it was always a `[V]` —
 with no way to tell that a repository was consulted first and came back empty. That trail is what
 lets the question be revisited if the repository later gains the answer.
 
-**Re-tagging runs out of `[G]`, not between `[V]` and `[C]`.** A question moving between `[V]` and
-`[C]` is not a grounding outcome; it is a correction of a mis-tagging, and it is handled by
-re-applying §2's test or by the split in §4. It carries the same obligation to record why the tag
-changed, and the same prohibition on the change being silent.
+**Re-tagging out of `[G]` is a grounding outcome; a move between `[V]` and `[C]` is not.** A question
+moving between `[V]` and `[C]` is a correction of a mis-tagging, and it is handled by re-applying
+§2's test or by the split in §4. It carries the same obligation to record why the tag changed, and
+the same prohibition on the change being silent.
+
+**The one such correction an interview makes after tagging is a held `[C]` that a delivery-team
+answer shows was the delivery team's to decide all along** (`workflows-core:question-budget` §8):
+`commands/brd-interview.md` re-tags it `[V]`, its cause recorded on a line of its own,
+`- **Re-tagged:** [C] → [V] — <reason>`, which is no disposition — the question's state is the one
+it then reaches as a `[V]`, written with that line, applied from that answer where the answer
+alone decides it and otherwise put to the delivery team like any `[V]`. The
+customer's authority is not spent by it, since the customer was never asked, and the
+recoverable direction of §2's asymmetry is kept: a correction that was itself wrong is a `[V]` with
+its reasoning on the page. **It is never made on a `[C]` a package has already carried** — the
+customer holds it as asked, and `commands/brd-reconcile.md` matches their answer to it by round and
+position — **nor on one that is a `[C]` by rule**: a requirement defect's question (§1), or a
+rejected row's, whose acceptance only the customer can give. Short of a re-tag, the same answer may
+put the answer the delivery team would propose beside a held `[C]`, for the customer to confirm or
+correct; that answers nothing, and the question stays held.
 
 ## 4. Untaggable questions
 
@@ -205,8 +222,10 @@ questions are typically the tedious ones, and the rule exists to resist exactly 
 leave them. A round with an outstanding `[C]` stays open until that answer comes back through the
 package, or until its question stops applying — the record it put again withdrawn, or every
 requirement defect it carries withdrawn with its requirement while it has no record of its own —
-no answer frozen against it and no `Re-puts:` line — and the customer's turnaround is not
-a reason to declare the round finished around them.
+no answer frozen against it and no `Re-puts:` line — or until, before any package has carried it, a
+delivery-team answer shows it was the delivery team's to decide all along and it is re-tagged `[V]`
+under §3, after which it closes as a `[V]`; and the customer's turnaround is not a reason to declare
+the round finished around them.
 
 **Resumability is a property of the record, not of the session.** Because a round is a set of
 questions each of which either has a disposition or does not, an interrupted run resumes at the

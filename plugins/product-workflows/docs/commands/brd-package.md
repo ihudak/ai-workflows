@@ -317,7 +317,11 @@ attack.
   every round to be closed would deadlock the route — and a `[V]` waiting only on those answers
   would deadlock it the same way, so it is admitted too, goes to the customer in no form, and is
   named in the final report; [`/brd-interview`](brd-interview.md) puts it again once the answers are
-  recorded. The other three holding states each name work that is still the delivery team's.
+  recorded. The interview's one other way out of a held `[C]` — re-tagging it `[V]` where one of
+  your answers shows it was yours to decide all along, before any package carries it — corrects a
+  mis-tag and never closes a genuine customer question, so it opens no way around that. A `[V]`
+  deferred on a question since re-tagged waits on you for that one, not the customer: it is admitted
+  only while every question its line names is still held for the customer. The other three holding states each name work that is still the delivery team's.
 - **Phase 0 — a dated bundle is never rewritten.** A `bundle-<date>/` that already exists stops the
   run with `BRD_PACKAGE_BUNDLE_EXISTS`. Rewriting it destroys the only evidence of what the reviewer
   of that date was looking at, and the command cannot tell whether the existing directory was already
@@ -522,8 +526,9 @@ A run that stops — at any gate or check above, on a refusal under *What it nee
   note is printed for pasting. Delivery is the operator's.
 - **It writes no `[CD#n]`, and it ingests no returned review.**
   [`/brd-reconcile`](brd-reconcile.md) is what turns a returned answer into a confirmed customer
-  decision, so the round holding each `[C]` stays open until that run records it, or finds its
-  question has stopped applying.
+  decision, so the round holding each `[C]` this package carries stays open until that run records
+  it, or finds its question has stopped applying — once a package has carried a question, no later
+  interview answer re-tags it.
 - **It changes no ledger disposition.** The final report's ledger line reports where allocation
   stands; allocation itself is `/brd-split`'s walk. Two other runs may move a row afterwards, and
   neither is this one: [`/brd-reconcile`](brd-reconcile.md) freezes a customer decision that settles

@@ -7,7 +7,8 @@ each `[V]` nothing has settled to the operator one at a time with mandatory argu
 most a budget of questions a sitting, the ones beyond it whose answer it is confident of put
 together as one table to accept or name exceptions in, and every answer applied to the questions
 still open, so that one an answer settles is recorded without being asked — and holds every `[C]`
-for the customer. It writes `decisions.md`, the
+for the customer, with the answer your team would propose beside it where one of your answers
+settles that, or re-tags it `[V]` where one shows it was yours to decide all along. It writes `decisions.md`, the
 round's own record, the `[C]` question set, and — where a decision raises a defect in the code or
 re-dispositions one already on file — the code-defect log; and, on the operator's confirmation, it
 writes a resolution into the parent BRD's requirement-defect log for an `unsourced` defect a
@@ -144,7 +145,9 @@ to give and cannot defend later.
 prose. Tagging runs over the whole round before any asking phase opens; the phase that answers `[G]`
 questions raises no prompt of any kind; the operator queue holds exactly what the tagging phase has
 fixed — including a `[G]` re-tagged to `[V]`, which is re-tested there before it joins — and nothing
-reaches it that has not been through that phase, nor anything at all once the queue opens; and a
+reaches it that has not been through that phase, nor anything at all once the queue opens save a
+question it reopens and a held `[C]` of the round one of your answers shows was yours to decide,
+re-tagged `[V]` with its cause recorded — a question the tagging phase tagged; and a
 `[G]` can leave the `[G]` set only by re-tagging, which re-enters at the tagging phase and is
 admissible only against a named finding nobody could settle — one reading `NOT-PROVABLE`, or one
 whose verifier outcome is `unprovable`, whatever verdict it keeps.
@@ -224,12 +227,12 @@ was closed; otherwise it hands off what it wrote — `decisions.md`
 as its header line alone where none was on file, any file a torn-write removal or a completed
 re-disposition changed, a code-defect log an earlier run left changed and uncommitted, and the
 parent's defect log where Phase 10 wrote a resolution into it.
-`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. Beside it the run dispatches two agents that read no code, each on the Opus tier: `workflows-core:question-planner` once tagging is done, to find the questions that ask the same thing, those no answer would change and those a decision on file already settles, and again at the opening of each sitting, to rank the questions left and pick those whose answer it is confident of for the sitting's table; and `workflows-core:answer-applier` after each answer, to find the open questions that answer settles or narrows. No grounding or review agent is dispatched — every finding this command reads was already independently re-derived by
+`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. Beside it the run dispatches two agents that read no code, each on the Opus tier: `workflows-core:question-planner` once tagging is done, to find the questions that ask the same thing, those no answer would change and those a decision on file already settles, and again at the opening of each sitting, to rank the questions left and pick those whose answer it is confident of for the sitting's table; and `workflows-core:answer-applier` after each answer, to find the open questions that answer settles or narrows, and the questions held for the customer it gives a proposed answer or shows were yours to decide. No grounding or review agent is dispatched — every finding this command reads was already independently re-derived by
 `/prd-ground`'s own verifier pass.
 
-**Questions are kept in a registry, and every answer is applied to it.** Once every question of the round is tagged, the run builds one registry of every `[V]` and `[C]` question on file in the slice — every round's, rounds written before this release included, with the state each record last gives it. A held `[C]` that a review package has already carried to the customer — its round and position found in one of the slice's `bundle-*/` directories, or any such directory unreadable — is marked carried and left exactly as the customer holds it. Before the first question, `question-planner` proposes merges of questions asking the same substance (never across tags, never a carried question), drops of questions whose answer would change nothing, and answers a decision on file already determines — a decision of this slice's register, of a sibling slice's under the same parent, or of a BRD this slice's `depends-on:` names, the last two cited with their BRD's key — and the run records them. A question that puts a decision on file again is never merged, dropped, applied or put in a table: it is always asked on its own.
+**Questions are kept in a registry, and every answer is applied to it.** Once every question of the round is tagged, the run builds one registry of every `[V]` and `[C]` question on file in the slice — every round's, rounds written before this release included, with the state each record last gives it. A held `[C]` that a review package has already carried to the customer — its round and position found in one of the slice's `bundle-*/` directories, or any such directory unreadable — is marked carried and left exactly as the customer holds it. Before the first question, `question-planner` proposes merges of questions asking the same substance (never across tags, never a carried question), drops of questions whose answer would change nothing, and answers a decision on file already determines — a decision of this slice's register, of a sibling slice's under the same parent, or of a BRD this slice's `depends-on:` names, the last two cited with their BRD's key — and the run records them, with the answer a decision on file lets your team propose for a question held for the customer. A question that puts a decision on file again is never merged, dropped, applied, given a proposed answer, re-tagged or put in a table: it is always asked on its own.
 
-**The `[V]`s are put in sittings, at most a budget of questions each** — 25 unless `--budget` says otherwise, numbered `Q1/25`, `Q2/25` and on. Each sitting opens with `question-planner`'s plan: it records any question a decision on file now settles, ranks the rest, and, where more of the round's `[V]`s are open than the budget, picks those whose answer it is confident of. Those are put first, as one table — each row the question, the answer it recommends and why — which counts as one question: accept them all, or name the exceptions, each then asked on its own; each row accepted is recorded as a decision confirmed in a table. A question that puts a decision on file again, or a deferred one the customer's answers have now unblocked, is never a row. Then each `[V]` of the round is put on its own, in the plan's order, never one already closed, in plain words: what is being decided; what the run saw — the rows, each finding with its verdict and outcome and the repository or frame set it came from; the options, each with what it does; and the option it recommends, with why. Choosing the recommended option records that reason as the decision's argumentation; any other option asks why, unless your answer already says. A typed answer is read as the option it expresses, and nothing is asked twice. Deferring a question asks why it cannot be answered yet and, where it waits on questions held for the customer, which — offering those that share one of its rows — and deferring it again keeps what it waited on unless you name others; once the customer's answers to all of those are recorded, the next run says so and puts the question again with that answer as its recommendation, unless a decision on file — that answer among them — now settles it, when it is recorded as applied and shown in the end-of-sitting list. A question deferred only on questions held for the customer does not keep the package from being built, since what it waits on is what the package carries; it never goes to the customer itself. Any other deferred question keeps the package from being built until it is answered. After each answer `answer-applier` reads the other open `[V]` questions against it — every one save a question that puts a decision on file again, one an earlier release's record leaves untied to any decision it may put again, and one the run set aside after the registry refused it twice: a question the answer settles in one line is recorded as an applied `[VD#n]` naming the decision it follows, and one it settles in part is narrowed to what is still open. An answer whose position may yet be held — resting only on findings about to change, or written conditional on a prerequisite's decision — is applied to nothing, and the questions it might have closed are asked. At the end of each sitting the run lists everything it closed without asking singly — each applied answer grouped by the decision it follows, each merge and each drop with its reason, each row confirmed in a table — and asks once whether all of it stands, or which to reopen; a reopened question returns to the queue, with every answer applied from it. The table and this list are the only prompts that carry more than one question. Where a sitting reaches its budget with questions left, the run then asks whether to continue with the next sitting now (recommended), stop here and continue later — the run stops with every answer kept, `BRD_INTERVIEW_SITTING_STOPPED`, and running it again resumes at the next question — or defer every question left with one reason you give, which leaves the round open. Nothing is deferred unless you choose it.
+**The `[V]`s are put in sittings, at most a budget of questions each** — 25 unless `--budget` says otherwise, numbered `Q1/25`, `Q2/25` and on. Each sitting opens with `question-planner`'s plan: it records any question a decision on file now settles, ranks the rest, and, where more of the round's `[V]`s are open than the budget, picks those whose answer it is confident of. Those are put first, as one table — each row the question, the answer it recommends and why — which counts as one question: accept them all, or name the exceptions, each then asked on its own; each row accepted is recorded as a decision confirmed in a table. A question that puts a decision on file again, or a deferred one the customer's answers have now unblocked, is never a row. Then each `[V]` of the round is put on its own, in the plan's order, never one already closed, in plain words: what is being decided; what the run saw — the rows, each finding with its verdict and outcome and the repository or frame set it came from; the options, each with what it does; and the option it recommends, with why. Choosing the recommended option records that reason as the decision's argumentation; any other option asks why, unless your answer already says. A typed answer is read as the option it expresses, and nothing is asked twice. Deferring a question asks why it cannot be answered yet and, where it waits on questions held for the customer, which — offering those that share one of its rows — and deferring it again keeps what it waited on unless you name others; once the customer's answers to all of those are recorded, the next run says so and puts the question again with that answer as its recommendation, unless a decision on file — that answer among them — now settles it, when it is recorded as applied and shown in the end-of-sitting list. A question deferred only on questions held for the customer does not keep the package from being built, since what it waits on is what the package carries; it never goes to the customer itself. Any other deferred question keeps the package from being built until it is answered. After each answer `answer-applier` reads the other open `[V]` questions, and every question held for the customer, against it — every one save a question that puts a decision on file again, one an earlier release's record leaves untied to any decision it may put again, and one the run set aside after the registry refused it twice: a question the answer settles in one line is recorded as an applied `[VD#n]` naming the decision it follows, and one it settles in part is narrowed to what is still open. A question held for the customer is never answered by you. Where your answer settles what your team would propose, that proposal is recorded beside it, `- **Proposed answer:** <text> — follows [VD#n]`, for the customer to confirm or correct, and the question stays held. Where your answer shows the question was yours to decide all along, it is re-tagged `[V]` with the cause on a `- **Re-tagged:**` line, then recorded as applied from your answer where that alone decides it, or otherwise, where it is a question of the round being worked, put to you in its turn. A question a package has already carried takes a proposal only, written into its round's record and never over the question the customer holds; and a question a requirement defect raised, a rejected row's, or one a deferred question of another round waits on is never re-tagged. A deferral the run writes names no question since re-tagged among those it waits on, and one left naming none keeps the package from being built until it is answered. An answer whose position may yet be held — resting only on findings about to change, or written conditional on a prerequisite's decision — is applied to nothing, and the questions it might have closed are asked. At the end of each sitting the run lists everything it closed without asking singly — each applied answer grouped by the decision it follows, each merge and each drop with its reason, each row confirmed in a table — and asks once whether all of it stands, or which to reopen; a reopened question returns to the queue, with every answer applied from it. The table and this list are the only prompts that carry more than one question. Where a sitting reaches its budget with questions left, the run then asks whether to continue with the next sitting now (recommended), stop here and continue later — the run stops with every answer kept, `BRD_INTERVIEW_SITTING_STOPPED`, and running it again resumes at the next question — or defer every question left with one reason you give, which leaves the round open. Nothing is deferred unless you choose it.
 
 **A stopped run resumes with its answers kept.** The run keeps a run folder outside every repository: the round as it was generated, the registry and every answer recorded in it, and the two agents' results. A run stopped mid-way — by an abort, by stopping at a sitting's budget, at a compaction or a restart — offers on its next start to resume, and the resumed run puts no answered question again and goes on at the next unanswered one. Choosing *Start over*, or running without a run folder, works from the round records alone, as before.
 
@@ -376,17 +379,21 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   `[V]` tag is on file without the line is tied
   when its round is resumed: the run asks the operator which reopened or held decision it puts
   again, from those that could be, or none, and writes the answer as the line, so it is asked once;
-  an ordinary `[V]` the run tags carries `none` and is never asked about — every re-tag with the finding that caused it,
-  every split with the parts it became, and each question's state — either a **terminal disposition** (*answered from findings*,
+  an ordinary `[V]` the run tags carries `none` and is never asked about — every re-tag with the findings that caused it,
+  a held `[C]` re-tagged `[V]` on a line labelled `- **Re-tagged:**` with its cause, written
+  together with the `- **Re-puts:** none` line and the state it reached as a `[V]`, a proposed
+  answer for a held `[C]` on a line labelled `- **Proposed answer:**`, the last of which is the one
+  that stands, every split with the parts it became, and each question's state — either a **terminal disposition** (*answered from findings*,
   *decided*, *answered by the customer*, *re-tagged*, *split*, *applied* naming the decision it
   follows, *merged* naming the question it was merged into, *dropped* with its reason, *confirmed in
   a table*) or a **holding state** (*held for the
   customer*, *deferred*, *needs grounding*, *untagged*) — a deferred one followed, where it waits
   on questions held for the customer, by a line labelled `- **Blocked-on:**` naming them by round
   and position, which a later deferral of it carries forward where it names none of its own, and
-  which [`/brd-package`](brd-package.md) reads to admit the question while those are still held. A question of another round that this run
-  closed — applied, merged or dropped — gets its state in its own round's record, appended after
-  this round's. A re-tagged question keeps its number, so
+  which [`/brd-package`](brd-package.md) reads to admit the question while those are still held, and
+  which names no question re-tagged `[V]` by the time it is written. A question of another round
+  that this run closed (applied, merged or dropped), re-tagged, or gave a proposed answer to, gets
+  its lines in its own round's record, appended after this round's. A re-tagged question keeps its number, so
   two states sit at that one address — *re-tagged*, and whatever the question reached under its new
   tag — and, the file being append-only, the **last** of them is the question's state: a question
   re-tagged and then deferred holds its round open and is resumed at, rather than reading as
@@ -433,7 +440,12 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   `decided` and re-decides a reopened one in place — reading each status as the register stood
   before its run wrote anything — follows a `superseded` one to its live successor and acts on that
   one instead, and, where the record or its successor reads `withdrawn`, freezes nothing, and closes the question, naming the withdrawal, whether
-  the operator records the answer for a human or rejects it.
+  the operator records the answer for a human or rejects it. Where one of your answers settles what
+  your team would propose for a question, its entry carries that proposal on a line labelled
+  `- **Proposed answer:**`, with the decision it follows; where one shows the question was yours to
+  decide all along, it carries a line labelled `- **Re-tagged:**` with the cause, and is no question
+  for the customer any more — no package renders it. An entry a package has already carried is
+  never changed: its proposal goes into its round's record alone.
 - `code-defect-log.md` — the code-defect log: one `[CDF#n]` per defect in the code that a decision
   turns on, each citing the verified `[CG#n]` that established the behaviour and naming separately
   what the code is supposed to do and what says so. Written where a round raised one **or
@@ -557,7 +569,8 @@ option is picked.
   held `[C]` whose entry is already written, which the next package would carry whatever was
   recorded here.
 - **Phase 5 — a re-tag needs a cause.** A `[G]` grounding cannot settle is re-tagged only against a
-  named `NOT-PROVABLE` finding or an `unprovable` verifier outcome, and never while another
+  named `NOT-PROVABLE` finding or an `unprovable` verifier outcome — naming every finding on it that
+  could not settle it, where several repositories each hold one — and never while another
   repository's finding settles it. A finding reading `SUPERSEDED`
   answers no `[G]` and causes no re-tag, though it keeps its claim and its verifier outcome as they
   stood: its successors are read in its place. A `[G]` no finding bears on at
@@ -578,9 +591,9 @@ option is picked.
   you choose to defer them all with one reason. Only `[V]`s are ever put, singly or in the table,
   and a question that puts a decision on file again is never a table row.
 - **Phase 6 — every answer is applied forward, and checked at the end of the sitting.** After each
-  answer — one asked, or a table row accepted — the open `[V]` questions are read against it, and
-  one it settles in a line is recorded as an applied decision, never asked; nothing is closed on a
-  guess. The end-of-sitting list shows every question closed without being asked singly, each
+  answer — one asked, or a table row accepted — the open `[V]` questions, and every question held
+  for the customer, are read against it, and a `[V]` it settles in a line is recorded as an applied
+  decision, never asked; nothing is closed on a guess. The end-of-sitting list shows every question closed without being asked singly, each
   applied one grouped by the decision it follows, and the operator confirms it all or names what
   to reopen — a reopened applied answer or table row takes every answer applied from it back to
   the queue with it, and nothing it lists was recorded as decided before that answer.
@@ -597,6 +610,15 @@ option is picked.
   opens the next round for it, and where the flags alone made it askable that round holds no question
   and closes once their answers are written. This is what [`/brd-package`](brd-package.md)'s flag gate
   sends you back here for.
+- **Phase 7 — a held `[C]` is never answered by the delivery team.** Your answer can only put a
+  proposed answer beside it, for the customer to confirm or correct, or show it was yours to decide
+  all along and re-tag it `[V]`, which is then decided or applied like any `[V]`. A question a
+  package has already carried — or one whose bundle cannot be read, so that nobody can tell — is
+  never rewritten, narrowed, re-tagged or closed: it takes a proposal only, recorded beside it in
+  its round's record. A question a requirement defect raised, a rejected row's question, one a
+  deferred question of another round waits on and one that puts a decision on file again are never
+  re-tagged. Only a customer's answer, confirmed at
+  [`/brd-reconcile`](brd-reconcile.md), becomes a customer decision.
 - **Phase 8 — the will-change rule.** A decision whose `evidence` list is *entirely*
   `horizon: will-change` findings may not be closed. Three resolutions are offered and exactly three:
   re-base it on a `current` finding, make it explicitly `conditional_on` the prerequisite decision —
@@ -677,7 +699,10 @@ A run that stops — on a refusal under *What it needs*, a gate above, a `Cancel
   [`/brd-reconcile`](brd-reconcile.md) is what records the answer once it comes back. A round holding
   a `[C]` stays open across both — until the answer is recorded, or `/brd-reconcile` finds its
   question has stopped applying — because holding a question is not the customer answering it and the
-  customer answering it is not the register recording an answer.
+  customer answering it is not the register recording an answer. The one other way out is this
+  command's own re-tag, before any package carries the question, where one of your answers shows it
+  was yours to decide all along: it then closes as a `[V]`, which corrects a mis-tag and never closes
+  a genuine customer question.
 - **It changes no ledger disposition.** The final report's ledger line reports where allocation
   stands; allocation itself is `/brd-split`'s walk. Two other runs may move a row afterwards, and
   neither is this one: [`/brd-reconcile`](brd-reconcile.md) freezes a customer decision that settles
