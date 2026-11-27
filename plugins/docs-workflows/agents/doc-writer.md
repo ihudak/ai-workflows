@@ -78,13 +78,40 @@ at all). `Bash` is granted solely to copy a user-provided screenshot (step 5 abo
 absolute `src` to the absolute path the checklist records for it — its `dest` where the target's
 `image_policy` is `local`, its `staging` path where it is `cdn_upload_required` and
 `cdn_handoff_decision` is `defer` — creating the destination directory where it does not exist
-yet, in the same call
-(`command mkdir -p -- "<its directory>" && command cp -- "<src>" "<dest or staging>"`) — each
-utility as `command <name>`, since the Bash tool's shell carries the user's aliases and shell
-functions, and a `cp -i` alias would ask before overwriting, be answered no from an empty standard
-input, and leave the old file in place. Your Bash
-tool starts every call in the session's directory, not in `docs_repo_path`, and a `cd` does not
-persist between calls, so a relative path would land in the wrong tree. Never use it for git
+yet. **The copy is this program's, and no screenshot's name is typed into a command**: a screenshot
+keeps the name whoever saved it gave it, and one holding `$(`, a backtick or a `"` runs in a
+double-quoted shell word, a `'` ends a single-quoted one, and a leading `-` reads as an option. Write the pairs
+with the Write tool, as a JSON array of `{"src", "dest"}` objects, each an absolute path, to
+`copies.json` in a directory of its own — make it with `command mktemp -d -t dw-copies-XXXXXX`,
+`command` because the Bash tool's shell carries the user's aliases and shell functions — then run:
+
+```bash
+python3 -I - "<the path mktemp printed>/copies.json" <<'EOF'
+import json, os, shutil, sys
+with open(sys.argv[1], encoding="utf-8") as fh:
+    pairs = json.load(fh)
+done, failed = [], []
+for n, pair in enumerate(pairs, 1):
+    src, dest = pair.get("src"), pair.get("dest")
+    if not (isinstance(src, str) and isinstance(dest, str) and os.path.isabs(src) and os.path.isabs(dest)):
+        failed.append({"entry": n, "error": "src and dest are absolute paths"})
+        continue
+    try:
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        shutil.copyfile(src, dest)  # the bytes; a file already at dest is replaced, as a copy must
+        done.append(dest)
+    except OSError as e:
+        failed.append({"entry": n, "error": e.strerror or e.__class__.__name__})
+sys.stdout.buffer.write(json.dumps({"copied": done, "failed": failed}, ensure_ascii=False).encode("utf-8") + b"\n")
+EOF
+```
+
+It prints one line of JSON: `copied`, each destination written, and `failed`, each pair it could
+not copy, by its place in the file, with the reason — name each in `notes`, and place no image
+reference for a pair that failed. Remove the directory once the call has returned, with
+`command rm -rf -- "<the path mktemp printed>"`. Your Bash tool starts every call in the session's
+directory, not in `docs_repo_path`, and a `cd` does not persist between calls, so a relative path
+would land in the wrong tree, which is why every path in the file is absolute. Never use it for git
 commands; the orchestrator remains the only actor
 that commits, both for the docs write target and for its own terminal
 `commit-artifacts` step. Return:

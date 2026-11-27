@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.13.4] — 2026-11-27
+
+Fix batch B51 (RECORDED-BRANCH-CLASS). **What changes for you.** A change scan tests the branch and the base an `implementation.md` block records before any command names them: a branch outside the safe class is read as naming no branch, and a base outside it gives way to the default branch, which the report says. Needs `workflows-core` 1.101.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.1 bullet).
+
+### Fixed
+
+- **`/scan` Phase 0 step 5** takes `<branch>` only where `workflows-core:implementation-format` §5's *A recorded branch name* holds it in the class, before the fetch by refspec; **Phase 1**'s change scan takes `<default ref>` for a null `base` and says so in `### Scope`.
+- **`docs/commands/scan.md`** says so.
+
 ## [0.13.3] — 2026-11-27
 
 **What changes for you.** `/scan` stops with `ADDRESS_FOLDER_NAME` where a unit's folder, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).

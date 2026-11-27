@@ -213,7 +213,7 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   clean by `/prd-ground`; the repo→SHA table is read from that run's `baselines.md`, and the three
   pin-verification commands are handed to the customer's reviewer to run rather than re-run here.
 - **`python3`** — for one bundled script, standard library only: `scripts/bundle-scan.py`, which runs
-  the plugin-free scan in Phases 6, 7 and 8 and the citation-resolution and set-resolution checks in Phase 8. Without it none of the three runs, and the run stops
+  the plugin-free scan in Phases 6, 7 and 8 and the citation-resolution and set-resolution checks in Phase 8, and makes and names the bundle's copies in Phase 8 and lists its files for the handoff. Without it none of the three checks runs, and the run stops
   rather than read no output as a clean scan.
 
 ## What it produces
@@ -379,6 +379,15 @@ attack.
   `[BR#n]`, because the prompt is a bundle document and the citation-resolution check would resolve
   an example number against this package's own records — to a requirement or finding nobody meant,
   or to nothing.
+- **Phase 8 — the copies, made by the script.** Every file the bundle carries byte for byte — the
+  customer's captured files, the frames its documents reference and each prerequisite's own files —
+  is listed, named and copied by `scripts/bundle-scan.py place`, and Phase 6 reads the same names
+  from it before writing the prompt, so no file's name is ever typed into a shell command: a name
+  holding a space, `$(`, a backtick, a quote or a leading `-` is copied, staged and committed as it
+  stands. A captured file whose name is not a printable value — one holding a control character such
+  as a line feed — and a symbolic link among the captured files stop the run with
+  `BRD_PACKAGE_NAME_REFUSED`, naming each by its position in its folder, since the manifest could not
+  name it.
 - **Phases 6, 7 and 8 — the plugin-free scan.** Run over the finished prompt, the finished note and
   every bundle document, by `scripts/bundle-scan.py tokens`, so every run finds the same tokens: it
   reports each hit with its file, line and the span its position places it in — a captured file, an

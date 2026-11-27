@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.71.7] — 2026-11-27
+
+Fix batch B51 (RECORDED-BRANCH-CLASS). **What changes for you.** `/conformance` and `/implement` test the branch an `implementation.md` block records before they fetch it, and read one outside the safe class as naming no branch, so a hand-edited branch name holding `$(` or a backtick runs nothing. Needs `workflows-core` 1.101.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.1 bullet).
+
+### Fixed
+
+- **`/conformance` Phase 1 (c)**, its Epic run and its PRD run, and **`/implement` Phase 1.4 step 2's unit branch** hold the block's `branch` (and, on the PRD run, its `commit`) to `workflows-core:implementation-format` §5's *A recorded branch name* before the fetch by refspec names it; a line that would name an out-of-class branch names it as `a branch whose name is outside the safe class`.
+- **`docs/commands/conformance.md`** and **`docs/commands/implement.md`** say so.
+
 ## [4.71.6] — 2026-11-27
 
 DOC-D-G1, sub-project 2, batch 2: five pages name `docs-workflows` 1.45.0's `/docs-workflows:docs-verify`, and one count that was already short is corrected. No command, agent or reference changes, and nothing a run does or prints. Released with `docs-workflows` 1.45.0 and `workflows-core` 1.101.0; its pages need neither, nor they it. 4.71.6 carries 4.71.5, 4.71.4 and 4.71.3, so the 1.100.6, 1.100.5 and 1.100.3 bullets of `.claude/rules/plugin-updates-coupling.md` apply to it, which `workflows-core` 1.101.0, carrying all three, `product-workflows` 3.88.7, carrying 3.88.6, 3.88.5 and 3.88.3, and `docs-workflows` 1.45.0, carrying 1.44.5, meet, beside `security-workflows` 0.13.3 or later, which 1.100.6's bullet names.

@@ -795,22 +795,75 @@ The confirmed target list (from any of the three paths above) is the **authorita
 
 Build this list only when `new_images_wanted` is `true` (Phase 1); when `false`, the add list is empty and contributes nothing to the merged prompt below — skip straight to the existing-image list. When `true`, build a **merged, deduped candidate list** from four sources (by this point Phase 0's `specs_dir`, the Phase 1 `<project_dir>`, the Phase 3 the folder read `attachments[]`, and the Phase 4 resolved repos are all in hand):
 
-1. **Recursive scan of `<specs_dir>`** — when Phase 0 resolved a `specs_dir` (not `none`), recursively scan it for image files — its root and every folder below it, each `EPIC-*/` subfolder included:
-   ```bash
-   find "<specs_dir>" \
-     -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.svg" -o -iname "*.webp" \) 2>/dev/null
-   ```
-   When `specs_dir` is `none`, this source contributes nothing.
+1. **Recursive scan of `<specs_dir>`** — when Phase 0 resolved a `specs_dir` (not `none`), recursively scan it for image files — its root and every folder below it, each `EPIC-*/` subfolder included. When `specs_dir` is `none`, this source contributes nothing.
 2. **PRD-folder attachments** — the image paths enumerated under the resolved PRD folder's `attachments/` directory, where one exists. May be empty. This source reads an image already there and never moves it; this run never places one there (see *add a new image* below).
-3. **Recursive scan of `<project_dir>`** — when Phase 1 resolved a `<project_dir>` (the folder this run resolved), recursively scan it for image files:
-   ```bash
-   find "<project_dir>" -type f \
-     \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.gif" -o -iname "*.svg" -o -iname "*.webp" \) 2>/dev/null
-   ```
-   This surfaces images you keep in the project folder (custom diagrams, curated screenshots). When `<project_dir>` is null, this source contributes nothing.
+3. **Recursive scan of `<project_dir>`** — when Phase 1 resolved a `<project_dir>` (the folder this run resolved), recursively scan it for image files. This surfaces images you keep in the project folder (custom diagrams, curated screenshots). When `<project_dir>` is null, this source contributes nothing.
 4. **Manual paths** — the paths the operator types after choosing *Use all auto-discovered + add manual paths* or *Provide screenshot paths manually only* (plain text, see the `choices` below).
 
-**Dedupe** by resolved absolute path (collapse mixed separators / trailing-slash differences); when the same image appears in more than one source, keep one entry and note its origins.
+**The images program lists, checks and dedupes every source, and no image's name is typed into a command.** An image keeps the name whoever saved it gave it — a designer's export, a screenshot tool's default, a file the operator named — which may hold a space, `$(`, a backtick, a quote, a leading `-` or a line feed, which a shell command would run or split; so the three folders are walked, and each manual path checked, by this one program, which builds no command from a name. Its arguments are `<specs_dir>`, `<project_dir>` and the resolved PRD folder's `attachments/` — each a folder the run resolved, held to `workflows-core:addressing` §2's class, and `''` for one this run does not have — and a file of manual paths, `''` before the operator gives any: once they do, write them with the Write tool, as a JSON array of strings, to `paths.json` in a directory of its own (`command mktemp -d -t dw-images-XXXXXX`), and run the program again with that file, so a typed path reaches it as data too.
+
+```bash
+python3 -I - "<specs_dir or ''>" "<project_dir or ''>" "<attachments/ or ''>" "<paths.json or ''>" <<'EOF'
+import json, os, stat, sys, unicodedata
+EXT = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
+BIDI = set("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")  # the bidirectional controls
+def printable(s):  # UTF-8, no Cc, no U+2028 or U+2029, no bidirectional control
+    try:
+        s.encode("utf-8")
+    except UnicodeError:
+        return False
+    return not any(unicodedata.category(c) == "Cc" or c in "\u2028\u2029" or c in BIDI for c in s)
+found, order, skipped, dropped = {}, [], [], []
+def skip(entry):  # once, though two sources walk one folder
+    if entry not in skipped:
+        skipped.append(entry)
+def add(path, source):
+    key = os.path.realpath(path)
+    if key not in found:
+        found[key] = []
+        order.append(key)
+    if source not in found[key]:
+        found[key].append(source)
+for top, source in ((sys.argv[1], "specs"), (sys.argv[3], "attachments"), (sys.argv[2], "project")):
+    stack = [(top, top)] if top and os.path.isdir(top) else []
+    while stack:  # walked with a stack, never by recursion, following no symbolic link
+        d, label = stack.pop()
+        try:
+            names = sorted(os.listdir(d), key=os.fsencode)
+        except OSError:
+            skip({"folder": label, "reason": "unreadable"})
+            continue
+        for n, name in enumerate(names, 1):
+            p = os.path.join(d, name)
+            st = os.lstat(p)
+            if not printable(name):
+                skip({"folder": label, "position": n, "reason": "name"})
+            elif stat.S_ISDIR(st.st_mode):
+                stack.append((p, p))
+            elif stat.S_ISREG(st.st_mode) and name.lower().endswith(EXT):
+                add(p, source)
+if sys.argv[4]:
+    with open(sys.argv[4], encoding="utf-8") as fh:
+        typed = json.load(fh)
+    for n, p in enumerate(typed, 1):
+        if not isinstance(p, str) or not printable(p):
+            dropped.append({"entry": n, "reason": "not a printable value"})
+        elif not os.path.isabs(p):
+            dropped.append({"entry": n, "path": p, "reason": "not an absolute path"})
+        elif not os.path.isfile(p):
+            dropped.append({"entry": n, "path": p, "reason": "no such file"})
+        elif not p.lower().endswith(EXT):
+            dropped.append({"entry": n, "path": p, "reason": "not an image extension"})
+        elif not printable(os.path.realpath(p)):
+            dropped.append({"entry": n, "path": p, "reason": "resolves to a name that is not a printable value"})
+        else:
+            add(p, "manual")
+sys.stdout.buffer.write(json.dumps({"candidates": [{"path": k, "sources": found[k]} for k in order],
+    "skipped": skipped, "dropped": dropped}, ensure_ascii=False).encode("utf-8") + b"\n")
+EOF
+```
+
+It prints one line of JSON: `candidates`, each image once, by its resolved absolute path — the dedupe — with every source it came from; `skipped`, each entry whose name is not a printable value (UTF-8 holding no control character, no U+2028 or U+2029 and no bidirectional control), named by its folder and its position in that folder's listing, sorted byte-wise, and each folder it could not list, which is never read as an empty one; and `dropped`, each manual path it refused, by its place in the file and why. A symbolic link is followed nowhere. Name every `skipped` and `dropped` entry to the operator with the candidates. Any exit other than 0 is reported, naming its stderr, and the add list then holds what an earlier call printed, or nothing. Remove the directory holding `paths.json` once its call has returned, with `command rm -rf -- "<the path mktemp printed>"`.
 
 ### Existing-image list (staleness review)
 
@@ -857,7 +910,7 @@ When both lists are empty, skip presenting this prompt — there is nothing to s
 - `SKIPPED_BY_USER` — the choice was "Add-list only — existing images are current" or "Nothing to do — no image work this run"; `user_decision` quotes the choice verbatim.
 - `NOT_APPLICABLE` — both lists were empty (the prompt above was skipped); `precondition_unmet: "no add-list candidates and no image references on any extend-existing write target"`.
 
-For any **manual** free-text paths, accept any absolute filesystem path (`/tmp`, home, the docs repo); accept multiple (one per line or space-separated). Validate each path exists and has an image extension (`.png|.jpg|.jpeg|.gif|.svg|.webp`); drop and report any that don't.
+For any **manual** free-text paths, accept any absolute filesystem path (`/tmp`, home, the docs repo); accept multiple (one per line or space-separated). Validate each path exists and has an image extension (`.png|.jpg|.jpeg|.gif|.svg|.webp`) — by the images program above, handed the paths in its `paths.json`, never by a command naming one — and drop and report any it drops.
 
 When you need to **add a new image** for this feature (a screenshot the docs should have but no source yet holds — including a replacement source for an accepted existing-image entry), place it in the resolved PRD folder's `Doc screenshots/` subfolder — the one Phase 1 defaults `<screenshot_staging_dir>` to — where source 3's scan of `<project_dir>` finds it. **Never in the folder's `attachments/`**, which holds only the text and markdown sources a run vendored (`workflows-core:addressing` §2, *Reserved subdirectory names*); an image found there is still read, as source 2, and left where it is. There is one home for a feature's new images, and it is a subfolder of the folder the run already resolved.
 

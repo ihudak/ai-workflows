@@ -12,12 +12,16 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
   specs-git.py --specs <root> push-scope --branch <name> [--session-default-ref <ref>]
   specs-git.py --specs <root> mode --default <name>
   specs-git.py owner-repo --repo <path> [--no-alias]
-  specs-git.py declined --command /<name> [--started <stamp>] --path <p> [--path <p>]...
+  specs-git.py declined --command /<name> [--started <stamp>] [--path <p>]... [--paths-from <file>]...
+  specs-git.py --specs <root> handoff-stage [--path <p>]... [--paths-from <file>]...
+  specs-git.py --specs <root> handoff-commit --message-file <file> [--path <p>]... [--paths-from <file>]...
+  specs-git.py --specs <root> handoff-diff --base <ref> [--fork] [--path <p>]... [--paths-from <file>]...
   specs-git.py --specs "<value>" specs-root-check
   specs-git.py --specs "<value>" start --command /<name> [--key <K>]... [--commit-key <K>] [--register-rebuild <path>]
                [--rerun] [--resume] [--budget <seconds>] [--started <stamp>, with --rerun or --resume]
   specs-git.py --specs "<value>" end --command /<name> [--commit-key <K>] [--register-rebuild <path>] [--no-preflight]
-               [--misrooted-stdin] [--session-branch-created <sha7>] [--declined <p>]... [--resume] [--started <stamp>]
+               [--misrooted-stdin] [--session-branch-created <sha7>] [--declined <p>]... [--declined-from <file>]...
+               [--resume] [--started <stamp>]
                [--superseded]
   specs-git.py --specs <root> replay --for start|end --command /<name> --branch <name> [--set-upstream] [--timed-out]
                [--started <stamp>]
@@ -29,7 +33,12 @@ both. It loads session-branch.py as a module, so the §2.1 classifier, the §4 s
   specs-git.py --selftest [--group <name>]...
 
 declined appends paths to the run's state record (specs_git_state.py, one file per session and command, outside
-every repository), creating the record where the command's start never ran. specs-root-check runs addressing §3's
+every repository), creating the record where the command's start never ran. handoff-stage, handoff-commit and
+handoff-diff are phase-handoff's path work over a handoff's declared paths: §2.3's staging and its account of every
+declared path, §2.4's commit by pathspec and its index restore, and the two-dot or three-dot diff §2.2 and §2.3 test.
+Every path command here takes its paths as data -- each --path, then each NUL-terminated entry of each --paths-from file
+-- and hands them to git as :(literal) pathspecs in an argument list, never in a shell word, so a name a customer or a
+designer gave a file, holding a space, $(, a backtick, a quote, a leading - or a line feed, is a path and nothing else. specs-root-check runs addressing §3's
 entry point on SPECS_PATH as set, "" meaning unset. start is specs-repo-git §3's specs-preflight for the run of this
 session and command: it prints the Environment: line and what §3.1 reports, opens the run's record, then runs §3.2 to
 §3.5 in stages saved in that record -- each resumable from its start -- and prints what each does; a push rejected as
@@ -57,7 +66,8 @@ workflows/held.json), which also journals every landing until its lift; --retry-
 <root> is the specs repository's top level (branch-merged and branch-key also accept a directory below it,
 where specs-repo-git §3.5 classifies under specs_git: misrooted); the <value> specs-root-check, start and end take is
 never checked first, so empty, a file or a subdirectory each reaches it. Nothing here but start, end, replay and land
-writes the working tree, the index or a ref. Output is one JSON object on stdout. Exit 0: it ran, whatever it found.
+writes the working tree, the index or a ref, save handoff-stage, which writes the index (add -A over the declared paths),
+and handoff-commit, which commits them on HEAD's branch and restores the index. Output is one JSON object on stdout. Exit 0: it ran, whatever it found.
 Exit 2: it could not run (usage, not a repository's top level, a ref that does not resolve, an unexpected git failure,
 any other exception), printing one "specs-git: not run (...)" line on stderr; the caller reports it
 and the run continues. start exits 2 only before it saves its record, its first write; after it, a failure is exit 0
@@ -260,6 +270,110 @@ def push_scope(root, branch, session_default_ref=None):
     return {"base": base, "commits": commits, "in_scope": failed is None, "failed": failed}
 
 
+def _declared(paths, files=()):
+    """The paths a caller hands over: each of <paths> (--path), then each NUL-terminated entry of each of <files>
+    (--paths-from), in that order, each once; an empty entry is no path. A file that cannot be read is NotRun."""
+    out = []
+    for p in paths:
+        if p and p not in out:
+            out.append(p)
+    for f in files:
+        try:
+            with open(f, "rb") as fh:
+                data = fh.read()
+        except OSError as e:
+            raise NotRun("cannot read %s: %s" % (f, e.strerror or e.__class__.__name__))
+        for raw in data.split(b"\0"):
+            p = raw.decode("utf-8", "surrogateescape")
+            if p and p not in out:
+                out.append(p)
+    return out
+
+
+def handoff_stage(root, declared):
+    """phase-handoff §2.3 steps 1-4 over <declared>: status -z with every untracked file, each record's path classified
+    against the declared paths (a rename's or copy's original consumed with its record, as status() does), the
+    declared paths it reports staged with add -A by :(literal) pathspec, and every other declared path accounted for
+    only where HEAD holds it as a blob (cat-file -t). staged: what add -A was given; unaccounted: the declared paths
+    neither staged nor on HEAD as a blob -- one nothing wrote, one git ignores, a directory, an absolute path, a glob;
+    unreadable: each record that is not two status bytes and a space, as it stands; error: add's first line where it
+    failed."""
+    if not declared:
+        raise NotRun("usage: handoff-stage needs at least one --path or --paths-from entry")
+    fields = sb.git(root, "status", "--porcelain", "-z", "--untracked-files=all").stdout.decode(
+        "utf-8", "surrogateescape").split("\0")
+    reported, unreadable = set(), []
+    i = 0
+    while i < len(fields):
+        record = fields[i]
+        i += 1
+        if not record:
+            continue
+        if len(record) < 4 or record[2] != " ":
+            unreadable.append(record)
+            continue
+        reported.add(record[3:])
+        if record[0] in "RC" or record[1] in "RC":
+            i += 1  # the original path, consumed with its record
+    staged = [p for p in declared if p in reported]
+    out = {"staged": staged, "unaccounted": [], "unreadable": unreadable, "error": None}
+    if staged:
+        r = sb.git(root, "add", "-A", "--", *_literal(staged), check=False)
+        if r.returncode != 0:
+            return dict(out, staged=[], error=_first_line(r, error=True))
+    for p in declared:
+        if p in reported:
+            continue
+        t = sb.git(root, "cat-file", "-t", "HEAD:" + p, check=False)
+        if t.returncode != 0 or sb.text(t) != "blob":
+            out["unaccounted"].append(p)
+    return out
+
+
+def handoff_commit(root, declared, message_file):
+    """phase-handoff §2.4's commit, by pathspec, never the index: the declared paths git still lists as staged,
+    committed by :(literal) pathspec with the message read from <message_file> (-F), then the index restore
+    specs-repo-git §4 step 4 gives -- the paths the commit carries whose index entry differs from the new HEAD, less a
+    change somebody else had staged that the commit's pathspecs do not name. status: committed, nothing, or failed
+    with git's or the hook's first line."""
+    if not declared:
+        raise NotRun("usage: handoff-commit needs at least one --path or --paths-from entry")
+    if not os.path.isfile(message_file):
+        raise NotRun("usage: --message-file names no file: %s" % message_file)
+    out = {"status": "nothing", "sha": None, "paths": [], "hook_paths": [], "error": None}
+    listed = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames", "--", *_literal(declared)))
+    if not listed:
+        return out
+    before = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames"))
+    r = sb.git(root, "commit", "-q", "-F", message_file, "--", *_literal(listed), check=False)
+    if r.returncode != 0:
+        return dict(out, status="failed", error=_first_line(r))
+    sha = sb.text(sb.git(root, "rev-parse", "HEAD"))
+    carried = _commit_paths(root, "HEAD")
+    differ = set(sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames")))
+    theirs = set(before) - set(listed)
+    back = [p for p in carried if p in differ and p not in theirs]
+    if back:
+        sb.git(root, "restore", "--staged", "--", *_literal(back))
+    return dict(out, status="committed", sha=sha, paths=carried, hook_paths=[p for p in carried if p not in set(listed)])
+
+
+def handoff_diff(root, declared, base, fork=False):
+    """git diff --quiet over <declared> by :(literal) pathspec: <base> against the working tree, or, with <fork>,
+    <base>...HEAD -- what HEAD's branch changed since it forked from <base>. differ: true where git exits 1, false
+    where it exits 0; any other exit is NotRun. paths: the declared paths the same diff names (--name-only -z), the
+    first of which phase-handoff §4.1's stacked clause names."""
+    if not declared:
+        raise NotRun("usage: handoff-diff needs at least one --path or --paths-from entry")
+    _commit(root, base)
+    rng = base + "...HEAD" if fork else base
+    r = sb.git(root, "diff", "--quiet", rng, "--", *_literal(declared), check=False)
+    if r.returncode not in (0, 1):
+        raise NotRun("git diff: %s" % _first_line(r))
+    named = sb.nul_list(sb.git(root, "diff", "--name-only", "-z", "--no-renames", rng, "--", *_literal(declared)))
+    return {"differ": r.returncode == 1, "paths": named}
+
+
 def declined(command, paths, started=None):
     """The paths the run's user declined to stage, appended (unique, in order) to the record of this session
     and <command> -- the one <started> names (state.find; specs-repo-git §7's declined --started), else
@@ -268,7 +382,7 @@ def declined(command, paths, started=None):
     unparsable) is overwritten and reported created: it serves no later call."""
     state, _ = _flow()
     if not paths:
-        raise NotRun("usage: declined needs at least one --path")
+        raise NotRun("usage: declined needs at least one --path or --paths-from entry")
     if not state.COMMAND_RE.fullmatch(command):
         raise NotRun("usage: --command is /<name>, got %s" % command)
     session = state.session_id()
@@ -5034,7 +5148,17 @@ def main():
     p = sub.add_parser("declined")
     p.add_argument("--command", required=True)
     p.add_argument("--path", action="append", default=[])
+    p.add_argument("--paths-from", action="append", default=[])
     p.add_argument("--started")
+    for name in ("handoff-stage", "handoff-commit", "handoff-diff"):
+        p = sub.add_parser(name)
+        p.add_argument("--path", action="append", default=[])
+        p.add_argument("--paths-from", action="append", default=[])
+        if name == "handoff-commit":
+            p.add_argument("--message-file", required=True)
+        if name == "handoff-diff":
+            p.add_argument("--base", required=True)
+            p.add_argument("--fork", action="store_true")
     sub.add_parser("specs-root-check")
     p = sub.add_parser("end")
     p.add_argument("--command", required=True)
@@ -5045,6 +5169,7 @@ def main():
     p.add_argument("--superseded", action="store_true")
     p.add_argument("--session-branch-created")
     p.add_argument("--declined", action="append", default=[])
+    p.add_argument("--declined-from", action="append", default=[])
     p.add_argument("--resume", action="store_true")
     p.add_argument("--started")
     p = sub.add_parser("start")
@@ -5091,7 +5216,8 @@ def main():
             print(json.dumps(owner_repo_of(a.repo, not a.no_alias), indent=2, ensure_ascii=False))
             return 0
         if a.cmd == "declined":
-            print(json.dumps(declined(a.command, a.path, a.started), indent=2, ensure_ascii=False))
+            print(json.dumps(declined(a.command, _declared(a.path, a.paths_from), a.started), indent=2,
+                             ensure_ascii=False))
             return 0
         if a.cmd == "specs-root-check":  # the --specs exception: SPECS_PATH as set, never checked first
             if a.specs is None:
@@ -5111,7 +5237,8 @@ def main():
             if a.misrooted_stdin:
                 notice = [line for line in sys.stdin.buffer.read().decode("utf-8", "replace").splitlines() if line.strip()]
             print(json.dumps(end(a.specs, a.command, a.commit_key, a.register_rebuild, a.no_preflight, notice,
-                                 a.session_branch_created, a.declined, a.resume, a.started, a.superseded), indent=2,
+                                 a.session_branch_created, _declared(a.declined, a.declined_from), a.resume, a.started,
+                                 a.superseded), indent=2,
                              ensure_ascii=False))
             return 0
         if not a.specs:
@@ -5153,6 +5280,12 @@ def dispatch(a):
         return land_cli(a)
     if a.cmd == "snapshot":
         return snapshot(a.specs)
+    if a.cmd == "handoff-stage":
+        return handoff_stage(a.specs, _declared(a.path, a.paths_from))
+    if a.cmd == "handoff-commit":
+        return handoff_commit(a.specs, _declared(a.path, a.paths_from), a.message_file)
+    if a.cmd == "handoff-diff":
+        return handoff_diff(a.specs, _declared(a.path, a.paths_from), a.base, a.fork)
     raise NotRun("unknown subcommand %s" % a.cmd)
 
 

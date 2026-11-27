@@ -1,16 +1,40 @@
 #!/usr/bin/env python3
-"""bundle-scan.py — /brd-package's plugin-free scan (tokens), citation check (citations) and set check (sets).
+"""bundle-scan.py — /brd-package's plugin-free scan (tokens), citation check (citations) and set check (sets), and the
+bundle's copies (place) and the list of its files a handoff declares (declare).
 
   bundle-scan.py tokens <file-or-directory>... [--prereq-key KEY]... [--captured NAME]...
-                        [--captured-path PATH]...
+                        [--captured-path PATH]... [--record FILE]
   bundle-scan.py citations <bundle-dir> --key KEY [--prereq-key KEY]... [--copied-key KEY]...
                         [--prereq-source KEY=DIR]...
                         [--date YYYYMMDD] [--captured NAME]... [--captured-path PATH]...
                         [--source-basename NAME]... [--manifest NAME] [--known-key KEY]...
-                        [--prereq-aux NAME]...
+                        [--prereq-aux NAME]... [--record FILE]
   bundle-scan.py sets <bundle-dir> --key KEY --date YYYYMMDD --manifest NAME --note PATH
                         [--unreviewed-prereq KEY]...
+  bundle-scan.py place <working-dir> --key KEY --source-dir DIR --brd-dir DIR [--plan FILE] [--record FILE]
+                        [--prereq KEY=DIR]... [--reserve NAME]... [--dry-run]
+  bundle-scan.py declare <bundle-dir> --specs DIR --out FILE
   bundle-scan.py --selftest
+
+place: Assemble the bundle's rule 1 copies, made by this script, so that no name a customer or a designer gave a file
+reaches a shell. It lists <source-dir>/brd/source and source-external itself, following no symbolic link, and takes
+every markdown file there, every image the plan's captured_images names (paths relative to brd/), each image the plan's
+frames names (paths relative to <brd-dir>), and, for each --prereq KEY=DIR, every file of DIR whose name begins KEY-,
+save the prompt and manifest the plan's prereq_aux names for KEY. The plan is a JSON object written as data, never a
+shell word. It names each copy by rule 1 -- <KEY>- and the basename; images sharing a basename take the shortest run of
+their own trailing folder names that tells them apart; a name that coincides with a --reserve name (a document the run
+renders), a prerequisite's name or another copy's takes -2 before its extension, the copy whose path sorts later
+byte-wise taking it -- and copies each byte for byte into the empty working directory, refusing to overwrite. A name
+that is not a printable value (UTF-8, no control character, no U+2028 or U+2029, no bidirectional control), a symbolic
+link and a folder it cannot list are refused by position, never by name, and then nothing is copied; so is everything
+under --dry-run, which prints the names it would give. It prints one line of JSON, written to --record as well: copied
+(each name, kind, path, prerequisite and whether the manifest maps it), captured_not_bundled, captured_unselected,
+prereq_other, prereq_aux, refused, and what tokens and citations read through --record: captured (every customer's
+file copied byte for byte, a prerequisite's captured files the plan's prereq_captured names among them),
+captured_paths (every captured path relative to brd/, and each prereq_captured path) and source_basenames.
+
+declare: every regular file under <bundle-dir>, as its path relative to --specs, each ended by a NUL byte, written to
+--out -- the deliverable_paths_file workflows-core:phase-handoff stages, so no bundled name is typed into a command.
 
 citations: runs the bundle-packaging reference's section 6 over an assembled bundle. Documents
 partition on the key each bundled name begins with, resolved against --key and --prereq-key, never
@@ -102,9 +126,10 @@ Tables split into cells on every delimiting "|" -- one that opens the row or has
 before it -- as the plugin's brd-format reference, section 2.3, fixes; a "|" with no space before it
 is inside a cell.
 
-Exit 0: it ran, with hits or without. Exit 2: an argument names no file or directory, or a file
-cannot be read as UTF-8; the cause is one line on stderr and nothing is printed on stdout. Python
-standard library only.
+Exit 0: it ran, with hits or without, and place with or without a refusal. Exit 2: an argument names no
+file or directory, a file cannot be read as UTF-8, or place or declare cannot take an input -- a plan
+naming what the tree does not hold, a working directory already holding a file, a copy that fails; the
+cause is one line on stderr and nothing is printed on stdout. Python standard library only.
 """
 
 import argparse
@@ -116,6 +141,7 @@ import os
 import re
 import sys
 import tempfile
+import unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PLUGIN_ROOT = os.path.dirname(HERE)
@@ -1712,6 +1738,490 @@ def sets_selftest(check):
           code == 0 and buf.getvalue().count("\n") == 1 and "relations" in json.loads(buf.getvalue()))
 
 
+# ---------------------------------------------------------------------------------------------------
+# place and declare: the bundle's copies, read from the tree and copied here, never in a shell
+# ---------------------------------------------------------------------------------------------------
+
+# A name the customer or a designer gave a file is read back from the tree and holds spaces as a rule, so no class can
+# be its test; it is held only to being a printable value -- UTF-8, holding no control character (category Cc), no
+# U+2028 or U+2029 and no bidirectional control -- so that it can neither break the line a manifest or a report writes
+# it on nor show as another, and it never reaches a shell: this script lists, names and copies itself.
+BIDI = set("؜‎‏‪‫‬‭‮⁦⁧⁨⁩")
+PLAN_KEYS = ("captured_images", "frames", "prereq_aux", "prereq_captured")
+KEY_RE = re.compile(KEY_TOKEN + r"\Z")
+
+
+def printable(name):
+    """A printable value: UTF-8 (a name os.listdir decoded with surrogates is not), no Cc, no U+2028 or U+2029, no
+    bidirectional control."""
+    try:
+        name.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return not any(unicodedata.category(c) == "Cc" or c in "  " or c in BIDI for c in name)
+
+
+def _bytewise(names):
+    return sorted(names, key=lambda n: os.fsencode(n))
+
+
+def _captured(brd):
+    """(files, refused): every regular file under <brd>/source and <brd>/source-external, as its path relative to
+    <brd>, walked with a stack and following no symbolic link. A folder that cannot be listed, an entry that is a
+    symbolic link or neither a file nor a folder, and a name that is not a printable value are refused by position --
+    the folder's path relative to <brd> and the entry's place, from 1, in that folder's byte-wise listing -- and never
+    by name. A missing source-external is no capture; a missing source is refused (exit 2)."""
+    if not os.path.isdir(os.path.join(brd, "source")) or os.path.islink(os.path.join(brd, "source")):
+        raise Refused("no brd/source/ folder to read the capture from under " + os.path.dirname(brd))
+    files, refused = [], []
+    stack = [rel for rel in ("source-external", "source") if os.path.lexists(os.path.join(brd, rel))]
+    while stack:
+        rel = stack.pop()
+        full = os.path.join(brd, rel)
+        if os.path.islink(full):
+            refused.append({"folder": rel, "position": None, "reason": "link"})
+            continue
+        try:
+            names = _bytewise(os.listdir(full))
+        except OSError:
+            refused.append({"folder": rel, "position": None, "reason": "unreadable"})
+            continue
+        subs = []
+        for n, name in enumerate(names, 1):
+            path = os.path.join(full, name)
+            if os.path.islink(path):
+                refused.append({"folder": rel, "position": n, "reason": "link"})
+            elif not printable(name):
+                refused.append({"folder": rel, "position": n, "reason": "name"})
+            elif os.path.isdir(path):
+                subs.append(rel + "/" + name)
+            elif os.path.isfile(path):
+                files.append(rel + "/" + name)
+            else:
+                refused.append({"folder": rel, "position": n, "reason": "kind"})
+        stack.extend(reversed(subs))
+    return _bytewise(files), refused
+
+
+def _inside(root, rel, what):
+    """The path <rel> names under <root>, held there: relative, no empty, '.' or '..' segment, every segment a
+    printable value, no segment a symbolic link, and a regular file at its end. Anything else is refused (exit 2)."""
+    parts = rel.split("/")
+    if not rel or rel.startswith("/") or any(p in ("", ".", "..") for p in parts) or not all(printable(p) for p in parts):
+        raise Refused("the plan's %s entry %r is not a plain path below its folder" % (what, rel))
+    path = root
+    for part in parts:
+        path = os.path.join(path, part)
+        if os.path.islink(path):
+            raise Refused("the plan's %s entry %r passes through a symbolic link" % (what, rel))
+    if not os.path.isfile(path):
+        raise Refused("the plan's %s entry %r names no file" % (what, rel))
+    return path
+
+
+def _read_plan(plan):
+    if plan is None:
+        return {}
+    try:
+        with open(plan, encoding="utf-8") as fh:
+            got = json.load(fh)
+    except (OSError, UnicodeDecodeError, ValueError) as e:
+        raise Refused("cannot read the plan " + plan + ": " + e.__class__.__name__)
+    if not isinstance(got, dict) or any(k not in PLAN_KEYS for k in got):
+        raise Refused("the plan is a JSON object whose keys are among " + ", ".join(PLAN_KEYS))
+    for k in ("captured_images", "frames"):
+        if not isinstance(got.get(k, []), list) or not all(isinstance(x, str) for x in got.get(k, [])):
+            raise Refused("the plan's %s is a list of paths" % k)
+    for k in ("prereq_aux", "prereq_captured"):
+        if not isinstance(got.get(k, {}), dict):
+            raise Refused("the plan's %s is an object keyed by a prerequisite's key" % k)
+    return got
+
+
+def _suffixed(name):
+    stem, ext = os.path.splitext(name)
+    return stem + "-2" + ext
+
+
+def bundle_names(key, own, fixed):
+    """Rule 1's names (commands/brd-package.md, Assemble the bundle): own is [(path, folders, basename, image)] --
+    the file's path, its folder names from the nearest up, and whether it is an image; fixed is every name the bundle
+    carries that is never renamed, a document this run renders and a prerequisite's file. Each own file is
+    <key>-<basename>; images sharing a basename each take, between the key and the basename, the shortest run of their
+    own trailing folder names that tells them apart, joined by '-'; then, while two names coincide, or one coincides
+    with a fixed name, the one whose path sorts later byte-wise -- every own one, against a fixed name -- takes -2
+    before its extension. Returns {path: name}."""
+    names = {p: key + "-" + b for p, _, b, _ in own}
+    by_base = {}
+    for p, folders, b, image in own:
+        if image:
+            by_base.setdefault(b, []).append((p, folders))
+    for b, group in by_base.items():
+        if len(group) < 2:
+            continue
+        for p, folders in group:
+            others = [f for q, f in group if q != p]
+            run = folders
+            for k in range(1, len(folders) + 1):
+                if all(list(reversed(folders[:k])) != list(reversed(f[:k])) for f in others):
+                    run = folders[:k]
+                    break
+            names[p] = key + "-" + "-".join(reversed(run)) + "-" + b
+    order = sorted(names, key=os.fsencode)
+    while True:
+        holders = {}
+        for p in order:
+            holders.setdefault(names[p], []).append(p)
+        moved = False
+        for name, ps in holders.items():
+            losers = ps if name in fixed else ps[1:]
+            for p in losers:
+                names[p] = _suffixed(names[p])
+                moved = True
+        if not moved:
+            return names
+
+
+def place(bundle, key, source_dir, brd_dir, plan=None, prereqs=(), reserve=(), dry_run=False):
+    """The bundle's byte-for-byte copies, named by rule 1 and copied by this script: every markdown file and every
+    image the plan takes from <source_dir>/brd/source and source-external, each frame the plan names under <brd_dir>,
+    and each prerequisite's own files save the prompt and manifest the plan names for it. Everything is decided before
+    anything is copied, and nothing is copied where anything is refused or with <dry_run>; the working directory must
+    be empty. Returns the record tokens and citations read through --record."""
+    if not KEY_RE.match(key):
+        raise Refused("--key is no key: " + key)
+    got = _read_plan(plan)
+    brd = os.path.join(os.path.abspath(source_dir), "brd")  # absolute, so rule 1 compares paths in one tree
+    brd_dir = os.path.abspath(brd_dir)
+    files, refused = _captured(brd)
+    images = {f for f in files if f.lower().endswith(IMAGE_EXT)}
+    taken = []
+    for n, rel in enumerate(got.get("captured_images", []), 1):
+        if rel not in images:
+            raise Refused("the plan's captured_images entry %d, %r, names no captured image" % (n, rel))
+        taken.append(rel)
+    out = {"copied": [], "captured_not_bundled": [], "captured_unselected": [], "prereq_other": [], "prereq_aux": [],
+           "refused": refused, "captured": [], "captured_paths": list(files), "source_basenames": []}
+    own = []
+    for rel in files:
+        parts = rel.split("/")
+        if rel.lower().endswith(DOC_EXT):
+            own.append((os.path.join(brd, rel), list(reversed(parts[:-1])), parts[-1], False, "captured", rel))
+            if parts[-1] not in out["source_basenames"]:
+                out["source_basenames"].append(parts[-1])
+        elif rel in images:
+            if rel in taken:
+                own.append((os.path.join(brd, rel), list(reversed(parts[:-1])), parts[-1], True, "captured", rel))
+            else:
+                out["captured_unselected"].append(rel)
+        else:
+            out["captured_not_bundled"].append(rel)
+    for rel in got.get("frames", []):
+        if rel.split("/", 1)[0] == "brd" or not rel.lower().endswith(IMAGE_EXT):
+            raise Refused("the plan's frames entry %r is not an image outside brd/" % rel)
+        parts = rel.split("/")
+        own.append((_inside(brd_dir, rel, "frames"), list(reversed(parts[:-1])), parts[-1], True, "frame", rel))
+    aux_plan, cap_plan = got.get("prereq_aux", {}), got.get("prereq_captured", {})
+    pre_copies, pre_captured = [], []
+    keys = []
+    for v in prereqs:
+        pk, sep, d = v.partition("=")
+        if not sep or not KEY_RE.match(pk) or not d:
+            raise Refused("--prereq takes KEY=DIR, not " + v)
+        keys.append(pk)
+        aux = aux_plan.get(pk)
+        if not isinstance(aux, list) or not all(isinstance(x, str) for x in aux):
+            raise Refused("the plan names no prompt and manifest for %s (prereq_aux)" % pk)
+        try:
+            names = _bytewise(os.listdir(d))
+        except OSError as e:
+            raise Refused("cannot list %s's bundle %s: %s" % (pk, d, e.__class__.__name__))
+        mine = []
+        for n, name in enumerate(names, 1):
+            path = os.path.join(d, name)
+            if os.path.islink(path) or not os.path.isfile(path):
+                refused.append({"folder": pk, "position": n, "reason": "link" if os.path.islink(path) else "kind"})
+            elif not printable(name):
+                refused.append({"folder": pk, "position": n, "reason": "name"})
+            elif not name.startswith(pk + "-"):
+                out["prereq_other"].append({"key": pk, "name": name})
+            elif name in aux:
+                out["prereq_aux"].append(name)
+            else:
+                mine.append(name)
+                pre_copies.append((path, pk, name))
+        for name in aux:
+            if name not in out["prereq_aux"]:
+                raise Refused("the plan's prereq_aux for %s names %r, which its bundle does not hold" % (pk, name))
+        for entry in cap_plan.get(pk, []):
+            if not (isinstance(entry, dict) and isinstance(entry.get("path"), str)
+                    and isinstance(entry.get("name"), str) and entry["name"] in mine and printable(entry["path"])):
+                raise Refused("the plan's prereq_captured for %s holds an entry naming none of its copied files" % pk)
+            pre_captured.append(entry["name"])
+            out["captured_paths"].append(entry["path"])
+    for pk in cap_plan:
+        if pk not in keys:
+            raise Refused("the plan's prereq_captured names %s, which no --prereq names" % pk)
+    fixed = set(reserve) | {name for _, _, name in pre_copies}
+    names = bundle_names(key, [(p, f, b, img) for p, f, b, img, _, _ in own], fixed)
+    own_captured = []
+    for path, folders, base, image, kind, rel in own:
+        name = names[path]
+        out["copied"].append({"name": name, "kind": kind, "path": rel, "prerequisite": None,
+                              "map": kind == "captured" or name != key + "-" + base})
+        own_captured.append(name)  # a frame is the customer's own file too, copied byte for byte
+    out["captured"] = own_captured + pre_captured
+    for path, pk, name in pre_copies:
+        out["copied"].append({"name": name, "kind": "prerequisite", "path": name, "prerequisite": pk, "map": False})
+    if refused:
+        out["copied"], out["captured"] = [], []
+        return out
+    if dry_run:
+        return out
+    try:
+        if os.listdir(bundle):
+            raise Refused("the working directory " + bundle + " already holds a file; place runs first, on an empty one")
+    except OSError as e:
+        raise Refused("cannot list the working directory " + bundle + ": " + e.__class__.__name__)
+    sources = {names[p]: p for p, _, _, _, _, _ in own}
+    sources.update({name: path for path, _, name in pre_copies})
+    for c in out["copied"]:
+        try:
+            with open(sources[c["name"]], "rb") as a:
+                fd = os.open(os.path.join(bundle, c["name"]), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+                with os.fdopen(fd, "wb") as b:
+                    while True:
+                        chunk = a.read(1 << 20)
+                        if not chunk:
+                            break
+                        b.write(chunk)
+        except OSError as e:
+            raise Refused("cannot copy %s into the bundle: %s" % (c["name"], e.strerror or e.__class__.__name__))
+    return out
+
+
+def declare(bundle, specs, out_path):
+    """Every regular file under <bundle>, as its path relative to <specs>, each ended by a NUL byte, written to
+    <out_path>: phase-handoff's deliverable_paths_file, so no name of the bundle is typed into a command."""
+    root = os.path.abspath(specs)
+    top = os.path.relpath(os.path.abspath(bundle), root)
+    if top == os.curdir or top == os.pardir or top.startswith(os.pardir + os.sep) or not os.path.isdir(bundle):
+        raise Refused(bundle + " is not below " + specs + ", or is no folder")
+    paths = []
+    for d, dirs, names in os.walk(bundle):
+        dirs.sort()
+        for n in _bytewise(names):
+            full = os.path.join(d, n)
+            if os.path.isfile(full) and not os.path.islink(full):
+                paths.append(os.path.relpath(os.path.abspath(full), root))
+    try:
+        with open(out_path, "wb") as fh:
+            fh.write(b"".join(os.fsencode(p) + b"\0" for p in paths))
+    except OSError as e:
+        raise Refused("cannot write " + out_path + ": " + e.__class__.__name__)
+    return {"declared": len(paths)}
+
+
+def _from_record(path):
+    """(captured, captured_paths, source_basenames, prereq_aux) from a place record."""
+    if path is None:
+        return [], [], [], []
+    try:
+        with open(path, encoding="utf-8") as fh:
+            rec = json.load(fh)
+    except (OSError, UnicodeDecodeError, ValueError) as e:
+        raise Refused("cannot read the place record " + path + ": " + e.__class__.__name__)
+    return (list(rec.get("captured", [])), list(rec.get("captured_paths", [])),
+            list(rec.get("source_basenames", [])), list(rec.get("prereq_aux", [])))
+
+
+
+def place_selftest(check):
+    """place and declare: the bundle's copies and their names, read from the tree and copied by this script, every
+    name handed over as data -- never a shell word (FOLDER-NAME-CLASS (1))."""
+
+    def put(path, data=b"x\n"):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as fh:
+            fh.write(data)
+
+    def call(argv):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            try:
+                code = main(argv)
+            except SystemExit as e:  # a usage error
+                code = e.code
+        try:
+            got = json.loads(out.getvalue()) if out.getvalue().strip() else None
+        except ValueError:
+            got = None
+        return code, got, err.getvalue()
+
+    with tempfile.TemporaryDirectory() as t:
+        pwn = os.path.join(t, "PWN")  # where a shell run in t would leave it; the names carry the bare word
+        parent = os.path.join(t, "specs", "specifications", "BRD-K-1-x")
+        slice_ = os.path.join(parent, "PRD-K-1-1-s")
+        src = os.path.join(parent, "brd", "source")
+        ext = os.path.join(parent, "brd", "source-external")
+        odd = ["Customer BRD v2.md", "$(touch PWN).md", "`touch PWN`.md", '"q".md', "it's.md", "-lead.md",
+               "decisions.md"]
+        for n in odd:
+            put(os.path.join(src, n), n.encode("utf-8"))
+        put(os.path.join(src, "appendix", "notes.md"), b"appendix notes\n")
+        put(os.path.join(ext, "notes.md"), b"external notes\n")
+        put(os.path.join(src, "img", "Q3 report.png"), b"\x89PNG q3")
+        put(os.path.join(src, "img", "a.png"), b"\x89PNG img-a")
+        put(os.path.join(ext, "a.png"), b"\x89PNG ext-a")
+        put(os.path.join(src, "img", "unused.png"), b"\x89PNG unused")
+        put(os.path.join(src, "pricing.pdf"), b"%PDF")
+        put(os.path.join(slice_, "design", "login", "01.png"), b"\x89PNG login")
+        put(os.path.join(slice_, "design", "checkout", "01.png"), b"\x89PNG checkout")
+        put(os.path.join(slice_, "design", "x", "login-01.png"), b"\x89PNG x-login")
+        pre = os.path.join(t, "specs", "specifications", "BRD-P-2-y", "PRD-P-2-1-z", "bundle-20261001")
+        for n in ("P-2-customer-review-prompt-20261001.md", "P-2-manifest.md", "P-2-decisions.md",
+                  "P-2-it's brief.md", "Q-9-other.md"):
+            put(os.path.join(pre, n), n.encode("utf-8"))
+        plan = os.path.join(t, "plan.json")
+        with open(plan, "w", encoding="utf-8") as fh:
+            json.dump({"captured_images": ["source/img/Q3 report.png", "source/img/a.png", "source-external/a.png"],
+                       "frames": ["design/login/01.png", "design/checkout/01.png", "design/x/login-01.png"],
+                       "prereq_aux": {"P-2": ["P-2-customer-review-prompt-20261001.md", "P-2-manifest.md"]},
+                       "prereq_captured": {"P-2": [{"path": "source/it's brief.md", "name": "P-2-it's brief.md"}]}},
+                      fh)
+        work = os.path.join(t, "work")
+        os.makedirs(work)
+        record = os.path.join(t, "record.json")
+        argv = ["place", work, "--key", "K-1", "--source-dir", parent, "--brd-dir", slice_, "--plan", plan,
+                "--record", record, "--prereq", "P-2=" + pre, "--reserve", "K-1-decisions.md",
+                "--reserve", "K-1-brd-inventory.md"]
+        code, dry, err = call(argv + ["--dry-run"])
+        check("place --dry-run: names every copy and copies nothing (%r)" % err,
+              code == 0 and dry and os.listdir(work) == [] and dry["copied"])
+        code, got, err = call(argv)
+        names = {(c["kind"], c["path"]): c["name"] for c in (got or {}).get("copied", [])}
+        want = {("captured", "source/Customer BRD v2.md"): "K-1-Customer BRD v2.md",
+                ("captured", "source/$(touch PWN).md"): "K-1-$(touch PWN).md",
+                ("captured", "source/`touch PWN`.md"): "K-1-`touch PWN`.md",
+                ("captured", 'source/"q".md'): 'K-1-"q".md',
+                ("captured", "source/it's.md"): "K-1-it's.md",
+                ("captured", "source/-lead.md"): "K-1--lead.md",
+                ("captured", "source/decisions.md"): "K-1-decisions-2.md",
+                ("captured", "source-external/notes.md"): "K-1-notes.md",
+                ("captured", "source/appendix/notes.md"): "K-1-notes-2.md",
+                ("captured", "source/img/Q3 report.png"): "K-1-Q3 report.png",
+                ("captured", "source/img/a.png"): "K-1-img-a.png",
+                ("captured", "source-external/a.png"): "K-1-source-external-a.png",
+                ("frame", "design/login/01.png"): "K-1-login-01.png",
+                ("frame", "design/checkout/01.png"): "K-1-checkout-01.png",
+                ("frame", "design/x/login-01.png"): "K-1-login-01-2.png",
+                ("prerequisite", "P-2-decisions.md"): "P-2-decisions.md",
+                ("prerequisite", "P-2-it's brief.md"): "P-2-it's brief.md"}
+        check("place: rule 1's names -- the key, a folder run for images sharing a basename, -2 against a reserved "
+              "name, a prerequisite's name and each other, byte-wise by path (%r)" % (sorted(names.items()),),
+              code == 0 and names == want)
+        check("place --dry-run: the names it printed are the names place gives",
+              dry and {(c["kind"], c["path"]): c["name"] for c in dry["copied"]} == want)
+        same = code == 0
+        for (kind, rel), name in want.items():
+            if kind == "captured":
+                origin = os.path.join(parent, "brd", rel)
+            elif kind == "frame":
+                origin = os.path.join(slice_, rel)
+            else:
+                origin = os.path.join(pre, rel)
+            try:
+                with open(origin, "rb") as a, open(os.path.join(work, name), "rb") as b:
+                    same = same and a.read() == b.read()
+            except OSError:
+                same = False
+        check("place: every copy holds its source's bytes", same)
+        check("place: no name is run as a command",
+              not os.path.exists(pwn) and not os.path.exists(os.path.join(os.getcwd(), "PWN")))
+        check("place: the prerequisite's prompt and manifest are not copied, a file under another key is named",
+              got and not os.path.exists(os.path.join(work, "P-2-manifest.md"))
+              and got["prereq_other"] == [{"key": "P-2", "name": "Q-9-other.md"}]
+              and sorted(got["prereq_aux"]) == ["P-2-customer-review-prompt-20261001.md", "P-2-manifest.md"])
+        check("place: a captured file that is neither markdown nor an image, and an image the plan does not take, "
+              "are named and not copied (%r)" % (got and (got["captured_not_bundled"], got["captured_unselected"]),),
+              got and got["captured_not_bundled"] == ["source/pricing.pdf"]
+              and got["captured_unselected"] == ["source/img/unused.png"])
+        maps = {c["name"] for c in (got or {}).get("copied", []) if c["map"]}
+        check("place: every captured copy, and every other image whose name took a folder or a -2, is mapped",
+              maps == {n for (k, _), n in want.items() if k == "captured"}
+              | {"K-1-login-01.png", "K-1-checkout-01.png", "K-1-login-01-2.png"})
+        try:
+            with open(record, encoding="utf-8") as fh:
+                rec = json.load(fh)
+        except (OSError, ValueError):
+            rec = {}
+        check("place: the record carries what tokens and citations read, a prerequisite's captured file among them",
+              bool(got) and rec.get("copied") == got["copied"] and "P-2-it's brief.md" in rec.get("captured", [])
+              and "source/it's brief.md" in rec.get("captured_paths", [])
+              and "source/pricing.pdf" in rec.get("captured_paths", [])
+              and "K-1-login-01.png" in rec.get("captured", [])
+              and sorted(rec.get("source_basenames", [])) == sorted(
+                  [n for n in odd] + ["notes.md"]))
+        code, again, err = call(argv)
+        check("place: a working directory that already holds a file is refused (exit 2)", code == 2 and again is None)
+        # tokens and citations read the record
+        put(os.path.join(work, "K-1-brd-inventory.md"), "See source/it's.md › § 2 and K-1-it's.md.\n".encode("utf-8"))
+        put(os.path.join(work, "K-1-it's.md"), b"Their D3.\n")
+        code, scanned, err = call(["tokens", work, "--record", record, "--prereq-key", "P-2"])
+        spans = {(g["file"], g["span"]) for g in (scanned or {}).get("groups", [])}
+        check("tokens --record: a captured file is captured-file, and a captured path's tail section is omitted (%r)"
+              % (scanned,), code == 0 and ("K-1-it's.md", "captured-file") in spans
+              and (scanned or {}).get("omitted_locator_sections", 0) >= 1)
+        # declare: the bundle's files as a NUL-terminated list of paths relative to SPECS_PATH
+        out = os.path.join(t, "declared")
+        moved = os.path.join(slice_, "bundle-20261127")  # declare runs once the bundle is moved into place
+        os.makedirs(moved)
+        for n in os.listdir(work):
+            os.rename(os.path.join(work, n), os.path.join(moved, n))
+        work = moved
+        code, dec, err = call(["declare", work, "--specs", os.path.join(t, "specs"), "--out", out])
+        try:
+            with open(out, "rb") as fh:
+                listed = [x.decode("utf-8") for x in fh.read().split(b"\0") if x]
+        except OSError:
+            listed = []
+        rel = os.path.relpath(work, os.path.join(t, "specs"))
+        code2, _, err2 = call(["declare", os.path.join(t, "work"), "--specs", os.path.join(t, "specs"), "--out", out])
+        check("declare: a folder outside SPECS_PATH is refused (exit 2)", code2 == 2 and "not below" in err2)
+        check("declare: every file of the bundle, relative to SPECS_PATH, NUL-terminated (%r)" % (listed[:3],),
+              code == 0 and sorted(listed) == sorted(os.path.join(rel, n) for n in os.listdir(work))
+              and (dec or {}).get("declared") == len(listed))
+        # refusals: a name that is not a printable value, a symbolic link, a plan naming no captured image
+        bad = os.path.join(t, "bad")
+        put(os.path.join(bad, "brd", "source", "BRD.md"))
+        put(os.path.join(bad, "brd", "source", "line\nfeed.md"))
+        os.symlink(os.path.join(bad, "brd", "source", "BRD.md"), os.path.join(bad, "brd", "source", "link.md"))
+        work2 = os.path.join(t, "work2")
+        os.makedirs(work2)
+        code, got, err = call(["place", work2, "--key", "K-1", "--source-dir", bad, "--brd-dir", bad])
+        check("place: a captured name that is not a printable value, and a symbolic link, are refused by position, "
+              "and nothing is copied (%r)" % (got,),
+              code == 0 and bool(got) and sorted((r["folder"], r["position"], r["reason"]) for r in got["refused"])
+              == [("source", 2, "name"), ("source", 3, "link")] and got["copied"] == [] and os.listdir(work2) == [])
+        with open(plan, "w", encoding="utf-8") as fh:
+            json.dump({"captured_images": ["source/img/nope.png"]}, fh)
+        code, got, err = call(["place", work2, "--key", "K-1", "--source-dir", parent, "--brd-dir", slice_,
+                               "--plan", plan])
+        check("place: a plan naming no captured image is refused (exit 2)", code == 2 and "nope.png" in err)
+        with open(plan, "w", encoding="utf-8") as fh:
+            json.dump({"frames": ["design/../../BRD-K-1-x/brd/source/pricing.pdf"]}, fh)
+        code, got, err = call(["place", work2, "--key", "K-1", "--source-dir", parent, "--brd-dir", slice_,
+                               "--plan", plan])
+        check("place: a frame path climbing out of the folder is refused (exit 2)", code == 2)
+        with open(plan, "w", encoding="utf-8") as fh:
+            json.dump({"prereq_aux": {}}, fh)
+        code, got, err = call(["place", work2, "--key", "K-1", "--source-dir", parent, "--brd-dir", slice_,
+                               "--plan", plan, "--prereq", "P-2=" + pre])
+        check("place: a prerequisite whose prompt and manifest the plan does not name is refused (exit 2)",
+              code == 2 and "P-2" in err)
+        check("place: no name is run as a command, in any case", not os.path.exists(pwn))
+
+
 def selftest():
     cases, failed = 0, 0
 
@@ -1866,6 +2376,7 @@ def selftest():
           and "brd-package" in fam_here["commands"] and "brd-reader" in fam_here["agents"])
     citations_selftest(check)
     sets_selftest(check)
+    place_selftest(check)
     print("SELFTEST " + ("PASS" if not failed else "FAIL") + " (%d cases, %d failed)" % (cases, failed))
     return 0 if not failed else 1
 
@@ -1879,6 +2390,7 @@ def main(argv=None):
     t.add_argument("--prereq-key", action="append", default=[])
     t.add_argument("--captured", action="append", default=[])
     t.add_argument("--captured-path", action="append", default=[])
+    t.add_argument("--record")
     c = sub.add_parser("citations")
     c.add_argument("bundle")
     c.add_argument("--key", required=True)
@@ -1892,6 +2404,21 @@ def main(argv=None):
     c.add_argument("--known-key", action="append", default=[])
     c.add_argument("--prereq-aux", action="append", default=[])
     c.add_argument("--prereq-source", action="append", default=[])
+    c.add_argument("--record")
+    pl = sub.add_parser("place")
+    pl.add_argument("bundle")
+    pl.add_argument("--key", required=True)
+    pl.add_argument("--source-dir", required=True)
+    pl.add_argument("--brd-dir", required=True)
+    pl.add_argument("--plan")
+    pl.add_argument("--record")
+    pl.add_argument("--prereq", action="append", default=[])
+    pl.add_argument("--reserve", action="append", default=[])
+    pl.add_argument("--dry-run", action="store_true")
+    de = sub.add_parser("declare")
+    de.add_argument("bundle")
+    de.add_argument("--specs", required=True)
+    de.add_argument("--out", required=True)
     s = sub.add_parser("sets")
     s.add_argument("bundle")
     s.add_argument("--key", required=True)
@@ -1902,11 +2429,21 @@ def main(argv=None):
     a = ap.parse_args(argv)
     if a.selftest:
         return selftest()
-    if a.cmd not in ("tokens", "citations", "sets"):
+    if a.cmd not in ("tokens", "citations", "sets", "place", "declare"):
         ap.print_usage(sys.stderr)
         return 2
     try:
-        if a.cmd == "sets":
+        if a.cmd == "place":
+            result = place(a.bundle, a.key, a.source_dir, a.brd_dir, a.plan, a.prereq, a.reserve, a.dry_run)
+            if a.record:
+                try:
+                    with open(a.record, "w", encoding="utf-8") as fh:
+                        json.dump(result, fh, ensure_ascii=False)
+                except OSError as e:
+                    raise Refused("cannot write the record " + a.record + ": " + e.__class__.__name__)
+        elif a.cmd == "declare":
+            result = declare(a.bundle, a.specs, a.out)
+        elif a.cmd == "sets":
             result = sets(a.bundle, a.key, a.date, a.manifest, a.note, a.unreviewed_prereq)
         elif a.cmd == "citations":
             sources = []
@@ -1915,11 +2452,13 @@ def main(argv=None):
                 if not sep or not k or not d:
                     raise Refused("--prereq-source takes KEY=DIR, not " + v)
                 sources.append((k, d))
-            result = citations(a.bundle, a.key, a.prereq_key, a.copied_key, a.date, a.captured,
-                               a.captured_path, a.source_basename, a.manifest, a.known_key, a.prereq_aux,
-                               prereq_sources=sources)
+            cap, cap_paths, bases, aux = _from_record(a.record)
+            result = citations(a.bundle, a.key, a.prereq_key, a.copied_key, a.date, a.captured + cap,
+                               a.captured_path + cap_paths, a.source_basename + bases, a.manifest, a.known_key,
+                               a.prereq_aux + aux, prereq_sources=sources)
         else:
-            result = scan(a.paths, a.prereq_key, a.captured, a.captured_path)
+            cap, cap_paths, _, _ = _from_record(a.record)
+            result = scan(a.paths, a.prereq_key, a.captured + cap, a.captured_path + cap_paths)
     except Refused as e:
         print("bundle-scan.py: " + str(e), file=sys.stderr)
         return 2
