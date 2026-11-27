@@ -1910,13 +1910,14 @@ YAML_ESCAPES = {"0": "\x00", "a": "\x07", "b": "\x08", "t": "\x09", "\x09": "\x0
                 "_": "\xa0", "L": "\u2028", "P": "\u2029"}
 YAML_HEX_ESCAPES = {"x": 2, "u": 4, "U": 8}
 NULL_KEY = ("null",)  # the one key every key whose text is null, Null, NULL or ~, and an absent key, counts as
+NULL_WORDS = ("null", "Null", "NULL", "~")
 
 
 def _key_id(key):
     """What a mapping key is compared by, the walkthrough's one rule for a key twice: its text -- a quoted key's as
     its quotes and escapes give it -- so 1 and "1" are one key and yes and true two; except that a key whose text is
     null, Null, NULL or ~, or no key at all, is NULL_KEY. A key that is not text (a collection) is itself."""
-    return NULL_KEY if key is None or (isinstance(key, str) and key in ("null", "Null", "NULL", "~")) else key
+    return NULL_KEY if key is None or (isinstance(key, str) and key in NULL_WORDS) else key
 
 
 def _yaml_text(kind, token):
@@ -2174,7 +2175,10 @@ class _WalkReader:
             raise WalkOut(n, "result")
         elif role == "capture" and key not in CAPTURE_KEYS:
             raise WalkOut(n, "capture")
-        if role != "stamp" and any(_key_id(k) == _key_id(key) for k in frame.keys):  # one rule with flow mappings
+        # _key_id's rule, as flow mappings take it, in constant time: a block key is plain text, so the rule makes it
+        # one with another only where the two are equal, or both null words.
+        if role != "stamp" and (key in frame.keys or (_key_id(key) is NULL_KEY
+                                                      and any(w in frame.keys for w in NULL_WORDS))):
             raise WalkOut(n, "duplicate-key")
         if role == "root":
             if key == "walkthrough" and value.kind != "empty":
@@ -5980,6 +5984,31 @@ def case_export_blob_line_pinned(tmp):
     _true(err.startswith("backlog-lines: not run ("), "the line opens so")
 
 
+def case_walk_many_keys_read_in_time(tmp):
+    """The reader's cost grows with the file, never with the square of a mapping's keys: 20,000 distinct keys in a
+    block mapping, 20,000 in one flow mapping, and 5,000 steps whose results hold whitespace alone, each read within
+    10 seconds -- a bound loose enough for a loaded machine, where a quadratic key test takes minutes -- and the null
+    words still one key at the end of such a mapping."""
+    head = "walkthrough:\n  id: W-001\n  unit: U-001\n"
+    block = "".join("  k%d: v\n" % k for k in range(20000))
+    flow = "  environment: { " + ", ".join("k%d: v" % k for k in range(20000)) + " }\n"
+    steps = "steps:\n" + "".join("  - n: %d\n    action: wait\n    result: { outcome: differs, observed: \"  \" }\n" % k
+                                 for k in range(1, 5001))
+    for name, data, want in (("block", head + block, None), ("flow", head + flow, None),
+                             ("steps", head + steps, list(range(1, 5001))),
+                             ("null-words", head + block + "  null: a\n  Null: b\n", 20005)):
+        started = time.monotonic()
+        got = _wshape(tmp, data, name)
+        took = time.monotonic() - started
+        _true(took < 10, "%s: read in %.1f seconds, within 10" % (name, took))
+        if isinstance(want, int):
+            _eq(got, {"shape": "out", "line": want, "reason": "duplicate-key"}, name)
+        else:
+            _eq(got["shape"], "ok", name)
+            if want:
+                _eq((got["steps"], got["differs_no_observed"]), (want, want), name)
+
+
 def case_walk_shape_paragraph_pinned(tmp):
     """EC section 4's shape paragraph names, in its out-of-shape list, exactly the reasons the walkthrough reader
     gives; they are the backlog's line reasons less its four of structure, with the walkthrough's own."""
@@ -6083,7 +6112,8 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_walk_changed_after_write, case_walk_counts, case_id_class_matches_walkthrough_flag,
          case_id_class_bad_args, case_walk_stamp_page_bounded, case_walk_flow_duplicate_key_out,
          case_walk_too_large_and_overflow, case_walk_whitespace_is_no_text, case_constants_assigned_once,
-         case_export_blob_line_pinned, case_walk_shape_paragraph_pinned, case_slot_comment_pinned,
+         case_export_blob_line_pinned, case_walk_many_keys_read_in_time, case_walk_shape_paragraph_pinned,
+         case_slot_comment_pinned,
          case_visibility_marker_pinned,
          case_shape_paragraph_pinned, case_marker_phrase_pinned)
 
