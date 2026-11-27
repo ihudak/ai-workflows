@@ -1,6 +1,6 @@
 ---
 name: brd-interview
-description: "The BRD-to-PRD route's decision step, once per slice after /prd-ground and /brd-split: generates the round's questions and tags each [G] (answered from the grounding, never asked), [V] (yours: asked one at a time with argumentation, save one the question registry closes without asking) or [C] (held for the customer), then writes decisions.md ([VD#n], [AS#n]), the round record and the customer question set. Gates on merged, verified grounding and a fully allocated ledger; --round N resumes or re-opens a round. Next: /brd-package."
+description: "The BRD-to-PRD route's decision step, once per slice after /prd-ground and /brd-split: generates the round's questions and tags each [G] (answered from the grounding, never asked), [V] (yours: asked one at a time with argumentation or confirmed in a table, save one the question registry closes without asking) or [C] (held for the customer), then writes decisions.md ([VD#n], [AS#n]), the round record and the customer question set. Gates on merged, verified grounding and a fully allocated ledger; --round N resumes or re-opens a round. Next: /brd-package."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 disable-model-invocation: true
 ---
@@ -32,7 +32,8 @@ other.
 **Standing rule, binding on every phase below.** A `[G]` is answered from the grounding findings and
 is **never put to a human** — not the customer, not the delivery team, not the operator watching the
 run (`interview-tagging.md` §1, D8). A `[V]` is the operator's to answer — put to the operator
-with recorded argumentation, or closed by the question registry — applied from an answer the
+with recorded argumentation, on its own or as a row of a table the operator confirms (*Put each
+`[V]` to the operator*), or closed by the question registry — applied from an answer the
 operator gave or a decision on file, merged into a question the operator answers, or dropped as no
 answer to it would change anything (*Tag every question*, *The question registry*) — and is **never
 routed to the
@@ -71,7 +72,7 @@ round record already names (step 9); and *Resolve the round*'s no-new-round path
 that never reaches that phase, writes the register's header where none is on file, removes and
 reports torn writes and re-stamps the register's lineage frontmatter before its handoff.
 
-**Ending early.** Every stop this run takes — each `BRD_INTERVIEW_*` stop (Phase 0's, its lineage stops `BRD_INTERVIEW_LINEAGE_FAILED` and `BRD_INTERVIEW_UPSTREAM_STALE` among them, and the round stops of Phases 2 and 3, `BRD_INTERVIEW_ALL_DELEGATED` among them), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, a `depends-on:` key's `ambiguous` stop, `branch-check`'s, a stopping row of a `require-on-main` gate), the `$SPECS_PATH` *Cancel*, and every run-ending answer — an abort in Phase 6, Phase 8's `Cancel` — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 12's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. `emit-block` still fires wherever a stop's own text calls it, at the halt — `BRD_INTERVIEW_MALFORMED_FINDING`'s, as Phase 12's capture-at-block rule says. Where a stop or answer writes nothing, that means the run's own work: the cost entry is bookkeeping and is written all the same, and Phase 0 step 9's completion of a re-disposition, where it wrote, stays uncommitted, since the tail commits only the bookkeeping paths. **Every stop taken once Phase 0 step 8c has opened the run folder** runs `run-stop-line` (`Skill(skill: "workflows-core:reference", args: "run-folder run-stop-line")`) right after its own message: it logs the stop, by its code where it has one, and prints the `Run folder kept:` line, `<command>` there being `/product-workflows:brd-interview <BRD-KEY>` with the other arguments this run was given. `BRD_INTERVIEW_RUN_TAKEN_OVER` is the exception: it takes no tail at all and prints no such line (Phase 0 step 8c). The stop message, the `Run folder kept:` line where one prints, then the cost and `Specs repo:` lines, end the run; it reaches neither *Next steps* nor the Final report. Two *Cancel*s are not stops: row C's repair offer at Phase 0 step 8a's defect-log gate, which never stops the run, and the handoff's consent choice in Phase 10 each decline what they offer, and the run goes on. Row C's *Cancel* at step 6's grounding gate is not one of them: that gate maps every stopping row to a stop, row C's among them once its repair is declined.
+**Ending early.** Every stop this run takes — each `BRD_INTERVIEW_*` stop (Phase 0's, its lineage stops `BRD_INTERVIEW_LINEAGE_FAILED` and `BRD_INTERVIEW_UPSTREAM_STALE` among them, and the round stops of Phases 2 and 3, `BRD_INTERVIEW_ALL_DELEGATED` among them), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, a `depends-on:` key's `ambiguous` stop, `branch-check`'s, a stopping row of a `require-on-main` gate), the `$SPECS_PATH` *Cancel*, and every run-ending answer — an abort in Phase 6, its at-budget *Stop here and continue later* (`BRD_INTERVIEW_SITTING_STOPPED`), Phase 8's `Cancel` — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 12's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. `emit-block` still fires wherever a stop's own text calls it, at the halt — `BRD_INTERVIEW_MALFORMED_FINDING`'s, as Phase 12's capture-at-block rule says. Where a stop or answer writes nothing, that means the run's own work: the cost entry is bookkeeping and is written all the same, and Phase 0 step 9's completion of a re-disposition, where it wrote, stays uncommitted, since the tail commits only the bookkeeping paths. **Every stop taken once Phase 0 step 8c has opened the run folder** runs `run-stop-line` (`Skill(skill: "workflows-core:reference", args: "run-folder run-stop-line")`) right after its own message: it logs the stop, by its code where it has one, and prints the `Run folder kept:` line, `<command>` there being `/product-workflows:brd-interview <BRD-KEY>` with the other arguments this run was given. `BRD_INTERVIEW_RUN_TAKEN_OVER` is the exception: it takes no tail at all and prints no such line (Phase 0 step 8c). The stop message, the `Run folder kept:` line where one prints, then the cost and `Specs repo:` lines, end the run; it reaches neither *Next steps* nor the Final report. Two *Cancel*s are not stops: row C's repair offer at Phase 0 step 8a's defect-log gate, which never stops the run, and the handoff's consent choice in Phase 10 each decline what they offer, and the run goes on. Row C's *Cancel* at step 6's grounding gate is not one of them: that gate maps every stopping row to a stop, row C's among them once its repair is declined.
 
 ---
 
@@ -100,29 +101,36 @@ them is.
    already on it never reaches the queue**: the standing re-decision *A later round is generated
    from what changed* records, in the round being generated or in a round resumed, arrives
    answered, and the queue asks only what is not; one the question registry closes — merged into
-   another, dropped, or applied from an answer or a decision on file — leaves it unasked, and
-   returns to it only where an end-of-sitting list reopens it, a question of that same set.
+   another, dropped, applied from an answer or a decision on file, or confirmed as a row of a
+   sitting's table — leaves it, and returns to it only where an end-of-sitting list reopens it, a
+   question of that same set.
 4. **A `[G]` leaves the `[G]` set only by re-tagging, and re-tagging re-enters at the tagging
    phase.** It never enters the operator queue directly. And a re-tag is admissible only against a
    named `NOT-PROVABLE` finding or an `unprovable` verifier outcome (`interview-tagging.md` §3):
    **a re-tag with no finding to name is not a re-tag**, so "the code did not tell us, so let us ask
    someone" has no route through this command.
-5. **Every prompt this command raises is enumerated, and only one of them carries a question from
-   the question set.** They are: the `SPECS_PATH` escalation in *Resolve inputs and gate the grounded
-   BRD*; the round re-open cause prompt in *Resolve the round*; the `[V]` queue and the argumentation
-   prompt that follows each of its answers; the code-defect offer that follows it, with the
+5. **Every prompt this command raises is enumerated, and only two of them carry questions from the
+   question set.** They are: the `SPECS_PATH` escalation in *Resolve inputs and gate the grounded
+   BRD*; the round re-open cause prompt in *Resolve the round*; the `[V]` queue, with the "why"
+   prompt that follows an answer carrying no reason and the plain-text question its defer entry
+   opens; the tail table's question, with the plain-text question its *Let me name the exceptions*
+   opens; the code-defect offer that follows an answer of the queue, with the
    plain-text question its *Yes* opens; the re-disposition put of a `[CDF#n]` already on file; the
    end-of-sitting list's question, with the plain-text question its *Let me name the ones to
-   reopen* opens; the will-change resolution picker; the picker that offers to close an `unsourced`
+   reopen* opens; the at-budget question, with the plain-text question its *Defer the rest* opens;
+   the will-change resolution picker; the picker that offers to close an `unsourced`
    requirement defect a verified finding settles, at the start of *Handoff*, with the plain-text
    question its *Write some of them* opens; the handoff choice; the next-step offer;
    and, in *Put each `[V]` to the operator*, the re-put tie picker for a resumed `[V]` whose `[V]`
    tag is on file with no `- **Re-puts:**` line. Only
-   the third carries a question from the set — and the argumentation prompt inside it asks why the
+   the third and the fourth carry questions from the set — the queue one `[V]` a prompt, the table
+   the `[V]`s a sitting's plan is confident of as one prompt, and neither anything but a `[V]` —
+   and the "why" prompt inside the third asks why the
    answer just given was given, never a question of its own. The tie picker names a question of the
    set but asks only which record it puts again, never for its answer; the end-of-sitting list
-   names questions of the set that closed without being asked, and asks only whether what closed
-   each stands, never for its answer; and the close picker and its question name defects and
+   names questions of the set that closed without being asked singly, and asks only whether what closed
+   each stands, never for its answer; the at-budget question counts the questions of the set left
+   and asks only whether to go on, stop or defer them all, never for an answer; and the close picker and its question name defects and
    findings, never a question of the set.
 
    **Three further prompts can appear, raised inside shared entry points this command executes rather
@@ -686,7 +694,7 @@ session of this run already resolved and generated the round, tagged it and answ
 this phase resolves nothing, and *Generate the round's question set*, *Tag every question* and
 *Answer every `[G]` from the findings* do not run again. The round — its number, how this run came
 to work it, every question with its position, tag, text and state, and everything those phases
-hold for *Write the register and the round record* — is that file's, and the run goes on at *The
+hold for *Put each `[V]` to the operator* and *Write the register and the round record* — is that file's, and the run goes on at *The
 question registry*, the last step of *Tag every question*, which takes the registry up where the
 earlier session left it. A round generated a second time would differ from the first in some
 question or position, and the registry's answers name questions by round and position. Where the
@@ -1036,6 +1044,20 @@ they already said about the row.
 
 Carry the resolved round number for the whole run. Every decision, assumption and question this run
 records is stamped with it.
+
+**A deferred `[V]` whose wait is over** (`workflows-core:question-budget` §8). A deferral may name
+the held `[C]`s it waits on, on a `- **Blocked-on:**` line written under its *deferred* state
+(*Put each `[V]` to the operator*). For each `[V]` of the round this run works whose last state is
+*deferred* and carries that line, read each `<round>/<position>` the line names in the round
+records on file: the `[V]` is **unblocked** where every one of them is a `[C]` whose last state is
+*answered by the customer* naming a `[CD#n]` that `decisions.md` holds, no torn write
+(`decision-register-format.md` §8), reading `decided` — the customer's answer, frozen. Print each
+unblocked `[V]` now, its address with each `[C]` it waited on and that `[CD#n]`'s `chosen`, and hold
+the set: *Put each `[V]` to the operator* puts each with that customer answer as its
+recommendation. A deferred `[V]` that is not unblocked — some `[C]` it names still held, or
+answered by no `[CD#n]` the register holds `decided` — is put again as any deferred question is,
+its prompt naming each `[C]` it still waits on. Nothing here is written: the question stays
+*deferred* until it is answered.
 
 ---
 
@@ -1746,9 +1768,10 @@ the layout *Write the register and the round record* writes a round record in �
 whether this run opened, resumed or re-opened it, its `generated against:` line where this run
 generated it, the scope, and every question with its position, tag, text, rows, findings,
 `- **Re-puts:**` line and state — followed by every other item Phases 2
-to 5 hold for that phase or for the final report: a `--round N` re-open and its cause, each question
+to 5 hold for that phase, for *Put each `[V]` to the operator* or for the final report: a `--round N` re-open and its cause, each question
 and defect line the round-1 test and *One question per row* added, the causes the requirement-defect
-account line will name, each `[G]` answer, each split and re-tag with its cause. It is written once,
+account line will name, each `[G]` answer, each split and re-tag with its cause, and each deferred
+`[V]` *Resolve the round* found unblocked, with the `[CD#n]`s that unblock it. It is written once,
 before the registry is made, so a resumed run that finds it builds the registry's questions from
 the same round (*Resolve the round*, *A resumed run's round*).
 
@@ -1932,22 +1955,34 @@ disposed is in that set and not in the queue**: the standing re-decision *A late
 generated from what changed* records carries its terminal disposition from generation, or, in a
 round this run resumes, from the resume, and a question that already has one is never asked —
 **nor is one the question registry records closed** (*Tag every question*, *The question
-registry*): merged, dropped or applied before the first question, or applied from an answer given
-in this phase.
+registry*): merged, dropped or applied before the first question, applied at a sitting's plan or
+confirmed in its table (below), or applied from an answer given in this phase.
 
 **The queue is walked in the registry's order** (`workflows-core:question-budget` §8: the next
-question shown is never one an answer has already closed). Where the registry holds a question, the
+question shown is never one an answer has already closed), **at most the budget in force a
+sitting** (Phase 0 step 2; §3). Where the registry holds a question, the
 next question put is the first qid `next --limit <the number of questions it holds>` prints that is
 a `[V]` of the round this run works and is not in the skip set; `next` prints open questions alone,
-and a registry holding none has no question to put. An open `[V]` of another round stays in the
+in the order the sitting's plan ranked them (below), and a registry holding none has no question to put. An open `[V]` of another round stays in the
 registry for answers to be applied to, and is put by a run that works its round. Where the registry
-was lost (its exit 2), nothing more is put, and no end-of-sitting list is shown. **A sitting** (§1) is one
+was lost (its exit 2), nothing more is put, and no plan, table, end-of-sitting list or at-budget
+question is shown. **A sitting** (§1) is one
 pass of this queue: the first opens when this phase does, whether or not it puts a question; it
 ends when `next` prints no
-`[V]` of the round this run works outside the skip set; and where its end-of-sitting list reopens a
-question, the next sitting opens. Its number is fact `p6-sitting`, `1` where unset — set to the
+`[V]` of the round this run works outside the skip set, or once it has spent its budget while
+`next` still prints one (*At the budget*, below); and where its end-of-sitting list reopens a
+question, or the operator goes on at its budget, the next sitting opens. Its number is fact `p6-sitting`, `1` where unset — set to the
 next number as each new sitting opens; where the run folder is unavailable, the run holds it — and
-every event this phase records in the registry carries `--sitting <it>`.
+every event this phase records in the registry carries `--sitting <it>`. A resumed run opens the
+sitting that fact names, and never puts an earlier sitting's table or at-budget question.
+
+**What a sitting has spent** is fact `p6-spent-<sitting>`, `0` where unset, set one higher after
+each prompt that counts — each `[V]` picker put, and the sitting's table. No other prompt of this
+phase counts (§1): not a prompt that follows an answer, a tie picker, a re-disposition put, the
+end-of-sitting list or the at-budget question. Each prompt that counts is numbered against the
+budget, `Q<n>/<budget>`, `<n>` one more than the sitting has spent, on a line of its own printed
+before the prompt and kept out of its shown text (§3). A reused answer was counted by the session that put its prompt; where
+the run folder is unavailable, the run holds the count.
 
 **First, tie each resumed `[V]` that carries no `- **Re-puts:**` line to the record it puts again,
 or to none — by asking, never by reading its prose.** Every write of this version that records a
@@ -1998,18 +2033,130 @@ answer. **This picker asks which record, never the question itself**, and the
 queue below is unchanged by it. Where the run folder is open, each tie picker is a recorded
 question, gate `p6-tie-<round>-<position>` (*Recorded questions*, below).
 
-Present each question **exactly one at a time, never batched**, via `AskUserQuestion`, quoting the
-question — its text as the registry holds it, which an earlier answer may have narrowed (*Then the
-answer is applied forward*, below), the prompt then naming that answer's `[VD#n]` and saying what
-it settled, and with every row and finding of each question merged into it
-(`workflows-core:question-budget` §5), whose answer this one's is — the findings that bear on it
-with their verdicts, verifier outcomes and horizons, and —
-when it got here by a re-tag — the finding that caused the re-tag, `NOT-PROVABLE` or carrying the
-`unprovable` outcome, so the operator can see that the repository was consulted first and came
-back empty.
+**Each sitting opens with its plan** (`workflows-core:question-budget` §6, §9), where `next`
+prints a `[V]` of the round this run works outside the skip set — and with none where it prints
+none. Write the planner's input as indented JSON,
+`{"mode": "plan", "budget": <the budget in force>, "questions": [every question as the registry file holds it, in the file's order], "decisions": [...], "findings": [...]}`:
+`decisions`, as the applier's input lists them (*Then the answer is applied forward*, below), less
+each `[VD#n]` of this run whose position may yet be held, which that paragraph names — nothing is
+applied from one; and `findings`, built as *Tag every question*'s merge input builds them. Write
+it with `put <folder> 'scratch/p6/plan-<sitting>.json' --from -` — a resumed run that finds the
+file reads it and builds none — or, where the run folder is unavailable, into a file
+`command mktemp` creates. Then dispatch `workflows-core:question-planner` as *Tag every question*'s
+*Then merge* does, through `run-dispatch` where the run folder is open, with id
+`p6-plan-<sitting>` and `--attach scratch/p6/plan-<sitting>.json`, all else as there. It replies
+`RESULT <result_path> mode=plan …` and writes one JSON object there: read that file. A `REFUSED`
+reply, or a file missing or not that object, is the dispatch failing: it is made once more, and
+where that fails too, the sitting goes on unplanned — nothing applied or tabled at its opening, its
+questions put in the order `next` already prints, up to the budget, which loses no question — and
+the final report names the failure, with the planner's last reply line or why its file could not
+be read, as a defect of the run. A result read is recorded `done <folder> p6-plan-<sitting>`. Then,
+in order:
+
+- **each `applied` entry** — recorded as *Then merge* records one, with `--sitting <the sitting>`
+  in place of `--sitting 1`, so that this sitting's end-of-sitting list shows it; none naming a
+  question that puts a record again, or a `[V]` whose `[V]` tag is on file with no
+  `- **Re-puts:**` line and no tie picker's answer, is recorded (*Then merge*), and one naming a
+  question the registry already records closed is skipped;
+- **the ranks** — `rank`, its stdin the result's `ranks` less every qid no longer open, so that
+  `next` prints the questions left in the plan's order;
+- **the table's rows** — the result's `plan.table` rows that *The tail table*'s test (below)
+  keeps, in their order, each with its question's text as the registry now holds it, written with
+  `put <folder> 'scratch/p6/table-<sitting>.json' --from -`, or held by the run where the run
+  folder is unavailable.
+
+Then set fact `p6-plan-done-<sitting>` to `done`. **A resumed run that finds it set records no
+applied entry and no rank** — both were recorded, and a question open now that the plan closed was
+reopened since, at an end-of-sitting list, which must stand — and reads the table's rows from
+`scratch/p6/table-<sitting>.json`.
+
+**The tail table** (`workflows-core:question-budget` §9) — once a sitting, where its plan kept a
+row, before its first question put singly; gate `p6-table-<sitting>`; it counts one. **Rows are
+kept only where, once the plan's `applied` entries are recorded, more `[V]`s of the round this run
+works are open outside the skip set than the budget in force** — the planner counts the open `[V]`s
+of every round, and this phase puts its own round's alone — **and a row only for a question that
+is a `[V]` of the round this run works, open in the registry and
+outside the skip set**, and never for one that puts a record again — its `- **Re-puts:**` line, or
+the tie picker's answer, naming one: such a question is put to the person who answers it and closed
+no other way (*Tag every question*, *The question registry*) — nor for one *Resolve the round*
+found unblocked, which is put singly with the customer's answer as its recommendation (*A deferred
+`[V]` whose wait is over*). A row the planner wrote for any other question is left out, and that
+question is put singly in its turn. Show the rows kept, in the plan's order, each as its
+question's address, its text as the rows file holds it, the answer the row puts forward and that
+answer's reason:
+
+```text
+These go beyond this sitting's budget, and I am confident of each recommendation. Each is recorded as a decision, as recommended, unless you name it as an exception, which is then asked on its own.
+- <round>/<position> — <its text> → <the row's answer> — <the row's reason>
+choices: ["Accept all as recommended (Recommended)", "Let me name the exceptions (you'll be prompted)"]
+```
+
+**Each option carries this description**, word for word:
+- *Accept all as recommended* — "Records each row as a delivery-team decision confirmed in a table, its reason the row's."
+- *Let me name the exceptions* — "Asks which rows, by address; each one named is asked on its own in its turn, and every other is recorded as on Accept all."
+
+The shown text is built from `scratch/p6/table-<sitting>.json` alone, whatever the registry now
+says of each row's question, so a resumed run reuses the answer.
+**Once every event below is recorded, set fact `p6-table-done-<sitting>` to `done`; a resumed run
+that finds it set shows no table**, its answer acted on already — a row open now was named as an
+exception, or reopened since at an end-of-sitting list, which must stand — and one that finds it
+unset acts on the reused answer for each row still open.
+- ***Accept all as recommended*** — each row still open is recorded, in the rows' order:
+  `record --sitting <the sitting>`, its event
+  `{"qid": …, "event": "table", "decision": <the next [VD#n]>, "answer": <the row's answer>, "reason": <the row's reason>}`,
+  its id taken as *Tag every question*'s *Decision ids* says. No "why" is asked of a row, whose
+  reason it carries (§4). Each is a decision whose `evidence` is the findings its question carries
+  (*Write the register and the round record*), which *Then the answer is applied forward*'s save
+  reads. Then each row so recorded is applied forward as an answer is (*Then the answer is applied
+  forward*, below), in the rows' order.
+- ***Let me name the exceptions*** — ask in plain text which rows, by address, gate
+  `p6-table-<sitting>.which`. Each row named stays open and is put singly in its turn, and every
+  other is recorded as on *Accept all as recommended*. A name matching no row is asked about once
+  more.
+- **A typed answer is read as the option it expresses** (§4): one naming rows is the second option
+  with those names given, and one accepting the rows is the first; one clarifying question, in
+  plain text, is asked only where it maps to no option, and the same dialog is never put twice.
+
+**Each question is put on its own, in `workflows-core:question-budget` §4's shape** — one `[V]` a
+prompt, one `AskUserQuestion` call each, never two `[V]`s in one call. **The tail table above and
+the end-of-sitting list below are the two sanctioned prompts that carry several questions of the
+set** (§4, *One question per prompt*): the table puts the rows a sitting's plan is confident of as
+one question, and the list shows what closed without being asked singly; no other prompt of this
+phase carries more than one. The prompt carries, in this order:
+
+1. **What is being decided** — one plain line, in the operator's terms: what the delivery team's
+   choice changes in what gets built. The `[V]` tag and the question's address, `<round>/<position>`,
+   stand beside it, never in its place.
+2. **What I saw** — the question's text as the registry holds it, which an earlier answer may have
+   narrowed (*Then the answer is applied forward*, below), the prompt then naming that answer's
+   `[VD#n]` and saying what it settled; each `[BR#n]` it and every question merged into it name
+   (§5), whose answer this one's is, with the row's text; each finding they carry, with its
+   verdict, its verifier outcome, its horizon and its source — a `[CG#n]`'s repository, a `[DG#n]`'s
+   frame set, read as *A superseded finding's successors* reads a finding's source (*Generate the
+   round's question set*), or `source not on file` where that reading decides none — since a row no
+   repository settles raises one question carrying every finding that could not settle it (*Round 1
+   is generated from the grounding*); and, when it got here by a re-tag, the finding that caused
+   the re-tag, `NOT-PROVABLE` or carrying the `unprovable` outcome, so the operator can see that the
+   repository was consulted first and came back empty. A deferred `[V]` put again names each held
+   `[C]` its `- **Blocked-on:**` line names, and, where *Resolve the round* found it unblocked, each
+   `[CD#n]` that answered them, with its `chosen`. **Every claim the prompt makes about a row, a
+   finding or the code is checked against its source before the question is written** (§4).
+3. **The options**, listed in prose above the array (below), each with what it does in one short
+   line, which is also its description in the array: an option — "Recorded as a delivery-team
+   decision, a [VD#n], with its reason as the argumentation."; *Defer this question* — "Nothing is
+   decided: the question stays open in this round with your reason, a later run puts it again, and
+   the package waits until it is answered."
+4. **The recommendation** — the option this run would take, where one is safe to take: the
+   strongest option, its marker reading `(Recommended — <why>)` (below), `<why>` one line written
+   to the sufficiency test under *Then take the argumentation*, since choosing the option records it
+   as the argumentation. A `[V]` *Resolve the round* found unblocked recommends the option the
+   customer's answer supports — weighed among its options where none states it — its `<why>`
+   naming each `[CD#n]` and what it answered. Where no option is safe to recommend, no option
+   carries the marker and the question's own text says so
+   (`workflows-core:escalation-rules`' *The `(Recommended)` marker is unconditional*).
 
 **Every prompt that follows an answer is a call of its own too, never batched with another**: the
-argumentation prompt, then the code-defect offer where it fires, then the plain-text question its
+"why" prompt, where a choice carries no reason, then the code-defect offer where it fires, then the plain-text question its
 *Yes* opens, then the next `[V]`'s picker — and each re-disposition put below — each asked alone and
 answered before the next is raised, never two of them in one `AskUserQuestion` call. The rule above
 covers the follow-ups as it covers the picker: each one turns on the answer before it — the
@@ -2021,8 +2168,14 @@ The options presented are that question's own `options_considered`
 most two of them as entries, and the defer entry:
 
 ```
-choices: ["<the strongest option considered> (you'll be prompted for why)", "<the next strongest, where a second was weighed> (you'll be prompted for why)", "Defer this question (you'll be prompted for why it is not answerable yet)"]
+choices: ["<the strongest option considered><its marker>", "<the next strongest, where a second was weighed><its marker>", "Defer this question (you'll be prompted for why it is not answerable yet)"]
 ```
+
+**`<its marker>` is resolved per showing**, as `workflows-core:escalation-rules`' *The
+`(Recommended)` marker is unconditional* allows a placeholder to be: ` (Recommended — <why>)` on the
+strongest option where it is recommended, and ` (you'll be prompted for why)` on every option that
+is not — chosen bare, such an option opens the "why" (*Then take the argumentation*), while the
+recommended one carries its reason.
 
 **The array is bounded at four and authors no escape of its own, like every other array in the plugin** (`workflows-core:escalation-rules` §0): `AskUserQuestion` renders `maxItems: 4`, so an uncapped `one entry per option considered` prompt cannot be presented at all once three options were weighed — and this phase is required to present its array verbatim. **The entries are two options at most, plus the defer entry: three, never four.** The two option slots are **one entry each**, substituted from the options weighed — not two entries per option, which is the reading that would put a four-option question past the cap on its own — and where only one was weighed the second slot is dropped, leaving two entries. **List every option considered as prose above the prompt**, in the order they were weighed and with the argumentation each carries, and let the harness's own free-text option carry the rest — §0 forbids an array from authoring that escape, and an authored `Another option from the list above` both duplicated it and spent a slot. **Where more options were weighed than the array carries, the question's own text names each one it leaves out**, after `Not shown as an option:`, so they are named in the dialog whether or not the prose was printed — the line `workflows-core:next-phase-offer`'s *overflow rule* puts there. Where one option was weighed, its entry is the only one beside defer.
 
@@ -2035,9 +2188,22 @@ dispositions rather than from an escalation array. The harness's free-text optio
 operator names; that option joins `options_considered` and may then be `chosen`, so the record still
 shows what was actually on the table.
 
-**Then take the argumentation, and refuse the record without it.** After a choice is made, prompt for
-why, and do not write a `[VD#n]` until something is supplied that is not a restatement of the
-`statement`, not "to be filled in later", and not the name of whoever decided it.
+**A typed answer is read as the option it expresses** (`workflows-core:question-budget` §4), its
+other words kept as the reason: words choosing an entry of the array, or an option the prose above
+lists, are that option; words naming an option nobody weighed are that option, which joins
+`options_considered` as above; words saying it cannot be answered yet are *Defer this question*,
+their reason the deferral's; words to stop are an abort (below). One clarifying question, in plain
+text, is asked only where the text can be read as none of these, and **the same dialog is never
+put twice**: a question whose typed answer was read is not put again.
+
+**Then take the argumentation, and refuse the record without it** (§4). It is the reason the answer
+carries: on the recommended option, its `<why>`, unless free text given with it states another,
+which overrides it; on any other option, the free text given with it. **"Why" is asked only for a
+choice that carries no reason** — an option other than the recommended one, or any option where
+none was recommended, chosen bare or typed with nothing beyond the option — as one plain-text
+question, never after a choice that carries its reason. Do not write a `[VD#n]` until the reason is something that is not a restatement of the
+`statement`, not "to be filled in later", and not the name of whoever decided it: where the reason
+a choice carries is one of those, ask why, saying what it lacks.
 `argumentation` is mandatory (`decision-register-format.md` §2), and the test for sufficiency is that
 section's: **adequate when a reader who was not in the room can say what would have to change for the
 answer to change.** A reason that survives being read back a month later names the constraint, not
@@ -2172,8 +2338,16 @@ why the question is not answerable yet, records that reason, keeps the round **o
 another tag on the way out. It does **not** move the question into a later round: the question stays
 where it was raised (the *Generate the round's question set* phase fixes that), and the resume rule
 in *Resolve the round* returns to it. A round whose remaining questions are all deferred is an open
-round with work left, and is reported as one. **This is the defer entry of the picker above, and
-only that one**: *The will-change rule* phase's *Defer it until the prerequisite ships* resolves a
+round with work left, and is reported as one. **A deferral may name the held `[C]`s it waits on**
+(`workflows-core:question-budget` §8): the same plain-text question asks, where the answer waits on
+the customer's answer to questions held for them, which ones, by round and position (`2/7`). Each
+address given is resolved against the registry's open `[C]` questions — held for the customer,
+carried or not — and one naming none of them is asked about once more; those resolved are written
+under the question's *deferred* state as `- **Blocked-on:** <round>/<position>, …` (*Write the
+register and the round record*), and once each carries the customer's answer, a later run puts the
+question with that answer as its recommendation (*Resolve the round*, *A deferred `[V]` whose wait
+is over*). A deferral naming none writes no such line. **This is the defer entry of the picker
+above, and the at-budget question's *Defer the rest* (below), and only those two**: *The will-change rule* phase's *Defer it until the prerequisite ships* resolves a
 question that was answered, records the wait on the `[VD#n]` rather than on the question, and keeps
 no round open (that phase says so). **An abort — the harness's free-text option, since the array
 lists no `Cancel` — stops the run** naming how many `[V]` questions remain, **and writes nothing
@@ -2200,17 +2374,22 @@ put, so a resumed run never builds it again. Each is recorded under gate
 `p6-v-<round>-<position>.q`, the address in lower case (`p6-v-2-7b.q`), its shown text the prompt
 as put — the prose above it and the array — with `--keep-shown`; and each prompt that follows its
 answer under the same address with `--keep-shown` too, as the second question of a two-part answer
-(*An answer in two parts*): `.why`, the argumentation; `.cdf`, the code-defect offer; `.cdf-entry`,
-the plain-text question its *Yes* opens; `.defer`, the reason a deferral asks for. Before it puts a
+(*An answer in two parts*): `.why`, the "why", where it is asked; `.cdf`, the code-defect offer; `.cdf-entry`,
+the plain-text question its *Yes* opens; `.defer`, the reason a deferral asks for, with the held
+`[C]`s it names. Before it puts a
 question, the run reads `answers <folder> --match 'p6-v-<round>-<position>.'`: each prompt listed
 was answered by an earlier session of this run, so it is not put again, and its recorded answer is
 acted on as though just given. Each tie picker is recorded under gate
 `p6-tie-<round>-<position>`, each re-disposition put under gate `p6-cdf-<n>` (`<n>` the `[CDF#n]`'s
-number), and the end-of-sitting list's question under gate `p6-end-<sitting>`, with the plain-text
-question its second option opens under `p6-end-<sitting>.which` — each shown text built from the
-files, the registry and `sitting-list`'s output in the order this phase fixes, so a resumed run
+number), the end-of-sitting list's question under gate `p6-end-<sitting>`, with the plain-text
+question its second option opens under `p6-end-<sitting>.which`, the tail table's question under
+gate `p6-table-<sitting>`, with the plain-text question its second option opens under
+`p6-table-<sitting>.which`, and the at-budget question under gate `p6-budget-<sitting>`, with the
+reason its third option asks for under `p6-budget-<sitting>.why` — each shown text built from the
+files, the registry, `sitting-list`'s output and the table's rows file in the order this phase fixes, so a resumed run
 builds the same bytes and reuses the answer. **An abort is never recorded**, so a resumed run puts
-that question again rather than stopping. *The will-change rule*'s picker is not recorded: a
+that question again rather than stopping; nor is *Stop here and continue later*, which moves the
+run to the next sitting before it stops (*At the budget*). *The will-change rule*'s picker is not recorded: a
 resumed run asks it again. Where the run folder is unavailable, each is asked as before.
 
 **Each answer is recorded as it is given** (`workflows-core:question-budget` §12, *Answers are
@@ -2226,13 +2405,18 @@ written as they are given*), before the next prompt is shown:
   `{"qid": …, "event": "answered", "decision": <its [VD#n]>, "answer": <its chosen>, "reason": <its argumentation>}`.
   A question whose file stands and that the registry still records open was decided by a session
   that stopped before this call: it is recorded from the file, and nothing is put.
-- **A deferral**: `record --sitting <the sitting>`, its event
+- **A deferral**: where it names held `[C]`s, their addresses first, one a line, with
+  `put <folder> 'scratch/p6/blocked-on/<round>-<position>.txt' --from -`, the address in lower
+  case — a resumed run reads them from there — or held by the run where the run folder is
+  unavailable; then `record --sitting <the sitting>`, its event
   `{"qid": …, "event": "deferred", "reason": <the reason given>}`.
+- **The rows the table confirms**: as *The tail table* says, above.
 - **A re-disposition and a tie picker's answer** are held for the register phase, as above; the
   registry holds no `[CDF#n]` and no tie.
 
-**Then the answer is applied forward** (`workflows-core:question-budget` §8) — a decision's, never a
-deferral's — before the next question is put. **Save a decision whose position may yet be held**:
+**Then the answer is applied forward** (`workflows-core:question-budget` §8) — a decision's, asked
+or confirmed as a row of the table, never a deferral's — before the next question is put. **Save a
+decision whose position may yet be held**:
 one every finding of whose `evidence` carries `horizon: will-change`, which *The will-change rule*
 holds `open` or `conditional_on` its prerequisite unless re-based, and one written `conditional_on`
 a prerequisite's decision. Nothing is applied from either, by its coverage or by the applier: an
@@ -2253,8 +2437,10 @@ questions it might have closed stay open, to be asked.
    `{"answer": {"qid": <the answered question's>, "decision": <its [VD#n]>, "statement": …, "chosen": …, "argumentation": …}, "candidates": [each such [V], as the registry file holds it, in the file's order], "decisions": [...]}`,
    `decisions` being the planner's (*Tag every question*, *Then merge*) followed by each `[VD#n]`
    this run has taken so far, as `{"id", "statement", "chosen", "argumentation"}` — an asked one
-   from its file above, an applied one from the registry, its `answer` standing as both `statement`
-   and `chosen` and its `reason` as `argumentation`. Write it with
+   from its file above, an applied one or one confirmed in a table from the registry, its `answer` standing as both `statement`
+   and `chosen` and its `reason` as `argumentation`. Where the answer applied is a row confirmed in
+   a table, the input's `answer` object takes its `[VD#n]` as `decision`, the row's answer as
+   `statement` and `chosen`, and the row's reason as `argumentation`. Write it with
    `put <folder> 'scratch/p6/applier/<round>-<position>.json' --from -` — a resumed run that finds
    the file reads it and builds none — or, where the run folder is unavailable, into a file
    `command mktemp` creates. Then dispatch:
@@ -2284,35 +2470,80 @@ questions it might have closed stay open, to be asked.
    no further than its coverage, the dispatch having failed twice — set fact
    `p6-applied-<round>-<position>` to `done`. **A resumed run first finishes every answer an earlier
    session recorded and left unapplied**: before it puts a question, each question the registry
-   records `answered` in a sitting of this run (its `sitting` 1 or more) whose fact is unset is
+   records `answered` or `table` in a sitting of this run (its `sitting` 1 or more) whose fact is unset is
    applied as above, its input file read and its dispatch reused where its fingerprint still
    matches.
+
+**At the budget** (`workflows-core:question-budget` §3). Once the sitting has spent its budget and
+`next` still prints a `[V]` of the round this run works outside the skip set, the sitting ends:
+its end-of-sitting list comes first (below), and then, where such a `[V]` still remains, this
+question, gate `p6-budget-<sitting>`, `<sitting>` the sitting that ended. Print before it, on a
+line of its own kept out of its shown text, how many such `[V]`s remain, `<k>`; its shown text is
+the question and the array, each option with its description below:
+
+```
+Sitting <sitting> has reached its budget of <budget> questions, and every answer given so far is kept. How do you want to go on?
+choices: ["Continue with the next sitting now (Recommended)", "Stop here and continue later", "Defer the rest, with one reason (you'll be prompted)"]
+```
+
+**Each option carries this description**, `<budget>` the budget in force:
+- *Continue with the next sitting now* — "Asks up to <budget> more, in the order the rest are ranked. Every answer so far is kept, and the register is written once the walk ends."
+- *Stop here and continue later* — "Ends this run; nothing it decided is written to the BRD folder yet. Running the command again resumes at the next question, every answer so far kept." — and, where the run folder is unavailable, "Ends this run; nothing it decided is written. This run keeps no run folder, so the next run puts again every question this run answered." in its place.
+- *Defer the rest, with one reason* — "Records every question still to ask in this round as deferred, with the one reason you give: the round stays open, a later run puts each again, and the package waits until they are answered."
+
+- ***Continue with the next sitting now*** — set fact `p6-sitting` to `<sitting>` + 1, where an
+  end-of-sitting reopen has not already set it so, and the next sitting opens, with its own plan.
+- ***Stop here and continue later*** — never recorded, as an abort is not: set `p6-sitting` to
+  `<sitting>` + 1 first, where it does not read that already, so that a resumed run opens the next
+  sitting with its budget whole, then stop:
+  `BRD_INTERVIEW_SITTING_STOPPED: the interview stopped after sitting <sitting> of round <N>, with <k> [V] question(s) still open; every answer given is kept, and nothing this run decided is written to the BRD folder yet. Run '/product-workflows:brd-interview <BRD-KEY>' again and resume the run to go on with the next sitting.`
+  `<k>` is the count printed above the question. The stop takes the refusal tail and
+  `run-stop-line` (*Ending early*), which keeps the folder. Where the run folder is unavailable,
+  say beside the array that stopping loses this run's answers, as an abort does (above), and end
+  the stop with `This run kept no run folder, so the next run puts again every question this run answered.`
+  in place of its last sentence.
+- ***Defer the rest, with one reason*** — ask in plain text for the reason, gate
+  `p6-budget-<sitting>.why`; then record each `[V]` of the round this run works that is still open
+  and outside the skip set, in `next`'s order, as event `deferred` with that reason,
+  `--sitting <the sitting>`, a question the registry already records closed being skipped — a resumed
+  run's; and the walk ends, the run going on to *Hold every `[C]`*. It is never recommended and
+  never taken by default (§3): nothing over the budget is deferred but by this choice.
+- **A typed answer is read as the option it expresses** (§4), its other words kept: a reason
+  typed with words to defer the rest is that option's reason, and no reason is asked after it; one
+  clarifying question, in plain text, is asked only where it maps to no option, and the same
+  dialog is never put twice.
 
 **The end-of-sitting list** (`workflows-core:question-budget` §10), at the end of every sitting
 and before *Write the register and the round record*: `sitting-list --sitting <the sitting>`. Where
 it prints nothing, nothing is shown. Otherwise show it — each qid written as its address and the
 first line of its question's text — and ask once, gate `p6-end-<sitting>`, saying that every
-answer it lists was recorded without being asked, each grouped under the decision it follows:
+answer it lists was recorded without being asked singly, each applied one grouped under the
+decision it follows:
 
 ```
 choices: ["All correct (Recommended)", "Let me name the ones to reopen (you'll be prompted)"]
 ```
 
-- ***All correct*** — nothing changes, and the run goes on to *Hold every `[C]`*.
+- ***All correct*** — nothing changes, and the run goes on: to the at-budget question where the
+  sitting ended at its budget and a `[V]` of the round this run works still remains (*At the
+  budget*, above), and otherwise to *Hold every `[C]`*.
 - ***Let me name the ones to reopen*** — ask in plain text which, by address, or a whole group by
   the decision it follows. **First fix what the answer reopens**: each named question — every one of
-  a named group, and the question of each named merge or drop — with, for an applied one, its
+  a named group, and the question of each named merge or drop — with, for an applied one or a row
+  confirmed in a table, its
   `decision` read off the registry file, written as one JSON list of `{"qid", "decision"}` objects
   (`decision` `null` for a merge or drop) with
   `put <folder> 'scratch/p6/reopen-<sitting>.json' --from -` — a resumed run that finds the file
   reads it and builds none — then fact `p6-sitting` set to the next number. **Then reopen**, for
   each entry in order: `reopen --qid <its qid>`, skipped where the registry already records it
-  open; and, for an applied one, every question applied from its decision in turn,
+  open; and, for an applied one or a row confirmed in a table, every question applied from its decision in turn,
   `reopen --follows '<its decision>'`, the id between single quotes, since its brackets and `#`
   are no shell's to read — a call that reopens nothing where those are open already. Then set
   fact `p6-reopen-<sitting>` to `done`. Each is open in the registry again, and a reopened
   question's answer was never recorded as decided, since the list comes before the write. Then the
-  next sitting opens over what is open, and the queue is walked again. **A resumed run first
+  next sitting opens over what is open, and the queue is walked again — save where the sitting
+  ended at its budget, where the at-budget question comes first and its answer decides (*At the
+  budget*, above). **A resumed run first
   completes an interrupted reopen**: before it puts a question, for each sitting below the current
   one whose `scratch/p6/reopen-<sitting>.json` stands and whose fact `p6-reopen-<sitting>` is unset,
   it makes that file's reopens as above, then sets the fact. Where the run folder is unavailable,
@@ -2425,7 +2656,9 @@ finding.** The test fires when *every* finding in the list carries `horizon: wil
 two `will-change` ones — the `current` finding is ground that holds — nor on `evidence: []`, which
 rests on no `will-change` finding either (§6). A `[VD#n]` taken `applied` carries `evidence: []`
 (*Write the register and the round record*): it rests on the decision its `applied_from` names and
-nothing else, so the test never fires on it, and that decision moving reopens it (§4). Nor does a
+nothing else, so the test never fires on it, and that decision moving reopens it (§4). One
+confirmed in a table carries its question's findings as its `evidence` (*Write the register and the
+round record*), and is tested like one asked. Nor does a
 resolution here leave one standing on a held position: *Put each `[V]` to the operator* applies
 nothing from a decision this test fires on, nor from one written `conditional_on`, so no answer of
 this run follows a `[VD#n]` this phase holds `open` or makes conditional.
@@ -2617,7 +2850,8 @@ cascade reopens, in turn — is reopened in the same write, `status: reopened` a
 decision reopened elsewhere* in the next round opened, and the final report names each.
 
 **A decision taken `applied`** — closed by the registry as applied, from an answer of this run
-(*Put each `[V]` to the operator*) or from a decision on file (*Tag every question*) — is a
+(*Put each `[V]` to the operator*) or from a decision on file (*Tag every question*, or a sitting's
+plan in *Put each `[V]` to the operator*) — is a
 `[VD#n]` block written from the registry's record of it: `id`, its `decision`; `statement`, its
 `answer`; `options_considered`, that answer alone, and `chosen`, the same, since nothing else was
 put; `argumentation`, its `reason`, after `Applied from <the decision>: ` — its bare id, or, for
@@ -2629,7 +2863,20 @@ decision it follows as the registry records it — a bare id for this register's
 `<BRD-KEY>/[VD#n]` or `<BRD-KEY>/[CD#n]` for a sibling slice's or a `depends-on:` BRD's (§1). It
 takes no `defects`, `settles` or `conditional_on`.
 
-**Ids this run took and freed.** Where an end-of-sitting list reopened a question applied in this
+**A decision confirmed in a table** — closed by the registry as `table`, a row of a sitting's tail
+table the operator accepted (*Put each `[V]` to the operator*, *The tail table*) — is a `[VD#n]`
+block written from the registry's record of it too: `id`, its `decision`; `statement`, its
+`answer`; `options_considered`, that answer alone, and `chosen`, the same, since the row put nothing
+else; `argumentation`, its `reason`, after `Confirmed in a table, as recommended: `; `evidence`, the
+findings its question carries in the registry, written `evidence: []` where it carries none (§1);
+`altitude`, by §1's test from its question; `status: decided`; `consumed_by: none`; `round`, its
+question's; and `taken: table`. It takes no `defects`, `settles` or `applied_from`, and
+`conditional_on` only where *The will-change rule* writes it, which tests this record as it tests
+one asked, and whose resolution, where its test fires, changes `evidence` or `status` as that phase
+says.
+
+**Ids this run took and freed.** Where an end-of-sitting list reopened a question applied or
+confirmed in a table in this
 run (*Put each `[V]` to the operator*), the `[VD#n]` it had names no block this write makes — an
 answer it takes later takes the next id (*Tag every question*, *Decision ids*): before the write, every `[VD#n]` this run took above it moves down to
 close the gap, in the order they were taken, and every `applied_from`, every state line this
@@ -2707,9 +2954,11 @@ record, whichever round that is:
 - dropped — `- **State:** dropped — <reason>`, the reason recorded with it;
 - confirmed in a table — `- **State:** confirmed in a table — [VD#n]`;
 - answered — `- **State:** decided — [VD#n]`, and deferred — `- **State:** deferred — <reason>`, as
-  ever.
+  ever; and under a deferral that named the held `[C]`s it waits on, on the next line, those `[C]`s
+  as *Put each `[V]` to the operator* resolved them, `- **Blocked-on:** <round>/<position>, …`,
+  which *Resolve the round* reads (*A deferred `[V]` whose wait is over*).
 
-**A question of another round** — one an answer of this run applied, or a merge or a drop named —
+**A question of another round** — one this run applied, or a merge or a drop named —
 is closed in that round's record, appended after the worked round's record is written — after any
 baseline line that record lacks (above): its state line at its address, then that record's
 `code defects: none` line and a `Status:` line, each as below, and no account line or
@@ -3488,8 +3737,13 @@ and every defect withheld, with its cause — one that belongs to a closed round
 and one waiting on an open round with the round it will be asked in; every defect asked by a line
 appended to its rejected row's held question, naming that question, and every one raised as a
 question of its own because the held entry could not be chosen, naming the candidates;
-the `[VD#n]` decided this run and any deferred; **the question registry** (*Tag every question*,
-*The question registry*; *Put each `[V]` to the operator*) — the budget in force; each question
+the `[VD#n]` decided this run and any question deferred, each with its reason and the held `[C]`s
+its `- **Blocked-on:**` line names; each deferred `[V]` *Resolve the round* found unblocked, with
+the `[CD#n]`s that unblocked it; **the question registry** (*Tag every question*,
+*The question registry*; *Put each `[V]` to the operator*) — the budget in force; each sitting,
+what it spent and how it ended — its queue empty, or at its budget with the operator going on or
+deferring the rest, those deferred together named with their one reason; each table, with each
+row confirmed and its `[VD#n]`, and each named as an exception; each question
 merged, with what it was merged into and why; each dropped, with its reason; each applied, with its
 `[VD#n]` and the decision it follows, grouped as its end-of-sitting list grouped it; each reopened at
 an end-of-sitting list; each merge, drop or applied entry not recorded, with why; each held `[C]`

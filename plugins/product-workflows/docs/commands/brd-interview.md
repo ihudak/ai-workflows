@@ -3,9 +3,11 @@
 Turns a grounded, fully-allocated BRD into a **decided** one. It generates a round of open questions,
 tags every one of them `[G]`, `[V]` or `[C]` **before a single one is asked**, answers every `[G]`
 from the grounding findings without asking anybody, merges questions that ask the same thing, puts
-each `[V]` nothing has settled to the operator one at a time with mandatory argumentation —
-applying every answer to the questions still open, so that one an answer settles is recorded
-without being asked — and holds every `[C]` for the customer. It writes `decisions.md`, the
+each `[V]` nothing has settled to the operator one at a time with mandatory argumentation — at
+most a budget of questions a sitting, the ones beyond it whose answer it is confident of put
+together as one table to accept or name exceptions in, and every answer applied to the questions
+still open, so that one an answer settles is recorded without being asked — and holds every `[C]`
+for the customer. It writes `decisions.md`, the
 round's own record, the `[C]` question set, and — where a decision raises a defect in the code or
 re-dispositions one already on file — the code-defect log; and, on the operator's confirmation, it
 writes a resolution into the parent BRD's requirement-defect log for an `unsourced` defect a
@@ -115,7 +117,8 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
   already asked, where any slice — this one included — owns that defect through a live row, whose
   question names this row as context, or where another slice carries it. A deferred row raises a
   question only where no rationale for the deferral was ever recorded.
-- **`--budget <N>`** (optional) — the run's question budget, a whole number from 5 to 50; anything
+- **`--budget <N>`** (optional) — the run's question budget, the most questions one sitting puts
+  to you (a table counts as one), a whole number from 5 to 50; anything
   else stops the run with `BRD_INTERVIEW_BAD_BUDGET` before anything is written. Without it, a run
   that resumes takes the budget its question registry recorded, and any other run takes 25. The
   run's question registry records the budget when it is made.
@@ -220,12 +223,14 @@ was closed; otherwise it hands off what it wrote — `decisions.md`
 as its header line alone where none was on file, any file a torn-write removal or a completed
 re-disposition changed, a code-defect log an earlier run left changed and uncommitted, and the
 parent's defect log where Phase 10 wrote a resolution into it.
-`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. Beside it the run dispatches two agents that read no code, each on the Opus tier: `workflows-core:question-planner` once tagging is done, to find the questions that ask the same thing, those no answer would change and those a decision on file already settles, and `workflows-core:answer-applier` after each answer, to find the open questions that answer settles or narrows. No grounding or review agent is dispatched — every finding this command reads was already independently re-derived by
+`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. Beside it the run dispatches two agents that read no code, each on the Opus tier: `workflows-core:question-planner` once tagging is done, to find the questions that ask the same thing, those no answer would change and those a decision on file already settles, and again at the opening of each sitting, to rank the questions left and pick those whose answer it is confident of for the sitting's table; and `workflows-core:answer-applier` after each answer, to find the open questions that answer settles or narrows. No grounding or review agent is dispatched — every finding this command reads was already independently re-derived by
 `/prd-ground`'s own verifier pass.
 
-**Questions are kept in a registry, and every answer is applied to it.** Once every question of the round is tagged, the run builds one registry of every `[V]` and `[C]` question on file in the slice — every round's, rounds written before this release included, with the state each record last gives it. A held `[C]` that a review package has already carried to the customer — its round and position found in one of the slice's `bundle-*/` directories, or any such directory unreadable — is marked carried and left exactly as the customer holds it. Before the first question, `question-planner` proposes merges of questions asking the same substance (never across tags, never a carried question), drops of questions whose answer would change nothing, and answers a decision on file already determines — a decision of this slice's register, of a sibling slice's under the same parent, or of a BRD this slice's `depends-on:` names, the last two cited with their BRD's key — and the run records them. A question that puts a decision on file again is never merged, dropped or applied: it is always asked. Then each `[V]` of the round is put in the registry's order, never one already closed, and after each answer `answer-applier` reads the other open `[V]` questions against it — every one save a question that puts a decision on file again, one an earlier release's record leaves untied to any decision it may put again, and one the run set aside after the registry refused it twice: a question the answer settles in one line is recorded as an applied `[VD#n]` naming the decision it follows, and one it settles in part is narrowed to what is still open. An answer whose position may yet be held — resting only on findings about to change, or written conditional on a prerequisite's decision — is applied to nothing, and the questions it might have closed are asked. At the end of each pass the run lists everything it closed without asking — each applied answer grouped by the decision it follows, each merge and each drop with its reason — and asks once whether all of it stands, or which to reopen; a reopened question returns to the queue, with every answer applied from it.
+**Questions are kept in a registry, and every answer is applied to it.** Once every question of the round is tagged, the run builds one registry of every `[V]` and `[C]` question on file in the slice — every round's, rounds written before this release included, with the state each record last gives it. A held `[C]` that a review package has already carried to the customer — its round and position found in one of the slice's `bundle-*/` directories, or any such directory unreadable — is marked carried and left exactly as the customer holds it. Before the first question, `question-planner` proposes merges of questions asking the same substance (never across tags, never a carried question), drops of questions whose answer would change nothing, and answers a decision on file already determines — a decision of this slice's register, of a sibling slice's under the same parent, or of a BRD this slice's `depends-on:` names, the last two cited with their BRD's key — and the run records them. A question that puts a decision on file again is never merged, dropped, applied or put in a table: it is always asked on its own.
 
-**A stopped run resumes with its answers kept.** The run keeps a run folder outside every repository: the round as it was generated, the registry and every answer recorded in it, and the two agents' results. A run stopped mid-way — by an abort, at a compaction or a restart — offers on its next start to resume, and the resumed run puts no answered question again and goes on at the next unanswered one. Choosing *Start over*, or running without a run folder, works from the round records alone, as before.
+**The `[V]`s are put in sittings, at most a budget of questions each** — 25 unless `--budget` says otherwise, numbered `Q1/25`, `Q2/25` and on. Each sitting opens with `question-planner`'s plan: it records any question a decision on file now settles, ranks the rest, and, where more of the round's `[V]`s are open than the budget, picks those whose answer it is confident of. Those are put first, as one table — each row the question, the answer it recommends and why — which counts as one question: accept them all, or name the exceptions, each then asked on its own; each row accepted is recorded as a decision confirmed in a table. A question that puts a decision on file again, or a deferred one the customer's answers have now unblocked, is never a row. Then each `[V]` of the round is put on its own, in the plan's order, never one already closed, in plain words: what is being decided; what the run saw — the rows, each finding with its verdict and outcome and the repository or frame set it came from; the options, each with what it does; and the option it recommends, with why. Choosing the recommended option records that reason as the decision's argumentation; any other option asks why, unless your answer already says. A typed answer is read as the option it expresses, and nothing is asked twice. Deferring a question asks why it cannot be answered yet and, where it waits on questions held for the customer, which; once the customer's answers to all of those are recorded, the next run says so and puts the question again with that answer as its recommendation — until it is answered, a deferred question keeps the package from being built, as any deferred question does. After each answer `answer-applier` reads the other open `[V]` questions against it — every one save a question that puts a decision on file again, one an earlier release's record leaves untied to any decision it may put again, and one the run set aside after the registry refused it twice: a question the answer settles in one line is recorded as an applied `[VD#n]` naming the decision it follows, and one it settles in part is narrowed to what is still open. An answer whose position may yet be held — resting only on findings about to change, or written conditional on a prerequisite's decision — is applied to nothing, and the questions it might have closed are asked. At the end of each sitting the run lists everything it closed without asking singly — each applied answer grouped by the decision it follows, each merge and each drop with its reason, each row confirmed in a table — and asks once whether all of it stands, or which to reopen; a reopened question returns to the queue, with every answer applied from it. The table and this list are the only prompts that carry more than one question. Where a sitting reaches its budget with questions left, the run then asks whether to continue with the next sitting now (recommended), stop here and continue later — the run stops with every answer kept, `BRD_INTERVIEW_SITTING_STOPPED`, and running it again resumes at the next question — or defer every question left with one reason you give, which leaves the round open. Nothing is deferred unless you choose it.
+
+**A stopped run resumes with its answers kept.** The run keeps a run folder outside every repository: the round as it was generated, the registry and every answer recorded in it, and the two agents' results. A run stopped mid-way — by an abort, by stopping at a sitting's budget, at a compaction or a restart — offers on its next start to resume, and the resumed run puts no answered question again and goes on at the next unanswered one. Choosing *Start over*, or running without a run folder, works from the round records alone, as before.
 
 **The register records its lineage**: the exact version (git blob id) of the slice's two grounding files and its `brd/brd-inventory.md` the run read, never another BRD's files or this run's own interview records. Before anything is decided, the run checks the grounding up its chain: where a grounding file was built from an inventory that has since changed, or carries no lineage record yet, it shows what moved and asks whether to re-ground first or proceed, recording your answer in the register. **A run that finds no question still re-stamps the register** and offers the handoff where that changed it: after a `--rebaseline` whose new findings raise nothing, that is what tells every later command the register was checked against the grounding as it now stands. A run that only resumes an open round keeps the register's record as it stands, since an earlier run generated that round's questions.
 
@@ -345,7 +350,8 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   slice's or a `depends-on:` BRD's as `<BRD-KEY>/[VD#n]`, which the package's citation check reads
   as a reference to another BRD — and that decision being reopened, superseded or withdrawn reopens
   it. An applied decision rests on that decision alone, so it
-  carries no findings. An assumption carries every one that applies to it
+  carries no findings; a decision confirmed in a table carries its question's findings, and the
+  reason the table gave for its answer as its argumentation. An assumption carries every one that applies to it
   and omits the five that do not — `options_considered`, `chosen`, `settles`, `taken` and `applied_from` — rather than writing them empty, and its
   `argumentation` and `evidence` mean something different there: why the package proceeds without
   establishing the assumption, and why no evidence exists. Ids are contiguous within their
@@ -374,7 +380,9 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   *decided*, *answered by the customer*, *re-tagged*, *split*, *applied* naming the decision it
   follows, *merged* naming the question it was merged into, *dropped* with its reason, *confirmed in
   a table*) or a **holding state** (*held for the
-  customer*, *deferred*, *needs grounding*, *untagged*). A question of another round that this run
+  customer*, *deferred*, *needs grounding*, *untagged*) — a deferred one followed, where it waits
+  on questions held for the customer, by a line labelled `- **Blocked-on:**` naming them by round
+  and position. A question of another round that this run
   closed — applied, merged or dropped — gets its state in its own round's record, appended after
   this round's. A re-tagged question keeps its number, so
   two states sit at that one address — *re-tagged*, and whatever the question reached under its new
@@ -557,16 +565,23 @@ option is picked.
 - **Phase 6 — argumentation is mandatory.** No `[VD#n]` is written without a reason that is not a
   restatement of the decision, not "to be filled in later", and not the name of whoever decided it.
   The test is whether a reader who was not in the room can say what would have to change for the
-  answer to change. Each `[V]`'s picker and each prompt that follows its answer — the
-  argumentation prompt, the code-defect offer and the question its *Yes* opens, a re-disposition —
-  is asked on its own, never batched with another into one prompt.
-- **Phase 6 — every answer is applied forward, and checked at the end of the pass.** After each
-  answer, the open `[V]` questions are read against it, and one it settles in a line is recorded as
-  an applied decision, never asked; nothing is closed on a guess. The end-of-pass list shows every
-  question closed without being asked, grouped by the decision each follows, and the operator
-  confirms it all or names what to reopen — a reopened applied answer takes every answer applied
-  from it back to the queue with it, and nothing it lists was recorded as decided before that
-  answer.
+  answer to change. The recommended option carries its reason, written to that test; any other
+  choice made with no reason is asked why. Each `[V]`'s picker and each prompt that follows its
+  answer — the "why", the code-defect offer and the question its *Yes* opens, a re-disposition —
+  is asked on its own, never batched with another into one prompt. The two prompts that carry
+  several questions are named: a sitting's table, whose rows are `[V]`s the plan is confident of,
+  and the end-of-sitting list.
+- **Phase 6 — at most a budget of questions a sitting.** A sitting puts at most the budget, the
+  table counting one; past it, the rest wait for the next sitting, now or in a later run, unless
+  you choose to defer them all with one reason. Only `[V]`s are ever put, singly or in the table,
+  and a question that puts a decision on file again is never a table row.
+- **Phase 6 — every answer is applied forward, and checked at the end of the sitting.** After each
+  answer — one asked, or a table row accepted — the open `[V]` questions are read against it, and
+  one it settles in a line is recorded as an applied decision, never asked; nothing is closed on a
+  guess. The end-of-sitting list shows every question closed without being asked singly, each
+  applied one grouped by the decision it follows, and the operator confirms it all or names what
+  to reopen — a reopened applied answer or table row takes every answer applied from it back to
+  the queue with it, and nothing it lists was recorded as decided before that answer.
 - **Phase 6 — a code defect a reconciliation flagged is put again.** A later round puts an entry of
   the code-defect log to the operator where it is still `open`, `conditional` on something the
   round has settled, or **flagged**: a [`/brd-reconcile`](brd-reconcile.md) run of any slice under
@@ -647,7 +662,7 @@ option is picked.
   `[C]` still waiting on a customer. The resume rule and the closure rule are stated in the same
   vocabulary so they cannot drift apart.
 
-A run that stops — on a refusal under *What it needs*, a gate above, or a `Cancel` or an abort that ends the run — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer, and makes no next-step offer. That commit holds only the session's own bookkeeping, so the decisions the stopped run took are not written; they stay in its run folder, which the stop keeps and names, and running the command again offers to resume with them — or, started over or without a run folder, they are lost, as above. Cancelling the handoff is not a stop: the files stay written and the run goes on to its next-step offer. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
+A run that stops — on a refusal under *What it needs*, a gate above, a `Cancel` or an abort that ends the run, or a stop at a sitting's budget — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer, and makes no next-step offer. That commit holds only the session's own bookkeeping, so the decisions the stopped run took are not written; they stay in its run folder, which the stop keeps and names, and running the command again offers to resume with them — or, started over or without a run folder, they are lost, as above. Cancelling the handoff is not a stop: the files stay written and the run goes on to its next-step offer. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
 
 ## What it does not do
 
@@ -680,7 +695,8 @@ Work the first round of a slice of a synthetic customer BRD, once the slice's ow
 The run gates on the grounding being merged and verified and the ledger being fully allocated, opens
 round 1, generates its questions, tags every one of them, answers the `[G]`s from the findings,
 merges those that ask the same thing, walks the `[V]`s nothing has settled past the operator one at
-a time, applying each answer to the rest, lists what it closed without asking for you to confirm,
+a time — at most a budget a sitting, with those beyond it that it is confident of put as one table —
+applying each answer to the rest, lists what it closed without asking singly for you to confirm,
 holds the `[C]`s, writes the register, and offers
 to branch, commit, push, and open a pull request. Its next-step offer names
 [`/brd-package`](brd-package.md) **only when both of that command's own content gates would pass** —
