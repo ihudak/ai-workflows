@@ -26,6 +26,10 @@ DOC-D-G1, sub-project 2, batch 2: the shared references register `/docs-workflow
 - **`references/followup-emission.md`** counts fourteen commands, and **`references/dependencies.md`** all nine of `docs-workflows`' commands and eight of its twelve agents reading the shared corpus; **`references/doc-structure-conventions.md`**, **`references/components.md`** (the slug→clone maps it is not among) and **`references/read-only-repos.md`** (the commands that base a branch in a docs repository), and the agents **`code-scanner`** (its §8.5 callers) and **`doc-fixer`**, name `/docs-verify` where it reads or dispatches them.
 - **Pages.** The family map draws `/docs-verify` in the portal lane, after `/docs-write`, and the agents, grounding, references, session-feedback and roles-and-phases pages name it.
 
+### Fixed
+
+- **`scripts/lineage.py --selftest` no longer fails at random.** Its throwaway repository let each `git commit` start git's detached auto-maintenance. That process's `objects/maintenance.lock` could stand in the *before* snapshot of the nothing-written check in `test_capture_disk_is_what_git_add_stores` and be gone in the *after* one, so the check failed although the capture wrote nothing: 8 of 15 runs on git 2.56.1, and none of 15 with auto-maintenance off. The fixture now sets `maintenance.auto` to `false`. No command's behaviour changes, and the self-test still counts 66 cases.
+
 ### Fixed — GIT-G1 sentences made false by `/docs-verify`, truth only
 
 Each is a truth edit under the maintainer's 2026-11-17 standing approval for DOC-D-G1, named in the pull request.
