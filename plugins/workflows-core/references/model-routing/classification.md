@@ -572,7 +572,7 @@ map govern every command, and §9.4 applies them to scanning.
 
 | Role | Chain |
 |------|-------|
-| Synthesis / planner (e.g. `doc-planner`) | §2 reasoning (Opus) |
+| Synthesis / planner (e.g. `doc-planner`), and `claim-reader`'s reading of a page's claims, which a unit's move to `verified` rests on | §2 reasoning (Opus) |
 | `/implement`'s `code-writer` and `review-fixer` dispatches | §4's `implementation_model` rule: `current_model` at SIMPLE; from MODERATE up, `current_model` where it is an Opus-tier model (§4), else §2 reasoning (Opus); at HIGH-RISK, Fable where the run chose it and the session is not on Fable or Mythos (§4); `--enforce-model` overrides all three (§10) |
 | Reader / summarizer / locator / style-checker / fixer (save `/implement`'s `code-writer` and `review-fixer` dispatches, row above) / maintenance (`code-scanner`, `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, maintenance agents) | §2.1 detection (Sonnet) |
 | Domain reviewer (`doc-reviewer`, `epic-reviewer`) | §2 review (Opus) — usually already frontmatter-pinned; the orchestrator records it and adds **no** override — unless §10 enforces a model |

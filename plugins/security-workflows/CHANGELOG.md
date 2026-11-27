@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.13.3] — 2026-11-27
+
+**What changes for you.** `/scan` stops with `ADDRESS_FOLDER_NAME` where a unit's folder, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).
+
+### Fixed
+
+- **`/scan` Phase 0 steps 2 and 4** hold an `@<path>` unit folder's path to `workflows-core:addressing` §3's test before the directory test or the carrier read names it, and map `read-key`'s and `resolve-address`'s `misnamed` to its stop, beside `ambiguous` and `misrooted`.
+- **`docs/commands/scan.md`**'s *Other stops* and **`docs/reference/environment.md`** name it.
+
 ## [0.13.2] — 2026-11-26
 
 **What changes for you.** `/scan`'s reservations test each run record's file name before they copy it from another branch, so a file name holding a command substitution no longer runs it. Needs `workflows-core` 1.100.2 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.2 bullet).

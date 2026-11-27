@@ -220,7 +220,7 @@ def _git(specs, *args, data=None):
 
 
 def _blob_at(specs, ref, path):
-    rc, out = _git(specs, "rev-parse", "--verify", "-q", f"{ref}:{path}")
+    rc, out = _git(specs, "rev-parse", "--verify", "-q", f"{ref}:./{path}")  # ./: from $SPECS_PATH, not the top level
     return out.decode().strip() if rc == 0 else None
 
 
@@ -229,11 +229,67 @@ def _cat_blob(specs, blob):
     return out.decode("utf-8", "replace") if rc == 0 else None
 
 
-def _hash_bytes(specs, data):
-    rc, out = _git(specs, "hash-object", "--stdin", data=data)
+def _hash_bytes(specs, data, path=None):
+    """The blob id of data: hashed with path (relative to specs) where one is given -- that path's clean filter and
+    line-ending conversion applied, with no index read -- else of the bytes as they are."""
+    rc, out = _git(specs, "hash-object", "--stdin", *(["--path", path] if path else []), data=data)
     if rc != 0:
         raise LineageError("git hash-object failed")
     return out.decode().strip()
+
+
+class _Adder:
+    """`git add -- <path>` run into a scratch index -- a copy of the repository's own, its mtime kept -- and a scratch
+    object directory, the repository's object directory an alternate of it, so the repository is left as it was.
+    blob(path) is then the blob a commit of the working-tree file would store, by git's own rules: the path's clean
+    filter and line-ending conversion, the check that leaves a CRLF copy as it is where the index's blob already
+    holds a CR, and a symlink stored as its link text. None where git cannot add the path -- no repository, or a
+    path outside its work tree or beyond a symbolic link."""
+
+    def __init__(self, specs):
+        self.specs = specs
+        self.tmp = None
+        self.env = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        if self.tmp is not None:
+            self.tmp.cleanup()
+
+    def _setup(self):
+        import shutil
+        import tempfile
+        paths = []
+        for name in ("index", "objects"):
+            rc, out = _git(self.specs, "rev-parse", "--git-path", name)
+            if rc != 0:
+                return False
+            paths.append(os.path.join(self.specs, out.decode().strip()))
+        index, objects = paths
+        self.tmp = tempfile.TemporaryDirectory(prefix="lineage-capture-")
+        scratch_index = os.path.join(self.tmp.name, "index")
+        if os.path.exists(index):
+            shutil.copy2(index, scratch_index)
+        os.mkdir(os.path.join(self.tmp.name, "objects"))
+        alternates = [objects] + [a for a in os.environ.get("GIT_ALTERNATE_OBJECT_DIRECTORIES", "").split(os.pathsep) if a]
+        self.env = dict(os.environ, GIT_INDEX_FILE=scratch_index, GIT_OBJECT_DIRECTORY=os.path.join(self.tmp.name, "objects"),
+                        GIT_ALTERNATE_OBJECT_DIRECTORIES=os.pathsep.join(alternates))
+        return True
+
+    def blob(self, path):
+        import subprocess
+        if self.env is None and not self._setup():
+            return None
+        base = ["git", "-C", self.specs, "--literal-pathspecs", "-c", "core.safecrlf=false", "-c", "core.splitIndex=false",
+                "-c", "core.fsmonitor=false"]
+        if subprocess.run(base + ["add", "-f", "--", path], env=self.env, capture_output=True).returncode != 0:
+            return None
+        r = subprocess.run(base + ["ls-files", "-s", "-z", "--", path], env=self.env, capture_output=True)
+        entries = [rec.split(b"\t", 1)[0].split() for rec in r.stdout.split(b"\0") if rec]
+        staged = [e[1].decode() for e in entries if len(e) == 3 and e[2] == b"0"]
+        return staged[0] if r.returncode == 0 and len(staged) == 1 else None
 
 
 # --------------------------------------------------------------------------- the record
@@ -363,8 +419,8 @@ def _write_record(doc, upstreams=None, accepted=None):
 # --------------------------------------------------------------------------- subcommands
 
 def capture(specs, ref, from_ref, from_disk):
-    """Each input's path, blob id of the bytes read, and Version: from_ref read at ref, from_disk as
-    the working tree holds it."""
+    """Each input's path, blob id, and Version: from_ref read at ref; from_disk as the working tree holds it, its blob
+    the one `git add` would store for it (_Adder), or, where git cannot add the path, its bytes hashed with the path."""
     out = []
     for path in from_ref:
         blob = _blob_at(specs, ref, path)
@@ -372,16 +428,22 @@ def capture(specs, ref, from_ref, from_disk):
             raise LineageError(f"{path} is not on {ref}")
         text = _cat_blob(specs, blob) or ""
         out.append({"path": path, "blob": blob, "version": _version_any(path, text)})
-    for path in from_disk:
-        full = os.path.join(specs, path)
-        try:
-            with open(full, "rb") as fh:
-                data = fh.read()
-        except OSError as exc:
-            raise LineageError(f"cannot read {path}: {exc}")
-        out.append({"path": path, "blob": _hash_bytes(specs, data),
-                    "version": _version_any(path, data.decode("utf-8", "replace"))})
+    with _Adder(specs) as adder:
+        for path in from_disk:
+            data = _read_input(specs, path)
+            blob = adder.blob(path) or _hash_bytes(specs, data, path)
+            if _read_input(specs, path) != data:
+                raise LineageError(f"{path} changed while it was captured; capture it again")
+            out.append({"path": path, "blob": blob, "version": _version_any(path, data.decode("utf-8", "replace"))})
     return out
+
+
+def _read_input(specs, path):
+    try:
+        with open(os.path.join(specs, path), "rb") as fh:
+            return fh.read()
+    except OSError as exc:
+        raise LineageError(f"cannot read {path}: {exc}")
 
 
 def _version_any(path, text):
@@ -737,7 +799,38 @@ def test_kind_of():
     _check("kind spec", kind_of("specifications/PRD-1-x/specification.md") == "specification")
     _check("kind ard", kind_of("specifications/PRD-1-x/ard-server.md") == "ard")
     _check("kind ard plain", kind_of("specifications/PRD-1-x/ard.md") == "ard")
+    for area in ("ard-платежі.md", "ard-Cart.md", "ard-v2.api.md", "ard-भुगतान.md", "ard-zahlungsauslo\u0308sung.md"):
+        _check("kind ard, an area named in the class: " + area, kind_of("specifications/PRD-1-x/" + area) == "ard")
+    for name in ("ard-a b.md", "ard-a..b.md", "ard-$(x).md"):
+        _check("kind not ard, a name outside the class: " + name, kind_of("specifications/PRD-1-x/" + name) is None)
+    for path in ("specifications/BRD-1-x/ard-seed.md", "specifications/BRD-1-x/PRD-1-01-y/ard-seed.md"):
+        _check("kind not ard, the seed /product-workflows:brd-intake writes: " + path, kind_of(path) is None)
+    _check("kind ard, an area whose name begins with seed", kind_of("specifications/PRD-1-x/ard-seeds.md") == "ard")
     _check("kind unknown", kind_of("specifications/PRD-1-x/notes.md") is None)
+
+
+def test_seed_is_an_uncovered_top():
+    """ard-seed.md is a slice's input and an uncovered top: the walk compares it whole, as it compares
+    prd-seed.md, and never looks for a record of its own (workflows-core:document-lineage §4)."""
+    def body(r):
+        brd = "specifications/BRD-1-intake"
+        os.makedirs(os.path.join(r.root, brd, "PRD-1-01-orders"))
+        seed, ard = f"{brd}/ard-seed.md", f"{brd}/PRD-1-01-orders/ard.md"
+        r.write(seed, "# Architecture seed\n\n## Architecture decisions\n\n### [AD#1]: One queue\n\n**Rule:** one queue.\n")
+        r.commit()
+        r.write(ard, "---\nkind: ard\nkey: PRD-1-01\n---\n# Orders ARD\n\n## Architecture decisions\n\n"
+                     "### [AD#1]: One queue\n\n**Rule:** one queue.\n")
+        stamp(r.root, "main", os.path.join(r.root, ard), capture(r.root, "main", [seed], []))
+        r.commit()
+        res = check(r.root, "main", [ard])
+        _check("seed walked", seed in res["walked"], json.dumps(res["walked"]))
+        _check("seed: no record asked of it", res["missing"] == [] and res["top_missing"] is None, json.dumps(res))
+        r.write(seed, r.read(seed).replace("one queue.", "two queues."))
+        r.commit()
+        res = check(r.root, "main", [ard])
+        _check("seed moved: compared whole", [(s["upstream"], s["changed"]) for s in res["stale"]] == [(seed, ["§file"])],
+               json.dumps(res["stale"]))
+    _with_repo(body)
 
 
 class _Repo:
@@ -750,6 +843,9 @@ class _Repo:
         self.run("init", "-q", "-b", "main")
         self.run("config", "user.email", "t@example.invalid")
         self.run("config", "user.name", "t")
+        # No detached auto-maintenance after a commit: its objects/maintenance.lock comes and goes on its own
+        # schedule, under the directory the nothing-written checks list (_repo_state).
+        self.run("config", "maintenance.auto", "false")
         self.dir = "specifications/PRD-1-checkout"
         os.makedirs(os.path.join(tmp, self.dir))
         self.prd = f"{self.dir}/prd.md"
@@ -803,6 +899,170 @@ def test_capture_ref_and_disk():
         disk = r.run("hash-object", os.path.join(r.root, r.dir, "code-grounding.md"))
         _check("capture disk blob", got[1]["blob"] == disk, str(got))
         _check("capture version", got[0]["version"] is None)
+    _with_repo(body)
+
+
+def _crlf_copy(r, rel, text):
+    with open(os.path.join(r.root, rel), "w", encoding="utf-8", newline="") as fh:
+        fh.write(text.replace("\n", "\r\n"))
+
+
+def _write_bytes(r, rel, data):
+    full = os.path.join(r.root, rel)
+    os.makedirs(os.path.dirname(full), exist_ok=True)
+    with open(full, "wb") as fh:
+        fh.write(data)
+
+
+def _git_add_oracle(root, rel):
+    """git's own answer to what a commit of rel's working copy would store: `git add` into a copy of the
+    repository's index, then `ls-files -s` -- index and objects of the copy only, nothing read off this script."""
+    import shutil
+    import subprocess
+    import tempfile
+    idx = os.path.join(root, subprocess.run(["git", "-C", root, "rev-parse", "--git-path", "index"],
+                                            capture_output=True, text=True, check=True).stdout.strip())
+    with tempfile.TemporaryDirectory() as tmp:
+        copy = os.path.join(tmp, "index")
+        if os.path.exists(idx):
+            shutil.copy2(idx, copy)
+        env = dict(os.environ, GIT_INDEX_FILE=copy)
+        subprocess.run(["git", "-C", root, "add", "-f", "--", rel], env=env, capture_output=True, check=True)
+        out = subprocess.run(["git", "-C", root, "ls-files", "-s", "--", rel], env=env,
+                             capture_output=True, text=True, check=True).stdout.split()
+    return out[1]
+
+
+def _repo_state(root):
+    """What a capture must leave as it found it: the index's bytes and every file under the object directory."""
+    git_dir = os.path.join(root, ".git")
+    objs = sorted(os.path.relpath(os.path.join(d, f), git_dir) for d, _, fs in os.walk(os.path.join(git_dir, "objects")) for f in fs)
+    with open(os.path.join(git_dir, "index"), "rb") as fh:
+        return fh.read(), objs
+
+
+_BODY = PRD.encode()
+_BODY2 = PRD.replace("within one minute", "within two minutes").encode()
+_CR = lambda b: b.replace(b"\n", b"\r\n")
+# Each setting: (name, the config it sets after the blob is committed, the .gitattributes committed after it).
+_SETTINGS = [
+    ("core.autocrlf=true", [("core.autocrlf", "true")], None),
+    ("core.autocrlf=input", [("core.autocrlf", "input")], None),
+    ("core.autocrlf=false", [("core.autocrlf", "false")], None),
+    ("* text=auto", [("core.autocrlf", "false")], "* text=auto\n"),
+    ("* text eol=crlf", [("core.autocrlf", "false")], "* text eol=crlf\n"),
+    ("* eol=lf", [("core.autocrlf", "false")], "* eol=lf\n"),
+    ("*.md text", [("core.autocrlf", "false")], "*.md text\n"),
+    ("*.md filter=x, a clean filter", [("core.autocrlf", "false"), ("filter.x.clean", "sed -e s/minute/MINUTE/"),
+                                       ("filter.x.smudge", "cat")], "*.md filter=x\n"),
+]
+# Each working copy: (name, its bytes from the committed blob's, or None to leave the checkout untouched).
+_COPIES = [
+    ("unchanged", None),
+    ("CRLF", lambda blob: _CR(_BODY)),
+    ("LF", lambda blob: _BODY),
+    ("changed, CRLF", lambda blob: _CR(_BODY2)),
+    ("changed, LF", lambda blob: _BODY2),
+]
+
+
+def test_capture_disk_is_what_git_add_stores():
+    """document-lineage §5 step 1: a --from-disk input records the blob `git add` would store for it -- the oracle is
+    git itself, adding into a copy of the index -- under every line-ending setting and a clean filter, for an LF and a
+    CRLF blob, unchanged, converted or changed copies and a path absent from the index; where the copy is the
+    default branch's as git compares it, that is the default branch's blob; and the capture writes nothing into the
+    repository."""
+    for setting, config, attrs in _SETTINGS:
+        for blob_name, blob in (("LF blob", _BODY), ("CRLF blob", _CR(_BODY))):
+            def body(r, setting=setting, config=config, attrs=attrs, blob_name=blob_name, blob=blob):
+                r.run("config", "core.autocrlf", "false")
+                rels = [f"{r.dir}/copy-{n}.md" for n in range(len(_COPIES))]
+                for rel in rels:
+                    _write_bytes(r, rel, blob)
+                r.commit()
+                for key, val in config:
+                    r.run("config", key, val)
+                if attrs is not None:
+                    r.write(".gitattributes", attrs)
+                    r.commit("attributes")
+                for rel, (_, make) in zip(rels, _COPIES):
+                    if make is not None:
+                        _write_bytes(r, rel, make(blob))
+                new = f"{r.dir}/new.md"
+                _write_bytes(r, new, _CR(_BODY2))
+                before = _repo_state(r.root)
+                got = {e["path"]: e["blob"] for e in capture(r.root, "main", [], rels + [new])}
+                _check(f"{setting}, {blob_name}: nothing written", _repo_state(r.root) == before)
+                import subprocess
+                for rel, (copy_name, _) in zip(rels + [new], _COPIES + [("absent from the index", None)]):
+                    where = f"{setting}, {blob_name}, {copy_name}"
+                    want = _git_add_oracle(r.root, rel)
+                    _check(f"{where}: what git add stores", got[rel] == want, f"{got[rel]} != {want}")
+                    clean = rel != new and subprocess.run(["git", "-C", r.root, "diff", "--quiet", "main", "--", rel], capture_output=True).returncode == 0
+                    if clean:
+                        _check(f"{where}: the default branch's blob", got[rel] == r.run("rev-parse", f"main:{rel}"), got[rel])
+            _with_repo(body)
+
+
+def test_capture_disk_lands_as_recorded():
+    """The record names the blob that lands: a changed CRLF copy of a blob committed with CRLF, under
+    core.autocrlf=true, captured, the downstream stamped, then the copy committed as it stood -- the check finds
+    the link current, its recorded blob the one the commit stored."""
+    def body(r):
+        r.run("config", "core.autocrlf", "false")
+        _crlf_copy(r, r.prd, PRD)
+        r.commit()
+        r.run("config", "core.autocrlf", "true")
+        _crlf_copy(r, r.prd, PRD.replace("within one minute", "within two minutes"))
+        captured = capture(r.root, "main", [], [r.prd])
+        r.write(r.spec, SPEC)
+        stamp(r.root, "main", os.path.join(r.root, r.spec), captured)
+        r.commit("land the copy and the downstream")
+        _check("lands: the blob recorded is the blob stored", captured[0]["blob"] == r.run("rev-parse", f"main:{r.prd}"), str(captured))
+        res = check(r.root, "main", [r.spec])
+        _check("lands: nothing stale", res["stale"] == [], json.dumps(res["stale"]))
+    _with_repo(body)
+
+
+def test_capture_disk_symlink_is_its_link():
+    """A symlinked document read from disk records what git stores for the path -- the link text as a blob -- so a
+    check finds it current where nothing moved."""
+    def body(r):
+        target = f"{r.dir}/prd-body.md"
+        r.write(target, PRD)
+        os.symlink("prd-body.md", os.path.join(r.root, r.prd))
+        r.commit()
+        captured = capture(r.root, "main", [], [r.prd])
+        _check("symlink: the link's blob", captured[0]["blob"] == r.run("rev-parse", f"main:{r.prd}"), str(captured))
+        r.write(r.spec, SPEC)
+        stamp(r.root, "main", os.path.join(r.root, r.spec), captured)
+        r.commit()
+        res = check(r.root, "main", [r.spec])
+        _check("symlink: nothing stale", res["stale"] == [], json.dumps(res["stale"]))
+    _with_repo(body)
+
+
+def test_specs_below_the_top_level():
+    """A specs tree below its repository's top level: capture --from-ref reads the path from $SPECS_PATH, and a
+    check finds the downstream stale when its upstream moves, never absent."""
+    def body(r):
+        specs = os.path.join(r.root, "specs")
+        sub = "specifications/PRD-1-checkout"
+        os.makedirs(os.path.join(specs, sub))
+        with open(os.path.join(specs, sub, "prd.md"), "w", encoding="utf-8") as fh:
+            fh.write(PRD)
+        r.commit()
+        captured = capture(specs, "main", [f"{sub}/prd.md"], [])
+        _check("subdir: --from-ref names the blob", captured[0]["blob"] == r.run("rev-parse", f"main:specs/{sub}/prd.md"), str(captured))
+        with open(os.path.join(specs, sub, "specification.md"), "w", encoding="utf-8") as fh:
+            fh.write(SPEC)
+        stamp(specs, "main", os.path.join(specs, sub, "specification.md"), captured)
+        r.commit()
+        with open(os.path.join(specs, sub, "prd.md"), "w", encoding="utf-8") as fh:
+            fh.write(PRD.replace("within one minute", "within two minutes"))
+        r.commit()
+        res = check(specs, "main", [f"{sub}/specification.md"])
+        _check("subdir: stale, not absent", res["absent"] == [] and [s["upstream"] for s in res["stale"]] == [f"{sub}/prd.md"], json.dumps(res))
     _with_repo(body)
 
 

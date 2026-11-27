@@ -98,7 +98,7 @@
     "ard": {
       "match": [
         "^ard\\.md$",
-        "^ard-[A-Za-z0-9._-]+\\.md$"
+        "^(?!.*\\.\\.)(?!ard-seed\\.md$)ard-(?:[A-Za-z0-9._@+-]|[^\\x00-\\x7f])*\\.md$"
       ],
       "covered": true,
       "altitude": "architecture",
@@ -116,7 +116,7 @@
       "ignore_lines": [
         "^\\s*[-*]\\s+\\[[ xX]\\]"
       ],
-      "_source": "product-workflows/references/ard-format.md:15 (ard-<area>.md), :63 (### [AD#N]:); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to specification.md, prd.md, epic.md, ard.md and ard-<area>.md (conformance.md Phase 5)"
+      "_source": "product-workflows/references/ard-format.md:15 (ard-<area>.md), :63 (### [AD#N]:); an area file's name as workflows-core:addressing §2 classes it, which workflows-core:ard-resolution holds it to — exact over ASCII, and every character outside ASCII admitted, since a Python re pattern names no combining mark; never ard-seed.md, the seed product-workflows/commands/brd-intake.md Phase 6 writes, which product-workflows/commands/create-ard.md Phase 0 step 4 calls never an ARD: it matches no row, so the walk compares it whole and stops at it (workflows-core:document-lineage §4); notes: /dev-workflows:conformance adds - [ ] notes under ## Engineering review to specification.md, prd.md, epic.md, ard.md and ard-<area>.md (conformance.md Phase 5)"
     },
     "threat-model": {
       "match": [

@@ -2,9 +2,9 @@
 
 Single source of truth for **what `/docs-init` creates**. It is an executable template, not a description of one: a command reads it to know which directories and files to write, what goes in each, and what the two build configs and the linter config contain.
 
-Consumed by `/docs-init` (Phase 3 writes §1–§6, Phase 4 writes §7), by `/docs-brand`, which reads §5 and §6 to know which config carries the theme and which inherits it, §3.13 for the file a rebrand reconciles and §7 for its commit-time ignore test, by `/docs-serve`, which takes the two builds' site names from §5 and §6 and its state file's ignore line from §7, by `/docs-write`, which runs §4's **regenerate** over the tree each unit's commit will hold and, through `finish-and-handoff.md` §6.3, §7's commit-time ignore test, and by `docs-scaffold-reviewer`, whose checklist asserts relationships between the files this file specifies; four references, `visibility.md`, `docs-audit/backlog-format.md`, `docs-iteration/unit-brief.md` and `finish-and-handoff.md`, cite single sections of it. `grep -rl scaffold-tree plugins/docs-workflows/commands plugins/docs-workflows/agents plugins/docs-workflows/references` lists every reader, and this file besides.
+Consumed by `/docs-init` (Phase 3 writes §1–§6, Phase 4 writes §7), by `/docs-brand`, which reads §5 and §6 to know which config carries the theme and which inherits it, §3.13 for the file a rebrand reconciles and §7 for its commit-time ignore test, by `/docs-serve`, which takes the two builds' site names from §5 and §6 and its state file's ignore line from §7, by `/docs-write`, which runs §4's **regenerate** over the tree each unit's commit will hold and, through `finish-and-handoff.md` §6.3, §7's commit-time ignore test, by `/docs-verify`, which runs that ignore test through §6.3 too, by `/document`'s keyed mode, which runs **regenerate** over the pages its writer wrote, and by `docs-scaffold-reviewer`, whose checklist asserts relationships between the files this file specifies; four references, `visibility.md`, `docs-audit/backlog-format.md`, `docs-iteration/unit-brief.md` and `finish-and-handoff.md`, cite single sections of it. `grep -rl scaffold-tree plugins/docs-workflows/commands plugins/docs-workflows/agents plugins/docs-workflows/references` lists every reader but `/docs-verify`, which reads §7 through `finish-and-handoff.md`, and this file besides.
 
-Its entry points, so a command can say which part it is executing: **the tree** (§1), **the stubs** (§3), **nav generation** (§4), **regenerate** (§4's last paragraphs: the same rule, run again by a backlog run over a tree whose configs already hold their generated blocks), **the mkdocs configs** (§5 and §6), and **the vale config** (§7, which also carries `requirements-docs.txt`, `.gitignore` with its create-or-merge rule, and the Vale exit criterion both the scaffold's own verification and its CI apply).
+Its entry points, so a command can say which part it is executing: **the tree** (§1), **the stubs** (§3), **nav generation** (§4), **regenerate** (§4's last paragraphs: the same rule, run again by a command that adds a page — a backlog run, or `/document`'s keyed mode — over a tree whose configs already hold their generated blocks), **the mkdocs configs** (§5 and §6), and **the vale config** (§7, which also carries `requirements-docs.txt`, `.gitignore` with its create-or-merge rule, and the Vale exit criterion both the scaffold's own verification and its CI apply).
 
 The navigation is **product-shaped** (design D15). Diátaxis lives in each page's `type:` frontmatter, whose vocabulary is that of the page type `/docs-audit`'s coverage grid takes as its second axis from the backlog's units, so the tree looks like a documentation portal a reader recognises while the quadrant discipline stays fully intact.
 
@@ -100,6 +100,8 @@ This is not filler. The commonest failure of a documentation tree is contributor
 
 Every **directory** stub carries six frontmatter fields — `title`, `description`, `type`, `audience`, `visibility`, `order` — being the six that record where the page sits, who it is for, and which build it belongs to (the build itself is decided by path — `visibility.md` §1 — and each stub's `visibility` matches its path). The full page contract is larger (`references/docs-profiles/frontmatter-guidelines.md` and the `docs-frontmatter` skill own it), and the writer fills the rest when the page stops being a stub. **A leaf-page stub carries a lighter shape**, defined with its reason in §3.12.
 
+**Each directory stub's `order:` places its section among its siblings in §1's reading order**, the values tens apart — `discover/` at 10, then `get-started/`, `guides/`, `reference/`, `integrations/`, `administration/`, `troubleshooting/` and `whats-new/` up to 80, `support.md`'s 90 (§3.12) after them, and `internal/` at 100 — and each subsection's among its own siblings, so that §4's sort, which breaks a tie on `title`, never lists sections by their labels. Two stubs keep `order: 1`: the portal home, the content root's own `index.md`, which leads its section whatever its `order:`, and `whats-new/v<MAJOR>/`, which sorts before `deprecations.md`'s 90, the other entry of its section after that section's `index.md`. These are the values `/docs-init` writes; a scaffold that already exists keeps its own, and a section is moved by giving its `index.md` a distinct `order:` (§4).
+
 **Every file under `internal/` carries the visibility marker** as its first line after the frontmatter — see `visibility.md` §5. The stubs below show it. A stub written without it is the exact file the gate cannot see.
 
 ### 3.1 Portal home
@@ -134,7 +136,7 @@ description: What <product> does, who it is for, and the model behind it.
 type: explanation
 audience: user
 visibility: public
-order: 1
+order: 10
 ---
 
 The concept layer. Pages here answer *what is this and why is it shaped like this* for someone who has not decided to use the product yet.
@@ -155,7 +157,7 @@ description: Install <product> and reach a first working result.
 type: tutorial
 audience: user
 visibility: public
-order: 1
+order: 20
 ---
 
 The one guaranteed path from nothing to a working result. A reader following this page in order arrives somewhere real, without deciding anything.
@@ -176,7 +178,7 @@ description: Task-oriented instructions for the things people do with <product>.
 type: how-to
 audience: user
 visibility: public
-order: 1
+order: 30
 ---
 
 One page per task, each named for the task in the reader's words—*Import a customer list*, not *The import subsystem*.
@@ -197,7 +199,7 @@ description: Exact values—configuration, CLI, data model, limits, errors.
 type: reference
 audience: user
 visibility: public
-order: 1
+order: 40
 ---
 
 The lookup layer. A reader arrives here knowing what they want and needing its exact name, type, default, or value.
@@ -239,7 +241,7 @@ description: How <product> connects to the other systems it works with.
 type: how-to
 audience: user
 visibility: public
-order: 1
+order: 50
 ---
 
 One page per integrated system, each covering what the connection does, what it needs, and how to set it up.
@@ -260,7 +262,7 @@ description: Managing users, roles, security, and billing for <product>.
 type: how-to
 audience: user
 visibility: public
-order: 1
+order: 60
 ---
 
 Tasks that require elevated permissions: user and role management, authentication and SSO, security settings, quotas, and billing.
@@ -281,7 +283,7 @@ description: Symptoms, causes, and fixes—plus the FAQ and known issues.
 type: how-to
 audience: user
 visibility: public
-order: 1
+order: 70
 ---
 
 Organised by **symptom**, in the words a reader would use before they know the cause: what they saw, what it means, what to do.
@@ -302,7 +304,7 @@ description: Releases, what changed in each, and what is being retired.
 type: reference
 audience: user
 visibility: public
-order: 1
+order: 80
 ---
 
 The release hub: one entry per major version, newest first, plus the deprecations page.
@@ -342,7 +344,7 @@ description: Engineering documentation for the team that builds and runs <produc
 type: explanation
 audience: engineering
 visibility: internal
-order: 1
+order: 100
 ---
 <!-- docs-visibility: internal -->
 
@@ -362,7 +364,7 @@ description: How <product> is built—components, boundaries, and data flow.
 type: explanation
 audience: engineering
 visibility: internal
-order: 1
+order: 10
 ---
 <!-- docs-visibility: internal -->
 
@@ -382,7 +384,7 @@ description: Decisions taken about <product>, with their context and consequence
 type: explanation
 audience: engineering
 visibility: internal
-order: 1
+order: 20
 ---
 <!-- docs-visibility: internal -->
 
@@ -402,7 +404,7 @@ description: What to do when something breaks or has to be operated.
 type: how-to
 audience: engineering
 visibility: internal
-order: 1
+order: 30
 ---
 <!-- docs-visibility: internal -->
 
@@ -461,18 +463,18 @@ MkDocs takes navigation order from `mkdocs.yml`, not from frontmatter, so a page
 
 The rule: **sort each section's pages on frontmatter `order`, then on `title`.** Ties break on title so the result is stable rather than filesystem-ordered, and a page with no `order:` sorts after every page that has one.
 
-Regenerated by the family's writes that place a page by this rule: `/docs-init` when it scaffolds, and `/docs-write` whenever it adds a page, by **regenerate** below, which runs only where every build config holds its generated block. One source of truth, no extra plugin, and no state that can drift: the block is derived from the tree each time rather than edited.
+Regenerated by the family's writes that place a page by this rule: `/docs-init` when it scaffolds, and `/docs-write` and `/docs-workflows:document`'s keyed mode whenever they add a page, by **regenerate** below, which runs only where every build config holds its generated block. One source of truth, no extra plugin, and no state that can drift: the block is derived from the tree each time rather than edited.
 
-**A page added or renamed any other way is placed by hand, by this rule** — a page you write yourself on the documentation route (its step 4's *A page written any other way*), and a page `/docs-workflows:document` adds or renames, since `/document` maintains no `nav:` by this rule: direct mode never touches it, and keyed mode may add an index or sidebar entry with no regard to the sort, so after a keyed run check whether it added one and move it to where the sort places it. Put its entry into each `nav:` block that lists its section — a public page into both, a page under `internal/` into the internal one only — exactly where the sort above places it, and remove the old entry of a renamed page. That is regeneration by hand, not a hand-edit: the block stays what the rule derives from the tree, so the next generated write reproduces it rather than undoing it. **Leaving the page out is not the safe alternative**: `validation.nav.omitted_files: warn` under `strict: true` (§5) makes a page missing from the public `nav:` a failure of the public build, which is gate 1, locally and in CI.
+**A page added or renamed any other way is placed by hand, by this rule** — a page you write yourself on the documentation route (its step 4's *A page written any other way*), a page `/docs-workflows:document`'s direct mode adds or renames, since that mode never touches `nav:`, and a page its keyed mode adds where its Phase 6.3 finds regenerate does not apply, which its report then says. Put its entry into each `nav:` block that lists its section — a public page into both, a page under `internal/` into the internal one only — exactly where the sort above places it, and remove the old entry of a renamed page. That is regeneration by hand, not a hand-edit: the block stays what the rule derives from the tree, so the next generated write reproduces it rather than undoing it. **Leaving the page out is not the safe alternative**: `validation.nav.omitted_files: warn` under `strict: true` (§5) makes a page missing from the public `nav:` a failure of the public build, which is gate 1, locally and in CI.
 
 Both configs' `nav:` blocks are generated. The internal one is the public nav plus the `internal/` sections, in the same order by the same rule.
 
 A hand-edit to a generated `nav:` that departs from the rule — an entry out of its sorted place, a page grouped where its section is not — survives until the next write and then vanishes, which is worse than being rejected. The block therefore carries the comment shown in §5 and §6, so the next person to open the file is told before they edit rather than after.
 
-**Regenerate** is the entry point a backlog run executes — `/docs-workflows:docs-write`, before each build of a unit, once it has written the unit's page — and it is this section's rule run again over the tree as the unit's commit will hold it.
+**Regenerate** is the entry point a command that adds a page executes — a backlog run, `/docs-workflows:docs-write`, before each build of a unit, once it has written the unit's page, and `/docs-workflows:document`'s keyed mode, once `doc-writer` has written its pages and before it commits them — and it is this section's rule run again over the tree as the run's commit will hold it. `/docs-workflows:docs-verify`, a backlog run that places no page, never runs it.
 
 - **Where it applies.** Only where every config a `builds[]` entry of the profile names — `mkdocs.yml` and `mkdocs.internal.yml` as §5 and §6 write them, or `mkdocs.yml` alone under `/docs-init`'s `--public-only` — holds one top-level `nav:` line, `nav:` at column 0 with nothing after it but spaces, and directly under it a comment line whose text, after its leading spaces, begins `# generated:`. Where any config lacks that line, or the profile records no `builds[]`, regenerate writes nothing, into any config, and the run places the page by the repository's own convention instead, as its command says. It never reads the profile's `generator`: the configs' own text is the test.
-- **The pages** are those the commit will hold: the `.md` files `git -C '<top>' ls-files -z -- ':(literal)<content root>/'` lists, each as git holds it, plus the page the commit adds, less any under `<content root>/_snippets/` and, for a config whose `builds[]` entry has `visibility: public`, any under `<content root>/internal/`. `<top>` is the docs repository's work-tree top level and `<content root>` the `content_root` of the `spaces[]` entry that holds the unit's page, relative to `<top>`, each `'` either holds written `'\''` in that command; every path the block names is relative to `<content root>`, as `nav:` names a page. Each page's `order:` and `title:` are read, as data, from its frontmatter block as it stands in the working tree, each value with its surrounding quotes, its surrounding spaces, a trailing ` # …` comment and a CR removed. A value that is not a one-line scalar counts as absent, an `order:` that is then not an integer counts as none, and a page that cannot be read — one missing from the working tree among them — counts as having neither key.
+- **The pages** are those the commit will hold: the `.md` files `git -C '<top>' ls-files -z -- ':(literal)<content root>/'` lists, each as git holds it, plus each page the commit adds, less any under `<content root>/_snippets/` and, for a config whose `builds[]` entry has `visibility: public`, any under `<content root>/internal/`. `<top>` is the docs repository's work-tree top level and `<content root>` the `content_root` of the `spaces[]` entry that holds the page the commit adds — a backlog run's unit's page; `/document` runs this only where every page its writer wrote lies under one root — relative to `<top>`, each `'` either holds written `'\''` in that command; every path the block names is relative to `<content root>`, as `nav:` names a page. Each page's `order:` and `title:` are read, as data, from its frontmatter block as it stands in the working tree, each value with its surrounding quotes, its surrounding spaces, a trailing ` # …` comment and a CR removed. A value that is not a one-line scalar counts as absent, an `order:` that is then not an integer counts as none, and a page that cannot be read — one missing from the working tree among them — counts as having neither key.
 - **The block.** A *section* is a directory under the content root holding a page at any depth, the content root itself being the top one. A section's entries are its own `index.md` first, where it has one; then its other pages and its subsections, sorted on `order`, an entry with no `order:` after every entry that has one, and a subsection taking its `index.md`'s `order` — none where it has no `index.md`. Among entries of equal `order`, or of none, the pages come first, sorted on `title`, then on path, a page with no `title:` taking its path as its title; then each subsection the block already lists — one the block holds the entry for that gives it its label, below — keeping its position relative to the block's other listed subsections; then each subsection the block does not list, sorted on its label. So regenerate keeps a listed section's place only among sections of the same `order`, and always after that order's pages — a block that listed a subsection before a page of the same `order` has it moved after that page — and a section is moved by giving its `index.md` a distinct `order:`. A page's entry is its path alone, `- <path>`: MkDocs takes the page's own `title:`. A subsection's entry is `- '<label>':` with its own entries under it. The top section's entries stand at the indent of the comment lines under `nav:`, and each subsection's two spaces further in than its own `- `. A section's label is the one the block gives it — the key of the block's entry, `- <key>:` opening a list, whose list names, directly, a page lying directly in that directory — else its `index.md`'s `title`, else the directory's name. A label is written single-quoted, each `'` it holds doubled; a path is written bare where it matches `^[A-Za-z0-9_][A-Za-z0-9._/-]*$`, else single-quoted the same way. A page whose path holds a C0 or C1 control character (U+0085 among them), DEL, U+2028 or U+2029 — each a line break or an unprintable character to a YAML reader — is left out of the block, and the strict build then reports it; a label that would hold one falls back to the directory's name.
 - **The rewrite.** In each config, the comment lines directly under `nav:` stay as they stand, and the lines after them, up to the next top-level key — the first later line at column 0 that is not blank, not a comment and not an entry opening `- ` — or the end of the file, are replaced by the generated entries; blank or comment lines directly before that key stay where they are. Nothing else in the file changes. A config whose `builds[]` entry has `visibility: internal` takes the same rule over the larger page set, so its block is the public one with the `internal/` section where the sort places it.
 
@@ -573,7 +575,7 @@ Created or merged into first, before `vale sync` downloads anything and before e
 
 **Create or merge — never replace.** Where the resolved root has no `.gitignore`, write the block above as the whole file. Where it has one, **append only the lines of the block it does not already contain verbatim, at the end of the file and in the block's order — never removing, reordering or rewriting a line that is already there**, and starting on a new line: where the file does not end in a newline, terminate its last line first — a line terminator, not a change to that line's text, though git's diff will show the line as changed — or the first appended line fuses with it and rewrites it. The reason is the directory `/docs-init` accepts. Phase 0 takes any git work tree that carries no docs signal, and a common one is a repository created on a hosting service with a language template's `.gitignore` already committed — every line of which is the project's own decision: its virtualenv, its caches, its secrets file. Replacing the file would un-ignore all of them silently, in a diff that reads as a docs scaffold, and the next `git add` by anyone would commit what the project had deliberately kept out. An exact line already present is therefore skipped rather than duplicated, and an equivalent line spelled differently (`/site` against `/site/`) is appended beside it — two patterns matching the same build directory cost nothing.
 
-**A pre-existing line can still ignore a path the run writes, and it is reported, not rewritten.** The block's own lines never do — that is what its two narrow rules below are for — but a project line can: `styles/` — beneath which no line appended after it can re-include a file — or a template's `*.svg` or `*.css`. **The commit-time ignore test** is how a run finds out, and it runs **at commit time, immediately before staging**, over every path the run wrote — `/docs-init` Phase 8, where that includes whatever its `/docs-brand --inline` phase wrote, and a standalone `/docs-brand` run's Phase 10 — and `/docs-write`'s commit step for each unit, where any match instead ends the unit uncommitted (`finish-and-handoff.md` §6.3), so what follows for a matching path is the first two's alone. It cannot run earlier: the branding phase writes a logo and favicon under `docs/assets/` whose names nothing before it knows. Test each written path with `git -C <root> check-ignore -v <path>`; a line it prints whose pattern starts with `!` re-includes the path, and is no match. For each path that matches:
+**A pre-existing line can still ignore a path the run writes, and it is reported, not rewritten.** The block's own lines never do — that is what its two narrow rules below are for — but a project line can: `styles/` — beneath which no line appended after it can re-include a file — or a template's `*.svg` or `*.css`. **The commit-time ignore test** is how a run finds out, and it runs **at commit time, immediately before staging**, over every path the run wrote — `/docs-init` Phase 8, where that includes whatever its `/docs-brand --inline` phase wrote, and a standalone `/docs-brand` run's Phase 10 — and a backlog run's commit step for each unit, `/docs-write`'s and `/docs-verify`'s, where any match instead ends the unit uncommitted (`finish-and-handoff.md` §6.3), so what follows for a matching path is the first two's alone. It cannot run earlier: the branding phase writes a logo and favicon under `docs/assets/` whose names nothing before it knows. Test each written path with `git -C <root> check-ignore -v <path>`; a line it prints whose pattern starts with `!` re-includes the path, and is no match. For each path that matches:
 
 - **Leave it unstaged** — never force-added past the project's own rule. The line that matched is the project's, and it stays as it is.
 - **Remove every reference a committed config makes to it**, before staging, so that no committed config ever names a file the commit leaves out: a `theme.logo` or `theme.favicon` key, an `extra_css` entry, or — for a page — its `nav:` entry, by regenerating the block by §4's rule over the pages being committed. A logo the project's `.gitignore` keeps out would otherwise be a broken image on every page of the committed site.

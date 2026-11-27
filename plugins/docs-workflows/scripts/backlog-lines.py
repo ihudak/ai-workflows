@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-r"""backlog-lines.py — the one line reader of the documentation backlog, <top>/.dev-workflows/docs-backlog.yml.
+r"""backlog-lines.py — the one line reader of the documentation backlog, <top>/.dev-workflows/docs-backlog.yml, and the
+export of a source repository's commit for /docs-verify's claim reader.
 
   backlog-lines.py check --repo <top>
   backlog-lines.py moved --repo <top> --base <name> --id <id> [--id <id> ...] [--own-moves]
   backlog-lines.py edit  --repo <top> --id <id> --status <status> [--page-path <rel>] [--from <status>]
                          [--walkthrough <id>] [--block <token>]
+  backlog-lines.py export --repo <clone> --commit <oid> --out <dir> --manifest <file> [--whole]
+                         [--path <rel> ...]
   backlog-lines.py --selftest
 
 It never parses the backlog as YAML -- no YAML parser ships with the plugins -- and reads it line by line, in the one
@@ -24,8 +27,22 @@ counted, once per id, in duplicates_outside_class; ids_outside_class the number 
 class. Or it prints {"shape": "out", "line": <n>, "reason": "<word>"}: <n> the first line out of shape, 1-based (0 for
 too-large, whose reason is the whole file), and <word> the paragraph's reason for it.
 
-moved tells which of the --id units a branch not merged into the base has moved. It resolves the base as
-refs/remotes/origin/<base>, else refs/heads/<base>, and reads HEAD's branch itself. It lists `git for-each-ref
+moved tells which of the --id units the base, or a branch not merged into it, has moved. It resolves the base as
+refs/remotes/origin/<base>, else refs/heads/<base>, and reads HEAD's branch itself. The base moves a unit where it
+moved it after HEAD's branch left it: where the unit's status in the base's backlog, read by object id within a kept
+ref's limits below, differs from its working status and from its status at every merge base of HEAD with the base
+(`git merge-base --all`), read the same way -- no backlog or no entry there being a status that differs. No merge base
+is read where no unit's status in the base's backlog differs from its working status, and the base moves nothing where
+a merge base's backlog is the base's own blob. An absent backlog on the base, or an entry absent there, moves nothing.
+Where that cannot be told -- the base's backlog unreadable as a kept ref's is, no merge base (an orphan branch, a
+shallow clone), git failing or timing out on the merge bases, or a merge base's backlog unreadable -- the base is
+unreadable, never compared with the working backlog alone, and moves nothing. Where the base resolved as
+origin/<base>, a local <base> that holds commits origin/<base> lacks -- one that is no ancestor of it -- is read as the
+base is, by the same rule, so a move made there and not pushed is seen; a local <base> that is an ancestor of
+origin/<base>, which then holds every move it holds, is not read, nor one HEAD is on, and one git cannot place is
+unreadable. A limit: a move the local <base> holds and origin/<base> no longer does -- origin/<base> force-pushed
+without it, or a local merge of a branch whose pull request was then closed -- is named as an unpushed move is, since
+nothing either history holds tells the two apart. It lists `git for-each-ref
 --sort=-committerdate` over refs/heads and refs/remotes/origin, each ref with its object id, full name and short name,
 and drops refs/remotes/origin/HEAD, HEAD's branch, <base> and origin/<base> -- by full name, since git shortens
 refs/remotes/origin/HEAD to "origin" and shortens a ref another one shadows to "heads/..." or "remotes/..." -- and
@@ -43,10 +60,17 @@ differs from the unit's status in the backlog at the ref's merge base with the b
 unit moved on the base, still holding the older status, moves nothing. That backlog is read by its object id within a
 kept ref's limits, and one those limits make unreadable makes the ref unreadable; no backlog there, or no entry for
 the unit, is a status that differs; and a ref sharing no merge base with the base is compared as without the flag.
-Without it a merge base's backlog is compared with the ref's by tree entry alone, never read. It prints {"moved":
-{<id>: [<ref>...]}, "unreadable": [<ref>...], "read": <n>, "more": <n>, "names_outside_class": <n>}: moved names only
-the ids some ref moved, each ref by its short name, newest first; read counts the refs kept, each either compared or
-unreadable; more counts every ref past the point it stopped.
+Without it a merge base's backlog is compared with the ref's by tree entry alone, never read. The flag does not change
+how the base or the local <base> is read. It prints {"moved": {<id>: [<ref>...]}, "unreadable": [<ref>...], "base":
+{"moved": {<id>: [<ref>...]}, "unreadable": [<ref>...]}, "read": <n>, "more": <n>, "names_outside_class": <n>}:
+moved names only the ids the base or some ref moved, the base first, by the name it
+resolved as -- origin/<base> or <base> -- then the local <base>, as <base>, where it is read, then each ref by its
+short name, newest first; unreadable lists the base first where it is unreadable, then the local <base> where it is
+read and unreadable, then each unreadable ref; base holds the part of moved and unreadable that the base and the
+local <base> give, so that a caller reads a base off it and never off a printed name, which a ref can share -- a local
+branch named origin/<base>, where no remote-tracking ref shadows it, is printed as origin/<base>; read counts the refs
+kept, each either compared or unreadable, and never counts the base or the local <base>; more counts every ref past
+the point it stopped.
 
 edit writes one unit's move. It refuses, exit 3, the file untouched: a backlog out of shape; an --id no entry or two
 entries hold; where --from is given, an entry whose status: is another -- tested before the refusals after it; where
@@ -73,61 +97,112 @@ no-blocked-by, blocked and changed-while-reading, and line, where it is not null
 refused or, for a key the entry lacks, the entry's first; on exit 4 {"undone": "<why>", "first": <n>, "last": <n>,
 "changed": [<n>...]}, <why> hunk-outside or diff-failed.
 
-The arguments are tested before anything is read or run: --id against the unit-id class; --walkthrough against the
-same class, less every value YAML reads, written plain as edit writes it, as something other than a string -- a null,
-boolean, integer, float or date of YAML 1.1 or of YAML 1.2's core schema, such as null, true, y, 017, 0x1f, 1_000,
-1.5, 1e3 or 2026-11-18 -- which would not read back as an id, null as no walkthrough at all (the refusal is a little
-wider, refusing a few spellings of digits, _ and . that YAML reads as strings, such as 0_8 or 2026-1-5); --base against the branch
-class; --status, --from and --block against ^[a-z][a-z-]{0,31}$, less the words YAML reads as something other than a
-string (null, true, false, yes, no, on, off, y, n); --page-path against ^[A-Za-z0-9_][A-Za-z0-9._/-]*\.md$ with no
-empty, . or .. segment; --repo, a directory, which moved and edit also hold to being a git work tree's top level.
---own-moves takes no value. A flag given twice (--id to moved aside), or as --flag=value, refuses the run.
-<top>/.dev-workflows must be a real directory and the backlog a regular file, both by lstat: a symbolic link to either
-is refused, never followed, and the backlog is opened without following a link and never waited on.
+export writes one commit of a source repository under --out as regular files, and a manifest of them, for /docs-verify's
+claim reader, which reads them with Read, Grep and Glob and runs nothing. --repo must be a clone's top level:
+<repo>/.git exists -- tested before any git call, since a directory laid out as a git directory can be committed into
+any repository, and git run in it would run the commands its config names -- and `git -c safe.bareRepository=explicit -C
+<repo> rev-parse --show-toplevel` prints <repo>'s resolved path. Every git call export makes takes that form. It
+refuses, exit 3, commit-absent, where `cat-file -e <oid>^{commit}` fails. Before any git call it opens --out's parent
+and --manifest's, each a real directory, without following a link, and it makes both relative to those descriptors, so a
+parent swapped for a link meanwhile carries nothing elsewhere. It lists `ls-tree -r -z -l --full-tree <oid>`, each
+--path a pathspec `:(literal)<p>` where --whole is absent -- a listing git does not give within 30 seconds, as on a very
+large tree, is exit 2 -- and leaves out, counting each and printing none: a symbolic link (link); a submodule
+(submodule); any other mode but 100644 and 100755 (other); a name not strict UTF-8, holding an empty, . or .. segment, a
+segment .git in any case, a control character, U+2028, U+2029 or a bidirectional control, or above 4,096 bytes, or whose
+written path under --out reaches the file system's PATH_MAX, so that no reader could open it by its absolute path
+(name); and a blob above 1 MiB (large). Where the clone lacks a blob it would write -- a partial clone's, which the
+listing sizes BAD -- it refuses, exit 3, blob-absent. Where what remains is above 50,000 files or 512 MiB (536,870,912
+bytes) it refuses, exit 3, over-cap. None of these refusals creates anything. Otherwise it makes --out, mode 0700, and
+writes each file under it at its repository path: each directory made, mode 0700, and opened relative to its parent's
+descriptor without following a link; each file created exclusively, mode 0600, relative to its directory's descriptor,
+without following one. A mkdir or a create failing because the name is taken -- two names one under a file system's case
+folding -- or a segment is too long for the file system skips that file, or every file under that directory, counted
+name; any other failure is exit 2. A path segment named, in any case, .gitignore, .ignore or .rgignore -- which a search
+tool would honour, hiding other files -- or .svn, .hg, .bzr, .jj or .sl -- which the Grep tool passes over wherever they
+stand -- is written with .exported appended. The contents come raw from one `cat-file --batch`, by object id -- no
+filter and no textconv runs -- each header naming a blob of the size the listing gave, else exit 2, or, where it says
+the clone lacks the blob, blob-absent, the partial --out left and no manifest written; where it runs past 300 seconds
+export refuses, exit 3, timeout, the partial --out left for the caller to remove and no manifest written. It writes
+--manifest last, created exclusively without following a link: for each file written, in tree order, its path as written
+and its repository path, the first relative to --out and the second to the clone's top level, each followed by a NUL --
+the two equal but for a renamed segment. It checks nothing out, fetches nothing, and leaves the clone's index and
+working tree alone. It prints {"files": <n>, "bytes": <n>, "skipped": {"link": <n>, "submodule": <n>, "other": <n>,
+"name": <n>, "large": <n>}, "paths": {<p>: "exported"|"absent"|"skipped"}}: files and bytes those written; each --path
+exported where it, or a path under it, is in the manifest, absent where the listing holds neither, and skipped
+otherwise, a --path compared as git reads a pathspec (./, // and /./ collapsed, . the whole tree, a trailing / or /. a
+directory alone). On exit 3 it prints {"refused": "<why>", "files": <n>|null, "bytes": <n>|null}, <why> commit-absent,
+blob-absent, over-cap or timeout, the counts those of the files it would write, null for commit-absent and blob-absent.
 
-What it prints of the backlog, a ref or an argument is line numbers, counts, fixed words, and values that passed a
-class test: a unit id in the unit-id class, a branch name in the branch class, the schema version's digits. A value
-that fails is counted, never printed, not even in an error. Outside --selftest it opens no file but the backlog and
-writes nothing but the backlog, and it runs git as an argument list, never a shell, with a 30-second timeout per
-call, in its own environment less every variable whose name starts with GIT_, plus GIT_TERMINAL_PROMPT=0,
-GIT_OPTIONAL_LOCKS=0 and GIT_NO_LAZY_FETCH=1. Git's stderr is never printed.
+The arguments are tested before anything is read or run: --id against the unit-id class; --walkthrough against the same
+class, less every value YAML reads, written plain as edit writes it, as something other than a string -- a null,
+boolean, integer, float or date of YAML 1.1 or of YAML 1.2's core schema, such as null, true, y, 017, 0x1f, 1_000, 1.5,
+1e3 or 2026-11-18 -- which would not read back as an id, null as no walkthrough at all (the refusal is a little wider,
+refusing a few spellings of digits, _ and . that YAML reads as strings, such as 0_8 or 2026-1-5); --base against the
+branch class; --status, --from and --block against ^[a-z][a-z-]{0,31}$, less the words YAML reads as something other
+than a string (null, true, false, yes, no, on, off, y, n); --page-path against ^[A-Za-z0-9_][A-Za-z0-9._/-]*\.md$ with
+no empty, . or .. segment; --repo, a directory, which moved and edit also hold to being a git work tree's top level, and
+export to the absolute-path class -- opening with /, and holding no control character, U+2028, U+2029 or bidirectional
+control -- and to being a clone's top level, as its paragraph says; --commit against ^[0-9a-f]{40}([0-9a-f]{24})?$;
+--out and --manifest against the absolute-path class, each absent by lstat, in a parent that is a real directory by
+lstat, and not naming one entry -- one base name in one directory, however spelled; each --path against the
+relative-path class -- not empty, opening with neither / nor -, holding no .. segment and none of those characters --
+valid UTF-8 and at most 4,096 bytes. --own-moves and --whole take no value; export takes --whole, a --path, or both. A
+flag given twice (--id to moved and --path to export aside), or as --flag=value, refuses the run. <top>/.dev-workflows
+must be a real directory and the backlog a regular file, both by lstat: a symbolic link to either is refused, never
+followed, and the backlog is opened without following a link and never waited on.
 
-Exit 0: it ran, and the answer is the one JSON object on stdout -- for check, the shape in or out. Exit 2: it could
-not run -- an argument outside its class, a usage error, --repo no directory or no work tree's top level,
-.dev-workflows or the backlog refused as above or unreadable, git not run or not answering where moved must have an
-answer (HEAD, the base, the branch list), the working backlog out of shape or not holding an --id once (moved), a
-write that failed (the backlog unchanged), or an internal error; stdout is empty and stderr holds one line,
-"backlog-lines: not run (<why>)", <why> fixed text. Three exits 2 follow edit's write, each with a <why> of its own: a
-write -- the edit's or its undo's -- not reading back as written; an undo not written, since the backlog no longer
-held the edit's bytes but another writer's; and an undo that failed on its own write, the backlog then read again and
-found to hold the edit's bytes exactly -- where that read finds other bytes, the undo counts as blocked, and where it
-fails, as a write not reading back. Exit 3: edit refused on the file's content before writing; the file is untouched.
+What it prints of the backlog, a ref or an argument is line numbers, counts, fixed words, and values that passed a class
+test: a unit id in the unit-id class, a branch name in the branch class, the schema version's digits, a --path in the
+relative-path class. A value that fails is counted, never printed, not even in an error. Outside --selftest it opens no
+file but the backlog and those export makes, and writes nothing but the backlog and, for export, the files under --out
+and the file --manifest names; it runs git as an argument list, never a shell, with a 30-second timeout per call --
+export's one cat-file --batch, 300 seconds -- in its own environment less every variable whose name starts with GIT_,
+plus GIT_TERMINAL_PROMPT=0, GIT_OPTIONAL_LOCKS=0 and GIT_NO_LAZY_FETCH=1. Git's stderr is never printed.
+
+Exit 0: it ran, and the answer is the one JSON object on stdout -- for check, the shape in or out. Exit 2: it could not
+run -- an argument outside its class, a usage error, --repo no directory or no work tree's top level, .dev-workflows or
+the backlog refused as above or unreadable, git not run or not answering where moved must have an answer (HEAD, the
+base, the branch list), the working backlog out of shape or not holding an --id once (moved), a write that failed (the
+backlog unchanged), export's own -- --repo no clone's top level, --out or --manifest refused as above, git not listing
+the commit or not giving a blob as it listed it, or a write of the export that failed, a partial --out then left -- or
+an internal error; stdout is empty and stderr holds one line, "backlog-lines: not run (<why>)", <why> fixed text. Three
+exits 2 follow edit's write, each with a <why> of its own: a write -- the edit's or its undo's -- not reading back as
+written; an undo not written, since the backlog no longer held the edit's bytes but another writer's; and an undo that
+failed on its own write, the backlog then read again and found to hold the edit's bytes exactly -- where that read finds
+other bytes, the undo counts as blocked, and where it fails, as a write not reading back. Exit 3: edit refused on the
+file's content before writing, the file untouched; or export refused the commit -- commit-absent, blob-absent or
+over-cap, nothing created, or timeout or a blob-absent its cat-file --batch met, a partial --out left and no manifest.
 Exit 4: edit undone; the file holds the bytes it read. --selftest exits 0 when every case passes and 1 otherwise.
 
 The caller's rule, which fails closed. Any exit but 0, 3 and 4 -- a crash's 1, a signal's -- is read as 2, and so is a
 stdout that is not one JSON object. check or moved exiting anything but 0 is a stop, never a skip: never read as in
-shape, as no duplicate or as nothing moved. edit exiting 3 or 4 ends the unit, the backlog as it was. edit exiting 2
-ends the unit and stops the run, and what the caller then does with the backlog turns on stderr's one line, matched
-whole. Only "backlog-lines: not run (the edit was written and its undo failed on its own write, so the backlog still
-holds the edit, unchecked; restore the backlog from the copy taken before the edit)" has the caller restore the
-backlog from the copy it took before the edit. Every other line -- the read-back and the blocked undo after a write
-among them, an exit 2 before any write, and a crash or a stderr it cannot read -- leaves the backlog as it is, to be
-compared with that copy: restoring there could overwrite another writer's change, and leaving it is the side that
-cannot destroy one.
+shape, as no duplicate or as nothing moved. export exiting 3 leaves that commit unread, and exiting anything else but 0
+-- a 4 among them -- is a stop; either way a partial --out is the caller's to remove with its scratch. edit exiting 3 or
+4 ends the unit, the backlog as it was. edit exiting 2 ends the unit and stops the run, and what the caller then does
+with the backlog turns on stderr's one line, matched whole. Only "backlog-lines: not run (the edit was written and its
+undo failed on its own write, so the backlog still holds the edit, unchecked; restore the backlog from the copy taken
+before the edit)" has the caller restore the backlog from the copy it took before the edit. Every other line -- the
+read-back and the blocked undo after a write among them, an exit 2 before any write, and a crash or a stderr it cannot
+read -- leaves the backlog as it is, to be compared with that copy: restoring there could overwrite another writer's
+change, and leaving it is the side that cannot destroy one.
 
 Python standard library only.
 """
 
 import argparse
 import contextlib
+import errno
 import io
 import json
 import os
+import posixpath
 import re
 import stat
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BACKLOG_DIR = ".dev-workflows"
@@ -138,6 +213,11 @@ REF_CAP = 1024 * 1024  # bytes: a larger backlog on a ref is unreadable
 EXAMINE_CAP = 60  # refs examined at most, newest first
 READ_REFS_CAP = 20  # refs kept and read at most
 GIT_TIMEOUT = 30  # seconds, every git call
+EXPORT_FILE_CAP = 1048576  # bytes: a larger blob is not exported, counted large
+EXPORT_FILES_CAP = 50000  # files: an export that would write more is refused, over-cap
+EXPORT_BYTES_CAP = 536870912  # bytes: an export that would write more is refused, over-cap
+EXPORT_TIMEOUT = 300  # seconds: export's one cat-file --batch
+EXPORT_NAME_CAP = 4096  # bytes: a longer tree name is not exported, counted name; a longer --path is refused
 
 # Every pattern that tests a whole value is used with fullmatch and is ASCII; digits are [0-9].
 UNIT_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", re.ASCII)
@@ -159,7 +239,9 @@ PAGE_PATH_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._/-]*\.md", re.ASCII)
 OBJECT_ID_RE = re.compile(r"[0-9a-f]{40}([0-9a-f]{24})?", re.ASCII)
 BRANCH_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._/@+-]*", re.ASCII)  # read-only-repos section 3's class
 SINGLE_FLAGS = ("--repo", "--base", "--status", "--page-path", "--own-moves", "--from", "--walkthrough",
-                "--block")  # each taken once: a second refuses the run
+                "--block", "--commit", "--out", "--manifest", "--whole")  # each taken once: a second refuses the run
+# backlog-run.md section 3's X: the characters its relative-path and absolute-path classes, and export's names, refuse.
+X_RE = re.compile(r"[\x00-\x1f\x7f-\x9f  ‪-‮⁦-⁩]")
 
 # The reasons, one word each, the paragraph's: --selftest holds this tuple to it.
 REASONS = ("block-scalar", "anchor", "alias", "tag", "tab", "control", "encoding", "unclosed-quote",
@@ -197,6 +279,17 @@ WHY_UNDO_BLOCKED = ("the edit was written, and its undo was not: the backlog no 
                     "another writer's, so nothing was written back; leave the backlog as it is and compare it with "
                     "the copy taken before the edit")
 WHY_INTERNAL = "internal error"
+# export's.
+WHY_REPO_ABS = "--repo is outside the absolute-path class"
+WHY_COMMIT = "--commit is outside the object-id class"
+WHY_OUT = "--out is outside the absolute-path class, already exists, or its parent is not a real directory"
+WHY_MANIFEST = ("--manifest is outside the absolute-path class, already exists, its parent is not a real directory, "
+                "or it is --out")
+WHY_PATH = "--path is outside the relative-path class, is not UTF-8, or is above 4,096 bytes"
+WHY_CLONE = "--repo is not a clone's top level: it holds no .git, or git does not name it its top level"
+WHY_TREE = "git could not list the commit's tree"
+WHY_BLOB = "git did not give a blob of the commit as its listing named it"
+WHY_EXPORT_WRITE = "the export could not be written"
 
 _IO = {"git": 0, "reads": 0, "writes": 0}  # what a run did, for --selftest's "nothing read or written"
 
@@ -810,6 +903,47 @@ def _statuses(blob, ids):
     return got
 
 
+UNKNOWN = "unknown"
+
+
+def _base_moves(top, base_oid, own, ids):
+    """The ids the base itself moved since HEAD's branch left it: each whose status in the base's backlog differs from
+    its working status and from its status at every merge base of HEAD with the base (`git merge-base --all`), no
+    backlog or no entry at a merge base being a status that differs. UNKNOWN where that cannot be told: the base's
+    backlog unreadable as a kept ref's is; no merge base (an orphan branch, a shallow clone), or git failing or timing
+    out on the merge bases; or a merge base's backlog unreadable. An empty set where no id's status there differs from
+    the working one, read before any merge base is, or where a merge base's backlog is the base's own blob."""
+    entry = _tree_entry(top, base_oid)
+    if entry is ERROR:
+        return UNKNOWN
+    if entry is ABSENT:
+        return set()
+    tip = _statuses(_read_blob(top, entry), ids)
+    if tip is None:
+        return UNKNOWN
+    differ = [uid for uid in ids if uid in tip and tip[uid] != own[uid]]
+    if not differ:
+        return set()
+    r = _git(top, "merge-base", "--all", "HEAD", base_oid)
+    if r is None or r[0] != 0:
+        return UNKNOWN
+    forks = r[1].decode("ascii", "replace").split()
+    if not forks or not all(OBJECT_ID_RE.fullmatch(f) for f in forks):
+        return UNKNOWN
+    entries = [_tree_entry(top, fork) for fork in forks]
+    if entry in entries:  # the base's backlog is a merge base's: it moved nothing since
+        return set()
+    if ERROR in entries:
+        return UNKNOWN
+    at_forks = []
+    for fork_entry in entries:
+        got = {} if fork_entry is ABSENT else _statuses(_read_blob(top, fork_entry), differ)
+        if got is None:
+            return UNKNOWN
+        at_forks.append(got)
+    return {uid for uid in differ if all(tip[uid] != at.get(uid) for at in at_forks)}
+
+
 def cmd_moved(top, base, ids, own_moves=False):
     _require_top(top)
     data, _ = _read_backlog(top)
@@ -827,10 +961,11 @@ def cmd_moved(top, base, ids, own_moves=False):
     if head is None or head[0] not in (0, 1):
         raise NotRun(WHY_HEAD)
     head_ref = head[1].decode("utf-8", "surrogateescape").strip() if head[0] == 0 else None
-    base_oid = None
-    for ref in ("refs/remotes/origin/" + base, "refs/heads/" + base):
+    base_oid = base_name = None
+    for ref, name in (("refs/remotes/origin/" + base, "origin/" + base), ("refs/heads/" + base, base)):
         base_oid = _oid(_git(top, "rev-parse", "--verify", "--quiet", "--end-of-options", ref + "^{commit}"))
         if base_oid is not None:
+            base_name = name
             break
     if base_oid is None:
         raise NotRun(WHY_NO_BASE)
@@ -857,6 +992,31 @@ def cmd_moved(top, base, ids, own_moves=False):
             continue
         remaining.append((oid, short))
     moved, unreadable, examined, kept = {}, [], 0, 0
+    by_base = _base_moves(top, base_oid, own, ids)
+    if by_base is UNKNOWN:
+        unreadable.append(base_name)
+    else:
+        for uid in by_base:
+            moved[uid] = [base_name]
+    base_moved = {uid: list(names) for uid, names in moved.items()}
+    base_unreadable = list(unreadable)
+    # A local <base> holding commits origin/<base> lacks -- one that is no ancestor of it, read only where the base
+    # resolved as origin/<base> and HEAD is not on the local <base> -- is read as the base is, so a move made there and
+    # not pushed is seen. A local <base> that is an ancestor of origin/<base> holds nothing origin/<base> lacks.
+    if base_name != base and head_ref != "refs/heads/" + base:
+        local_oid = _oid(_git(top, "rev-parse", "--verify", "--quiet", "--end-of-options",
+                              "refs/heads/" + base + "^{commit}"))
+        if local_oid is not None and local_oid != base_oid:
+            behind = _git(top, "merge-base", "--is-ancestor", local_oid, base_oid)
+            by_local = UNKNOWN if behind is None or behind[0] not in (0, 1) else (
+                set() if behind[0] == 0 else _base_moves(top, local_oid, own, ids))
+            if by_local is UNKNOWN:
+                unreadable.append(base)
+                base_unreadable.append(base)
+            else:
+                for uid in by_local:
+                    moved.setdefault(uid, []).append(base)
+                    base_moved.setdefault(uid, []).append(base)
     for oid, name in remaining:
         if examined == EXAMINE_CAP or kept == READ_REFS_CAP:
             break
@@ -879,8 +1039,10 @@ def cmd_moved(top, base, ids, own_moves=False):
         for uid, status in theirs.items():
             if status != own[uid] and status != at_base.get(uid):
                 moved.setdefault(uid, []).append(name)
-    return 0, {"moved": {uid: moved[uid] for uid in ids if uid in moved}, "unreadable": unreadable, "read": kept,
-               "more": len(remaining) - examined, "names_outside_class": outside}
+    return 0, {"moved": {uid: moved[uid] for uid in ids if uid in moved}, "unreadable": unreadable,
+               "base": {"moved": {uid: base_moved[uid] for uid in ids if uid in base_moved},
+                        "unreadable": base_unreadable},
+               "read": kept, "more": len(remaining) - examined, "names_outside_class": outside}
 
 
 # ---- edit ----
@@ -1073,6 +1235,399 @@ def cmd_edit(top, uid, status, page_path, from_status=None, walkthrough=None, bl
     return 4, dict({"undone": why}, **result)
 
 
+# ---- export ----
+
+XGIT = ("git", "-c", "safe.bareRepository=explicit", "-C")  # every git call export makes in a source repository
+# A search tool reads the first three as rules that hide other files, and the Grep tool passes over the other five
+# wherever they stand: a segment of any of these names, in any case, is written with RENAMED_SUFFIX appended.
+RENAMED = (b".gitignore", b".ignore", b".rgignore", b".svn", b".hg", b".bzr", b".jj", b".sl")
+RENAMED_SUFFIX = b".exported"
+SKIP_ERRNOS = (errno.EEXIST, errno.ENAMETOOLONG)  # a name taken under case folding, or a segment too long: skipped
+_NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
+_DIR_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | _NOFOLLOW
+
+
+def _xgit(repo, *args):
+    """_git for a source repository: `git -c safe.bareRepository=explicit -C <repo> <args>`, the same environment,
+    timeout and discarded stderr."""
+    _IO["git"] += 1
+    try:
+        r = subprocess.run([*XGIT, repo, *args], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                           stderr=subprocess.DEVNULL, env=_git_env(), timeout=GIT_TIMEOUT)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return r.returncode, r.stdout
+
+
+def _abs_path(s):
+    """backlog-run.md section 3's absolute-path class: --repo, --out and --manifest."""
+    return s.startswith("/") and X_RE.search(s) is None
+
+
+def _rel_path(s):
+    """backlog-run.md section 3's relative-path class, valid UTF-8 and at most EXPORT_NAME_CAP bytes: --path."""
+    try:
+        size = len(s.encode("utf-8"))
+    except UnicodeEncodeError:
+        return False
+    return (s != "" and s[0] not in "/-" and ".." not in s.split("/") and X_RE.search(s) is None
+            and size <= EXPORT_NAME_CAP)
+
+
+def _open_parent(path, why):
+    """(a descriptor of `path`'s parent, a real directory opened without following a link, and `path`'s base name as
+    bytes), where that base name -- neither empty, . nor .. -- names nothing there by lstat; NotRun(why) otherwise.
+    export makes --out and --manifest relative to these descriptors, so a parent swapped for a link after the test
+    carries nothing elsewhere."""
+    head, base = os.path.split(os.fsencode(path))
+    if base in (b"", b".", b".."):
+        raise NotRun(why)
+    try:
+        fd = os.open(head, _DIR_FLAGS)
+    except OSError:
+        raise NotRun(why)
+    try:
+        os.stat(base, dir_fd=fd, follow_symlinks=False)
+    except FileNotFoundError:
+        return fd, base
+    except OSError:
+        pass
+    os.close(fd)
+    raise NotRun(why)
+
+
+def _fresh(path, why):
+    """NotRun(why) unless `path` is absent by lstat and its parent is a real directory by lstat: _open_parent's test,
+    its descriptor closed."""
+    os.close(_open_parent(path, why)[0])
+
+
+def _same_place(a, b):
+    """Whether the paths `a` and `b`, each in a real directory, name one entry: one base name, in one directory."""
+    (ha, ba), (hb, bb) = os.path.split(os.fsencode(a)), os.path.split(os.fsencode(b))
+    return ba == bb and os.path.samefile(ha, hb)
+
+
+def _name_in_class(raw):
+    """A tree name export writes: strict UTF-8, at most EXPORT_NAME_CAP bytes, no empty, . or .. segment, no segment
+    .git in any case, and no character X_RE names."""
+    if len(raw) > EXPORT_NAME_CAP:
+        return False
+    try:
+        name = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+    return X_RE.search(name) is None and all(s not in ("", ".", "..") and s.lower() != ".git"
+                                             for s in name.split("/"))
+
+
+def _written_segment(seg):
+    """The segment as export writes it: one of RENAMED, in any case, with RENAMED_SUFFIX appended."""
+    return seg + RENAMED_SUFFIX if seg.lower() in RENAMED else seg
+
+
+def _make_dir(name, dfd):
+    """mkdir `name`, mode 0700, in the open directory `dfd`: export's one mkdir, which --selftest wraps."""
+    os.mkdir(name, 0o700, dir_fd=dfd)
+
+
+def _create_file(name, dfd):
+    """A descriptor of the new file `name` in the open directory `dfd`: created exclusively, mode 0600, through no
+    link. export's one create, which --selftest wraps."""
+    return os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | _NOFOLLOW, 0o600, dir_fd=dfd)
+
+
+def _dir_at(root, want, made, failed):
+    """A descriptor of the directory `want`, a tuple of repository segments, under the open directory `root`, each
+    level by its written segment: made here where this export has not made it yet, and opened relative to its
+    parent's descriptor without following a link. None where a level's mkdir fails EEXIST or ENAMETOOLONG -- that
+    level is then in `failed` -- and NotRun on any other failure. A level is keyed by its repository segments, so two
+    that write one name -- a renamed segment beside a committed one already ending .exported -- never share a
+    directory: the second mkdir fails EEXIST."""
+    fd = None
+    try:
+        fd = os.dup(root)
+        for i, seg in enumerate(want):
+            key, name = want[:i + 1], _written_segment(seg)
+            if key not in made:
+                try:
+                    _make_dir(name, fd)
+                except OSError as e:
+                    if e.errno not in SKIP_ERRNOS:
+                        raise
+                    failed.add(key)
+                    return None
+                made.add(key)
+            child = os.open(name, _DIR_FLAGS, dir_fd=fd)
+            os.close(fd)
+            fd = child
+        got, fd = fd, None
+        return got
+    except OSError:
+        raise NotRun(WHY_EXPORT_WRITE)
+    finally:
+        if fd is not None:
+            os.close(fd)
+
+
+class _Stream(Exception):
+    """cat-file --batch did not answer as asked: killed at the timeout, or a header or a body not as listed."""
+
+
+class _Missing(Exception):
+    """cat-file --batch answered that the clone lacks the object."""
+
+
+def _blob(proc, oid, size, fd):
+    """Copy the blob `oid` from the running cat-file --batch into `fd`: the header naming it, a blob of `size` bytes,
+    then its bytes and a line feed. _Missing where the header says the clone lacks it; _Stream where the stream does
+    not answer so; NotRun where `fd` cannot be written."""
+    try:
+        proc.stdin.write(oid + b"\n")
+        proc.stdin.flush()
+        header = proc.stdout.readline(256)
+    except (OSError, ValueError):
+        raise _Stream()
+    if header == oid + b" missing\n":
+        raise _Missing()
+    if header != b"%s blob %d\n" % (oid, size):
+        raise _Stream()
+    left = size
+    while left:
+        try:
+            chunk = proc.stdout.read(min(left, 1 << 20))
+        except (OSError, ValueError):
+            raise _Stream()
+        if not chunk:
+            raise _Stream()
+        view = memoryview(chunk)
+        try:
+            while view:
+                view = view[os.write(fd, view):]
+        except OSError:
+            raise NotRun(WHY_EXPORT_WRITE)
+        left -= len(chunk)
+    try:
+        if proc.stdout.read(1) != b"\n":
+            raise _Stream()
+    except (OSError, ValueError):
+        raise _Stream()
+
+
+def _export_files(repo, keep, out_dir, out_base, skipped):
+    """Make --out, `out_base` in the open directory `out_dir`, mode 0700, and write under it each of `keep` --
+    (repository path, object id, size), in tree order -- by its written path, its contents from one cat-file --batch.
+    ("done", the (written path, repository path, size) of each file written, in tree order); or ("timeout", None)
+    where EXPORT_TIMEOUT passed first, or ("blob-absent", None) where cat-file says the clone lacks a blob, --out then
+    left as it stands. A mkdir or a create failing EEXIST or ENAMETOOLONG skips the file, counted name in `skipped`;
+    any other failure is NotRun."""
+    try:
+        _make_dir(out_base, out_dir)
+        root = os.open(out_base, _DIR_FLAGS, dir_fd=out_dir)
+    except OSError:
+        raise NotRun(WHY_EXPORT_WRITE)
+    _IO["writes"] += 1
+    done, made, failed, dirs, dfd, proc, timer, expired = [], set(), set(), None, None, None, None, []
+    finished = False
+    deadline = time.monotonic() + EXPORT_TIMEOUT
+    try:
+        try:
+            os.fchmod(root, 0o700)
+        except OSError:
+            raise NotRun(WHY_EXPORT_WRITE)
+        if keep:
+            _IO["git"] += 1
+            try:
+                proc = subprocess.Popen([*XGIT, repo, "cat-file", "--batch"], stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=_git_env())
+            except (OSError, subprocess.SubprocessError):
+                raise NotRun(WHY_NO_GIT)
+
+            def expire():
+                expired.append(True)
+                with contextlib.suppress(OSError):
+                    proc.kill()
+            timer = threading.Timer(max(deadline - time.monotonic(), 0), expire)
+            timer.daemon = True
+            timer.start()
+        for name, oid, size in keep:
+            if expired or time.monotonic() >= deadline:
+                return "timeout", None
+            segs = name.split(b"/")
+            base = _written_segment(segs[-1])
+            want = tuple(segs[:-1])
+            if any(want[:i] in failed for i in range(1, len(want) + 1)):
+                skipped["name"] += 1
+                continue
+            if want != dirs:
+                if dfd is not None:
+                    os.close(dfd)
+                    dfd = None
+                dirs = None
+                dfd = _dir_at(root, want, made, failed)
+                if dfd is None:
+                    skipped["name"] += 1
+                    continue
+                dirs = want
+            try:
+                fd = _create_file(base, dfd)
+            except OSError as e:
+                if e.errno not in SKIP_ERRNOS:
+                    raise NotRun(WHY_EXPORT_WRITE)
+                skipped["name"] += 1
+                continue
+            try:
+                _blob(proc, oid, size, fd)
+            except _Missing:
+                return "blob-absent", None
+            except _Stream:
+                if expired or time.monotonic() >= deadline:
+                    return "timeout", None
+                raise NotRun(WHY_BLOB)
+            finally:
+                os.close(fd)
+            done.append((b"/".join([_written_segment(s) for s in segs]), name, size))
+            _IO["writes"] += 1
+        finished = True
+        return "done", done
+    finally:
+        if timer is not None:
+            timer.cancel()
+        if proc is not None:
+            with contextlib.suppress(OSError, ValueError):
+                proc.stdin.close()
+            if not finished:  # a timeout or a failure: git may be blocked writing a blob nobody will read
+                with contextlib.suppress(OSError):
+                    proc.kill()
+            try:
+                proc.wait(timeout=GIT_TIMEOUT)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait()
+            with contextlib.suppress(OSError, ValueError):
+                proc.stdout.close()
+        for fd in (dfd, root):
+            if fd is not None:
+                with contextlib.suppress(OSError):
+                    os.close(fd)
+
+
+def _path_states(paths, listed, written):
+    """{<p>: exported | absent | skipped} for each --path: exported where it, or a path under it, is a repository
+    path `written` holds; absent where the listing holds neither; skipped otherwise. A path is compared as git reads
+    a pathspec -- ./, // and /./ collapsed, . the whole tree, and a trailing / or /. naming a directory alone."""
+    states = {}
+    for p in paths:
+        raw = p.encode("utf-8")
+        norm, dir_only = posixpath.normpath(raw), raw.endswith((b"/", b"/."))
+
+        def under(name):
+            return norm == b"." or (name == norm and not dir_only) or name.startswith(norm + b"/")
+        states[p] = ("exported" if any(under(n) for n in written) else
+                     "absent" if not any(under(n) for n in listed) else "skipped")
+    return states
+
+
+def _path_max(dfd):
+    """The longest path, in bytes and counting its terminating NUL, the file system under the open directory `dfd`
+    lets a reader open; 4096 where it names no limit."""
+    try:
+        got = os.fpathconf(dfd, "PC_PATH_MAX")
+    except (OSError, ValueError):
+        got = None
+    return got if got is not None and got > 0 else 4096
+
+
+def cmd_export(repo, commit, out, manifest, whole, paths):
+    out_dir = man_dir = None
+    try:
+        out_dir, out_base = _open_parent(out, WHY_OUT)
+        man_dir, man_base = _open_parent(manifest, WHY_MANIFEST)
+        return _export_commit(repo, commit, os.fsencode(out), out_dir, out_base, man_dir, man_base, whole, paths)
+    finally:
+        for fd in (out_dir, man_dir):
+            if fd is not None:
+                with contextlib.suppress(OSError):
+                    os.close(fd)
+
+
+def _export_commit(repo, commit, out, out_dir, out_base, man_dir, man_base, whole, paths):
+    if not os.path.lexists(os.path.join(repo, ".git")):  # before any git call: see the docstring
+        raise NotRun(WHY_CLONE)
+    r = _xgit(repo, "rev-parse", "--show-toplevel")
+    if r is None:
+        raise NotRun(WHY_NO_GIT)
+    top = r[1].rstrip(b"\n")
+    if r[0] != 0 or not top or os.path.realpath(os.fsdecode(top)) != os.path.realpath(repo):
+        raise NotRun(WHY_CLONE)
+    r = _xgit(repo, "cat-file", "-e", commit + "^{commit}")
+    if r is None:
+        raise NotRun(WHY_NO_GIT)
+    if r[0] != 0:
+        return 3, {"refused": "commit-absent", "files": None, "bytes": None}
+    specs = [] if whole else ["--"] + [":(literal)" + p for p in paths]
+    r = _xgit(repo, "ls-tree", "-r", "-z", "-l", "--full-tree", commit, *specs)
+    if r is None or r[0] != 0:
+        raise NotRun(WHY_TREE)
+    path_max = _path_max(out_dir)
+    listed, keep, absent = [], [], False
+    skipped = {"link": 0, "submodule": 0, "other": 0, "name": 0, "large": 0}
+    for record in r[1].split(b"\0"):
+        if not record:
+            continue
+        head, tab, name = record.partition(b"\t")
+        fields = head.split()
+        if not tab or not name or len(fields) != 4:
+            raise NotRun(WHY_TREE)
+        mode, kind, oid, size = fields
+        listed.append(name)
+        if mode == b"120000":
+            skipped["link"] += 1
+        elif mode == b"160000":
+            skipped["submodule"] += 1
+        elif mode not in FILE_MODES or kind != b"blob":
+            skipped["other"] += 1
+        elif not _name_in_class(name):
+            skipped["name"] += 1
+        elif len(out) + 1 + len(b"/".join(_written_segment(s) for s in name.split(b"/"))) >= path_max:
+            skipped["name"] += 1  # written, it could not be opened by its absolute path
+        elif not OBJECT_ID_RE.fullmatch(oid.decode("ascii", "replace")):
+            raise NotRun(WHY_TREE)
+        elif size == b"BAD":  # git could not read the blob's size: a partial clone that lacks it
+            absent = True
+        elif not size.isdigit():
+            raise NotRun(WHY_TREE)
+        elif int(size) > EXPORT_FILE_CAP:
+            skipped["large"] += 1
+        else:
+            keep.append((name, oid, int(size)))
+    if absent:
+        return 3, {"refused": "blob-absent", "files": None, "bytes": None}
+    total = sum(size for _, _, size in keep)
+    if len(keep) > EXPORT_FILES_CAP or total > EXPORT_BYTES_CAP:
+        return 3, {"refused": "over-cap", "files": len(keep), "bytes": total}
+    how, done = _export_files(repo, keep, out_dir, out_base, skipped)
+    if how == "timeout":
+        return 3, {"refused": "timeout", "files": len(keep), "bytes": total}
+    if how == "blob-absent":
+        return 3, {"refused": "blob-absent", "files": None, "bytes": None}
+    try:  # last, so a manifest exists only beside a whole export
+        fd = os.open(man_base, os.O_WRONLY | os.O_CREAT | os.O_EXCL | _NOFOLLOW, 0o600, dir_fd=man_dir)
+    except OSError:
+        raise NotRun(WHY_EXPORT_WRITE)
+    try:
+        view = memoryview(b"".join(written + b"\0" + name + b"\0" for written, name, _ in done))
+        while view:
+            view = view[os.write(fd, view):]
+    except OSError:
+        raise NotRun(WHY_EXPORT_WRITE)
+    finally:
+        os.close(fd)
+    _IO["writes"] += 1
+    return 0, {"files": len(done), "bytes": sum(size for _, _, size in done), "skipped": skipped,
+               "paths": _path_states(paths, listed, [name for _, name, _ in done])}
+
+
 # ---- the command line ----
 
 class _Parser(argparse.ArgumentParser):
@@ -1125,8 +1680,15 @@ def _args(argv):
     ep.add_argument("--from", dest="from_status")
     ep.add_argument("--walkthrough")
     ep.add_argument("--block")
+    xp = sub.add_parser("export", add_help=False, allow_abbrev=False)
+    xp.add_argument("--repo")
+    xp.add_argument("--commit")
+    xp.add_argument("--out")
+    xp.add_argument("--manifest")
+    xp.add_argument("--whole", action="store_true")
+    xp.add_argument("--path", action="append")
     a = ap.parse_args(argv)
-    if a.verb not in ("check", "moved", "edit") or not a.repo:
+    if a.verb not in ("check", "moved", "edit", "export") or not a.repo:
         raise NotRun(WHY_USAGE)
     if a.verb == "check":
         checks = []
@@ -1134,7 +1696,7 @@ def _args(argv):
         if a.base is None or not a.id:
             raise NotRun(WHY_USAGE)
         checks = [(all(_unit_id(i) for i in a.id), WHY_ID), (BRANCH_RE.fullmatch(a.base) is not None, WHY_BASE)]
-    else:
+    elif a.verb == "edit":
         if a.status is None or not a.id or len(a.id) != 1:
             raise NotRun(WHY_USAGE)
         checks = [(_unit_id(a.id[0]), WHY_ID),
@@ -1143,6 +1705,14 @@ def _args(argv):
                   (a.from_status is None or _status(a.from_status), WHY_FROM),
                   (a.walkthrough is None or _walkthrough(a.walkthrough), WHY_WALKTHROUGH),
                   (a.block is None or _status(a.block), WHY_BLOCK)]
+    else:
+        if a.commit is None or a.out is None or a.manifest is None or not (a.whole or a.path):
+            raise NotRun(WHY_USAGE)
+        checks = [(_abs_path(a.repo), WHY_REPO_ABS),
+                  (OBJECT_ID_RE.fullmatch(a.commit) is not None, WHY_COMMIT),
+                  (_abs_path(a.out), WHY_OUT),
+                  (_abs_path(a.manifest), WHY_MANIFEST),
+                  (all(_rel_path(p) for p in a.path or ()), WHY_PATH)]
     for ok, why in checks:
         if not ok:
             raise NotRun(why)
@@ -1152,7 +1722,13 @@ def _args(argv):
         return cmd_check, (a.repo,)
     if a.verb == "moved":
         return cmd_moved, (a.repo, a.base, list(dict.fromkeys(a.id)), a.own_moves)
-    return cmd_edit, (a.repo, a.id[0], a.status, a.page_path, a.from_status, a.walkthrough, a.block)
+    if a.verb == "edit":
+        return cmd_edit, (a.repo, a.id[0], a.status, a.page_path, a.from_status, a.walkthrough, a.block)
+    _fresh(a.out, WHY_OUT)
+    _fresh(a.manifest, WHY_MANIFEST)
+    if _same_place(a.out, a.manifest):
+        raise NotRun(WHY_MANIFEST)
+    return cmd_export, (a.repo, a.commit, a.out, a.manifest, a.whole, list(dict.fromkeys(a.path or ())))
 
 
 def _drop_stdout():
@@ -1198,12 +1774,16 @@ BF_PATH = os.path.join(HERE, os.pardir, "references", "docs-audit", "backlog-for
 FH_PATH = os.path.join(HERE, os.pardir, "references", "finish-and-handoff.md")
 VIS_PATH = os.path.join(HERE, os.pardir, "references", "docs-workflow", "visibility.md")
 DW_PATH = os.path.join(HERE, os.pardir, "commands", "docs-write.md")
+DV_PATH = os.path.join(HERE, os.pardir, "commands", "docs-verify.md")
 BR_PATH = os.path.join(HERE, os.pardir, "references", "docs-iteration", "backlog-run.md")
 BF_LEAD = "**The line shape a backlog run reads.**"
 # backlog-run.md's two marker programs, section 10.1's read and section 10.2's test, find the page-level marker in
-# evidence-contract section 3 by this phrase; /docs-write runs them at its Phase 0 and Phase 9.
+# evidence-contract section 3 by this phrase; /docs-write runs them at its Phase 0 and Phase 9, and /docs-verify at
+# its Phase 0 and its Phases 1 and 4. docs-verify.md's own marker program, which removes the marker, finds it by the
+# same phrase.
 EC_MARKER_PHRASE = "this page-level marker, character for character: "
-# An internal page's first line after its frontmatter, which backlog-run.md's section 10.2 program matches as page text.
+# An internal page's first line after its frontmatter, which backlog-run.md's section 10.2 program, and docs-verify.md's
+# marker program and frontmatter program, match as page text.
 VISIBILITY_MARKER = "<!-- docs-visibility: internal -->"
 MINI = ("schema_version: 1\n"                          # 1
         "units:\n"                                     # 2
@@ -1254,10 +1834,13 @@ def _get(top):
         return fh.read()
 
 
-def _fx(cwd, *args):
-    """A fixture's git command, its stdout; HOME is the case's empty directory, so no user configuration is read."""
+def _fx(cwd, *args, date=None):
+    """A fixture's git command, its stdout; HOME is the case's empty directory, so no user configuration is read. A
+    `date` (seconds since the epoch) fixes the author and committer dates, for a fixture whose shape turns on them."""
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
     env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_TERMINAL_PROMPT": "0"})
+    if date is not None:
+        env.update({"GIT_AUTHOR_DATE": "@%d +0000" % date, "GIT_COMMITTER_DATE": "@%d +0000" % date})
     r = subprocess.run(["git", "-c", "user.name=selftest", "-c", "user.email=selftest@example.invalid",
                         "-c", "init.defaultBranch=main", "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false",
                         *args], cwd=cwd, env=env, check=True, stdin=subprocess.DEVNULL, capture_output=True)
@@ -1338,10 +1921,22 @@ def _moved(top, *ids, base="main", own_moves=False):
     return _call(argv)
 
 
-def _moved_ok(top, *ids, base="main", own_moves=False):
+def _moved_ok(top, *ids, base="main", own_moves=False, bases=None):
+    """moved's object less its `base` member, which is checked here: against `bases`, given as {"moved": ...,
+    "unreadable": ...}, or, where none is given, against the entries of `moved` and `unreadable` named <base> or
+    origin/<base> -- right only where no ref is printed under a base's name, which a case that makes one says."""
     code, out, err = _moved(top, *ids, base=base, own_moves=own_moves)
     _eq((code, err), (0, ""), "moved's exit and stderr")
-    return _obj(out)
+    obj = _obj(out)
+    _true("base" in obj, "moved prints a base member")
+    got = obj.pop("base")
+    if bases is None:
+        names = (base, "origin/" + base)
+        bases = {"moved": {uid: [n for n in refs if n in names] for uid, refs in obj["moved"].items()
+                           if any(n in names for n in refs)},
+                 "unreadable": [n for n in obj["unreadable"] if n in names]}
+    _eq(got, bases, "moved's base member")
+    return obj
 
 
 def _edit(top, uid, status, page_path=None, frm=None, walkthrough=None, block=None):
@@ -1612,12 +2207,12 @@ def case_moved_on_branch(tmp):
     _fx(top, "switch", "-q", "feat/a")  # HEAD's own branch is never examined: the working backlog is its
     _eq(_moved_ok(top, "U-001"), {"moved": {}, "unreadable": [], "read": 0, "more": 0, "names_outside_class": 0},
         "HEAD's branch")
-    _fx(top, "switch", "-q", "-c", "ahead", "main")  # a local <base> ahead of origin/<base> is never examined either
+    _fx(top, "switch", "-q", "-c", "ahead", "main")  # a local <base> ahead of origin/<base> is read as the base is
     _fx(top, "switch", "-q", "main")
     _put(top, DRAFTED)
     _fx(top, "commit", "-qam", "unpushed move on main")
     _fx(top, "switch", "-q", "ahead")
-    _eq(_moved_ok(top, "U-001")["moved"], {"U-001": ["feat/a"]}, "a local base ahead of its remote")
+    _eq(_moved_ok(top, "U-001")["moved"], {"U-001": ["main", "feat/a"]}, "a local base ahead of its remote")
     _fx(top, "switch", "-q", "main")
     _fx(top, "reset", "-q", "--hard", "origin/main")
     _fx(top, "switch", "-q", "-c", "work")
@@ -1625,8 +2220,9 @@ def case_moved_on_branch(tmp):
     _fx(top, "merge", "-q", "--no-ff", "-m", "merge feat/a", "feat/a")
     _fx(top, "push", "-q", "origin", "main")
     _fx(top, "switch", "-q", "work")
-    _eq(_moved_ok(top, "U-001"), {"moved": {}, "unreadable": [], "read": 0, "more": 0, "names_outside_class": 0},
-        "merged into origin/main")
+    # work was cut before the merge, so origin/main moved U-001 after work left it: the base names it.
+    _eq(_moved_ok(top, "U-001"), {"moved": {"U-001": ["origin/main"]}, "unreadable": [], "read": 0, "more": 0,
+                                  "names_outside_class": 0}, "merged into origin/main")
 
 
 def case_ref_name_outside_class(tmp):
@@ -1634,7 +2230,8 @@ def case_ref_name_outside_class(tmp):
     _branch_with(top, "x$(id)", DRAFTED)
     code, out, err = _moved(top, "U-001")
     _eq((code, err), (0, ""))
-    _eq(_obj(out), {"moved": {}, "unreadable": [], "read": 0, "more": 0, "names_outside_class": 1})
+    _eq(_obj(out), {"moved": {}, "unreadable": [], "base": {"moved": {}, "unreadable": []}, "read": 0, "more": 0,
+                    "names_outside_class": 1})
     _true("$(" not in out + err and "x$" not in out + err, "the name is printed nowhere")
 
 
@@ -1932,9 +2529,10 @@ def case_edit_undo_failed(tmp):
 def case_marker_phrase_pinned(tmp):
     """The backlog runs read the page-level marker out of evidence-contract section 3 by one phrase, in
     backlog-run.md's two programs -- section 10.1's read and section 10.2's test, which /docs-write runs at its Phase 0
-    and at its Phase 9. The phrase stands in that section directly before the marker, once, and in each of the two
-    programs, so a reword of either side turns the build red, not a run after its review; docs-write.md holds no
-    program of its own that searches by it."""
+    and at its Phase 9, and /docs-verify at its Phase 0 and its Phases 1 and 4 -- and in docs-verify.md's one program
+    of its own, the marker program that removes it at its Phase 6 and tests for it at its Phase 10. The phrase stands
+    in that section directly before the marker, once, and in each of the three programs, so a reword of either side
+    turns the build red, not a run after its review; docs-write.md holds no program of its own that searches by it."""
     with open(os.path.join(HERE, os.pardir, "references", "docs-audit", "evidence-contract.md"), encoding="utf-8") as fh:
         ec = fh.read()
     sec = ec[ec.index("\n## 3. "):ec.index("\n## 4. ")]
@@ -1949,6 +2547,11 @@ def case_marker_phrase_pinned(tmp):
     with open(DW_PATH, encoding="utf-8") as fh:
         dw = fh.read()
     _eq(dw.count("character for character: `("), 0, "docs-write holds no program of its own that searches by it")
+    with open(DV_PATH, encoding="utf-8") as fh:
+        dv = fh.read()
+    _eq(dv.count('r"' + EC_MARKER_PHRASE + '`(\\[NEEDS CLARIFICATION: [^`]*\\])`"'), 1,
+        "docs-verify's marker program searches by the phrase, byte for byte")
+    _eq(dv.count("character for character: `("), 1, "docs-verify holds that one program searching by it, and no other")
 
 
 def case_edit_undo_failed_over_another_writer(tmp):
@@ -2171,8 +2774,8 @@ def case_own_moves_merge_base_unreadable(tmp):
 
 
 def case_own_moves_unchanged_without_flag(tmp):
-    """Without --own-moves, moved prints what it printed before the flag existed, byte for byte: every key, a moved
-    unit, an unreadable ref and a name outside the class, pinned to a literal."""
+    """Without --own-moves, moved prints what it printed before the flag existed, byte for byte, with the `base` member
+    B48 added: every key, a moved unit, an unreadable ref and a name outside the class, pinned to a literal."""
     top = _open_draft_repo(tmp)
     _branch_with(top, "bad-shape", DRAFTED.replace("    roles: [customer]\n", "    roles: |\n"))
     _branch_with(top, "x$(id)", DRAFTED)
@@ -2190,10 +2793,275 @@ def case_own_moves_unchanged_without_flag(tmp):
              '  "unreadable": [\n'
              '    "bad-shape"\n'
              '  ],\n'
+             '  "base": {\n'
+             '    "moved": {},\n'
+             '    "unreadable": []\n'
+             '  },\n'
              '  "read": 3,\n'
              '  "more": 0,\n'
              '  "names_outside_class": 1\n'
              '}\n', "stdout, byte for byte")
+
+
+def _note(top, text, date=None):
+    """A commit on the branch HEAD is on that changes a file other than the backlog."""
+    with open(os.path.join(top, "NOTES"), "a", encoding="utf-8") as fh:
+        fh.write(text + "\n")
+    _fx(top, "add", "-A", date=date)
+    _fx(top, "commit", "-qm", text, date=date)
+
+
+def case_base_merge_commit(tmp):
+    """M1: `stale` is cut, then docs/w-u-001 drafts U-001 and main merges it by a merge commit, so that branch is merged
+    and examined no more. Standing on stale, the base moved U-001 after stale left it: the base names it."""
+    top = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "branch", "stale")
+    _branch_with(top, "docs/w-u-001", _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "merge", "-q", "--no-ff", "-m", "merge docs/w-u-001", "docs/w-u-001")
+    _fx(top, "switch", "-q", "stale")
+    _eq(_moved_ok(top, "U-001", "U-002"), _moved_json({"U-001": ["main"]}), "flag or not")
+    _eq(_moved_ok(top, "U-001", "U-002", own_moves=True), _moved_json({"U-001": ["main"]}), "with --own-moves")
+
+
+def case_base_squash_branch_deleted(tmp):
+    """M3: as M1, merged by a squash and the drafting branch deleted, so no other ref holds the move: the base names
+    U-001, the one ref that does."""
+    top = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "branch", "stale")
+    _branch_with(top, "docs/w-u-001", _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "merge", "-q", "--squash", "docs/w-u-001")
+    _fx(top, "commit", "-qm", "squash docs/w-u-001")
+    _fx(top, "branch", "-q", "-D", "docs/w-u-001")
+    _fx(top, "switch", "-q", "stale")
+    _eq(_moved_ok(top, "U-001", "U-002"), _moved_json({"U-001": ["main"]}))
+
+
+def case_base_own_draft_not_moved(tmp):
+    """M7: the branch HEAD is on drafted U-001 itself, unmerged; the base's status differs from the working one but is
+    its status at the merge base, so the base moved nothing: a command verifying that branch's own draft takes it."""
+    top = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "switch", "-q", "-c", "docs/docs-write-u-001")
+    _put(top, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "commit", "-qam", "docs: draft U-001")
+    _eq(_moved_ok(top, "U-001", own_moves=True), _moved_json({}), "with --own-moves")
+    _eq(_moved_ok(top, "U-001"), _moved_json({}), "without it")
+
+
+def case_base_reset_on_branch_not_moved(tmp):
+    """M8: main holds U-001 drafted; a branch cut from it moves U-001 back to missing by hand, to redraft it. The base
+    has not moved U-001 since the branch left it, so it names nothing."""
+    top = _repo(tmp, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "switch", "-q", "-c", "redo-u-001")
+    _put(top, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "commit", "-qam", "U-001 back to missing, to redraft")
+    _eq(_moved_ok(top, "U-001", "U-002"), _moved_json({}))
+
+
+def case_base_criss_cross_every_merge_base(tmp):
+    """R5b: main and w merge each other crosswise, so they share two merge bases -- M1, where main drafted U-001, and
+    W1, a commit of w's dated after it, which `git merge-base` alone picks. w then resets U-001 to missing. The base
+    holds U-001 at M1's status, so it has not moved it since w took M1: read at every merge base, it names nothing."""
+    top = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")))
+    _put(top, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "add", "-A", date=1700000100)
+    _fx(top, "commit", "-qm", "M1: U-001 drafted on main", date=1700000100)
+    m1 = _fx(top, "rev-parse", "HEAD").strip()
+    _fx(top, "switch", "-q", "-c", "w", "HEAD~1")
+    _note(top, "W1, dated after M1", date=1700000200)
+    w1 = _fx(top, "rev-parse", "HEAD").strip()
+    _fx(top, "switch", "-q", "main")
+    _fx(top, "merge", "-q", "--no-ff", "-m", "M2: merge W1", w1, date=1700000300)
+    _fx(top, "switch", "-q", "w")
+    _fx(top, "merge", "-q", "--no-ff", "-m", "W2: merge M1", m1, date=1700000400)
+    _put(top, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "add", "-A", date=1700000500)
+    _fx(top, "commit", "-qm", "W3: U-001 reset to missing, to redraft", date=1700000500)
+    _eq(sorted(_fx(top, "merge-base", "--all", "HEAD", "main").split()), sorted([m1, w1]), "two merge bases")
+    _eq(_fx(top, "merge-base", "HEAD", "main").strip(), w1, "the one `git merge-base` alone picks")
+    _eq(_moved_ok(top, "U-001"), _moved_json({}))
+
+
+def case_base_shallow_unknown(tmp):
+    """R6: a depth-1 clone holds no merge base of its branches with origin/main. Where the base's status differs from
+    the working one, whether the base moved the unit cannot be told: the base is unreadable and names nothing -- for
+    the branch's own draft (U-002), and for a unit origin/main did draft (U-001) alike."""
+    seed = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")), "seed")
+    _fx(seed, "branch", "redo")
+    _put(seed, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(seed, "commit", "-qam", "U-001 drafted on main")
+    _fx(seed, "switch", "-q", "redo")
+    _put(seed, _units(("U-001", "missing"), ("U-002", "drafted")))
+    _fx(seed, "commit", "-qam", "redo drafts U-002")
+    _fx(seed, "switch", "-q", "main")
+    _note(seed, "main moves on")
+    top = os.path.join(tmp, "top")
+    _fx(tmp, "-c", "protocol.file.allow=always", "clone", "-q", "--depth", "1", "--no-single-branch",
+        "file://" + seed, top)
+    _fx(top, "switch", "-q", "redo")
+    for ids, own in ((("U-002",), True), (("U-001",), False)):
+        res = _moved_ok(top, *ids, own_moves=own)
+        _eq((res["moved"], res["unreadable"]), ({}, ["origin/main"]), "%s" % (ids,))
+
+
+def case_base_orphan_unknown(tmp):
+    """R7: an orphan branch shares no history with the base, so no merge base tells whether the base moved a unit
+    whose statuses differ: the base is unreadable and names nothing."""
+    top = _repo(tmp, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "switch", "-q", "--orphan", "w")
+    _put(top, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "add", "-A")
+    _fx(top, "commit", "-qm", "w's own backlog")
+    _eq(_moved_ok(top, "U-001", own_moves=True), _moved_json({}, unreadable=["main"]))
+
+
+def case_base_fork_backlog_unreadable(tmp):
+    """R10: the merge base's backlog holds U-001 twice, so its status there cannot be read: the base is unreadable and
+    names nothing, never falling back to comparing the base with the working backlog alone."""
+    top = _repo(tmp, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _put(top, _units(("U-001", "drafted"), ("U-002", "missing")).replace(
+        "threshold: 2\n", "  - id: U-001\n    status: drafted\nthreshold: 2\n"))
+    _fx(top, "commit", "-qam", "U-001 twice at the fork")
+    _fx(top, "switch", "-q", "-c", "w")
+    _put(top, _units(("U-001", "missing"), ("U-002", "missing")))
+    _fx(top, "commit", "-qam", "w repairs the backlog, U-001 missing")
+    _fx(top, "switch", "-q", "main")
+    _put(top, _units(("U-001", "drafted"), ("U-002", "missing")))
+    _fx(top, "commit", "-qam", "main repairs it, U-001 drafted")
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001"), _moved_json({}, unreadable=["main"]))
+
+
+THREE = (("U-001", "missing"), ("U-002", "missing"), ("U-003", "missing"))
+
+
+def _cloned(tmp, data):
+    """A clone at <tmp>/top of a bare origin whose one commit holds the backlog `data`, and a second clone at
+    <tmp>/other, which moves origin/main without touching top's local main."""
+    seed = _repo(tmp, data, "seed")
+    up = os.path.join(tmp, "up.git")
+    _fx(tmp, "clone", "-q", "--bare", seed, up)
+    top, other = os.path.join(tmp, "top"), os.path.join(tmp, "other")
+    _fx(tmp, "clone", "-q", up, top)
+    _fx(tmp, "clone", "-q", up, other)
+    return top, other
+
+
+def _commit_units(top, message, *pairs):
+    """A commit on the branch HEAD is on that sets the backlog to one entry per (id, status)."""
+    _put(top, _units(*pairs))
+    _fx(top, "add", "-A")
+    _fx(top, "commit", "-qm", message)
+
+
+def case_local_base_unpushed_move(tmp):
+    """L1: w is cut, then the local main drafts U-001 and is not pushed, so origin/main lacks the move. origin/main
+    moved nothing since w left it; the local main moved U-001: it is named, after the base, by its local name."""
+    top, _ = _cloned(tmp, _units(*THREE))
+    _fx(top, "branch", "w")
+    _commit_units(top, "U-001 drafted on the local main, unpushed", ("U-001", "drafted"), *THREE[1:])
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({"U-001": ["main"]}))
+    _eq(_moved_ok(top, "U-001", own_moves=True), _moved_json({"U-001": ["main"]}), "--own-moves reads it alike")
+
+
+def case_local_base_diverged(tmp):
+    """L3: the local main drafts U-002, unpushed; origin/main drafts U-001 after w was cut. Each names the move it
+    holds, origin/main first."""
+    top, other = _cloned(tmp, _units(*THREE))
+    _fx(top, "branch", "w")
+    _commit_units(top, "U-002 drafted on the local main", THREE[0], ("U-002", "drafted"), THREE[2])
+    _commit_units(other, "U-001 drafted on origin", ("U-001", "drafted"), *THREE[1:])
+    _fx(other, "push", "-q", "origin", "main")
+    _fx(top, "fetch", "-q", "origin")
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({"U-001": ["origin/main"], "U-002": ["main"]}))
+
+
+def case_local_base_behind_not_read(tmp):
+    """L2c: w is cut; the local main takes origin/main's draft of U-001, and origin/main then resets U-001 to missing
+    by hand. A local main that is an ancestor of origin/main holds no move origin/main lacks, so it is not read --
+    read, it would name U-001, which origin/main holds as missing."""
+    top, other = _cloned(tmp, _units(*THREE))
+    _fx(top, "branch", "w")
+    _commit_units(other, "U-001 drafted on origin", ("U-001", "drafted"), *THREE[1:])
+    _fx(other, "push", "-q", "origin", "main")
+    _fx(top, "pull", "-q", "--ff-only", "origin", "main")
+    _commit_units(other, "U-001 reset to missing by hand", *THREE)
+    _fx(other, "push", "-q", "origin", "main")
+    _fx(top, "fetch", "-q", "origin")
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({}))
+
+
+def case_local_base_holds_working_branch(tmp):
+    """L5: w drafts U-003 and the local main merges w, unpushed. The move is w's own, at its merge base with the local
+    main, so nothing is named. Then the local main drafts U-001 too: that move, made after it took w, is named."""
+    top, _ = _cloned(tmp, _units(*THREE))
+    _fx(top, "switch", "-q", "-c", "w")
+    _commit_units(top, "w drafts U-003", THREE[0], THREE[1], ("U-003", "drafted"))
+    _fx(top, "switch", "-q", "main")
+    _fx(top, "merge", "-q", "--no-ff", "-m", "merge w on the local main", "w")
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({}), "w's own draft")
+    _fx(top, "switch", "-q", "main")
+    _commit_units(top, "U-001 drafted on the local main", ("U-001", "drafted"), THREE[1], ("U-003", "drafted"))
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({"U-001": ["main"]}), "a move made after it took w")
+
+
+def case_local_base_same_draft_on_origin(tmp):
+    """L9: the local main and origin/main each merge the branch that drafts U-001, and origin/main then resets U-001 to
+    missing by hand; w is cut from origin/main after. w's merge base with the local main holds the draft, so the local
+    main has not moved U-001 since w left it."""
+    top, other = _cloned(tmp, _units(*THREE))
+    _fx(top, "switch", "-q", "-c", "docs/w-u-001")
+    _commit_units(top, "draft U-001", ("U-001", "drafted"), *THREE[1:])
+    _fx(top, "push", "-q", "origin", "docs/w-u-001")
+    _fx(top, "switch", "-q", "main")
+    _fx(top, "merge", "-q", "--no-ff", "-m", "merge docs/w-u-001 on the local main", "docs/w-u-001")
+    _fx(other, "fetch", "-q", "origin")
+    _fx(other, "merge", "-q", "--no-ff", "-m", "merge docs/w-u-001 on origin", "origin/docs/w-u-001")
+    _commit_units(other, "U-001 reset to missing by hand", *THREE)
+    _fx(other, "push", "-q", "origin", "main")
+    _fx(other, "push", "-q", "origin", "--delete", "docs/w-u-001")
+    _fx(top, "fetch", "-q", "--prune", "origin")
+    _fx(top, "branch", "-q", "-D", "docs/w-u-001")
+    _fx(top, "switch", "-q", "-c", "w", "origin/main")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({}))
+
+
+def case_local_base_head_on_it(tmp):
+    """L6: HEAD on the local main, ahead of origin/main by a draft of U-001. The working backlog is the local main's,
+    so it names nothing, and origin/main has moved nothing."""
+    top, _ = _cloned(tmp, _units(*THREE))
+    _commit_units(top, "U-001 drafted on the local main", ("U-001", "drafted"), *THREE[1:])
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({}))
+
+
+def case_local_base_shallow_unknown(tmp):
+    """L10: a depth-1 clone whose local main is ahead of origin/main by a draft of U-001. No merge base tells whether
+    the local main moved it since w left it: the local main is unreadable and names nothing."""
+    seed = _repo(tmp, _units(*THREE), "seed")
+    _fx(seed, "branch", "w")
+    _note(seed, "main moves on")
+    top = os.path.join(tmp, "top")
+    _fx(tmp, "-c", "protocol.file.allow=always", "clone", "-q", "--depth", "1", "--no-single-branch",
+        "file://" + seed, top)
+    _commit_units(top, "U-001 drafted on the local main", ("U-001", "drafted"), *THREE[1:])
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({}, unreadable=["main"], read=1))
+
+
+def case_ref_named_as_a_base(tmp):
+    """F1: with no origin the base is the local main, and a local branch named origin/main -- which git prints as
+    origin/main, no remote-tracking ref shadowing it -- drafts U-001. It is a ref, not a base: moved names it, and its
+    base member names no base, so a caller never takes it for the base by its printed name."""
+    top = _repo(tmp, _units(*THREE))
+    _fx(top, "switch", "-q", "-c", "origin/main")
+    _commit_units(top, "a branch named origin/main drafts U-001", ("U-001", "drafted"), *THREE[1:])
+    _fx(top, "switch", "-q", "-c", "w", "main")
+    _eq(_moved_ok(top, "U-001", bases={"moved": {}, "unreadable": []}),
+        _moved_json({"U-001": ["origin/main"]}, read=1))
 
 
 def case_own_moves_bad_args(tmp):
@@ -2408,10 +3276,571 @@ def case_edit_new_flags_bad_args(tmp):
     _eq((_get(top), _stat(top)), (MINI.encode("utf-8"), before), "untouched")
 
 
+# ---- export ----
+
+def _bytes_of(path):
+    with open(path, "rb") as fh:
+        return fh.read()
+
+
+def _put_files(top, files, execs=()):
+    """Each of `files`, {path: bytes}, under `top` -- a str value is the target of a symbolic link made there -- and
+    each path in `execs` made executable."""
+    for rel, data in files.items():
+        p = os.path.join(top, *rel.split("/"))
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        if isinstance(data, str):
+            os.symlink(data, p)
+        else:
+            with open(p, "wb") as fh:
+                fh.write(data)
+        if rel in execs:
+            os.chmod(p, 0o755)
+
+
+def _src(tmp, files, name="src", execs=()):
+    """A source repository at <tmp>/<name> whose one commit holds `files`, as _put_files writes them; (its path, the
+    commit's object id)."""
+    top = os.path.join(tmp, name)
+    os.makedirs(top)
+    _fx(top, "init", "-q", "-b", "main")
+    _put_files(top, files, execs)
+    _fx(top, "add", "-A")
+    _fx(top, "commit", "-qm", "source")
+    return top, _fx(top, "rev-parse", "HEAD").strip()
+
+
+def _fx_in(cwd, data, *args):
+    """_fx with `data` on git's stdin."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_TERMINAL_PROMPT": "0"})
+    r = subprocess.run(["git", "-c", "user.name=selftest", "-c", "user.email=selftest@example.invalid", *args],
+                       cwd=cwd, env=env, check=True, input=data, capture_output=True)
+    return r.stdout.decode("utf-8", "replace")
+
+
+def _commit_entry(top, mode, oid, path):
+    """A commit on top of HEAD adding the index entry `path`, with `mode` and object `oid`, which no working tree
+    file need hold; the new commit's object id."""
+    _fx(top, "update-index", "--add", "--cacheinfo", "%s,%s,%s" % (mode, oid, path))
+    _fx(top, "commit", "-qm", "an entry")
+    return _fx(top, "rev-parse", "HEAD").strip()
+
+
+def _xdir(tmp):
+    """A new directory to hold an export's --out and --manifest: (it, --out, --manifest)."""
+    d = os.path.join(tmp, "x")
+    os.mkdir(d)
+    return d, os.path.join(d, "out"), os.path.join(d, "out.files")
+
+
+def _export(repo, commit, out, manifest, *flags):
+    return _call(["export", "--repo", repo, "--commit", commit, "--out", out, "--manifest", manifest, *flags])
+
+
+def _export_ok(repo, commit, out, manifest, *flags):
+    """export's JSON object and its stdout, where it exits 0 with an empty stderr."""
+    code, stdout, err = _export(repo, commit, out, manifest, *flags)
+    _eq((code, err), (0, ""), "export's exit and stderr")
+    return _obj(stdout), stdout
+
+
+def _manifest(path):
+    """The manifest's pairs, (written path, repository path) as bytes, its NUL-separated layout checked."""
+    data = _bytes_of(path)
+    if not data:
+        return []
+    _true(data.endswith(b"\0"), "the manifest ends with a NUL")
+    parts = data[:-1].split(b"\0")
+    _eq(len(parts) % 2, 0, "the manifest holds pairs")
+    return list(zip(parts[0::2], parts[1::2]))
+
+
+def _files(out):
+    """{path relative to `out`, as bytes: bytes} of every file under `out`; anything but a directory or a regular
+    file -- a symbolic link among them -- fails the case."""
+    got, root = {}, os.fsencode(out)
+    for dirpath, dirnames, filenames in os.walk(root):
+        for n in dirnames + filenames:
+            p = os.path.join(dirpath, n)
+            st = os.lstat(p)
+            _true(stat.S_ISDIR(st.st_mode) or stat.S_ISREG(st.st_mode), "%r is a directory or a regular file" % p)
+            if stat.S_ISREG(st.st_mode):
+                got[os.path.relpath(p, root)] = _bytes_of(p)
+    return got
+
+
+def _skipped(**counts):
+    return dict({"link": 0, "submodule": 0, "other": 0, "name": 0, "large": 0}, **counts)
+
+
+def case_export_whole_tree(tmp):
+    """--whole over nested directories, an executable and a non-ASCII UTF-8 name: each file byte-equal under --out,
+    mode 0600 in a tree of mode 0700, the manifest pairing each written path with its repository path in tree order,
+    files and bytes right, nothing else written, and the clone's index and working tree untouched -- with a GIT_DIR,
+    GIT_WORK_TREE, GIT_INDEX_FILE and GIT_OBJECT_DIRECTORY in the environment naming another repository, which no git
+    call export makes may read."""
+    files = {"README.md": b"# top\n", "src/app.ts": b"export const x = 1;\r\n", "src/deep/er/mod.py": b"X = 2\n",
+             "bin/run.sh": b"#!/bin/sh\necho hi\n", "docs/café.md": "café — ok\n".encode("utf-8")}
+    top, oid = _src(tmp, files, execs=("bin/run.sh",))
+    _eq(_fx(top, "ls-tree", "HEAD", "bin/run.sh").split(" ")[0], "100755", "the fixture's executable")
+    status = _fx(top, "status", "--porcelain")
+    index = os.path.join(top, ".git", "index")
+    before = (_bytes_of(index), os.stat(index).st_mtime_ns)
+    other, _ = _src(tmp, {"other.txt": b"another repository\n"}, name="other")
+    hostile = {"GIT_DIR": os.path.join(other, ".git"), "GIT_WORK_TREE": other, "GIT_INDEX_FILE": index + ".other",
+               "GIT_OBJECT_DIRECTORY": os.path.join(other, ".git", "objects")}
+    saved = {k: os.environ.get(k) for k in hostile}
+    d, out, man = _xdir(tmp)
+    os.environ.update(hostile)
+    try:
+        obj, _ = _export_ok(top, oid, out, man, "--whole")
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+    _eq(_files(out), {k.encode("utf-8"): v for k, v in files.items()}, "the files written")
+    tree = [p.encode("utf-8") for p in _fx(top, "ls-tree", "-r", "-z", "--name-only", oid).split("\0") if p]
+    _eq(_manifest(man), [(p, p) for p in tree], "the manifest, in tree order")
+    _eq(obj, {"files": 5, "bytes": sum(len(v) for v in files.values()), "skipped": _skipped(), "paths": {}})
+    _eq(sorted(os.listdir(d)), ["out", "out.files"], "nothing else written")
+    for dirpath, dirnames, filenames in os.walk(out):
+        _eq(stat.S_IMODE(os.stat(dirpath).st_mode), 0o700, "%s's mode" % dirpath)
+        for n in filenames:
+            _eq(stat.S_IMODE(os.stat(os.path.join(dirpath, n)).st_mode), 0o600, "%s's mode" % n)
+    _eq((_bytes_of(index), os.stat(index).st_mtime_ns), before, "the clone's index untouched")
+    _eq(_fx(top, "status", "--porcelain"), status, "the clone's working tree untouched")
+
+
+def case_export_links_not_followed(tmp):
+    """A committed link to a file outside the repository, and one to a directory holding files: no path made for
+    either, skipped.link 2, and the file outside -- the sentinel -- and its directory unchanged. A directory export
+    has just made, --out or one under it, swapped for a link to that directory before export opens it: exit 2, and
+    nothing written through the link."""
+    outside = os.path.join(tmp, "outside")
+    os.mkdir(outside)
+    sentinel = os.path.join(outside, "secret.txt")
+    _put_files(outside, {"secret.txt": b"secret\n", "more.txt": b"more\n"})
+    mtime = os.stat(sentinel).st_mtime_ns
+    top, oid = _src(tmp, {"a.txt": b"a\n", "lnfile": sentinel, "lndir": outside})
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    _eq(sorted(os.listdir(out)), ["a.txt"], "no path made for either link")
+    _eq(_files(out), {b"a.txt": b"a\n"}, "the regular file alone")
+    _eq(_manifest(man), [(b"a.txt", b"a.txt")])
+    _eq(obj, {"files": 1, "bytes": 2, "skipped": _skipped(link=2), "paths": {}})
+    _eq((_bytes_of(sentinel), os.stat(sentinel).st_mtime_ns), (b"secret\n", mtime), "the sentinel unchanged")
+    _eq(sorted(os.listdir(outside)), ["more.txt", "secret.txt"], "nothing written outside")
+    top2, oid2 = _src(tmp, {"a.txt": b"a\n", "c/d.txt": b"d\n"}, name="src2")
+    real = _make_dir
+    for victim, base in ((b"c", "o1"), (b"o2", "o2")):  # a directory under --out, and --out itself
+        def swapping(name, dfd):  # another process swaps the new directory for a link before it is opened
+            real(name, dfd)
+            if name == victim:
+                os.rmdir(name, dir_fd=dfd)
+                os.symlink(outside, name, dir_fd=dfd)
+        out2, man2 = os.path.join(d, base), os.path.join(d, base + ".files")
+        code, stdout, err = _with("_make_dir", swapping, lambda: _export(top2, oid2, out2, man2, "--whole"))
+        _refused(code, stdout, err, WHY_EXPORT_WRITE)
+        _eq(sorted(os.listdir(outside)), ["more.txt", "secret.txt"], "%r swapped: nothing written through it" % victim)
+
+
+def case_export_submodule_skipped(tmp):
+    """A gitlink entry: skipped.submodule 1, nothing made for it."""
+    top, first = _src(tmp, {"a.txt": b"a\n"})
+    oid = _commit_entry(top, "160000", first, "vendor/lib")
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    _eq(obj, {"files": 1, "bytes": 2, "skipped": _skipped(submodule=1), "paths": {}})
+    _eq(sorted(os.listdir(out)), ["a.txt"], "nothing made for the submodule")
+
+
+def case_export_name_out_of_class(tmp):
+    """Names holding a newline, a tab and a U+202E: skipped.name 3, none in stdout or the manifest. And a tree a
+    committer built by hand, holding a directory .GIT, which git itself refuses to add: skipped name. A name above
+    4,096 bytes is outside the class; one under it whose path under --out reaches the file system's PATH_MAX, which no
+    reader could open by its absolute path: skipped name."""
+    names = ("new\nline.txt", "tab\there.txt", "bidi‮txt.md")
+    top, oid = _src(tmp, dict({"ok.txt": b"ok\n"}, **{n: b"x\n" for n in names}))
+    d, out, man = _xdir(tmp)
+    obj, stdout = _export_ok(top, oid, out, man, "--whole")
+    _eq(obj, {"files": 1, "bytes": 3, "skipped": _skipped(name=3), "paths": {}})
+    _eq(_files(out), {b"ok.txt": b"ok\n"})
+    raw = _bytes_of(man)
+    for n in names:
+        _true(n.encode("utf-8") not in raw, "%r is not in the manifest" % n)
+        _true(n not in stdout and json.dumps(n)[1:-1] not in stdout, "%r is not in stdout" % n)
+    blob = _fx(top, "rev-parse", oid + ":ok.txt").strip()
+    sub = _fx_in(top, b"100644 blob %s\tconfig\n" % blob.encode(), "mktree").strip()
+    tree = _fx_in(top, b"040000 tree %s\t.GIT\n100644 blob %s\tok.txt\n" % (sub.encode(), blob.encode()),
+                  "mktree").strip()
+    crafted = _fx(top, "commit-tree", "-m", "crafted", tree).strip()
+    out2, man2 = os.path.join(d, "out2"), os.path.join(d, "out2.files")
+    obj, _ = _export_ok(top, crafted, out2, man2, "--whole")
+    _eq((obj["skipped"], sorted(os.listdir(out2))), (_skipped(name=1), ["ok.txt"]), "a .GIT segment, in any case")
+    _eq((_name_in_class(b"a/" * 2047 + b"bc"), _name_in_class(b"a/" * 2048 + b"b")), (True, False),
+        "the name class: 4,096 bytes and no more")
+    child = _fx_in(top, b"100644 blob %s\t%s\n" % (blob.encode(), b"f" * 60), "mktree").strip()
+    for _ in range(19):  # with the one below, 20 directories of 200 bytes over a 60-byte file: 4,080 bytes
+        child = _fx_in(top, b"040000 tree %s\t%s\n" % (child.encode(), b"s" * 200), "mktree").strip()
+    tree = _fx_in(top, b"040000 tree %s\t%s\n100644 blob %s\tok.txt\n" % (child.encode(), b"s" * 200,
+                                                                         blob.encode()), "mktree").strip()
+    deep = _fx(top, "commit-tree", "-m", "deep", tree).strip()
+    out3, man3 = os.path.join(d, "out3"), os.path.join(d, "out3.files")
+    obj, _ = _export_ok(top, deep, out3, man3, "--whole")
+    _eq((obj["skipped"], sorted(os.listdir(out3))), (_skipped(name=1), ["ok.txt"]), "a path past PATH_MAX under --out")
+
+
+def case_export_ignore_files_renamed(tmp):
+    """.gitignore, sub/.ignore and .rgignore are written as that name plus .exported, byte-equal, the manifest
+    pairing each with its repository path, nothing skipped; a committed .gitignore.exported beside a .gitignore makes
+    the second create fail EEXIST, skipped name."""
+    files = {".gitignore": b"ignored-*\n", "sub/.ignore": b"*.log\n", ".rgignore": b"*\n", "sub/a.log": b"log\n"}
+    top, oid = _src(tmp, files)
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    _eq(_files(out), {b".gitignore.exported": b"ignored-*\n", b"sub/.ignore.exported": b"*.log\n",
+                      b".rgignore.exported": b"*\n", b"sub/a.log": b"log\n"}, "the files written")
+    _eq(_manifest(man), [(b".gitignore.exported", b".gitignore"), (b".rgignore.exported", b".rgignore"),
+                         (b"sub/.ignore.exported", b"sub/.ignore"), (b"sub/a.log", b"sub/a.log")])
+    _eq(obj, {"files": 4, "bytes": 22, "skipped": _skipped(), "paths": {}})
+    top2, oid2 = _src(tmp, {".gitignore": b"ignored-*\n", ".gitignore.exported": b"committed\n"}, name="src2")
+    out2, man2 = os.path.join(d, "out2"), os.path.join(d, "out2.files")
+    obj, _ = _export_ok(top2, oid2, out2, man2, "--whole", "--path", ".gitignore.exported")
+    _eq(_files(out2), {b".gitignore.exported": b"ignored-*\n"}, "the renamed file, the committed one skipped")
+    _eq(_manifest(man2), [(b".gitignore.exported", b".gitignore")])
+    _eq(obj, {"files": 1, "bytes": 10, "skipped": _skipped(name=1), "paths": {".gitignore.exported": "skipped"}})
+
+
+def case_export_large_file_skipped(tmp):
+    """Files of 1,048,576 and 1,048,577 bytes: the first exported, the second counted large; a --path naming the
+    second is skipped."""
+    top, oid = _src(tmp, {"cap.bin": b"a" * 1048576, "over.bin": b"b" * 1048577})
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole", "--path", "over.bin")
+    _eq(obj, {"files": 1, "bytes": 1048576, "skipped": _skipped(large=1), "paths": {"over.bin": "skipped"}})
+    _eq(_files(out), {b"cap.bin": b"a" * 1048576})
+
+
+def case_export_over_cap(tmp):
+    """EXPORT_FILES_CAP set to 3 over four files: exit 3, over-cap, files 4, --out not created; EXPORT_BYTES_CAP set
+    one under the bytes the same; each cap met exactly exports."""
+    top, oid = _src(tmp, {"a": b"1", "b": b"22", "c": b"333", "d": b"4444"})
+    d, out, man = _xdir(tmp)
+    for cap, value in (("EXPORT_FILES_CAP", 3), ("EXPORT_BYTES_CAP", 9)):
+        code, stdout, err = _with(cap, value, lambda: _export(top, oid, out, man, "--whole"))
+        _eq((code, err), (3, ""), cap)
+        _eq(_obj(stdout), {"refused": "over-cap", "files": 4, "bytes": 10}, cap)
+        _eq(os.listdir(d), [], cap + ": nothing created")
+    for cap, value in (("EXPORT_FILES_CAP", 4), ("EXPORT_BYTES_CAP", 10)):
+        out, man = os.path.join(d, cap), os.path.join(d, cap + ".files")
+        obj, _ = _with(cap, value, lambda: _export_ok(top, oid, out, man, "--whole"))
+        _eq((obj["files"], obj["bytes"]), (4, 10), cap + " met exactly")
+
+
+def case_export_commit_absent(tmp):
+    """An object id the clone does not hold, and one naming a blob: exit 3, commit-absent, nothing created."""
+    top, oid = _src(tmp, {"a.txt": b"a\n"})
+    d, out, man = _xdir(tmp)
+    for commit in ("de" * 20, _fx(top, "rev-parse", oid + ":a.txt").strip()):
+        code, stdout, err = _export(top, commit, out, man, "--whole")
+        _eq((code, err), (3, ""), commit)
+        _eq(_obj(stdout), {"refused": "commit-absent", "files": None, "bytes": None}, commit)
+        _eq(os.listdir(d), [], "nothing created")
+
+
+def case_export_paths_at_ref(tmp):
+    """An older commit, --path a file and a directory, without --whole: only those exported, at that commit, both
+    exported. A --path holding a glob character, or opening as pathspec magic does, is a literal path."""
+    top, old = _src(tmp, {"src/a.ts": b"old a\n", "src/sub/b.ts": b"old b\n", "lib/c.ts": b"c\n", "README.md": b"r\n",
+                          "lit/a*b.txt": b"star\n", "lit/aXb.txt": b"x\n"})
+    _put_files(top, {"src/a.ts": b"new a\n", "lib/d.ts": b"d\n"})
+    _fx(top, "add", "-A")
+    _fx(top, "commit", "-qm", "newer")
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, old, out, man, "--path", "README.md", "--path", "src", "--path", "lit/a*b.txt",
+                        "--path", ":/lib")
+    _eq(_files(out), {b"README.md": b"r\n", b"src/a.ts": b"old a\n", b"src/sub/b.ts": b"old b\n",
+                      b"lit/a*b.txt": b"star\n"})
+    _eq(obj, {"files": 4, "bytes": 19, "skipped": _skipped(),
+              "paths": {"README.md": "exported", "src": "exported", "lit/a*b.txt": "exported", ":/lib": "absent"}})
+
+
+def case_export_path_states(tmp):
+    """--whole with --path a file, a directory (also as ./dir/ and dir/.), an absent path, a prefix of a name that is
+    no path, a link, and a file spelled as a directory (f.txt/.): exported, exported, exported, exported, absent,
+    absent, skipped, absent -- f.txt/. as git lists it without --whole."""
+    top, oid = _src(tmp, {"f.txt": b"f\n", "dir/g.txt": b"g\n", "dir/h.txt": b"h\n", "ln": "f.txt"})
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole", "--path", "f.txt", "--path", "dir", "--path", "./dir/",
+                        "--path", "dir/.", "--path", "gone.txt", "--path", "di", "--path", "ln", "--path", "f.txt/.")
+    _eq(obj["paths"], {"f.txt": "exported", "dir": "exported", "./dir/": "exported", "dir/.": "exported",
+                       "gone.txt": "absent", "di": "absent", "ln": "skipped", "f.txt/.": "absent"})
+    _eq(obj["skipped"], _skipped(link=1))
+    out2, man2 = os.path.join(d, "out2"), os.path.join(d, "out2.files")
+    obj, _ = _export_ok(top, oid, out2, man2, "--path", "f.txt/.")
+    _eq((obj["files"], obj["paths"]), (0, {"f.txt/.": "absent"}), "f.txt/. without --whole")
+
+
+def case_export_out_refused(tmp):
+    """--out existing, a link, a dangling link or under a linked parent; --manifest existing, under a linked parent or
+    --out itself, however spelled: exit 2 each, nothing run or written. --manifest planted as a link while the export
+    runs: exit 2, the link's target untouched. --out's parent swapped for a link after the test: the export and its
+    manifest land in the directory tested, now moved, and nothing under the link's target."""
+    top, oid = _src(tmp, {"a.txt": b"a\n"})
+    d = os.path.join(tmp, "x")
+    real = os.path.join(tmp, "real")
+    for p in (d, real, os.path.join(d, "taken")):
+        os.mkdir(p)
+    os.symlink(real, os.path.join(d, "linkout"))
+    os.symlink(os.path.join(tmp, "nowhere"), os.path.join(d, "dangling"))
+    os.symlink(real, os.path.join(d, "linkparent"))
+    _put_files(d, {"taken.files": b""})
+    listing = sorted(os.listdir(d))
+    j = lambda *p: os.path.join(d, *p)
+    for out, man, why in ((j("taken"), j("m"), WHY_OUT), (j("linkout"), j("m"), WHY_OUT),
+                          (j("dangling"), j("m"), WHY_OUT), (j("linkparent", "out"), j("m"), WHY_OUT),
+                          (j("out"), j("taken.files"), WHY_MANIFEST), (j("out"), j("linkparent", "m"), WHY_MANIFEST),
+                          (j("out"), j("out"), WHY_MANIFEST), (j("out"), "/" + j("out"), WHY_MANIFEST),
+                          (j("out"), j(".", "out"), WHY_MANIFEST)):
+        code, stdout, err = _export(top, oid, out, man, "--whole")
+        _refused(code, stdout, err, why)
+        _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "%s, %s: nothing read, run or written" % (out, man))
+    _eq((sorted(os.listdir(d)), os.listdir(real), os.path.lexists(os.path.join(tmp, "nowhere"))),
+        (listing, [], False), "nothing written")
+    victim = os.path.join(real, "victim")
+    _put_files(real, {"victim": b"keep\n"})
+    real_create = _create_file
+
+    def planting(name, dfd):  # another process plants the manifest path as a link, mid-export
+        if not os.path.lexists(j("m2")):
+            os.symlink(victim, j("m2"))
+        return real_create(name, dfd)
+    code, stdout, err = _with("_create_file", planting, lambda: _export(top, oid, j("o2"), j("m2"), "--whole"))
+    _refused(code, stdout, err, WHY_EXPORT_WRITE)
+    _eq(_bytes_of(victim), b"keep\n", "the planted link's target untouched")
+    parent, moved, elsewhere = os.path.join(tmp, "p"), os.path.join(tmp, "p.moved"), os.path.join(tmp, "elsewhere")
+    for p in (parent, elsewhere):
+        os.mkdir(p)
+    real_xgit = _xgit
+
+    def swapping(repo, *args):  # another process swaps --out's parent for a link while git lists the tree
+        if args[0] == "ls-tree":
+            os.rename(parent, moved)
+            os.symlink(elsewhere, parent)
+        return real_xgit(repo, *args)
+    obj, _ = _with("_xgit", swapping, lambda: _export_ok(top, oid, os.path.join(parent, "out"),
+                                                         os.path.join(parent, "out.files"), "--whole"))
+    _eq((sorted(os.listdir(moved)), os.listdir(elsewhere), obj["files"]), (["out", "out.files"], [], 1),
+        "written in the directory tested, nothing through the link")
+
+
+def case_export_bare_repo_refused(tmp):
+    """--repo laid out as a git directory with no .git, its config naming a core.fsmonitor that would write a
+    sentinel: exit 2, no git call made, no sentinel. With an empty .git directory beside it, which git without
+    safe.bareRepository=explicit passes over to take --repo itself as the repository, its top level --repo: exit 2.
+    A clone's subdirectory holding an empty .git directory, which git passes over to name the clone its top level:
+    exit 2."""
+    gitdir, sentinel = os.path.join(tmp, "gitdir"), os.path.join(tmp, "sentinel")
+    _fx(tmp, "init", "-q", "--bare", gitdir)
+    for key, value in (("core.bare", "false"), ("core.worktree", gitdir), ("core.fsmonitor", "touch " + sentinel)):
+        _fx(tmp, "config", "-f", os.path.join(gitdir, "config"), key, value)
+    d, out, man = _xdir(tmp)
+    code, stdout, err = _export(gitdir, "ab" * 20, out, man, "--whole")
+    _refused(code, stdout, err, WHY_CLONE)
+    _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "no git call made")
+    _eq((os.path.lexists(sentinel), os.listdir(d)), (False, []), "no sentinel, nothing created")
+    os.mkdir(os.path.join(gitdir, ".git"))
+    code, stdout, err = _export(gitdir, "ab" * 20, out, man, "--whole")
+    _refused(code, stdout, err, WHY_CLONE)
+    _eq((os.path.lexists(sentinel), os.listdir(d)), (False, []), "an empty .git: no sentinel, nothing created")
+    top, oid = _src(tmp, {"a.txt": b"a\n", "sub/b.txt": b"b\n"})
+    os.mkdir(os.path.join(top, "sub", ".git"))
+    code, stdout, err = _export(os.path.join(top, "sub"), oid, out, man, "--whole")
+    _refused(code, stdout, err, WHY_CLONE)
+    _eq(os.listdir(d), [], "a subdirectory: nothing created")
+
+
+def case_export_bad_args(tmp):
+    """Each export argument outside its class, a flag missing or given twice, or --flag=value: exit 2, nothing read,
+    run or written; export's flags are unknown to the other verbs."""
+    top, oid = _src(tmp, {"a.txt": b"a\n"})
+    d, out, man = _xdir(tmp)
+    base = {"--repo": top, "--commit": oid, "--out": out, "--manifest": man}
+
+    def argv(extra, **swap):
+        flags = dict(base, **{"--" + k: v for k, v in swap.items()})
+        return ["export"] + [t for k, v in flags.items() if v is not None for t in (k, v)] + extra
+    for args, why in ((argv(["--whole"], commit="HEAD"), WHY_COMMIT), (argv(["--whole"], commit=oid[:39]), WHY_COMMIT),
+                      (argv(["--path", "../x"]), WHY_PATH), (argv(["--path", "/x"]), WHY_PATH),
+                      (argv(["--path", "a\tb"]), WHY_PATH), (argv(["--path", "a‮b"]), WHY_PATH),
+                      (argv(["--path", "a" * 4097]), WHY_PATH), (argv(["--path", "x\udcff"]), WHY_PATH),
+                      (argv(["--whole"], repo="rel"), WHY_REPO_ABS), (argv(["--whole"], out="rel"), WHY_OUT),
+                      (argv(["--whole"], repo=top + "\x01"), WHY_REPO_ABS), (argv(["--whole"], out=out + "\t"), WHY_OUT),
+                      (argv(["--whole"], manifest=man + "\n"), WHY_MANIFEST),
+                      (argv(["--whole"], manifest="rel/m"), WHY_MANIFEST),
+                      (argv(["--whole"], repo=os.path.join(tmp, "absent")), WHY_REPO),
+                      (argv([]), WHY_USAGE), (argv(["--whole", "--whole"]), WHY_USAGE),
+                      (argv(["--whole"], commit=None), WHY_USAGE), (argv(["--whole", "--commit", oid]), WHY_USAGE),
+                      (argv(["--path=a.txt"]), WHY_USAGE), (argv(["--path"]), WHY_USAGE),
+                      (["check", "--repo", top, "--whole"], WHY_USAGE),
+                      (["moved", "--repo", top, "--base", "main", "--id", "U-001", "--path", "a"], WHY_USAGE),
+                      (["edit", "--repo", top, "--id", "U-001", "--status", "drafted", "--out", out], WHY_USAGE)):
+        code, stdout, err = _call(args)
+        _refused(code, stdout, err, why)
+        _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "%r: nothing read, run or written" % (args[1:],))
+    _eq(os.listdir(d), [], "nothing created")
+    _eq(_args(argv(["--path", "a" * 4096]))[1][5], ["a" * 4096], "a --path of 4,096 bytes passes")
+
+
+def case_export_no_filter_run(tmp):
+    """The clone's config naming a filter.x.clean, a filter.x.smudge and a diff.x.textconv, each a command that would
+    write a sentinel, and a committed .gitattributes `* filter=x diff=x`: each file's raw blob bytes written, and no
+    sentinel. A listing whose size is not its blob's, and a 100644 entry naming a tree, which ls-tree lists as a blob:
+    exit 2, no manifest."""
+    files = {".gitattributes": b"* filter=x diff=x\n", "a.txt": b"raw a\r\n", "b.md": b"raw b\n"}
+    top, oid = _src(tmp, files)
+    sentinel = os.path.join(tmp, "sentinel")
+    for key in ("filter.x.clean", "filter.x.smudge", "diff.x.textconv"):
+        _fx(top, "config", key, "touch '%s'; cat" % sentinel)
+    _fx(top, "cat-file", "--filters", oid + ":a.txt")
+    _true(os.path.lexists(sentinel), "the fixture's filter runs where git is asked to run it")
+    os.unlink(sentinel)
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    _eq(_files(out), {k.encode("utf-8"): v for k, v in files.items()}, "each file's raw blob bytes")
+    _eq(obj["files"], 3)
+    _true(not os.path.lexists(sentinel), "no filter or textconv ran")
+    real = _xgit
+
+    def lying(repo, *args):  # the last file's listed size one short, its blob's last byte a line feed
+        r = real(repo, *args)
+        return (r[0], r[1].replace(b"      6\tb.md", b"      5\tb.md")) if args[0] == "ls-tree" else r
+    out2, man2 = os.path.join(d, "out2"), os.path.join(d, "out2.files")
+    code, stdout, err = _with("_xgit", lying, lambda: _export(top, oid, out2, man2, "--whole"))
+    _refused(code, stdout, err, WHY_BLOB)
+    _true(not os.path.lexists(man2), "a blob not as listed: no manifest written")
+    tree_oid = _fx(top, "rev-parse", oid + "^{tree}").strip()
+    raw = b"100644 a.txt\0" + bytes.fromhex(tree_oid)  # a file entry whose object is a tree
+    crafted = _fx(top, "commit-tree", "-m", "a tree as a file",
+                  _fx_in(top, raw, "hash-object", "-t", "tree", "-w", "--literally", "--stdin").strip()).strip()
+    out3, man3 = os.path.join(d, "out3"), os.path.join(d, "out3.files")
+    code, stdout, err = _export(top, crafted, out3, man3, "--whole")
+    _refused(code, stdout, err, WHY_BLOB)
+    _true(not os.path.lexists(man3), "a tree listed as a file: no manifest written")
+
+
+def case_export_timeout(tmp):
+    """EXPORT_TIMEOUT set to 0.000001: exit 3, timeout, and no manifest written."""
+    top, oid = _src(tmp, {"a.txt": b"a\n", "b.txt": b"b\n"})
+    d, out, man = _xdir(tmp)
+    code, stdout, err = _with("EXPORT_TIMEOUT", 0.000001, lambda: _export(top, oid, out, man, "--whole"))
+    _eq((code, err), (3, ""))
+    _eq(_obj(stdout), {"refused": "timeout", "files": 2, "bytes": 4})
+    _true(not os.path.lexists(man), "no manifest written")
+
+
+def case_export_name_collision(tmp):
+    """A create forced in-process to fail EEXIST for one name, and a committed directory name of 256 bytes (a real
+    ENAMETOOLONG): both skipped, skipped.name 2, every other file exported, exit 0."""
+    top, _ = _src(tmp, {"a.txt": b"a\n", "b.txt": b"b\n", "c/d.txt": b"d\n"})
+    blob = os.path.join(tmp, "blob")
+    _put_files(tmp, {"blob": b"long\n"})
+    oid = _commit_entry(top, "100644", _fx(top, "hash-object", "-w", blob).strip(), "y" * 256 + "/f.txt")
+    real = _create_file
+
+    def colliding(name, dfd):
+        if name == b"b.txt":
+            raise OSError(errno.EEXIST, "forced")
+        return real(name, dfd)
+    d, out, man = _xdir(tmp)
+    obj, _ = _with("_create_file", colliding, lambda: _export_ok(top, oid, out, man, "--whole"))
+    _eq(obj, {"files": 2, "bytes": 4, "skipped": _skipped(name=2), "paths": {}})
+    _eq(_files(out), {b"a.txt": b"a\n", b"c/d.txt": b"d\n"})
+    _eq(_manifest(man), [(b"a.txt", b"a.txt"), (b"c/d.txt", b"c/d.txt")])
+
+
+def case_export_renamed_in_any_case(tmp):
+    """An ignore file's name in another case -- .IGNORE, sub/.RgIgnore, .GitIgnore -- which a file system that folds
+    case answers for .ignore, .rgignore or .gitignore; and the five names the Grep tool passes over wherever they
+    stand -- .svn, .hg, .bzr, .jj and .sl, as a directory or a file, in any case: each segment written with .exported
+    appended, byte-equal, the manifest pairing each with its repository path, nothing skipped. A committed
+    .hg.exported directory beside .hg: one of the two skipped, name, never merged into the other."""
+    files = {".IGNORE": b"*\n", "sub/.RgIgnore": b"*\n", ".GitIgnore": b"x-*\n", ".hg/hgrc": b"[ui]\n",
+             "tools/.svn/entries": b"12\n", ".jj/x": b"jj\n", ".sl": b"sl\n", ".BZR/y": b"bzr\n", "sub/a.ts": b"a\n"}
+    top, oid = _src(tmp, files)
+    d, out, man = _xdir(tmp)
+    obj, _ = _export_ok(top, oid, out, man, "--whole", "--path", ".hg/hgrc", "--path", "sub/.RgIgnore")
+    written = {".IGNORE": ".IGNORE.exported", "sub/.RgIgnore": "sub/.RgIgnore.exported",
+               ".GitIgnore": ".GitIgnore.exported", ".hg/hgrc": ".hg.exported/hgrc",
+               "tools/.svn/entries": "tools/.svn.exported/entries", ".jj/x": ".jj.exported/x", ".sl": ".sl.exported",
+               ".BZR/y": ".BZR.exported/y", "sub/a.ts": "sub/a.ts"}
+    _eq(_files(out), {written[k].encode(): v for k, v in files.items()}, "the files written")
+    tree = [p.encode() for p in _fx(top, "ls-tree", "-r", "-z", "--name-only", oid).split("\0") if p]
+    _eq(_manifest(man), [(written[p.decode()].encode(), p) for p in tree], "the manifest, in tree order")
+    _eq(obj, {"files": 9, "bytes": sum(len(v) for v in files.values()), "skipped": _skipped(),
+              "paths": {".hg/hgrc": "exported", "sub/.RgIgnore": "exported"}})
+    top2, oid2 = _src(tmp, {".hg/a": b"theirs\n", ".hg.exported/b": b"committed\n"}, name="src2")
+    out2, man2 = os.path.join(d, "out2"), os.path.join(d, "out2.files")
+    obj, _ = _export_ok(top2, oid2, out2, man2, "--whole")
+    _eq((obj["files"], obj["skipped"], len(_files(out2))), (1, _skipped(name=1), 1), "one written, one skipped")
+
+
+def case_export_parent_ignore_files(tmp):
+    """Ignore files above --out -- a .rgignore, an .ignore and a .gitignore, each naming every file -- change nothing
+    the export writes, and it writes no ignore file of its own: the files that outrank a parent's rules for a search
+    tool, an .ignore and a .rgignore each holding !*, are the caller's to write beside its exports, never this
+    script's."""
+    files = {"a.txt": b"a\n", "node_modules/m.js": b"m\n", ".hidden/h.log": b"h\n", "src/app.ts": b"x\n"}
+    top, oid = _src(tmp, files)
+    d, out, man = _xdir(tmp)
+    _put_files(tmp, {".rgignore": b"*\n", ".ignore": b"*\n", ".gitignore": b"*\n"})
+    _put_files(d, {".rgignore": b"*.ts\nnode_modules/\n"})
+    obj, _ = _export_ok(top, oid, out, man, "--whole")
+    _eq(_files(out), {k.encode(): v for k, v in files.items()}, "every file written")
+    _eq((sorted(os.listdir(d)), sorted(os.listdir(out))), ([".rgignore", "out", "out.files"],
+                                                           [".hidden", "a.txt", "node_modules", "src"]),
+        "no ignore file of the export's own")
+
+
+def case_export_blob_absent(tmp):
+    """A blobless partial clone lacking an older commit's blob, which ls-tree -l lists with the size BAD: exit 3,
+    blob-absent, nothing created, whether a --path names it or --whole takes it, and no fetch made for it. A blob the
+    listing sized that cat-file --batch then lacks: blob-absent, and no manifest."""
+    src, old = _src(tmp, {"a.txt": b"old\n", "b.txt": b"b\n"})
+    _put_files(src, {"a.txt": b"new\n"})
+    _fx(src, "commit", "-qam", "newer")
+    _fx(src, "config", "uploadpack.allowFilter", "true")
+    clone = os.path.join(tmp, "clone")
+    _fx(tmp, "clone", "-q", "--filter=blob:none", "file://" + src, clone)
+    packs = sorted(os.listdir(os.path.join(clone, ".git", "objects", "pack")))
+    d, out, man = _xdir(tmp)
+    for flags in (["--path", "a.txt"], ["--whole"]):
+        code, stdout, err = _export(clone, old, out, man, *flags)
+        _eq((code, err), (3, ""), flags)
+        _eq(_obj(stdout), {"refused": "blob-absent", "files": None, "bytes": None}, flags)
+        _eq(os.listdir(d), [], "%r: nothing created" % (flags,))
+    _eq(sorted(os.listdir(os.path.join(clone, ".git", "objects", "pack"))), packs, "no fetch made")
+    real = _xgit
+
+    def sized(repo, *args):  # the listing gives the absent blob a size: cat-file --batch then lacks it
+        r = real(repo, *args)
+        return (r[0], r[1].replace(b"    BAD\ta.txt", b"      4\ta.txt")) if args[0] == "ls-tree" else r
+    code, stdout, err = _with("_xgit", sized, lambda: _export(clone, old, out, man, "--path", "a.txt"))
+    _eq((code, err), (3, ""))
+    _eq(_obj(stdout), {"refused": "blob-absent", "files": None, "bytes": None})
+    _true(not os.path.lexists(man), "no manifest written")
+    _eq(sorted(os.listdir(os.path.join(clone, ".git", "objects", "pack"))), packs, "still no fetch made")
+
+
 def case_visibility_marker_pinned(tmp):
-    """The visibility marker is page text backlog-run.md's section 10.2 program matches, which /docs-write runs at its
-    Phase 9: visibility.md section 5 states it on a line of its own, once, backlog-run.md holds it as the program's
-    Python literal, once, and docs-write.md, which holds no copy of that program, holds the literal nowhere."""
+    """The visibility marker is page text three programs match: backlog-run.md's section 10.2 program, which
+    /docs-write runs at its Phase 9 and /docs-verify at its Phases 1 and 4, and docs-verify.md's marker program and
+    frontmatter program, which /docs-verify runs from its Phase 6 to its Phase 10. visibility.md section 5 states it
+    on a line of its own, once; backlog-run.md holds it as its program's Python literal, once, and docs-verify.md as
+    its two programs', twice; and docs-write.md, which holds no copy of a program, holds the literal nowhere."""
     with open(VIS_PATH, encoding="utf-8") as fh:
         vis = fh.read()
     sec = vis[vis.index("\n## 5. "):vis.index("\n## 6. ")]
@@ -2422,6 +3851,9 @@ def case_visibility_marker_pinned(tmp):
     with open(DW_PATH, encoding="utf-8") as fh:
         dw = fh.read()
     _eq(dw.count('"' + VISIBILITY_MARKER + '"'), 0, "docs-write holds the marker's literal nowhere")
+    with open(DV_PATH, encoding="utf-8") as fh:
+        dv = fh.read()
+    _eq(dv.count('"' + VISIBILITY_MARKER + '"'), 2, "docs-verify's marker and frontmatter programs hold its literal")
 
 
 def case_shape_paragraph_pinned(tmp):
@@ -2453,9 +3885,21 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_edit_not_a_repository, case_edit_undo, case_bad_args,
          case_own_moves_open_draft_branch, case_own_moves_real_move, case_own_moves_no_merge_base,
          case_own_moves_merge_base_unreadable, case_own_moves_unchanged_without_flag, case_own_moves_bad_args,
+         case_base_merge_commit, case_base_squash_branch_deleted, case_base_own_draft_not_moved,
+         case_base_reset_on_branch_not_moved, case_base_criss_cross_every_merge_base, case_base_shallow_unknown,
+         case_base_orphan_unknown, case_base_fork_backlog_unreadable,
+         case_local_base_unpushed_move, case_local_base_diverged, case_local_base_behind_not_read,
+         case_local_base_holds_working_branch, case_local_base_same_draft_on_origin, case_local_base_head_on_it,
+         case_local_base_shallow_unknown, case_ref_named_as_a_base,
          case_edit_from_refused, case_edit_from_ok, case_edit_walkthrough_unset, case_edit_walkthrough_other,
          case_edit_walkthrough_same, case_edit_no_walkthrough_key, case_edit_block_sets, case_edit_block_refused,
          case_edit_no_blocked_by_key, case_edit_record_noop, case_edit_new_flags_bad_args,
+         case_export_whole_tree, case_export_links_not_followed, case_export_submodule_skipped,
+         case_export_name_out_of_class, case_export_ignore_files_renamed, case_export_large_file_skipped,
+         case_export_over_cap, case_export_commit_absent, case_export_paths_at_ref, case_export_path_states,
+         case_export_out_refused, case_export_bare_repo_refused, case_export_bad_args, case_export_no_filter_run,
+         case_export_timeout, case_export_name_collision, case_export_renamed_in_any_case,
+         case_export_parent_ignore_files, case_export_blob_absent,
          case_visibility_marker_pinned,
          case_shape_paragraph_pinned, case_marker_phrase_pinned)
 

@@ -7,7 +7,8 @@ This is the single source of truth for the mechanics; Phase 6.5 cites it and
 stays lean. Read every path, command, and port from the resolved `profile` — do
 not hard-code example-docs specifics.
 
-"Affected pages" = every file written or modified in Phase 6.3.
+"Affected pages" = every file in Phase 6.3's `files_written` — never a build
+config its *Regenerate* rewrote, which is no page.
 
 ## 1. Build vs boot
 
@@ -72,7 +73,7 @@ of its spaces' build commands (with `builds[]` it runs every entry, since they a
 content root), and the smoke-check below boots, for each of them, the servers that publish its
 affected pages.
 
-The two operative consumers — `/document` Phase 6.5 Steps 1 and 2 — restate this set inline rather than citing it alone, Step 1 restates §1's choice of builds the same way, and Step 2 restates the choice of server below; `/docs-write` Phase 7 step 2 restates §1's choice of builds for its one page, building that page's space alone. That duplication is deliberate: those are instructions a model acts on in one pass, and it may not follow a cross-reference before deciding which servers to boot. Keep every restatement in sync with this definition and do not collapse them into a bare citation. Descriptive references elsewhere (`gate-ledger.md` §4's registry and §9's, which cites §1's three levels, and `docs-profile-schema.md`'s field rules) cite this section and should stay short.
+The two operative consumers — `/document` Phase 6.5 Steps 1 and 2 — restate this set inline rather than citing it alone, Step 1 restates §1's choice of builds the same way, and Step 2 restates the choice of server below; `/docs-write` Phase 7 step 2 and `/docs-verify` Phase 8 step 1 restate §1's choice of builds for their one page, building that page's space alone. That duplication is deliberate: those are instructions a model acts on in one pass, and it may not follow a cross-reference before deciding which servers to boot. Keep every restatement in sync with this definition and do not collapse them into a bare citation. Descriptive references elsewhere (`gate-ledger.md` §4's registry and §9's, which cites §1's three levels, and `docs-profile-schema.md`'s field rules) cite this section and should stay short.
 
 **Which server checks a page.** `profile.dev_servers.servers[]` is a list, not a map keyed by space, and a
 space id does not identify a server: the two-build profile `/docs-init` writes records **two** servers
