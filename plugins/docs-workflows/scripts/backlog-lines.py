@@ -3048,10 +3048,12 @@ BF_LEAD = "**The line shape a backlog run reads.**"
 WALK_LEAD = "**The shape a walkthrough is read in.**"
 # The image-slot comment's opening, page text a program matches: unit-brief section 3.3's step 5 gives the comment.
 SLOT_COMMENT = "<!-- docs-image-slot: "
-# The rule for when a walkthrough step states a claim, held in two copies: unit-brief section 2.1 and
-# walkthrough-composer's Method step 3. Each copy runs from this lead to the first STATES_END after it.
+# The rule for when a walkthrough step states a claim, with what an instruction's own effect is, held in two copies:
+# unit-brief section 2.1 and walkthrough-composer's Method step 3. Each copy runs from STATES_LEAD to the first
+# STATES_END after it, and holds EFFECT_LEAD, the own effect's definition, once.
 STATES_LEAD = "**A step states a claim**"
-STATES_END = "the instruction's own effect."
+EFFECT_LEAD = "**An instruction's own effect**"
+STATES_END = "and states the instruction all the same."
 # backlog-run.md's two marker programs, section 10.1's read and section 10.2's test, find the page-level marker in
 # evidence-contract section 3 by this phrase; /docs-write runs them at its Phase 0 and Phase 9, and /docs-verify at
 # its Phase 0 and its Phases 1 and 4. docs-verify.md's own marker program, which removes the marker, finds it by the
@@ -6041,11 +6043,12 @@ def case_slot_comment_pinned(tmp):
 
 
 def case_states_definition_pinned(tmp):
-    """The rule for when a walkthrough step states a claim has two copies, since walkthrough-composer reads no
-    unit-brief.md: section 2.1's coverage field, which doc-writer and doc-reviewer read -- the reviewer blocks a
-    coverage entry none of whose steps states its claim -- and the composer's Method step 3, by which it builds that
-    map. Each file holds the lead once, in that place; the sentence runs from STATES_LEAD to the first STATES_END after
-    it, on one line; and the two sentences are equal, byte for byte, so one cannot be edited without the other."""
+    """The rule for when a walkthrough step states a claim, with what an instruction's own effect is, has two copies,
+    since walkthrough-composer reads no unit-brief.md: section 2.1's coverage field, which doc-writer and doc-reviewer
+    read -- the reviewer blocks a coverage entry none of whose steps states its claim -- and the composer's Method step
+    3, by which it builds that map. Each file holds the lead once, in that place; the text runs from STATES_LEAD to the
+    first STATES_END after it, on one line, and holds EFFECT_LEAD, which stands nowhere else in the file; and the two
+    texts are equal, byte for byte, so neither the rule nor the effects it rests on can be edited in one copy alone."""
     spans = []
     for path, start, stop in ((UB_PATH, "\n### 2.1 ", "\n## 3. "), (WC_PATH, "\n## Method\n", "\n## Output\n")):
         with open(path, encoding="utf-8") as fh:
@@ -6056,6 +6059,7 @@ def case_states_definition_pinned(tmp):
         _true(text.index(start) < at < text.index(stop), "%s holds it in its place" % name)
         span = text[at:text.index(STATES_END, at) + len(STATES_END)]
         _true("\n" not in span, "%s keeps the sentence on one line" % name)
+        _eq((text.count(EFFECT_LEAD), span.count(EFFECT_LEAD)), (1, 1), "%s defines the own effect once, there" % name)
         spans.append(span)
     _eq(spans[0], spans[1], "unit-brief section 2.1 and walkthrough-composer state the rule alike")
 
