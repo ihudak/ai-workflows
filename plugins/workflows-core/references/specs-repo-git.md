@@ -284,7 +284,7 @@ what resolution returns (the resolved key, and on an Epic-level folder the key i
 asserts), and runs this before any placement or refusal reads the resolved folder; a command that
 takes none, or whose key set is the keys `workflows-core:addressing` §1's `read-key` reads off its arguments, or the carrier of the folder an `@<path>` argument names asserts (`workflows-core:addressing` §4) — `/dev-workflows:vuln`'s
 per-token keys among them, keyless where no token carries one — runs it as soon as `$SPECS_PATH` is known, and resolves afterwards — having first read the carrier of each key typed as a folder's whole name (`workflows-core:addressing` §1) and of each `@<path>` folder. Where resolution comes first,
-a run that stops on its address — `invalid`, `ambiguous`, `misrooted` or `absent` — runs none. In
+a run that stops on its address — `invalid`, `ambiguous`, `misrooted`, `misnamed` or `absent` — runs none. In
 either order, a run that stops before the preflight on a check of its own inputs needing no specs-repo
 state — a run flag, the directory it runs from, a path it reads where it sits rather than as an
 artifact of the specs tree — runs none either. Prompt-free.

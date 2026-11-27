@@ -161,13 +161,18 @@ read once:
 
 - **a slice under the flagged slice's parent**, the flagged slice included — the slices the positive
   `brd-link.md` parent test finds (`commands/brd-split.md` Phase 0) against the `parent:` the
-  flagged slice's `brd-link.md` names, never a directory listing;
+  flagged slice's `brd-link.md` names, never a directory listing — each subdirectory's name held to
+  `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it, which may
+  be a source slice whose records the reader cannot read, stopping the reader's run in one line that
+  names it by its position, with its remedy (§2 there, *A folder refused by its name*, `<P>` the
+  parent's folder), since a flag it holds would go unasked;
 - **the folder a key of the flagged slice's `depends-on:` resolves to** under `resolve-address`
   (`workflows-core:addressing` §3), where that folder is a slice, its own `brd-link.md` naming a
   `parent:`. A key that resolves to any other folder adds none: no run reconciles one, and a record
   the retired two-level model left in a root predates hit lines. A key that resolves `absent` or
   `invalid` adds none, and each reader reports it by key; `ambiguous` is `resolve-address`'s own
-  hard stop, naming every match, and the reader's run stops with it.
+  hard stop, naming every match, and `misnamed` its stop on a folder's name, naming none, and the
+  reader's run stops with either.
 
 In each source slice's folder, read **every** `reconciliation-<YYYYMMDD>.md`, whatever its date,
 every pass in each, none where the folder holds none, through `references/decision-register-format.md`

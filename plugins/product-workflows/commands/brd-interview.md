@@ -471,7 +471,9 @@ and nothing downstream can tell the difference afterwards.
    included*, and a run that dropped its own ledger from the input would answer every one of them
    against a hole. Also the
    `interview/customer-questions.md` of every slice under the parent (the positive `brd-link.md`
-   parent test, `commands/brd-split.md` Phase 0), which is how it tells a defect already asked from
+   parent test, `commands/brd-split.md` Phase 0, each subdirectory's name held to
+   `workflows-core:addressing` §2's class first, as `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md`
+   §7 holds a source slice's, and the run stopping on one outside it as that section says), which is how it tells a defect already asked from
    one that is not — an absent one holds no entry — **with every `interview/round-<N>.md` beside
    it**, since an entry no round record names is a torn write and asks nothing. **And, where this
    BRD holds a `code-defect-log.md`, every reconciliation record of every source slice**
@@ -485,7 +487,8 @@ and nothing downstream can tell the difference afterwards.
    reconciliation record*): it is how the *Put each `[V]` to the operator* phase learns which entries
    a sweep flagged `needs-a-human`. A `depends-on:` key that resolves `absent` or `invalid` is
    reported now, by key, as adding no record; one that resolves `ambiguous` stops the run with
-   `resolve-address`'s own stop, naming every match (§7). A record that exists and cannot be read is
+   `resolve-address`'s own stop, naming every match (§7), and one that resolves `misnamed` with its
+   stop on a folder's name, naming none. A record that exists and cannot be read is
    reported now, by path, and the flags it would carry are undecidable. Wherever this run names one
    of these records — a report line, the round record, the final report — it names it as §7 spells
    one: by its path relative to the parent's folder where it lies under this BRD's parent, and

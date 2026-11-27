@@ -466,7 +466,9 @@ first intake. **A document revised under a new filename is copied at that name**
 document's copy stays where it is, since nothing under `brd/source/` is removed (`brd-format.md`
 §1.1). A slice's inventory resolves its document anchors against the document its `source:` names
 (`brd-format.md` §2.1), so name each slice under this BRD — found by the positive `brd-link.md`
-parent test (`commands/brd-split.md` Phase 0 step 9) — whose `source:` names a document other than
+parent test (`commands/brd-split.md` Phase 0 step 9), each subdirectory's name held to
+`workflows-core:addressing` §2's class before its `brd-link.md` is read and one outside it named by its
+position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1) — whose `source:` names a document other than
 the one this run copies — the earlier one the inventory's `document:` records, or one before it —
 in the final report: its rows keep resolving against that kept copy, and any re-cut of it is
 `/product-workflows:brd-split`'s, since this command never writes a slice (Phase 0 step 7).

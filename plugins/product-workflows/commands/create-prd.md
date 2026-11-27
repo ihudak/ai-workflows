@@ -88,7 +88,7 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
     is read where it sits — a file directly, a directory's `prd.md`; any other seed is a key, resolved
     with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), and that folder's `prd.md` is read.
     **A seed the run cannot read stops it**, before step 3's ladder — or, where a `prd.md` already stands, once Phase 1's *Overwrite* is chosen: `ambiguous` names every match and
-    `@<path>` as the way through; `invalid` (neither an existing path nor a key), `absent`, a folder
+    `@<path>` as the way through; `misnamed` takes `resolve-address`'s stop on a folder's name; `invalid` (neither an existing path nor a key), `absent`, a folder
     holding no `prd.md`, and a `prd.md` or file that cannot be read each name the seed and what was
     found —
     `CREATE_PRD_SEED_NOT_FOUND: --from-prd <seed> <names no PRD key | resolves to no folder | resolves to <path>, which holds no prd.md | cannot be read (<error>)> — name a PRD that exists, or drop --from-prd.`
@@ -209,7 +209,7 @@ Usage: `/create-prd <ADDRESS | @<folder>> [@idea.md] [--from-prd <PRD-KEY|path>]
    than a ledger read** — the refusal is already taken by the time it is chosen, and re-deciding it
    on rows would put back the data gate this replaces. Enumerate slices by `/brd-split` Phase 0
    step 9's **positive test**: an immediate subdirectory carrying a `brd-link.md` whose `parent:`
-   names this BRD. A name match is not the test, for the reason that step gives.
+   names this BRD — each subdirectory's name held to `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it named by its position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1). A name match is not the test, for the reason that step gives.
 
    | What this BRD folder holds | What the stop says |
    |---|---|

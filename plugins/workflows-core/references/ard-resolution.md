@@ -17,8 +17,8 @@ convention live in ONE place.
    tolerating a stray `-`/`_` and a human-adjusted slug is exactly what §5 does, and a second copy of
    it here is the drift `addressing.md` §1 warns about. `status: absent` → no ARD exists; return
    `none`. `status: misrooted` is `addressing.md` §3's hard stop and stops the run here with
-   its `SPECS_PATH_INSIDE_TREE` message — never `none`, which would let the caller go on without an
-   ARD it should have enforced.
+   its `SPECS_PATH_INSIDE_TREE` message, and `status: misnamed` its stop with the `ADDRESS_FOLDER_NAME`
+   message — never `none`, which would let the caller go on without an ARD it should have enforced.
 
    **This step is the only route by which that resolution reaches an ARD**, save where a caller passes
    `folder` (*A folder outside the work tree*, below). Every command *Consumers (informative)*

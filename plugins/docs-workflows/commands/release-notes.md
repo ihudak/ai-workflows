@@ -56,7 +56,7 @@ This command makes **no external API calls but two**: key discovery's optional, 
    with no tree the `absent` stop below would name the wrong cause and offer a re-enter that cannot
    succeed. An `@<path>` address needs no specs tree to resolve and runs on, exactly as `/document`'s
    *Mode detection* does. Then resolve the address with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3). Carry the resolved `path`, `kind` and
-   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token `read-key` (§1) did not read — a key, a key behind its folder's kind prefix, or a folder's whole name — which the `$SPECS_PATH` test above has already let through. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`; *Cancel* ends the run) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
+   `key` forward; `ambiguous` → stop, naming every match; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `misnamed` → stop with §3's `ADDRESS_FOLDER_NAME` message; `invalid` → stop with `RELEASE_NOTES_NEEDS_KEY` below, naming the token `read-key` (§1) did not read — a key, a key behind its folder's kind prefix, or a folder's whole name — which the `$SPECS_PATH` test above has already let through. **`absent` is a stop, not a folder to create** — this command creates no folder in the specs tree. Surface the `key dir not found` rule in `Skill(skill: "workflows-core:reference", args: "escalation-rules stops")` (`choices: ["Re-enter key (you'll be prompted)", "Cancel"]`; *Cancel* ends the run) and name what does create one: a `PRD-` folder comes from `/product-workflows:idea <KEY>` or `/product-workflows:create-prd <KEY>` on the idea route and from `/product-workflows:brd-split` on its parent BRD on the BRD route; an `EPIC-` folder comes from `/product-workflows:epics <PRD-ADDRESS>` and from no other command.
 
    **Then settle the specs checkout, before the placement below reads anything.** Fix the run key
    set (`workflows-core:specs-repo-git` §3.2), reading only carrier frontmatter (`key:`, `kind:`) as
@@ -89,7 +89,7 @@ This command makes **no external API calls but two**: key discovery's optional, 
    tree, not a capability this plugin lacks — **so `emit-block` does not fire** on any of them.
    - **A BRD container** — the folder §4.1's container test places — holds no PRD: a BRD's PRDs are
      authored in its `PRD-` slices. List the slices under it by the positive test §4.1 names, each
-     immediate subdirectory carrying a `brd-link.md` whose `parent:` names the container. A slice
+     immediate subdirectory carrying a `brd-link.md` whose `parent:` names the container — each subdirectory's name held to `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it named by its position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1). A slice
      is listed by the `key` its own carrier asserts (§4); one whose carrier asserts none is listed by
      its `@<path>` with `(no key — give it a carrier, workflows-core:addressing §5)` and is not
      enterable. Stop:
@@ -194,7 +194,7 @@ This command makes **no external API calls but two**: key discovery's optional, 
    ` — '<token>' is not a key (workflows-core:addressing §1).`
 
 **Specs-repo preflight** — run at the end of step 1's address resolution, with the run key set step 1
-fixes, before step 1 places the folder or takes any stop its placement leads to — `RELEASE_NOTES_BRD_NOT_SLICED`, `RELEASE_NOTES_FOLDER_NOT_PLACED`, `RELEASE_NOTES_PRD_NO_KEY` and `RELEASE_NOTES_NO_PRD`. A run that stops on its address — none given, `invalid`, `ambiguous`, `misrooted` or `absent` — or on an unset `$SPECS_PATH` stops before this and runs none (`workflows-core:specs-repo-git` §3). Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session
+fixes, before step 1 places the folder or takes any stop its placement leads to — `RELEASE_NOTES_BRD_NOT_SLICED`, `RELEASE_NOTES_FOLDER_NOT_PLACED`, `RELEASE_NOTES_PRD_NO_KEY` and `RELEASE_NOTES_NO_PRD`. A run that stops on its address — none given, `invalid`, `ambiguous`, `misrooted`, `misnamed` or `absent` — or on an unset `$SPECS_PATH` stops before this and runs none (`workflows-core:specs-repo-git` §3). Invoke `Skill(skill: "workflows-core:reference", args: "specs-repo-git specs-preflight")` and execute its `specs-preflight` entry point (§3) inline: flush any leftover session
 artifacts from an earlier run, retry an artifact commit that failed to push,
 and settle the branch. This runs against `$SPECS_PATH` only — `git -C
 "$SPECS_PATH"`, never a `cd`, so the code/docs repo this run is working
@@ -213,7 +213,7 @@ aside — as `inputs_read`, as it reads it, for the handoff contract, which take
 - **`run_phase`.** `/release-notes` runs at two points in a PRD's life, and Phase 1's diff-grounding
   question and the `${CLAUDE_PLUGIN_ROOT}/references/release-note-types.md` §4 documentation-link rule
   both depend on which. Reuse the existing signal from `workflows-core:cost-emission` §7 — resolve the
-  PRD's specs dir by calling `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), then glob it for `specification.md` and `design.md`. A `misrooted` status stops the run with §3's `SPECS_PATH_INSIDE_TREE` message and is never read as *neither present*, though step 1's resolution, which runs the same check on either address form, has already stopped any run it would reach. That entry point searches every level §3 bounds and carries §5's legacy fallback; `workflows-core:addressing` §7 records why this command is one of its adopters.
+  PRD's specs dir by calling `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), then glob it for `specification.md` and `design.md`. A `misrooted` status stops the run with §3's `SPECS_PATH_INSIDE_TREE` message, and a `misnamed` one with its `ADDRESS_FOLDER_NAME` message, and neither is ever read as *neither present*, though step 1's resolution, which runs the same checks on either address form, has already stopped any run the first would reach, and any run whose PRD folder is on the path it resolved. That entry point searches every level §3 bounds and carries §5's legacy fallback; `workflows-core:addressing` §7 records why this command is one of its adopters.
   A flat glob alone would also be **narrower than the signal this step says it reuses**: cost-emission
   §7 defers to the specs-dir matching `workflows-core:feedback-emission` and
   `workflows-core:followup-emission` perform, whose pattern already spans both levels.
@@ -224,7 +224,8 @@ aside — as `inputs_read`, as it reads it, for the handoff contract, which take
     point at the page `/document` publishes.
   - **`$SPECS_PATH` unset** — an `@<path>` run, which needs no specs tree, so there is no tree for
     `resolve-address` to search → glob the PRD folder step 1 carried, and each `EPIC-` folder directly
-    under it, for the same two files, and take the row above that applies.
+    under it whose name is in `workflows-core:addressing` §2's class (checked as text for a `'`, then
+    with that section's program; a folder outside it is not read), for the same two files, and take the row above that applies.
   - **The dir missing** → `run_phase: pm`, the default that fabricates no link. It also recommends
     the PRD alone, which is why the row above globs the folder it has rather than fall to this one.
 
@@ -235,7 +236,7 @@ aside — as `inputs_read`, as it reads it, for the handoff contract, which take
   traced satisfies it, and what a person decided where it does not. List the records in this run's
   scope, in the working tree, as Phase 3 reads everything else: where `focus_key` is set, the focus
   Epic folder's and the PRD folder's (Phase 3 says which of the PRD folder's entries a focus run
-  takes); otherwise the PRD folder's and each `EPIC-` folder's directly under it. A missing record is
+  takes); otherwise the PRD folder's and each `EPIC-` folder's directly under it. **Each name a listing of the PRD folder's folders prints is held to `workflows-core:addressing` §2's class before any command is built from it** — checked as text for a `'`, then with that section's program — and a folder outside it that may be an Epic folder is named once, by its position, with its remedy, as §2's *A folder refused by its name* says, `<P>` the PRD folder's path; it is no Epic folder of this run's scope anywhere below — its record, its conformance record, its documents and its keys are read nowhere. A missing record is
   the absence of one, never a prerequisite, and a folder without one is not reported. Read each
   record's header — its `Run:` line (an Epic or a PRD run, the role, the date), its `At:` lines
   where it has any (the instant that run started; `workflows-core:source-truth` §7.8 counts them), its `Code
@@ -250,7 +251,8 @@ aside — as `inputs_read`, as it reads it, for the handoff contract, which take
 §6 by its step 6 — the caller that never asks, with no gate — over this run's scope, which is Phase
 3's: the focus Epic alone where `focus_key` is set; otherwise each `EPIC-` folder directly under the
 PRD folder — a listing of the working tree and of `<default-ref>` together, the default branch as
-`specs-preflight` resolved it — and the PRD folder itself. Each unit's `docs`, and each of its
+`specs-preflight` resolved it, each name held to `workflows-core:addressing` §2's class as the records
+above hold it — and the PRD folder itself. Each unit's `docs`, and each of its
 `--accepted-from`, are its `specification.md` and `design.md` where present, in the working tree or on
 `<default-ref>`, with no `--output`; a unit holding neither is skipped, and where every unit is — a
 note drafted at the PM stage, before anything is specified — one check takes the PRD folder's

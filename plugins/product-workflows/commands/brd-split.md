@@ -409,7 +409,13 @@ four-resolution one.
    are written by the parent's run — its walk, or Phase 4.5's removal repair — never chosen here
    (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §3); this step never looks for
    them and never needs to, because they are terminal already. In `full` mode: list every immediate subdirectory of `<BRD-dir>` that
-   **contains a `brd-link.md` carrying a `parent:` field naming this BRD**. Each match is a child a
+   **contains a `brd-link.md` carrying a `parent:` field naming this BRD** — **each subdirectory's name
+   held to `workflows-core:addressing` §2's class before its `brd-link.md` is read**, checked as text for
+   a `'`, then with that section's program, §2's reserved names passed over untested. One outside it may
+   be a child this run cannot read, whose rows the walk would then treat as no child's, so it stops
+   the run here, before the walk: `BRD_SPLIT_CHILD_NAME: a folder directly under <BRD-KEY>'s folder is named outside workflows-core:addressing §2's class — <its position>; <the remedy> — and may be a slice of it, so this run allocated nothing and wrote nothing. Re-run once it is renamed.`,
+   `<its position>` and `<the remedy>` as §2's *A folder refused by its name* gives them, `<P>` the BRD
+   folder's path. Each match is a child a
    previous `/brd-split` run already created, nested per `workflows-core:addressing` §6, and remains a valid
    `covered-by` target in Phase 4 even when this run proposes no new slice of its own — save one this
    step marks **unreconcilable** below, which no target list of this run offers.

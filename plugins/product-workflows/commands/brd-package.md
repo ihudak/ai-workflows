@@ -588,7 +588,8 @@ cannot review, and they will not tell you that — they will review it anyway, b
    - **A `depends-on:` key that resolves `absent` or `invalid`** adds no record (§7): print it as
      `depends-on key adds no record: <KEY> (<status>)` and go on — the *Resolve prerequisites and
      their packages* phase meets the same key again. **One that resolves `ambiguous`** stops the run
-     with `resolve-address`'s own stop, naming every match, before anything is written.
+     with `resolve-address`'s own stop, naming every match, before anything is written, and one that
+     resolves `misnamed` with its stop on a folder's name, naming none.
    - **A hit on this log whose `<entry>` names no id the log holds** flags nothing (§7): print it as
      `hit names no entry of this log: <record> › <the hit's line>` and go on.
    - **No unanswered flag** → print nothing more for this step, and go on.
