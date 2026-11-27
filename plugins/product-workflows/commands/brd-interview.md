@@ -2316,37 +2316,53 @@ where its `qid` is a `[V]` of the registry, its `behaviour` is a `[CG#n]` among 
 `findings` that carries a verifier `outcome` other than `unprovable` and a verdict
 `code-defect-log-format.md` §2 admits, and its `intent_basis` stands, as written, in the `evidence`
 of a finding of the plan's input; any other entry is left out, and the final report names it with
-why. **One defect is asked about once**: an entry whose `behaviour` and `intent_basis` are both,
-byte for byte, those of a `[CDF#n]` on file in `code-defect-log.md`, or of an entry this run has
-already put the question on, is not put — that defect is recorded, or answered, already.
+why. **One defect is asked about once in a run**: an entry whose `behaviour` and `intent_basis` are
+both, byte for byte, those of a `[CDF#n]` on file in `code-defect-log.md`, or of an entry this run
+has already put the question on, is not put — that defect is recorded, or answered, already. Where
+it is recorded — on file with a disposition other than `withdrawn`, which says there was never a
+defect, or raised by this run's *Yes* — the decision that closes this question names that
+`[CDF#n]` in its `defects` too, held as a raised one is (below); where it is `withdrawn`, or this
+run answered *No*, nothing is named. A *No* records nothing, so a later run's plan may raise the
+same entry again.
 
-**When it is asked — however the question closed.** For a question put singly and decided, right
-after its answer and the "why" where one is asked, before its decision is recorded (*Each answer is
-recorded*, below); a deferral closes nothing, so a deferred question is asked about only once a
-later answer decides it. For a question the sitting closed without putting it singly — applied at the plan's
-opening or from an answer, or confirmed in the table — once the end-of-sitting list is answered and
-any reopen it asks for is made (*The end-of-sitting list*, below): each question the registry
-records closed so, with that sitting's number, and still records closed, in the order the list
-showed them; one the list reopens is put again, and is asked about then. A question still open when
-the walk ends is asked about in no sitting of this run, and a sitting that went on unplanned raises
-none. At the end of every sitting, once the code-defect questions after its list are answered — at
-once where it raises none — set fact `p6-cdf-done-<sitting>` to `done`. **A resumed run first asks what an earlier
-sitting left unasked**: before it opens a sitting or puts a question — once any interrupted reopen
-is complete, and before an earlier sitting's at-budget question is settled (*At the budget*) — for
-each sitting below the one `p6-sitting` names whose fact `p6-cdf-done-<sitting>` is unset, it puts
-the code-defect questions of what that sitting closed without putting it singly through their
-gates, which reuse every answer recorded and ask the rest, then sets the fact. **It does not count
+**When it is asked — on every route a sitting's plan examines.** For a question put singly and
+decided, right after its answer and the "why" where one is asked, before its decision is recorded
+(*Each answer is recorded*, below); a deferral decides nothing, so a deferred question is asked
+about only once a later answer decides it. For a question the sitting closed without putting it
+singly — applied at the plan's opening or from an answer, or confirmed in the table — once the
+end-of-sitting list is answered and any reopen it asks for is made (*The end-of-sitting list*,
+below): each question the registry records closed so, with that sitting's number, and still
+records closed, in the order the list showed them; one the list reopens is put again, and is asked
+about then. A question still open when the walk ends is asked about in no sitting of this run, and
+a sitting that went on unplanned raises none. **Two closes no plan examines raise none either**: a
+question applied before the first sitting, at *Then merge*, since the planner's mode `merge`
+returns no `code_defects`; and a held `[C]` an answer re-tags `[V]` and closes in the sitting whose
+plan read it as a `[C]`, since the planner raises an entry only on a `[V]`. For those, the
+operator's own raise and the package reviewer's residue check (*The question is not the gate*,
+below) are what remain. At the end of every sitting, once the code-defect questions after its list
+are answered — at once where it raises none — set fact `p6-cdf-done-<sitting>` to `done`. **A
+resumed run first asks what an earlier sitting left unasked**: before it opens a sitting or puts a
+question — once any interrupted reopen is complete, and before an earlier sitting's at-budget
+question is settled (*At the budget*) — for each sitting below the one `p6-sitting` names whose
+fact `p6-cdf-done-<sitting>` is unset, it takes up the code-defect questions of what that sitting
+closed without putting it singly, each read first with `answers <folder> --match
+'p6-v-<round>-<position>.'` as one put singly is (*Recorded questions*, below), so that every
+answer recorded is reused, whatever its shown text, and only the rest are asked; then it sets the
+fact. **It does not count
 against the budget** (`workflows-core:question-budget` §1): it is no question of the registry, as a
 re-disposition put is not, and it is not numbered.
 
 **The question** is in `workflows-core:question-budget` §4's shape and under its rules, its shown
-text built from `scratch/p6/code-defects-<sitting>.json`, the registry and
-`grounding/code-grounding.md` alone. It opens with this sentence, word for word: "A code defect here
-means existing code that fails what it was itself meant to do — a bug that exists today,
-independent of this BRD." Then it names the question it bears on, by its address and the first line
-of its text; the behaviour — the entry's `[CG#n]` with its verdict, its verifier outcome and its
-claim; the cited intent — the entry's `intent_basis` and its `intent`; and the entry's
-`statement`, as what *Yes* would record. Each option carries its description, word for word:
+text built from `scratch/p6/code-defects-<sitting>.json`, the registry and the grounding files
+alone. It opens with this sentence, word for word: "A code defect here means existing code that
+fails what it was itself meant to do — a bug that exists today, independent of this BRD." Then it
+names the question it bears on, by its address and the first line of its text; the behaviour — the
+entry's `[CG#n]` with its verdict, its verifier outcome and its claim, as its grounding file holds
+them; the cited intent — the entry's `intent_basis`, with the line of `evidence` that holds it, as
+its grounding file writes it, from the first finding of the plan's input, in id order, whose
+`evidence` holds it, naming that finding; and the entry's `intent` and
+`statement`, labelled as the planner's reading of that evidence, not checked against the code, the
+`statement` as what *Yes* would record. Each option carries its description, word for word:
 
 ```
 choices: ["No — not a code defect", "Yes — record a code defect (you'll be prompted)<recommended>"]
@@ -2356,12 +2372,14 @@ choices: ["No — not a code defect", "Yes — record a code defect (you'll be p
 - *Yes — record a code defect* — "Records a [CDF#n] that goes to the customer in the package with a scope decision, and is priced by the effort proposal."
 
 **`<recommended>` resolves per showing**, as `workflows-core:escalation-rules`' *The
-`(Recommended)` marker is unconditional* allows: to ` (Recommended — <why>)`, `<why>` naming the
-entry's `intent_basis` and what it shows in one line — the planner writes an entry only where that
-basis shows the code failing its own intent, which is what *Yes* records. No "why" is asked after
-either answer: a `[CDF#n]` carries no argumentation, and *No* records nothing. A typed answer is
-read as the option it expresses, by the picker's rule (*A typed answer is read as the option it
-expresses*, above).
+`(Recommended)` marker is unconditional* allows: to ` (Recommended — <why>)`, `<why>` being the
+entry's `intent_basis`, then ` — `, then its `intent`, as the entries file holds them, so the shown
+text is built from files alone — the planner writes an entry only where that basis shows the code
+failing its own intent, which is what *Yes* records. No "why" is asked after either answer: a
+`[CDF#n]` carries no argumentation, and *No* records nothing. A typed answer is read as the option
+it expresses, with one clarifying question where it maps to neither
+(`workflows-core:question-budget` §4); words to stop are an abort, as at the picker, and nothing
+else typed is kept, since neither answer records a reason.
 
 *Yes* is followed at once by one plain-text question for the entry: it shows the entry's `statement`
 and `intent`, to keep or reword, and asks its `disposition` — the scope decision, one of
@@ -2373,7 +2391,15 @@ decision, whose `defects` list names it (*Each answer is recorded*); for one clo
 put singly, with `put <folder> 'scratch/p6/cdf/<round>-<position>.md' --from -`, the question's
 address in lower case — a resumed run that finds the file takes the entry from it and builds none —
 or held by the run where the run folder is unavailable, and *Write the register and the round
-record* names it in the `defects` of the decision that closed the question. *No* records nothing.
+record* names it in the `defects` of the decision that closed the question. A question *One defect
+is asked about once in a run* sends to a `[CDF#n]` already recorded holds that id alone the same
+way: in its decision's `defects` where it is put singly, and otherwise in that file, holding no
+entry. *No* records nothing. **A file holding an entry is written only after its `.cdf` answer is
+recorded *Yes***, and a resumed run reuses that answer (*Recorded questions*, below), so such a file
+never stands beside a *No*; *Write the register and the round record* writes the entry a file holds
+only where that question's `.cdf` answer, read with `answers <folder> --match
+'p6-v-<round>-<position>.'`, is *Yes*, and names one standing beside any other answer in the final
+report as a defect of the run, writing nothing from it.
 
 **The question is not the gate.** An operator may raise a `[CDF#n]` at any point in this phase
 without being asked — on any finding `code-defect-log-format.md` §2 admits, `CONFIRMED` included,
@@ -2542,17 +2568,19 @@ the plain-text question its *Yes* opens; `.defer`, the reason a deferral asks fo
 `[C]`s it names. Before it puts a
 question, the run reads `answers <folder> --match 'p6-v-<round>-<position>.'`: each prompt listed
 was answered by an earlier session of this run, so it is not put again, and its recorded answer is
-acted on as though just given. Each tie picker is recorded under gate
+acted on as though just given. **The code-defect question on a question closed without being put
+singly**, which has no `.q`, is recorded the same way, under the same two gates as one put singly,
+`p6-v-<round>-<position>.cdf` and `p6-v-<round>-<position>.cdf-entry`, with `--keep-shown`, and
+the same read before it is put finds its recorded answer, whatever its shown text, so a resumed
+run never asks it again. Each tie picker is recorded under gate
 `p6-tie-<round>-<position>`, each re-disposition put under gate `p6-cdf-<n>` (`<n>` the `[CDF#n]`'s
-number), the code-defect question on a question closed without being put singly, which has no
-`.q`, under the same two gates as one put singly, `p6-v-<round>-<position>.cdf` and
-`p6-v-<round>-<position>.cdf-entry`, through `run-gate`'s own steps with `--keep-shown`, the end-of-sitting list's question under gate `p6-end-<sitting>`, with the plain-text
+number), the end-of-sitting list's question under gate `p6-end-<sitting>`, with the plain-text
 question its second option opens under `p6-end-<sitting>.which`, the tail table's question under
 gate `p6-table-<sitting>`, with the plain-text question its second option opens under
 `p6-table-<sitting>.which`, and the at-budget question under gate `p6-budget-<n>`, `<n>` the
 sitting that ended at its budget, with the
 reason its third option asks for under `p6-budget-<n>.why` — each shown text built from the
-files, the registry, `sitting-list`'s output, the table's rows file and the code-defect entries file in the order this phase fixes, so a resumed run
+files, the registry, `sitting-list`'s output and the table's rows file in the order this phase fixes, so a resumed run
 builds the same bytes and reuses the answer. **An abort is never recorded**, so a resumed run puts
 that question again rather than stopping; nor is *Stop here and continue later*, which moves the
 run to the next sitting before it stops (*At the budget*). *The will-change rule*'s picker is not recorded: a
@@ -2579,8 +2607,8 @@ written as they are given*), before the next prompt is shown:
   ended (*At the budget*) — its event
   `{"qid": …, "event": "deferred", "reason": <the reason given>}`.
 - **The rows the table confirms**: as *The tail table* says, above.
-- **A re-disposition, a tie picker's answer, and a `[CDF#n]` raised on a question closed without
-  being put singly** are held for the register phase, as above; the registry holds no `[CDF#n]`
+- **A re-disposition, a tie picker's answer, and a `[CDF#n]` raised or named on a question closed
+  without being put singly** are held for the register phase, as above; the registry holds no `[CDF#n]`
   and no tie.
 
 **Then the answer is applied forward** (`workflows-core:question-budget` §8) — a decision's, asked
@@ -3152,9 +3180,11 @@ another BRD's, `<BRD-KEY> [VD#n]`, the qualified prose spelling (§4), never the
 of the question it closes, whose record names it; `taken: applied`; and `applied_from`, the
 decision it follows as the registry records it — a bare id for this register's, the cross-BRD form
 `<BRD-KEY>/[VD#n]` or `<BRD-KEY>/[CD#n]` for a sibling slice's or a `depends-on:` BRD's (§1). It
-takes no `settles` or `conditional_on`, and `defects` only where the code-defect question raised a
-`[CDF#n]` on its question (*Put each `[V]` to the operator*, *The code-defect question*), naming
-that one.
+takes no `settles` or `conditional_on`, and `defects` only where its question's
+`scratch/p6/cdf/<round>-<position>.md` stands, or the run holds its content where the run folder is
+unavailable (*Put each `[V]` to the operator*, *The code-defect question*), naming the `[CDF#n]` it
+holds — the entry it raised, where the log's write below takes it, or the id alone of one already
+recorded.
 
 **A decision confirmed in a table** — closed by the registry as `table`, a row of a sitting's tail
 table the operator accepted (*Put each `[V]` to the operator*, *The tail table*) — is a `[VD#n]`
@@ -3426,7 +3456,10 @@ Where no `[C]` was held and no line added, the file is not written, save to remo
 
 **`<BRD-dir>/code-defect-log.md`** — every `[CDF#n]` this round raised, appended after any already on
 file, each carrying every field `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §2
-defines. Ids are contiguous, assigned once, never renumbered and never reused: a re-run continues the
+defines: each a decision put singly holds (its `scratch/p6/taken/` file), and each entry a
+`scratch/p6/cdf/<round>-<position>.md` file holds, where that question's `.cdf` answer is *Yes*
+(*Put each `[V]` to the operator*, *The code-defect question*) — or what the run holds in their
+place, where the run folder is unavailable. Ids are contiguous, assigned once, never renumbered and never reused: a re-run continues the
 sequence from the highest id on file. **The file is written where this round raised an entry or
 re-dispositioned one already on file, or to remove a torn write, and is absent only where no run
 raised one** — that absence is
@@ -4084,7 +4117,9 @@ write reopened in turn, and each record whose basis moved, with the question tha
 round it waits on; and, on a run that resumed, `run-dispatch`'s `Resumed:` line (Phase 0 step 8c);
 the `[AS#n]` recorded; the `[CDF#n]` raised this
 round and the `[CDF#n]` re-dispositioned, each with its old and new disposition, when any; each
-`code_defects` entry of a sitting's plan the run left out, with why (*The code-defect question*); every
+`code_defects` entry of a sitting's plan the run left out, with why, and each `scratch/p6/cdf/`
+entry standing beside a `.cdf` answer other than *Yes*, as a defect of this run (*The code-defect
+question*); every
 `code-defect-log.md` entry a reconciliation record flagged, with that record, and that it was put to the operator, and every hit on this log that named
 none of its entries; every `unsourced` defect *Handoff*'s first step found to be a candidate, with its
 finding, and whether its resolution was written or left open — each left open with the value to

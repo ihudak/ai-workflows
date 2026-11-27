@@ -607,12 +607,16 @@ option is picked.
   independent of this BRD — shows the behaviour and the cited intent, and recommends *Yes*. *No*
   records nothing. *Yes* asks for the defect's scope decision — in scope, out of scope, conditional
   on what would settle it, open, or withdrawn — and records a `[CDF#n]`, which goes to the customer
-  in the package and is priced by [`/prd-proposal`](prd-proposal.md). It is asked whichever way the
-  question closed: right after your answer where the question was put on its own, and after the
-  end-of-sitting list for one applied or confirmed in a table. It counts nothing against the
-  budget, and one defect is never asked about twice. You can still raise a code defect yourself at
-  any point, and the package's review still flags a decision whose argumentation asserts a defect
-  no record names.
+  in the package and is priced by [`/prd-proposal`](prd-proposal.md). For a question a sitting's
+  plan looked at, it is asked whichever way that question closed: right after your answer where the
+  question was put on its own, and after the end-of-sitting list for one applied or confirmed in a
+  table. Two closes no plan looks at get no such question: a question a decision on file settled
+  before the first sitting, and one held for the customer that an answer shows was yours and closes
+  in the same sitting. It counts nothing against the budget, and one defect is never asked about
+  twice in a run — though a *No* records nothing, so a later run may ask about it again — and a
+  decision whose question bears on a defect already recorded names it too, unless it was withdrawn. You can still raise a
+  code defect yourself at any point, and the package's review still flags a decision whose
+  argumentation asserts a defect no record names.
 - **Phase 6 — a code defect a reconciliation flagged is put again.** A later round puts an entry of
   the code-defect log to the operator where it is still `open`, `conditional` on something the
   round has settled, or **flagged**: a [`/brd-reconcile`](brd-reconcile.md) run of any slice under
