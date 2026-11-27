@@ -531,7 +531,11 @@ command removes none of them; the next `/brd-interview` run does.
   be read, the walk says plainly that a customer who confirmed the proposal confirmed a position
   whose stated basis has moved; no option is recommended, and the operator decides. A question the
   prompt showed with no proposal following a decision — a strategic question's planned answer, or
-  none — is the customer's own answer, and nothing tests it.
+  none — is the customer's own answer, and nothing tests it. A proposal is matched to its line
+  exactly, never to a later, longer line following the same decision, and is shown in the prompt's
+  own words. Where the run cannot tell which package the review answers, it says that no prompt
+  says what was proposed for each question carrying a proposal, and that line takes the group
+  array that recommends nothing too.
 - **Phase 4 — a reason nobody gave.** A confirmed candidate, or a corrected row, whose reason is
   `not stated` takes one of exactly two routes: ask the customer and freeze nothing, or freeze it `status: open`, which
   puts the answer on the record and makes it unusable downstream until the reason arrives. The picker's third option, *Cancel — return to this candidate's four options*, resolves nothing: it puts the candidate back on the four-option picker, so *Correct it* can be taken there. Supplying

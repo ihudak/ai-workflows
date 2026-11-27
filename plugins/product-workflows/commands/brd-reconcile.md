@@ -1005,12 +1005,17 @@ record's last such line need not be what the customer saw. From the resolved pac
 a `### 7.2` table row's question `<round>/<position>`, proposed answer (a `\|` in a cell read as
 `|`) and the decision its *Why* cell names first, a bare id or `<BRD-KEY> [VD#n]`; and a
 `### 7.1` question's proposed answer. Match each to its line in the round record its
-`<round>/<position>` names, read through §8: the `- **Proposed answer:**` line at that address
-whose text after the label opens with that answer word for word and, for a `### 7.2` row, ends
-`— follows` that decision — the last such line where several match, one written again putting
-the same proposal. That line is **the proposal the package showed**. One ending in no `follows`
-— a strategic question's planned answer — follows no decision, and nothing tests it. For each
-that does follow a decision, note:
+`<round>/<position>` names, read through §8 — a `- **Proposed answer:**` line at that address:
+for a `### 7.2` row, the line whose text after the label, up to ` — follows `, equals the row's
+proposed answer exactly and which ends `— follows` that decision; for a `### 7.1` question, the
+line whose whole text after the label equals the answer shown exactly, which `/product-workflows:brd-package`
+writes as that text, word for word (*Render the customer prompt*, part 7) — the last such line
+where several match, one written again putting the same proposal. A line that only opens with
+the answer is no match: a later, longer line following the same decision is not what the
+customer saw. That line is **the proposal the package showed**, and wherever this run names it
+to the operator it gives the prompt's own text. One ending in no `follows` — a strategic
+question's planned answer — follows no decision, and nothing tests it. For each that does follow
+a decision, note:
 
 - whether a `- **Proposed answer:**` or `- **Proposal withdrawn:**` line follows it at that address
   — one written after the package was built;
@@ -1023,7 +1028,11 @@ that does follow a decision, note:
   `absent`, `invalid`, a register missing or unreadable, or no record of that id leaving the
   decision unread, which is no stop.
 
-A proposal the prompt shows that matches no line is noted as one whose basis cannot be read. **The
+A `### 7.2` row that matches no line is noted as one whose basis cannot be read; so is a `### 7.1`
+answer that matches no line, but only where the question's round record holds a
+`- **Proposed answer:** … — follows` line at its address. Where it holds none, the answer the
+prompt showed can only be the strategic question's planned answer, which follows no decision, so
+nothing tests it and no line is said. **The
 `Reopened` date is what reaches a re-decision no line here records** — a sibling slice's or a
 `depends-on:` BRD's interview re-deciding its own `[VD#n]`, which writes nothing into this slice
 and leaves the decision reading `decided`. A register carries dates, not times, so a reopening
@@ -1134,7 +1143,8 @@ put as *An answer and the answers applied from it* (below) sets out — with:
 - where its target has a live record (below), that record — its id, status, `chosen` and quoted
   reason — and whether the row as shown would re-affirm it;
 - where its target is a question the package showed a proposal for that follows a decision (*Ingest
-  the review*, *Read what the package proposed*), that proposal, the decision and its status now;
+  the review*, *Read what the package proposed*), that proposal in the prompt's own words, the
+  decision and its status now;
   and, where that basis has moved since the package was built — the decision reads anything but
   `decided`, or carries a `Reopened` paragraph dated on or after the package's date, or a later
   proposal or withdrawal line follows the one the package showed, or any of this cannot be read —
@@ -1144,7 +1154,10 @@ put as *An answer and the answers applied from it* (below) sets out — with:
   applied from it*). Where the prompt showed the question with no proposal following a decision —
   under `### 7.3`, or with a strategic question's planned answer — the answer is the customer's own
   and nothing tests it; a withdrawal line means the question carries no proposal only there, where
-  the prompt itself showed none. Where no prompt says what was proposed, the line says that instead;
+  the prompt itself showed none. Where no prompt says what was proposed — the package undetermined
+  (*Read what the package proposed*) — the line says that instead, and it is the line saying the
+  basis has moved wherever a group's array is chosen (*An answer and the answers applied from
+  it*): a group whose root or any member carries it is put on the array that recommends nothing;
 - the reason the customer gave, or `not stated` as the plain fact it is;
 - in free-text mode, the agent's own `confidence`, and every `conflict` flag naming the other
   candidate this one pulls against.
@@ -1648,8 +1661,9 @@ held, and the walk says so. Otherwise every member is shown with the facts above
 among them, and, in free-text mode, the statement that its row is an inference; the root comes
 first, shown as skipped or as the array it takes where it is no member, and each other decision
 under the answer it follows. Then ask once, on the first array below — or, where the root or any
-member carries the line saying the basis of a proposal the package showed has moved (above), on
-the second, which recommends nothing, for the reason that line gives:
+member carries the line saying the basis of a proposal the package showed has moved, or that no
+prompt says what was proposed (above), on the second, which recommends nothing, for the reason
+that line gives:
 
 ```
 choices: ["Confirm the answer and every answer applied from it (Recommended)", "Let me name the ones to correct"]

@@ -1418,11 +1418,15 @@ escalated findings under a sub-heading of their own:
   `<round>/<position>`, from its entry's `- **Covers:**` line — naming only questions this part
   renders, since one no longer held (answered, or re-tagged) is nothing left for the customer to
   settle, and is never named as open; and the package's proposed answer, its proposal by the rule
-  below — its own planned answer where a later one is left out or withdrawn.
+  below — its own planned answer where a later one is left out or withdrawn — written as the text
+  after the label on that proposal's `- **Proposed answer:**` line, word for word, as the line gives
+  it: `/product-workflows:brd-reconcile` matches the answer the prompt showed to that line
+  exactly.
 - **`### 7.2 Proposed answers to confirm or correct`** — every other held entry whose proposal
   stands, under the fixed line *confirm these as one table, or name the ones to correct, and ask
   each one named as an ordinary question*: one table, `| Question | Proposed answer | Why |`, a row
-  per question — its `<round>/<position>`, the proposal's answer, and the decision it follows named
+  per question — its `<round>/<position>`, the proposal's answer, its line's text after the label up
+  to ` — follows `, word for word, and the decision it follows named
   as its line names it, a bare id or another BRD's `<BRD-KEY> [VD#n]`, with that decision's
   `statement` quoted from its register, a `|` inside a cell written `\|` — and then each of those
   questions rendered in full, so one named for correction can be asked.
