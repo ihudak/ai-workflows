@@ -90,9 +90,11 @@ read is a candidate given no verdict.
      to decide all along: `reason` gives the cause, in one line, which the caller records with the
      re-tag (`product-workflows:interview-tagging` §3). Once re-tagged, the question is an open `[V]`.
      Where this answer alone decides it, as `determined` would, add `answer`, the derived answer, and
-     let the one-line `reason` give the derivation after the cause: the caller then records the
-     re-tag and applies the answer as a `[V]`, from `answer.decision`, in the same step. Without
-     `answer`, the re-tagged `[V]` is decided or applied like any other.
+     let the one-line `reason` give the derivation after the cause: where its own rules let it
+     re-tag the question, the caller then records the re-tag and applies the answer as a `[V]`, from
+     `answer.decision`, in the same step. Without `answer`, the re-tagged `[V]` is decided or applied
+     like any other. A caller may decline a re-tag its own rules forbid, and record the verdict's
+     `answer`, where there is one, as a proposal instead; the verdict is the same either way.
 
    Where `candidates` holds the answered question itself, it is `untouched`, its reason
    `the answered question`.

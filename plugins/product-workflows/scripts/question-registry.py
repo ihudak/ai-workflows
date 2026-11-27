@@ -7,7 +7,8 @@
   question-registry.py drop         --registry <file> --qid <qid> --reason <text> [--sitting <n>]
   question-registry.py record       --registry <file> --sitting <n>   (stdin one event E)
   question-registry.py reopen       --registry <file> (--qid <qid> | --follows <decision-id>)
-  question-registry.py rank         --registry <file>   (stdin {"<qid>": <rank>, ...})
+  question-registry.py carry        --registry <file> --qid <qid>
+  question-registry.py rank        --registry <file>   (stdin {"<qid>": <rank>, ...})
   question-registry.py next         --registry <file> [--limit <N>]
   question-registry.py sitting-list --registry <file> --sitting <n>
   question-registry.py account      --registry <file>
@@ -36,6 +37,9 @@ noted-in-inventory, sent-on-unreviewed.
 reopen --follows X reopens every question whose applied_from is X, then every question whose applied_from is
 the decision of one just reopened, and so on; reopen --qid reopens that one question. Either clears its
 decision, applied_from, answer, reason, into and sitting and sets it open; prints the reopened qids.
+carry --qid marks one open question of tag C carried, as one a package was found to have carried after it
+entered the registry; every rule on a carried question then holds for it. One already carried is left as it
+is. It prints {"qid", "carried": true, "changed": bool}.
 rank sets the rank of each question its stdin object names, a whole number from 0, lower asked first; a
 question it does not name keeps its rank, and an empty object writes nothing; prints {"ranked": n}.
 next prints the open, not carried, qids: open strategic first, then by rank, then by qid; default limit is
@@ -50,7 +54,7 @@ decision; answered or table without a decision; auto on a tag other than DEF; de
 decision other than sent-on-unreviewed; retagged without tag and reason, or to the same tag; narrowed
 without text; proposed without answer; a merge across tags, into a question that is not open, or of a
 carried question; a drop of a carried question; a reopen of a carried question or of one already open; a
-rank of an unknown, carried or not open question, or a rank that is not a whole number from 0; init over an
+carry of a question that is not open or not tag C; a rank of an unknown, carried or not open question, or a rank that is not a whole number from 0; init over an
 existing registry; a Q or an event that does not match the shape above.
 
 Exit 0: it ran. Exit 3: it refused the caller's input, which it can rebuild and send once more. Exit 2: the
@@ -468,6 +472,23 @@ def reopen(path, qid, follows):
     return reopened
 
 
+def carry(path, qid):
+    """Marks one open C question carried; one already carried is left as it is, and nothing is written."""
+    registry = _load(path)
+    q = registry["questions"].get(qid)
+    if q is None:
+        raise InputRefused("question %s is not in the registry" % json.dumps(qid))
+    if q["tag"] != "C":
+        raise InputRefused("%s is tag %s; only a C question is carried" % (qid, q["tag"]))
+    if q["state"] != "open":
+        raise InputRefused("%s is %s, not open" % (qid, q["state"]))
+    if q["carried"]:
+        return {"qid": qid, "carried": True, "changed": False}
+    q["carried"] = True
+    _write(path, registry)
+    return {"qid": qid, "carried": True, "changed": True}
+
+
 def rank(path, text):
     data = _parse_stdin(text, "a rank for each qid it names")
     for qid, value in data.items():
@@ -557,6 +578,7 @@ def main(argv):
     group = reopen_p.add_mutually_exclusive_group(required=True)
     group.add_argument("--qid")
     group.add_argument("--follows")
+    command("carry", ("--qid", {"required": True}))
     try:
         args = parser.parse_args(argv)
     except SystemExit as e:  # a usage error is the caller's input refused; --help is a run
@@ -575,6 +597,8 @@ def main(argv):
             print(json.dumps(record(path, sys.stdin.read(), args.sitting)))
         elif c == "reopen":
             print("".join(q + "\n" for q in reopen(path, args.qid, args.follows)), end="")
+        elif c == "carry":
+            print(json.dumps(carry(path, args.qid)))
         elif c == "rank":
             print(json.dumps(rank(path, sys.stdin.read())))
         elif c == "next":
@@ -851,6 +875,40 @@ def case_carried_refuses_all_but_proposed(tmp):
     assert q["state"] == "open" and q["proposed"] == "Probably yes", q
     code, out, err = _run(tmp, "reopen", ["--qid", "1/1"])
     assert code == 3, "reopened a carried question"
+
+
+def case_carry_marks_a_held_question_carried(tmp):
+    _init(tmp, [_q("1/1", tag="C"), _q("1/2"), _q("1/3", tag="C"), _q("1/4", tag="C")])
+    assert _run(tmp, "drop", ["--qid", "1/3", "--reason", "nothing turns on it"])[0] == 0
+    before = _get(tmp)
+    for extra in (["--qid", "1/2"], ["--qid", "1/3"], ["--qid", "9/9"], []):
+        code, out, err = _run(tmp, "carry", extra)
+        _unchanged(tmp, before, code)
+    code, out, err = _run(tmp, "carry", ["--qid", "1/1"])
+    assert code == 0 and json.loads(out) == {"qid": "1/1", "carried": True, "changed": True}, (code, out, err)
+    assert _state(tmp)["1/1"]["carried"] is True
+    after = _get(tmp)
+    code, out, err = _run(tmp, "carry", ["--qid", "1/1"])
+    assert code == 0 and json.loads(out)["changed"] is False and _get(tmp) == after, (code, out)
+    _unchanged(tmp, after, _event(tmp, qid="1/1", event="retagged", tag="V", reason="x")[0])
+    _unchanged(tmp, after, _event(tmp, qid="1/1", event="narrowed", text="Narrower?")[0])
+    _unchanged(tmp, after, _run(tmp, "rank", stdin={"1/1": 0})[0])
+    assert "1/1" not in _run(tmp, "next")[1].split()
+    assert _event(tmp, qid="1/1", event="proposed", answer="We propose yes")[0] == 0
+    # a re-tag an earlier session recorded, undone before the carry, as the caller does on a resume
+    assert _event(tmp, qid="1/4", event="retagged", tag="V", reason="the team's to decide")[0] == 0
+    assert _event(tmp, qid="1/4", event="applied", decision="[VD#2]", applied_from="[VD#1]")[0] == 0
+    before = _get(tmp)
+    _unchanged(tmp, before, _run(tmp, "carry", ["--qid", "1/4"])[0])
+    assert _run(tmp, "reopen", ["--qid", "1/4"])[0] == 0
+    _unchanged(tmp, _get(tmp), _run(tmp, "carry", ["--qid", "1/4"])[0])
+    assert _event(tmp, qid="1/4", event="retagged", tag="C", reason="a package carried it; undone")[0] == 0
+    assert _run(tmp, "carry", ["--qid", "1/4"])[0] == 0
+    q = _state(tmp)["1/4"]
+    assert q["carried"] and q["tag"] == "C" and q["state"] == "open" and q["decision"] is None, q
+    code, acct, err = _account(tmp)
+    assert code == 0 and acct["closes"], (code, acct, err)
+    assert acct["C"]["open"] == 2 and acct["C"]["retagged_out"] == 0 and acct["V"]["retagged_in"] == 0, acct
 
 
 def case_events_on_a_closed_or_unknown_question_refused(tmp):

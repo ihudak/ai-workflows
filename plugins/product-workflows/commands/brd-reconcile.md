@@ -1687,11 +1687,13 @@ Then, in the same phase and from the same confirmed set:
    want of its reason — moves from the holding state *held for the customer* to the terminal
    disposition **answered by the customer**, naming the `[CD#n]` it produced, completed or
    re-decided. Append it; never rewrite what the round originally asked, or
-   anything else an earlier write of the record holds. **This is the only thing that can close such
-   a round**, save the two closures of a question that has stopped applying — a withdrawn record put
+   anything else an earlier write of the record holds. **For a `[C]` a package has carried, this is
+   the only thing that can close its round**, save the two closures of a question that has stopped applying — a withdrawn record put
    again (below), and requirement defects all withdrawn (the *Resolve the defects the review
    settled* phase's last step) — and it is why the round stays open from the moment `/brd-interview` holds a `[C]`
-   until this command runs: holding a question is not the customer answering it, and the customer
+   until this command runs, save where, before any package carries the question, a delivery-team
+   answer shows it was the delivery team's to decide all along and `/brd-interview` re-tags it `[V]`
+   (`interview-tagging.md` §3), after which it closes as a `[V]`: holding a question is not the customer answering it, and the customer
    answering it is not the register recording an answer (`interview-tagging.md` §5, `decision-register-format.md` §1). Mark the same question answered in
    `interview/customer-questions.md`, naming the `[CD#n]` — in each file a `- **State:**` line
    appended beneath the question's last line, the layout `decision-register-format.md` §9 shows. **A question an earlier review already

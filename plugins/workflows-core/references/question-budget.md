@@ -308,14 +308,17 @@ its contract, and this section maps it to the rules above.
 | `drop` | closes a question as dropped, with the reason | §2, §7 |
 | `record` | one event: `answered`, `applied`, `table`, `deferred` or `auto` closes the question; `narrowed`, `proposed` or `retagged` leaves it open | §4, §8, §9 |
 | `reopen` | `--qid`, one question; `--follows <decision-id>`, every one applied from that decision, transitively | §8, §10 |
+| `carry` | marks an open `[C]` carried, where a package carried it after it entered the registry | §1, §8 |
 | `rank` | sets the rank of each open, uncarried question named, from the planner's plan | §6, §7 |
 | `next` | the open, uncarried questions to ask, strategic first, then by rank, up to the budget | §3, §6 |
 | `sitting-list` | one sitting's end-of-sitting list | §10 |
 | `account` | the account per tag, and whether it closes | §11 |
 
 **`init` runs once per run**, on a fresh run folder; a resumed run finds the registry there and
-reuses it. A carried `[C]` is marked `carried` when it enters the registry, and the script then
-refuses every event but `proposed` on it, and every merge, drop or reopen that names it.
+reuses it. A carried `[C]` is marked `carried` when it enters the registry — or, where a package
+carried it later, by `carry`, which a resumed run calls once it has undone anything this run did to
+it that a carried question may not take — and the script then refuses every event but `proposed`
+on it, and every merge, drop, reopen or rank that names it.
 
 **Its exits.** 0: it ran. 3: it refused the caller's input — rebuild the input and send it once
 more; a second refusal is reported as a defect of the run, the question left as it was. 2: the
