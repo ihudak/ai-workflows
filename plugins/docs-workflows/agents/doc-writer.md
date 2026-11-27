@@ -1,6 +1,6 @@
 ---
 name: doc-writer
-description: Writes product documentation for /document, a backlog unit's page for /docs-write, and a unit's answers onto its drafted page for /docs-verify, from a structured handoff file — for /document it applies the doc-planner checklist, discrepancy decisions, snippets, screenshots, frontmatter, and internal links; for /docs-write, the unit brief's evidence, markers and placement; for /docs-verify, each claim unmarked or rewritten to what was read. Write-only (no git). Returns the list of files written. The orchestrator pins it to the §2 Opus reasoning chain.
+description: Writes product documentation for /document, a backlog unit's page for /docs-write, and a unit's answers onto its drafted page for /docs-verify, from a structured handoff file — for /document it applies the doc-planner checklist, discrepancy decisions, snippets, screenshots, frontmatter, and internal links; for /docs-write, the unit brief's evidence, markers and placement; for /docs-verify, each claim unmarked or rewritten to what was answered. Write-only (no git). Returns the list of files written. The orchestrator pins it to the §2 Opus reasoning chain.
 tools: ["Read", "Glob", "Grep", "Write", "Edit", "Bash", "Skill"]
 ---
 

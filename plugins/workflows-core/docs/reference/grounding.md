@@ -57,7 +57,7 @@ The status lines are printed in the command's configure or plan step; the off sw
   - `/dev-workflows:implement` — its multi-source exploration, on a run that reads a specs folder — every keyed run — or more than one repository.
   - `/docs-audit` — always, over the repositories the docs profile records, or the set it confirms with you where the profile records none.
   - `/docs-write` — always, over the repositories a unit's evidence names, read at their default branch; a clone outside `$REPOS_PATH` is read only once you agree.
-  - `/docs-verify` — always, over the repositories a drafted engineering page's evidence names, read at their default branch and exported at that commit for its claim reader; a clone outside `$REPOS_PATH` is read only once you agree.
+  - `/docs-verify` — for a drafted engineering page, always, over the repositories its evidence names, read at their default branch and exported at that commit for its claim reader; a clone outside `$REPOS_PATH` is read only once you agree. A user page is walked, and no code is read for it.
   - `/document` (keyed mode) — the repositories the implementation record and the commit scan name, always.
   - `/release-notes` — only when you turn diff grounding on in Phase 1, which it recommends once a specification or design exists and not before.
 - **Status line:** none of its own — the run shows the repository set it resolved or proposes.

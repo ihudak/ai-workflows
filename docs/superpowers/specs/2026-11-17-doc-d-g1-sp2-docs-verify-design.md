@@ -290,7 +290,7 @@ Its contract:
 **In session.** The run writes the stamp (S2-D9), clearing every result; the consent has named any hand-recorded results this erases (m5). Then it asks one question per step, in `n` order.
 
 - The text gives the step's number, action, target and expect, each written as DW:22 writes free text.
-- The array is P-D11's, verbatim: `["confirmed", "differs — I'll type what I saw", "blocked — I'll say why"]`. Q3 asks for a fourth.
+- The array is P-D11's, in the form check 12 and `escalation-rules` §0 require (a label never promises text; reworded at batch 3's Task 3.3): `["confirmed", "differs (you'll be prompted for what you saw)", "blocked (you'll be prompted for why)"]`. Q3 asks for a fourth.
 - `differs` asks for the observed text, and `blocked` for the reason. Each is plain text, required, and one line (EC:113, :115, :127), and is re-asked when empty or multi-line.
 - A free-text answer naming one outcome is that outcome; any other is re-asked (CLAUDE.md, *choices*).
 - **Each answer is written to the file as it is given** (S2-D10). Rejected: writing at the walk's end, which would lose a dying session's answers.
@@ -325,7 +325,7 @@ Where they count, Phase 5 asks P-D11's question verbatim: `["Take these answers 
 **Images** (P-D11: "each slot's screenshot taken here").
 
 - **When.** For each slot in class whose comment the page carries, the run asks after the step a capture's `after_step` names in a walk, or, in a run that takes answers, once they are taken (N3). The question:
-  - under `in-repo`, the run asks `["I have it — I'll give the file", "Skip — the slot keeps its placeholder"]`;
+  - under `in-repo`, the run asks `["I have it (you'll be prompted for the file's path)", "Skip — the slot keeps its placeholder"]`;
   - under `object-store` and `cdn`, where the person uploads (docs-profile-schema.md:136-138), it asks the same for a URL.
 - **The profile's values (I10)**, held at Phase 0, shown in the consent, and equal at Phase 4's re-check. A failure stops the run, naming the field.
   - `images.policy` is one of the three.
@@ -599,8 +599,8 @@ On any failure the results do not count, and the run reports why.
 **EC gains the stamp.** EC §4 gains the key, its form, and a note that a driver reading `steps[]` ignores it. EC §5 gains three rules:
 
 - `/docs-verify` takes results only behind a stamp naming the page as it stands;
-- a person verifying by hand (ROUTE step 6) records results with no stamp;
-- `/docs-capture`'s results carry no stamp and never count.
+- a person verifying by hand (ROUTE step 6) writes no stamp: results in a walkthrough that carries none do not count, and results added by hand behind a stamp that still names the page as it stands count as any other recorded results, shown by P-D11's question, since a stamp proves no walk;
+- `/docs-capture` writes no stamp and keeps its results out of any walkthrough whose stamp would count them, so they never count.
 
 **What the stamp never authenticates**: who walked; that anybody walked; the environment; when; or the steps. Any committer can write a matching stamp, and P-D11's question is the control.
 

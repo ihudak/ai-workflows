@@ -46,8 +46,9 @@ Direct-mode `/document`, `/docs-init`, `/docs-audit`, `/docs-write`, `/docs-veri
 - **The cost checkpoint.** Every cost-emitting run here advances a small local file, keyed by session id and never committed, that records where the last cost phase left off, so the next run's cost window starts there — `--skip-costs` included. [Session cost](session-cost.md) describes it.
 - **`/docs-serve`'s run state.** `/docs-serve` records each server it starts in `.dev-workflows/docs-serve.state.json` in the documentation repository, keyed by the port the server bound, with its process, process group and log. A later `/docs-serve` reads it to find a server already running, and `--status` and `--stop` read it to report or end one. It is local bookkeeping: never staged, never committed, and kept out of `git status` by an ignore line for the file alone, since `.dev-workflows/` also holds the committed profile.
 - **The backlog runs' unfinished units.** A unit that `/docs-write` or `/docs-verify` did not commit leaves the files the run created for it — and, for `/docs-verify`, its page as the run left it, where that differs from the page you consented to — under `.dev-workflows/unfinished/<unit-id>/` in the documentation repository, or the next free `-2`, `-3` directory. The next run names each such directory and reads nothing in it: they block nothing, and no run resumes from them.
+- **A user page's walk.** [`/docs-verify`](../commands/docs-verify.md) writes each answer into the page's walkthrough, `.dev-workflows/walkthroughs/<id>.yml`, as you give it, and where the unit does not move once the walk has begun, commits the walkthrough with its answers wherever it can, naming it in its report where it cannot. The next `/docs-verify <unit-id>` asks whether to take those answers — where the walkthrough's stamp still names the page as it stands — and walks only the steps they leave open.
 
-None of this plugin's commands keeps a session file to resume a half-finished run from.
+None of this plugin's commands keeps a session file to resume a half-finished run from: a walk's answers live in the walkthrough, a file of the documentation repository.
 
 ## See also
 

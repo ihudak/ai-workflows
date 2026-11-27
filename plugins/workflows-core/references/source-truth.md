@@ -14,7 +14,7 @@ rules in the workflow plugin family:
 > The plugin never silently picks a winner; where a person already picked one in a conformance record, it takes that pick and says so (§7.8).
 
 Every sub-agent that synthesises documentation (`doc-planner`, `doc-writer`,
-`doc-reviewer`, `release-notes-writer`) MUST apply this principle. `claim-reader`, which reads a drafted page's claims for `/docs-verify`, applies §3 and §4.2's step 4, which that command hands it.
+`doc-reviewer`, `release-notes-writer`) MUST apply this principle. `claim-reader`, which reads an engineering page's claims for `/docs-verify`, applies §3 and §4.2's step 4, which that command hands it.
 
 ---
 
@@ -96,7 +96,7 @@ are ignored. The
 
 For every documentation page, snippet, or release-notes entry produced by a
 command of a plugin that depends on this one — `/document`,
-`/release-notes` and `/docs-verify` today — verify the following classes of user-visible claim
+`/release-notes` and, on an engineering page, `/docs-verify` today — verify the following classes of user-visible claim
 against the source code:
 
 | Claim type | Where to verify in code |
