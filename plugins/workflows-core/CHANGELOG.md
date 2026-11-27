@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.104.0] — 2026-11-27
+
+**What changes for you.** Nothing changes in a command of this plugin. `product-workflows` 3.91.0's `/brd-interview` now runs the strategic sittings `question-budget` §7 defines, dispatching `question-planner` in mode `strategic` before each; this release brings the two texts it follows into line with that command, which needs it (`.claude/rules/plugin-updates-coupling.md`, its 1.104.0 bullet): no question is grouped twice, and the choice after a strategic sitting is made before anything is planned again.
+
+### Changed
+
+- **`references/question-budget.md` §7.** *Planning*: no question is covered twice — a question any strategic question on file names in its `covers`, whatever that question's state and whichever run planned it, is never covered again, and a strategic question is never covered at all; what a strategic answer did not close, and what a split or deferred strategic question covers, is asked in detail; the planner holds to it, and the caller leaves out any strategic question that does not. *After each strategic sitting*: the stop rule is measured before anything is planned again, and what is left is planned once the choice is made — by another strategic sitting's own plan, or by the detailed walk's first sitting's.
+- **`agents/question-planner.md`** names `/brd-interview` as its caller in mode `strategic`, before each of its strategic sittings, beside `merge` and `plan`; in that mode it never covers a question a strategic question of its input already names in its `covers`, in any state, nor a strategic question itself, and its own check before it writes says so.
+
+### Known limits
+
+- **1.103.0's last limit is lifted, save §13**: `/product-workflows:brd-interview` runs strategic sittings and dispatches the planner in mode `strategic`. No package prompt carries §13's block yet: `/product-workflows:brd-package` renders a strategic `[C]` as it renders any held question.
+
 ## [1.103.0] — 2026-11-27
 
 **What changes for you.** Nothing changes in a command of this plugin. `product-workflows` 3.90.0's `/brd-interview` now asks its questions by `question-budget` and dispatches `question-planner` and `answer-applier`, the caller 1.102.0 named for them; this release brings four texts into line with that command, which needs it (`.claude/rules/plugin-updates-coupling.md`, its 1.103.0 bullet).
