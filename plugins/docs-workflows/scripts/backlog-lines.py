@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-r"""backlog-lines.py — the one line reader of the documentation backlog, <top>/.dev-workflows/docs-backlog.yml, and the
-export of a source repository's commit for /docs-verify's claim reader.
+r"""backlog-lines.py — the one line reader of the documentation backlog, <top>/.dev-workflows/docs-backlog.yml, and of a
+walkthrough, <top>/.dev-workflows/walkthroughs/<id>.yml, and the export of a source repository's commit for
+/docs-verify's claim reader.
 
   backlog-lines.py check --repo <top>
   backlog-lines.py moved --repo <top> --base <name> --id <id> [--id <id> ...] [--own-moves]
@@ -8,6 +9,12 @@ export of a source repository's commit for /docs-verify's claim reader.
                          [--walkthrough <id>] [--block <token>]
   backlog-lines.py export --repo <clone> --commit <oid> --out <dir> --manifest <file> [--whole]
                          [--path <rel> ...]
+  backlog-lines.py walk-check  --repo <top> --id <id>
+  backlog-lines.py walk-stamp  --repo <top> --id <id> --page <rel> --blob <oid> --at <stamp>
+  backlog-lines.py walk-record --repo <top> --id <id> --n <n> --answer <file>
+  backlog-lines.py walk-new    --repo <top> --id <id> --from <file>
+  backlog-lines.py walk-append --repo <top> --id <id> --from <file>
+  backlog-lines.py id-class --id <id>
   backlog-lines.py --selftest
 
 It never parses the backlog as YAML -- no YAML parser ships with the plugins -- and reads it line by line, in the one
@@ -17,7 +24,11 @@ unit entry. This script is that shape's one implementer. A change to the paragra
 in the same commit, and --selftest holds the two together: it reads the paragraph's reasons and the section's schema
 from the reference itself, and fails where either disagrees with this script. The file is decoded as UTF-8, strictly,
 and split on \n alone; a CR ends a line only before its \n. A unit entry spans from its `- id:` line to the line
-before the next line at its indent opening `- `, or the next column-0 line that is neither blank nor a comment.
+before the next line at its indent opening `- `, or the next column-0 line that is neither blank nor a comment. A
+walkthrough it reads the same way, in the shape docs-workflows' evidence-contract reference states in section 4, under
+"The shape a walkthrough is read in.": those line rules, at most 1 MiB, and a walkthrough's own structure in place of
+the backlog's units. It is that shape's one implementer too, and --selftest holds the two together as it holds the
+backlog's, reading that paragraph's reasons, section 4's example and its stamp from the reference itself.
 
 check tests the shape. It prints {"shape": "ok", "schema_version": "<digits>"|null, "units": <n>, "duplicates":
 [<id>...], "duplicates_outside_class": <n>, "ids_outside_class": <n>}: schema_version the top-level key's plain
@@ -133,6 +144,79 @@ otherwise, a --path compared as git reads a pathspec (./, // and /./ collapsed, 
 directory alone). On exit 3 it prints {"refused": "<why>", "files": <n>|null, "bytes": <n>|null}, <why> commit-absent,
 blob-absent, over-cap or timeout, the counts those of the files it would write, null for commit-absent and blob-absent.
 
+The walk verbs read and write the walkthrough <top>/.dev-workflows/walkthroughs/<id>.yml and run no git. walkthroughs
+must be a real directory and the walkthrough a regular file, both by lstat, each opened without following a link, the
+file never waited on and read to 1 MiB and one byte, so that a larger one reads as too-large. They take a walkthrough by
+--id and never compare it with the file's own walkthrough.id, which walk-check prints.
+
+walk-check tests the walkthrough's shape. It prints {"shape": "ok", "id": <id>|null, "unit": <id>|null, "steps":
+[<n>...], "outcomes": {"confirmed": [<n>...], "differs": [<n>...], "blocked": [<n>...], "none": [<n>...]},
+"differs_no_observed": [<n>...], "blocked_no_note": [<n>...], "stamp": {"state": "none"|"ok"|"out", "page":
+<path>|null, "blob": <oid>|null, "reason": "<word>"|null}, "slots": [{"slot": <slot>, "after_step": <n>|null}...],
+"slots_outside_class": <n>}: id and unit the walkthrough: block's two, each where it is in the unit-id class and
+otherwise null; steps each step's n, in file order; outcomes each step by its result's outcome, none a step with no
+result:; differs_no_observed each differs step whose observed is absent or reads as no text -- empty, null, Null,
+NULL, ~, '' or "" -- and blocked_no_note each blocked step whose note is; stamp none where there is no stamp:, ok
+where it is in its one form -- page and blob then printed -- and otherwise out, page and blob null and reason one of
+form (stamp: with anything on its line, nothing under it, or a line under it that is not two spaces, a key, ": " and
+a value with nothing after it, a blank line and a comment among them), keys (the keys under it not page, blob and at,
+each once, in that order), page (page no plain scalar in the page-path class), blob (blob no plain scalar in the
+object-id class) and at (at no double-quoted value in the stamp-time class,
+^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$);
+slots each captures entry whose slot is in the unit-id class, in file order, its after_step where that is a step
+number and otherwise null; slots_outside_class the number of the others, an entry with no slot among them. Or it
+prints {"shape": "out", "line": <n>, "reason": "<word>"}, as check does, line 0 for too-large and for a file with no
+walkthrough: key. A step number is ^[1-9][0-9]{0,8}$.
+
+walk-stamp stamps the walkthrough for a walk. It removes the stamp: block, where there is one, and every step's
+result: with the lines under it, and writes the stamp directly after the walkthrough: block's last line that is
+neither blank nor a comment: stamp:, then `  page: <--page>`, `  blob: <--blob>` and `  at: "<--at>"`. It prints
+{"stamp_line": <n>, "cleared": [<n>...]}: the stamp: line in the file it wrote, and the steps whose result it removed.
+
+walk-record writes one step's answer. --answer names a JSON object the caller wrote, at most 64 KiB: outcome one of
+confirmed, differs and blocked; observed given with differs and note with blocked, each required there and refused
+anywhere else, a string not empty, at most 2,000 characters, holding no \n, \r, U+0085, U+2028 or U+2029; no other
+key. It writes `result: { outcome: <o> }`, with `, observed: "<e>"` or `, note: "<e>"` before its }, at the step's key
+indent, in place of the step's result: and the lines under it, or else after the step's last line that is neither
+blank nor a comment. <e> is the text on one line, \ and " escaped with \, and every other C0 control, DEL, C1 control
+and bidirectional control (U+061C, U+200E, U+200F, U+202A to U+202E, U+2066 to U+2069) written \uXXXX, U+FFFE and
+U+FFFF too, so the line stays in shape and reads as it shows. It prints {"n": <n>, "line": <n>}, the step and the
+line it wrote; its read-back decodes the value it wrote and requires the answer's text.
+
+walk-new creates the walkthrough from --from, a JSON object the caller wrote, at most 1 MiB, holding unit, in the
+unit-id class, role and environment, preconditions, a list, and steps, 1 to 200 objects, each holding action -- one of
+navigate, click, type, select and wait --, target -- a string or an object -- and expect -- an object holding kind --,
+and no other key. A target's or an expect's keys are in ^[a-z_][a-z0-9_]{0,31}$, less the words YAML reads as no string
+(null, true, false, yes, no, on, off, y, n), and every other string -- a value, or a list's item -- is at most 500
+characters and holds no \n, \r, U+0085, U+2028 or U+2029. The file is walkthrough: with id (--id) and unit plain
+and role and environment double-quoted at a two-space indent; preconditions:, each item double-quoted at a two-space
+indent, or [] where there is none; steps:, each `  - n: <k>` from 1, then action plain, target double-quoted or a
+one-line flow mapping of double-quoted values, and expect a flow mapping of double-quoted values, at a four-space
+indent; no captures:; each string written as walk-record writes one, and each line ending in \n. It makes
+walkthroughs where it is absent, mode 0777 less the umask, and creates the file exclusively: a new file beside it,
+mode 0666 less the umask, written and synced, then linked to the walkthrough's name -- which fails where any entry has
+that name -- and removed. It prints {"created": true, "steps": [<n>...]}.
+
+walk-append appends the steps of --from, a JSON object holding steps alone, each held as walk-new holds one. It writes
+them after the steps: block's last line that is neither blank nor a comment, numbered from the last step's n + 1, each
+dash at the steps' indent and each key at the last step's key indent. It prints {"appended": [<n>...]}.
+
+A written line takes the file's line ending, its first line's that has one, and a last line with none gains it where
+a line is written after it. walk-stamp, walk-record and walk-append keep every line they do not write, byte for byte
+and in order, and check that before they write, with that the file they would write reads in shape as the change
+asked; they write as edit does, a new file beside the walkthrough renamed over it, the walkthrough read again
+immediately before the rename and refused, exit 3, changed-while-reading, where it no longer holds the bytes they
+read; and after it they read the walkthrough back and require the bytes they wrote. Where the walkthrough already
+holds them they write nothing. walk-new reads the file it created back the same way. On exit 3 each prints
+{"refused": "<why>", "line": <n>|null, "reason": "<word>"|null}, <why> one of shape (the walkthrough out of shape,
+line and reason as walk-check gives them), step-absent (walk-record: no step is --n), no-steps (walk-append: no
+steps: block, or no step in it), too-many-steps (walk-append: above 200 steps, or a step number above 999,999,999, once
+appended), too-large (the file it would write above 1 MiB), changed-while-reading and exists (walk-new: an entry has
+the walkthrough's name).
+
+id-class tests --id, reading and running nothing, and prints {"unit_id": <bool>, "walkthrough": <bool>}: whether it is
+in the unit-id class, and in --walkthrough's class below, which edit takes and walk-new holds its --id to.
+
 The arguments are tested before anything is read or run: --id against the unit-id class; --walkthrough against the same
 class, less every value YAML reads, written plain as edit writes it, as something other than a string -- a null,
 boolean, integer, float or date of YAML 1.1 or of YAML 1.2's core schema, such as null, true, y, 017, 0x1f, 1_000, 1.5,
@@ -146,15 +230,23 @@ control -- and to being a clone's top level, as its paragraph says; --commit aga
 --out and --manifest against the absolute-path class, each absent by lstat, in a parent that is a real directory by
 lstat, and not naming one entry -- one base name in one directory, however spelled; each --path against the
 relative-path class -- not empty, opening with neither / nor -, holding no .. segment and none of those characters --
-valid UTF-8 and at most 4,096 bytes. --own-moves and --whole take no value; export takes --whole, a --path, or both. A
-flag given twice (--id to moved and --path to export aside), or as --flag=value, refuses the run. <top>/.dev-workflows
-must be a real directory and the backlog a regular file, both by lstat: a symbolic link to either is refused, never
-followed, and the backlog is opened without following a link and never waited on.
+valid UTF-8 and at most 4,096 bytes. A walk verb's --id is in the unit-id class, walk-new's in --walkthrough's, since
+it writes the id plain; --page in the page-path class, as --page-path; --blob in the object-id class, as --commit; --at
+in the stamp-time class; --n a step number; --answer and --from in the absolute-path class, the file each names a
+regular file by lstat, opened without following a link and never waited on, its content held as its verb's paragraph
+says. id-class answers for its --id rather than refusing it. --own-moves and --whole take no value; export takes
+--whole, a --path, or both; a walk verb takes every flag its usage line names. A flag given twice (--id to moved and
+--path to export aside), or as --flag=value, refuses the run. <top>/.dev-workflows must be a real directory and the
+backlog a regular file, both by lstat: a symbolic link to either is refused, never followed, and the backlog is opened
+without following a link and never waited on.
 
-What it prints of the backlog, a ref or an argument is line numbers, counts, fixed words, and values that passed a class
-test: a unit id in the unit-id class, a branch name in the branch class, the schema version's digits, a --path in the
-relative-path class. A value that fails is counted, never printed, not even in an error. Outside --selftest it opens no
-file but the backlog and those export makes, and writes nothing but the backlog and, for export, the files under --out
+What it prints of the backlog, a walkthrough, a ref or an argument is line numbers, counts, fixed words, and values
+that passed a class test: a unit id, a walkthrough's id and unit and a slot in the unit-id class, a branch name in the
+branch class, the schema version's digits, a --path in the relative-path class, a stamp's page and blob in the
+page-path and object-id classes, a step number. A value that fails is counted, never printed, not even in an error;
+an observed text or a note is never printed. Outside --selftest it opens no file but the backlog, a walkthrough under
+.dev-workflows/walkthroughs/, the JSON file a walk verb names and those export makes, and writes nothing but the
+backlog, that walkthrough -- walk-new making walkthroughs where it is absent -- and, for export, the files under --out
 and the file --manifest names; it runs git as an argument list, never a shell, with a 30-second timeout per call --
 export's one cat-file --batch, 300 seconds -- in its own environment less every variable whose name starts with GIT_,
 plus GIT_TERMINAL_PROMPT=0, GIT_OPTIONAL_LOCKS=0 and GIT_NO_LAZY_FETCH=1. Git's stderr is never printed.
@@ -164,15 +256,19 @@ run -- an argument outside its class, a usage error, --repo no directory or no w
 the backlog refused as above or unreadable, git not run or not answering where moved must have an answer (HEAD, the
 base, the branch list), the working backlog out of shape or not holding an --id once (moved), a write that failed (the
 backlog unchanged), export's own -- --repo no clone's top level, --out or --manifest refused as above, git not listing
-the commit or not giving a blob as it listed it, or a write of the export that failed, a partial --out then left -- or
-an internal error; stdout is empty and stderr holds one line, "backlog-lines: not run (<why>)", <why> fixed text. Three
+the commit or not giving a blob as it listed it, or a write of the export that failed, a partial --out then left --,
+a walk verb's own -- walkthroughs or the walkthrough refused as above or unreadable, the file --answer or --from names
+outside its class, a write of the walkthrough that failed, the walkthrough as it was, or one not reading back as
+written -- or an internal error; stdout is empty and stderr holds one line, "backlog-lines: not run (<why>)", <why>
+fixed text. Three
 exits 2 follow edit's write, each with a <why> of its own: a write -- the edit's or its undo's -- not reading back as
 written; an undo not written, since the backlog no longer held the edit's bytes but another writer's; and an undo that
 failed on its own write, the backlog then read again and found to hold the edit's bytes exactly -- where that read finds
 other bytes, the undo counts as blocked, and where it fails, as a write not reading back. Exit 3: edit refused on the
-file's content before writing, the file untouched; or export refused the commit -- commit-absent, blob-absent or
-over-cap, nothing created, or timeout or a blob-absent its cat-file --batch met, a partial --out left and no manifest.
-Exit 4: edit undone; the file holds the bytes it read. --selftest exits 0 when every case passes and 1 otherwise.
+file's content before writing, the file untouched; export refused the commit -- commit-absent, blob-absent or
+over-cap, nothing created, or timeout or a blob-absent its cat-file --batch met, a partial --out left and no manifest;
+or a walk verb refused on the walkthrough's content, nothing written. Exit 4: edit undone; the file holds the bytes it
+read. A walk verb never exits 4. --selftest exits 0 when every case passes and 1 otherwise.
 
 The caller's rule, which fails closed. Any exit but 0, 3 and 4 -- a crash's 1, a signal's -- is read as 2, and so is a
 stdout that is not one JSON object. check or moved exiting anything but 0 is a stop, never a skip: never read as in
@@ -184,7 +280,10 @@ undo failed on its own write, so the backlog still holds the edit, unchecked; re
 before the edit)" has the caller restore the backlog from the copy it took before the edit. Every other line -- the
 read-back and the blocked undo after a write among them, an exit 2 before any write, and a crash or a stderr it cannot
 read -- leaves the backlog as it is, to be compared with that copy: restoring there could overwrite another writer's
-change, and leaving it is the side that cannot destroy one.
+change, and leaving it is the side that cannot destroy one. A walk verb exiting 4 is read as exiting 2. walk-check and
+id-class exiting anything but 0 is a stop, never a skip: never read as in shape or in class. walk-stamp, walk-record,
+walk-new and walk-append exiting 3 wrote nothing, and exiting anything else but 0 stop the run, the walkthrough's state
+taken as unknown, whatever stderr's line says, since no copy of a walkthrough is taken and no undo is made.
 
 Python standard library only.
 """
@@ -218,6 +317,13 @@ EXPORT_FILES_CAP = 50000  # files: an export that would write more is refused, o
 EXPORT_BYTES_CAP = 536870912  # bytes: an export that would write more is refused, over-cap
 EXPORT_TIMEOUT = 300  # seconds: export's one cat-file --batch
 EXPORT_NAME_CAP = 4096  # bytes: a longer tree name is not exported, counted name; a longer --path is refused
+WALK_DIR = "walkthroughs"  # under .dev-workflows: <id>.yml
+WALK_CAP = 1024 * 1024  # bytes: a larger walkthrough is out of shape, too-large
+ANSWER_CAP = 64 * 1024  # bytes: walk-record's --answer file at most
+STEPS_FILE_CAP = 1024 * 1024  # bytes: walk-new's and walk-append's --from file at most
+ANSWER_TEXT_CAP = 2000  # characters: an observed text or a note
+STEP_TEXT_CAP = 500  # characters: each string walk-new or walk-append writes
+STEPS_CAP = 200  # steps a walkthrough holds once walk-new or walk-append has written
 
 # Every pattern that tests a whole value is used with fullmatch and is ASCII; digits are [0-9].
 UNIT_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", re.ASCII)
@@ -238,8 +344,12 @@ NON_STRING_RE = re.compile(
 PAGE_PATH_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._/-]*\.md", re.ASCII)
 OBJECT_ID_RE = re.compile(r"[0-9a-f]{40}([0-9a-f]{24})?", re.ASCII)
 BRANCH_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._/@+-]*", re.ASCII)  # read-only-repos section 3's class
+STAMP_AT_RE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", re.ASCII)  # STAMP_AT: --at
+STEP_N_RE = re.compile(r"[1-9][0-9]{0,8}", re.ASCII)  # a step number: a walkthrough's `- n:`, and --n
+JSON_KEY_RE = re.compile(r"[a-z_][a-z0-9_]{0,31}", re.ASCII)  # a key of a target or an expect walk-new writes
 SINGLE_FLAGS = ("--repo", "--base", "--status", "--page-path", "--own-moves", "--from", "--walkthrough",
-                "--block", "--commit", "--out", "--manifest", "--whole")  # each taken once: a second refuses the run
+                "--block", "--commit", "--out", "--manifest", "--whole", "--page", "--blob", "--at", "--n",
+                "--answer")  # each taken once: a second refuses the run
 # backlog-run.md section 3's X: the characters its relative-path and absolute-path classes, and export's names, refuse.
 X_RE = re.compile(r"[\x00-\x1f\x7f-\x9f  ‪-‮⁦-⁩]")
 
@@ -247,6 +357,21 @@ X_RE = re.compile(r"[\x00-\x1f\x7f-\x9f  ‪-‮⁦-⁩]")
 REASONS = ("block-scalar", "anchor", "alias", "tag", "tab", "control", "encoding", "unclosed-quote",
            "unclosed-flow", "trailing", "key", "continuation", "units-twice", "units-not-block", "entry-opener",
            "duplicate-key", "indent", "status", "too-large")
+# A walkthrough's reasons, evidence-contract section 4's paragraph's: --selftest holds this tuple to it. The backlog's
+# line reasons -- REASONS less units-twice, units-not-block, entry-opener and status, which are its structure's --
+# then the walkthrough's structure's own.
+WALK_REASONS = ("block-scalar", "anchor", "alias", "tag", "tab", "control", "encoding", "unclosed-quote",
+                "unclosed-flow", "trailing", "key", "continuation", "duplicate-key", "indent", "too-large",
+                "top-key", "walkthrough", "step-opener", "step-number", "step-key", "action", "outcome", "result",
+                "capture")
+# Why walk-check reads a stamp as out of its form; the file stays in shape.
+STAMP_REASONS = ("form", "keys", "page", "blob", "at")
+ACTIONS = ("navigate", "click", "type", "select", "wait")  # evidence-contract section 4's closed vocabulary
+OUTCOMES = ("confirmed", "differs", "blocked")
+TOP_KEYS = ("walkthrough", "stamp", "preconditions", "steps", "captures")
+STEP_KEYS = ("n", "action", "target", "expect", "result")
+RESULT_KEYS = ("outcome", "observed", "note")
+CAPTURE_KEYS = ("slot", "after_step", "shows")
 
 # The fixed <why> of every exit 2; none carries a value from the command line, the backlog or a ref.
 WHY_USAGE = "usage: an unknown subcommand or flag, a flag without its value, or a flag given twice"
@@ -290,6 +415,23 @@ WHY_CLONE = "--repo is not a clone's top level: it holds no .git, or git does no
 WHY_TREE = "git could not list the commit's tree"
 WHY_BLOB = "git did not give a blob of the commit as its listing named it"
 WHY_EXPORT_WRITE = "the export could not be written"
+# The walk verbs'.
+WHY_WALK_ID = ("--id is outside the unit-id class, or is a spelling YAML reads as no string, or one near such a "
+               "spelling")
+WHY_PAGE = "--page is outside the page-path class"
+WHY_BLOB = "--blob is outside the object-id class"
+WHY_AT = "--at is outside the stamp-time class"
+WHY_N = "--n is outside the step-number class"
+WHY_ANSWER_PATH = "--answer is outside the absolute-path class"
+WHY_STEPS_PATH = "--from is outside the absolute-path class"
+WHY_WALK_DIR = "<top>/.dev-workflows/walkthroughs is not a real directory (absent, or a symbolic link)"
+WHY_WALK_FILE = "the walkthrough is not a regular file (absent, a symbolic link, or another kind of file)"
+WHY_WALK_READ = "the walkthrough could not be read"
+WHY_ANSWER = "the answer file is outside its class"
+WHY_STEPS_FILE = "the --from file is outside its class"
+WHY_WALK_WRITE = "the walkthrough could not be written; it is as it was"
+WHY_WALK_RACED = ("a write of the walkthrough did not read back as written: another writer's bytes, or a failed "
+                  "read; the walkthrough's state is unknown")
 
 _IO = {"git": 0, "reads": 0, "writes": 0}  # what a run did, for --selftest's "nothing read or written"
 
@@ -304,6 +446,16 @@ class Out(Exception):
     def __init__(self, line, reason):
         assert reason in REASONS, reason
         super().__init__(line, reason)
+        self.line, self.reason = line, reason
+
+
+class WalkOut(Out):
+    """A walkthrough's line out of shape for its structure: (line, reason), the reason one of WALK_REASONS. A line out
+    of the backlog's line rules is an Out, whose reason is one of WALK_REASONS too."""
+
+    def __init__(self, line, reason):
+        assert reason in WALK_REASONS, reason
+        Exception.__init__(self, line, reason)
         self.line, self.reason = line, reason
 
 
@@ -619,10 +771,25 @@ class _Reader:
 
 def read_shape(data):
     """The backlog's shape, a _Shape, where `data` is in it; Out at the first line out of it."""
-    if len(data) > SHAPE_CAP:
+    reader = _Reader()
+    texts, last = _read_lines(data, SHAPE_CAP, reader)
+    reader.end(last)
+    sv = None
+    if len(reader.schema) == 1 and reader.schema[0].kind == "plain" and DIGITS_RE.fullmatch(reader.schema[0].text):
+        sv = reader.schema[0].text
+    return _Shape(sv, reader.entries, texts)
+
+
+def _read_lines(data, cap, reader):
+    """The line rules every shape this script reads shares, the backlog's and a walkthrough's: Out(0, too-large)
+    above `cap` bytes; each line decoded as UTF-8, strictly, split on \\n alone, a CR ending a line only before its
+    \\n, and held to _chars; `---` as line 1 only; indentation ASCII spaces only; a line opening `- ` at column 0 out
+    of shape. Each line that is neither blank nor a comment goes to reader.line(n, line, indent, seq). Returns the
+    lines' texts, each with its CR, and the number of the last line."""
+    if len(data) > cap:
         raise Out(0, "too-large")
     segs = data.split(b"\n")
-    reader, texts = _Reader(), []
+    texts = []
     for k, raw in enumerate(segs):
         n = k + 1
         try:
@@ -644,11 +811,7 @@ def read_shape(data):
         if i == 0 and seq:  # a line opening `- ` at column 0
             raise Out(n, "indent")
         reader.line(n, line, i, seq)
-    reader.end(len(segs) - 1 if segs[-1] == b"" else len(segs))
-    sv = None
-    if len(reader.schema) == 1 and reader.schema[0].kind == "plain" and DIGITS_RE.fullmatch(reader.schema[0].text):
-        sv = reader.schema[0].text
-    return _Shape(sv, reader.entries, texts)
+    return texts, len(segs) - 1 if segs[-1] == b"" else len(segs)
 
 
 # ---- the backlog on disk ----
@@ -673,26 +836,25 @@ def _open_dir(top):
     return dfd
 
 
-def _read_at(dfd):
-    """(bytes, mode) of the backlog in the open .dev-workflows `dfd` -- at most SHAPE_CAP + 1 bytes, which is enough
-    to call it too large. It is a regular file by lstat, opened without following a link and never waited on;
-    anything else is NotRun."""
+def _read_file_at(dfd, name, cap, why_file, why_read):
+    """(bytes, mode) of the file `name` in the open directory `dfd` -- at most `cap` + 1 bytes, which is enough to call
+    it too large. It is a regular file by lstat, opened without following a link and never waited on; anything else
+    is NotRun(why_file), and a failed read NotRun(why_read)."""
     try:
-        st = os.stat(BACKLOG_NAME, dir_fd=dfd, follow_symlinks=False)
+        st = os.stat(name, dir_fd=dfd, follow_symlinks=False)
     except OSError:
-        raise NotRun(WHY_FILE)
+        raise NotRun(why_file)
     if not stat.S_ISREG(st.st_mode):
-        raise NotRun(WHY_FILE)
+        raise NotRun(why_file)
     try:
-        fd = os.open(BACKLOG_NAME, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0),
-                     dir_fd=dfd)
+        fd = os.open(name, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0), dir_fd=dfd)
     except OSError:
-        raise NotRun(WHY_READ)
+        raise NotRun(why_read)
     try:
         fst = os.fstat(fd)
         if not stat.S_ISREG(fst.st_mode) or (fst.st_dev, fst.st_ino) != (st.st_dev, st.st_ino):
-            raise NotRun(WHY_FILE)
-        chunks, left = [], SHAPE_CAP + 1
+            raise NotRun(why_file)
+        chunks, left = [], cap + 1
         while left > 0:
             b = os.read(fd, min(left, 1 << 20))
             if not b:
@@ -700,10 +862,15 @@ def _read_at(dfd):
             chunks.append(b)
             left -= len(b)
     except OSError:
-        raise NotRun(WHY_READ)
+        raise NotRun(why_read)
     finally:
         os.close(fd)
     return b"".join(chunks), stat.S_IMODE(fst.st_mode)
+
+
+def _read_at(dfd):
+    """(bytes, mode) of the backlog in the open .dev-workflows `dfd`, as _read_file_at reads a file, to SHAPE_CAP."""
+    return _read_file_at(dfd, BACKLOG_NAME, SHAPE_CAP, WHY_FILE, WHY_READ)
 
 
 def _read_backlog(top):
@@ -721,18 +888,19 @@ class _Changed(Exception):
     """The backlog no longer held what a write expected to replace, so nothing was written."""
 
 
-def _write_backlog(top, data, mode, expect):
-    """Replace the backlog with `data` atomically: a new file beside it, written and synced, renamed over it, and the
-    rename synced where the platform allows. Nothing is written through a link.
+def _replace_at(dfd, name, data, mode, expect, read_now):
+    """The shared atomic write, the backlog's and a walkthrough's: replace the file `name` in the open directory `dfd`
+    with `data` -- a new file beside it, written, given `mode` and synced, renamed over it, and the rename synced where
+    the platform allows. Nothing is written through a link.
 
-    Immediately before the rename it reads the backlog again, through the same directory descriptor, and where the
-    file no longer holds `expect` it removes its new file and raises _Changed, the backlog untouched. That narrows the
-    window in which another writer's change is lost to the instant between that read and the rename; it does not
-    close it, since no lock is shared with other writers. OSError or NotRun where it cannot write."""
-    dfd = _open_dir(top)
+    Immediately before the rename it reads the file again with read_now(), through the same directory descriptor, and
+    where the file no longer holds `expect` it removes its new file and raises _Changed, the file untouched. That
+    narrows the window in which another writer's change is lost to the instant between that read and the rename; it
+    does not close it, since no lock is shared with other writers. OSError or NotRun where it cannot write: the rename
+    has then not happened."""
     tmpname = None
     try:
-        tmpname = ".%s.%d.%s.tmp" % (BACKLOG_NAME, os.getpid(), os.urandom(4).hex())
+        tmpname = ".%s.%d.%s.tmp" % (name, os.getpid(), os.urandom(4).hex())
         fd = os.open(tmpname, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600, dir_fd=dfd)
         try:
             view = memoryview(data)
@@ -742,9 +910,9 @@ def _write_backlog(top, data, mode, expect):
             os.fsync(fd)
         finally:
             os.close(fd)
-        if _read_at(dfd)[0] != expect:  # the last look before the rename: the window stays open only from here
+        if read_now() != expect:  # the last look before the rename: the window stays open only from here
             raise _Changed()
-        os.replace(tmpname, BACKLOG_NAME, src_dir_fd=dfd, dst_dir_fd=dfd)
+        os.replace(tmpname, name, src_dir_fd=dfd, dst_dir_fd=dfd)
         tmpname = None
         _IO["writes"] += 1
         with contextlib.suppress(OSError):
@@ -753,6 +921,15 @@ def _write_backlog(top, data, mode, expect):
         if tmpname is not None:
             with contextlib.suppress(OSError):
                 os.unlink(tmpname, dir_fd=dfd)
+
+
+def _write_backlog(top, data, mode, expect):
+    """Replace the backlog with `data` by _replace_at, its last look _read_at's. _Changed where the backlog no longer
+    holds `expect`; OSError or NotRun where it cannot write."""
+    dfd = _open_dir(top)
+    try:
+        _replace_at(dfd, BACKLOG_NAME, data, mode, expect, lambda: _read_at(dfd)[0])
+    finally:
         with contextlib.suppress(OSError):  # so an OSError always means the rename did not happen
             os.close(dfd)
 
@@ -1628,6 +1805,914 @@ def _export_commit(repo, commit, out, out_dir, out_base, man_dir, man_base, whol
                "paths": _path_states(paths, listed, [name for _, name, _ in done])}
 
 
+# ---- the walkthroughs: the shape ----
+
+class _WItem(_Item):
+    """An _Item of a walkthrough: also its last line -- its own, or its block's last line that is neither blank nor a
+    comment -- the block under it, and, for a flow mapping read key by key, its pairs."""
+    __slots__ = ("last", "child", "pairs")
+
+    def __init__(self, line, key, value, inner=None):
+        super().__init__(line, key, value, inner)
+        self.last, self.child, self.pairs = line, None, None
+
+
+class _WFrame:
+    """An open block of a walkthrough: its indent, map or seq, its role (root, walkthrough, stamp, steps, step,
+    result, captures, capture or None), the item it hangs under, its keys, its last item and its last line."""
+    __slots__ = ("indent", "kind", "role", "owner", "keys", "item", "end", "step")
+
+    def __init__(self, indent, kind, role, owner=None):
+        self.indent, self.kind, self.role, self.owner = indent, kind, role, owner
+        self.keys, self.item, self.end, self.step = {}, None, None, None
+
+
+class _WStep:
+    """A step: its number, its first and last line, its dash's and its keys' indent, and its _WResult or None."""
+    __slots__ = ("n", "first", "last", "dash", "col", "result")
+
+    def __init__(self, n, first, dash, col):
+        self.n, self.first, self.last, self.dash, self.col, self.result = n, first, first, dash, col, None
+
+
+class _WResult:
+    """A step's result: its first and last line, its outcome's text, and its observed and note values or None."""
+    __slots__ = ("line", "last", "outcome", "observed", "note")
+
+
+class _Walk:
+    """A walkthrough in shape: its lines' texts, its top-level items, its walkthrough: block's keys, its steps, and
+    its captures as (slot value, after_step value) pairs, None where absent."""
+    __slots__ = ("texts", "top", "wt", "steps", "captures")
+
+
+def _empty_seq(value):
+    """Whether a value on its key's line leaves a block sequence to the lines below it, or is an empty one: empty,
+    or [] with spaces between, or none."""
+    return value.kind == "empty" or (value.kind == "flow" and value.text[0] == "[" and not value.text[1:-1].strip(" "))
+
+
+def _flow_pairs(text):
+    """[(key, _Value)] of a flow mapping `_flow` admitted, one level deep: `{}`, or `{ key: value, ... }`, each key in
+    the key grammar followed by `: ` and each value empty, a quoted scalar or a plain one that opens with no indicator;
+    None where it holds anything else -- a nested collection, an entry that is no `key: value`, a trailing comma."""
+    if not (text.startswith("{") and text.endswith("}")):
+        return None
+    end, pairs = len(text) - 1, []
+
+    def skip(i):
+        while i < end and text[i] == " ":
+            i += 1
+        return i
+    i = skip(1)
+    if i == end:
+        return pairs
+    while True:
+        m = KEY_RE.match(text, i)
+        if m is None:
+            return None
+        j = skip(m.end())
+        c = text[j] if j < end else ""
+        if c in ("", ","):
+            value = _Value("empty", j, j, "")
+        elif c in "'\"":
+            k = _quoted(text, j)
+            if k is None or k > end:
+                return None
+            value = _Value("squote" if c == "'" else "dquote", j, k, text[j:k])
+            j = k
+        elif c in "[]{}#%@`|>&*!," or (c in "-?:" and (j + 1 == end or text[j + 1] == " ")):
+            return None
+        else:
+            k = j
+            while k < end and text[k] not in ",[]{}" and not (
+                    text[k] == ":" and (k + 1 == end or text[k + 1] in " ,[]{}")):
+                k += 1
+            if k < end and text[k] != ",":
+                return None
+            body = text[j:k].rstrip(" ")
+            value = _Value("plain", j, j + len(body), body)
+            j = k
+        pairs.append((m.group(1), value))
+        j = skip(j)
+        if j == end:
+            return pairs
+        if text[j] != ",":
+            return None
+        i = skip(j + 1)
+        if i == end:
+            return None
+
+
+def _result_check(pairs, line):
+    """WalkOut unless a result's pairs, {key: (line, value)}, hold a plain outcome of the three, an observed on
+    differs alone and a note on blocked alone; `line` the result's own."""
+    if "outcome" not in pairs:
+        raise WalkOut(line, "outcome")
+    at, value = pairs["outcome"]
+    if value.kind != "plain" or value.text not in OUTCOMES:
+        raise WalkOut(at, "outcome")
+    for key, only in (("observed", "differs"), ("note", "blocked")):
+        if key in pairs and value.text != only:
+            raise WalkOut(pairs[key][0], "result")
+
+
+def _scalar_value(value):
+    """Whether a value is a scalar on its line: empty, plain or quoted."""
+    return value.kind in ("empty", "plain", "squote", "dquote")
+
+
+class _WalkReader:
+    """The structure of one walkthrough, a line at a time, on the backlog's line functions: a stack of open blocks,
+    each with its role, and the steps and captures as they close."""
+
+    def __init__(self):
+        self.root = _WFrame(0, "map", "root")
+        self.stack, self.placed, self.prev_n = [self.root], 0, 0
+        self.steps, self.captures, self.wt = [], [], None
+
+    def line(self, n, line, i, seq):
+        while self.stack[-1].indent > i:
+            self._close(self.stack.pop())
+        self._place(n, line, i, seq)
+        self.placed = n
+
+    def end(self, last_line):
+        while len(self.stack) > 1:
+            self._close(self.stack.pop())
+        self._top_done()
+        if self.wt is None:
+            raise WalkOut(0, "walkthrough")
+
+    def walk(self, texts):
+        w = _Walk()
+        w.texts, w.top, w.wt, w.steps, w.captures = texts, self.root.keys, self.wt, self.steps, self.captures
+        return w
+
+    def _top_done(self):
+        """The top-level item before the next, or the last: a walkthrough: with no block under it is out."""
+        item = self.root.item
+        if item is not None and item.key == "walkthrough" and not item.had_child:
+            raise WalkOut(item.line, "walkthrough")
+
+    def _close(self, frame):
+        frame.end = self.placed
+        frame.owner.last = frame.end
+        keys = frame.keys
+        if frame.role == "walkthrough":
+            if "id" not in keys or "unit" not in keys:
+                raise WalkOut(frame.owner.line, "walkthrough")
+            self.wt = keys
+        elif frame.role == "result":
+            _result_check({k: (it.line, it.value) for k, it in keys.items()}, frame.owner.line)
+        elif frame.role == "capture":
+            self.captures.append((keys["slot"].value if "slot" in keys else None,
+                                  keys["after_step"].value if "after_step" in keys else None))
+        elif frame.role == "step":
+            step = frame.step
+            step.last = frame.end
+            if "action" not in keys:
+                raise WalkOut(step.first, "action")
+            item = keys.get("result")
+            if item is not None:
+                if item.pairs is not None:
+                    pairs = item.pairs
+                elif item.child is not None:
+                    pairs = {k: (it.line, it.value) for k, it in item.child.keys.items()}
+                else:  # `result:` with nothing under it
+                    raise WalkOut(item.line, "result")
+                r = _WResult()
+                r.line, r.last, r.outcome = item.line, item.last, pairs["outcome"][1].text
+                r.observed = pairs["observed"][1] if "observed" in pairs else None
+                r.note = pairs["note"][1] if "note" in pairs else None
+                step.result = r
+
+    def _child_role(self, frame, item, seq, n):
+        """The role of a block opening under `item`, a key of `frame`; WalkOut where the block may not open there."""
+        role, key = frame.role, item.key
+        if role == "root":
+            if key == "walkthrough":
+                if seq:
+                    raise WalkOut(n, "walkthrough")
+                return "walkthrough"
+            if key == "steps":
+                if not seq:
+                    raise WalkOut(n, "step-opener")
+                return "steps"
+            if key == "captures":
+                if not seq:
+                    raise WalkOut(n, "capture")
+                return "captures"
+            return "stamp" if key == "stamp" else None
+        if role == "step" and key == "result":
+            if seq:
+                raise WalkOut(n, "result")
+            return "result"
+        if role in ("result", "capture"):  # one level deep
+            raise WalkOut(n, role)
+        return "stamp" if role == "stamp" else None
+
+    def _place(self, n, line, i, seq):
+        top = self.stack[-1]
+        if top.indent < i:  # a block under top's last item
+            item = top.item
+            if item is None or item.inner is not None:
+                raise WalkOut(n, "indent")
+            if not item.opens:
+                raise WalkOut(n, "continuation")
+            if item.had_child:
+                raise WalkOut(n, "indent")
+            item.had_child = True
+            top = _WFrame(i, "seq" if seq else "map", self._child_role(top, item, seq, n), item)
+            item.child = top
+            self.stack.append(top)
+        if top.kind == "map":
+            if seq:
+                raise WalkOut(n, "indent")
+            got = _mapping(n, line, i)
+            if got is None:
+                raise WalkOut(n, "continuation")
+            item = _WItem(n, got[0], got[1])
+            self._key(top, item, n)
+            top.keys[item.key] = item
+            top.item = item
+            return
+        if not seq:
+            raise WalkOut(n, "indent")
+        self._entry(top, _seq(n, line, i), n)
+
+    def _key(self, frame, item, n):
+        """WalkOut where a key may not stand in `frame`, or its value may not stand after it."""
+        role, key, value = frame.role, item.key, item.value
+        if role == "root":
+            self._top_done()
+            if key not in TOP_KEYS:
+                raise WalkOut(n, "top-key")
+        elif role == "step" and key not in STEP_KEYS:
+            raise WalkOut(n, "step-key")
+        elif role == "result" and key not in RESULT_KEYS:
+            raise WalkOut(n, "result")
+        elif role == "capture" and key not in CAPTURE_KEYS:
+            raise WalkOut(n, "capture")
+        if key in frame.keys and role != "stamp":  # a stamp's own keys are read as its form, never refused
+            raise WalkOut(n, "duplicate-key")
+        if role == "root":
+            if key == "walkthrough" and value.kind != "empty":
+                raise WalkOut(n, "walkthrough")
+            if key == "steps" and not _empty_seq(value):
+                raise WalkOut(n, "step-opener")
+            if key == "captures" and not _empty_seq(value):
+                raise WalkOut(n, "capture")
+        elif role == "walkthrough":
+            if key in ("id", "unit") and value.kind != "plain":
+                raise WalkOut(n, "walkthrough")
+        elif role == "step":
+            if key == "action" and not (value.kind in ("plain", "squote", "dquote")
+                                        and _scalar_text(value) in ACTIONS):
+                raise WalkOut(n, "action")
+            if key == "result":
+                item.pairs = self._flow_result(value, n)
+        elif role in ("result", "capture") and not _scalar_value(value):
+            raise WalkOut(n, role)
+
+    def _flow_result(self, value, n):
+        """A result on its key's line: its pairs where it is a flow mapping in shape; None where it is empty, a block
+        mapping to follow; WalkOut otherwise."""
+        if value.kind == "empty":
+            return None
+        pairs = _flow_pairs(value.text) if value.kind == "flow" else None
+        if pairs is None:
+            raise WalkOut(n, "result")
+        got = {}
+        for key, v in pairs:
+            if key not in RESULT_KEYS:
+                raise WalkOut(n, "result")
+            if key in got:
+                raise WalkOut(n, "duplicate-key")
+            got[key] = (n, v)
+        _result_check(got, n)
+        return got
+
+    def _entry(self, frame, got, n):
+        """A `- ` line in the sequence `frame`: a step, a capture, or an item of any other sequence."""
+        role, num = frame.role, None
+        if role == "steps":
+            if got[0] != "map" or got[1] != "n" or got[2].kind != "plain" or not STEP_N_RE.fullmatch(got[2].text):
+                raise WalkOut(n, "step-opener")
+            num = int(got[2].text)
+            if num <= self.prev_n:
+                raise WalkOut(n, "step-number")
+            self.prev_n = num
+        elif role == "captures":
+            if got[0] == "value":
+                pairs = _flow_pairs(got[1].text) if got[1].kind == "flow" else None
+                if pairs is None:
+                    raise WalkOut(n, "capture")
+                seen = {}
+                for key, v in pairs:
+                    if key not in CAPTURE_KEYS:
+                        raise WalkOut(n, "capture")
+                    if key in seen:
+                        raise WalkOut(n, "duplicate-key")
+                    seen[key] = v
+                self.captures.append((seen.get("slot"), seen.get("after_step")))
+            elif got[1] not in CAPTURE_KEYS or not _scalar_value(got[2]):
+                raise WalkOut(n, "capture")
+        if got[0] == "value":
+            frame.item = _WItem(n, None, got[1])
+            return
+        key, value, col = got[1], got[2], got[3]
+        frame.item = _WItem(n, None, None, inner=col)
+        inner_role = {"steps": "step", "captures": "capture", "stamp": "stamp"}.get(role)
+        inner = _WFrame(col, "map", inner_role, frame.item)
+        first = _WItem(n, key, value)
+        inner.keys[key], inner.item = first, first
+        if inner_role == "step":
+            inner.step = _WStep(num, n, frame.indent, col)
+            self.steps.append(inner.step)
+        self.stack.append(inner)
+
+
+def read_walk(data):
+    """The walkthrough, a _Walk, where `data` is in evidence-contract section 4's shape; Out at the first line out of
+    it, its reason one of WALK_REASONS."""
+    reader = _WalkReader()
+    texts, last = _read_lines(data, WALK_CAP, reader)
+    reader.end(last)
+    return reader.walk(texts)
+
+
+def _no_text(value):
+    """Whether a result's observed or note value reads as no text: absent, empty, null, ~, '' or ""."""
+    if value is None or value.kind == "empty":
+        return True
+    if value.kind == "plain":
+        return value.text in ("null", "Null", "NULL", "~")
+    return value.text in ("''", '""')
+
+
+def _stamp_state(w):
+    """{"state", "page", "blob", "reason"} of the walkthrough's stamp: none, ok in its one form, or out with a reason
+    of STAMP_REASONS -- read, never refused."""
+    item = w.top.get("stamp")
+    if item is None:
+        return {"state": "none", "page": None, "blob": None, "reason": None}
+
+    def out(reason):
+        assert reason in STAMP_REASONS, reason
+        return {"state": "out", "page": None, "blob": None, "reason": reason}
+    lines = [t[:-1] if t.endswith("\r") else t for t in w.texts[item.line - 1:item.last]]
+    if lines[0] != "stamp:" or len(lines) < 2:
+        return out("form")
+    got = []
+    for line in lines[1:]:
+        m = KEY_RE.match(line, 2) if line.startswith("  ") and line[2:3] not in (" ", "#", "-", "") else None
+        if m is None:
+            return out("form")
+        value = _value(0, line, m.end())
+        if value.end != len(line) or value.kind not in ("plain", "dquote"):
+            return out("form")
+        got.append((m.group(1), value))
+    if [k for k, _ in got] != ["page", "blob", "at"]:
+        return out("keys")
+    page, blob, at = (v for _, v in got)
+    if page.kind != "plain" or not _page_path(page.text):
+        return out("page")
+    if blob.kind != "plain" or not OBJECT_ID_RE.fullmatch(blob.text):
+        return out("blob")
+    if at.kind != "dquote" or not STAMP_AT_RE.fullmatch(at.text[1:-1]):
+        return out("at")
+    return {"state": "ok", "page": page.text, "blob": blob.text, "reason": None}
+
+
+def _walk_report(w):
+    """walk-check's object for a walkthrough in shape: counts, step numbers and values in their classes only."""
+    outcomes = {o: [] for o in OUTCOMES + ("none",)}
+    no_observed, no_note = [], []
+    for s in w.steps:
+        r = s.result
+        outcomes["none" if r is None else r.outcome].append(s.n)
+        if r is not None and r.outcome == "differs" and _no_text(r.observed):
+            no_observed.append(s.n)
+        if r is not None and r.outcome == "blocked" and _no_text(r.note):
+            no_note.append(s.n)
+    slots, outside = [], 0
+    for slot, after in w.captures:
+        text = _scalar_text(slot) if slot is not None and slot.kind != "empty" else None
+        if text is None or not _unit_id(text):
+            outside += 1
+            continue
+        step = _scalar_text(after) if after is not None and after.kind != "empty" else None
+        slots.append({"slot": text, "after_step": int(step) if step and STEP_N_RE.fullmatch(step) else None})
+    wid, unit = w.wt["id"].value.text, w.wt["unit"].value.text
+    return {"shape": "ok", "id": wid if _unit_id(wid) else None, "unit": unit if _unit_id(unit) else None,
+            "steps": [s.n for s in w.steps], "outcomes": outcomes, "differs_no_observed": no_observed,
+            "blocked_no_note": no_note, "stamp": _stamp_state(w), "slots": slots, "slots_outside_class": outside}
+
+
+# ---- the walkthroughs: the escape ----
+
+# Unicode's Bidi_Control characters.
+BIDI_CONTROLS = frozenset("؜‎‏‪‫‬‭‮⁦⁧⁨⁩")
+NO_LINE = frozenset("\n\r\x85  ")  # what no string a walk verb writes may hold
+
+
+def _dq(text):
+    """`text` as a YAML double-quoted scalar on one line: \\ and " escaped with \\, and every C0 control, DEL, C1
+    control, bidirectional control, U+2028, U+2029, U+FFFE and U+FFFF written \\uXXXX -- none of them reaches the file
+    raw, so the line stays in the line shape and reads as it shows."""
+    out = []
+    for ch in text:
+        o = ord(ch)
+        if ch in "\\\"":
+            out.append("\\" + ch)
+        elif o < 0x20 or 0x7F <= o <= 0x9F or ch in BIDI_CONTROLS or o in (0x2028, 0x2029, 0xFFFE, 0xFFFF):
+            out.append("\\u%04X" % o)
+        else:
+            out.append(ch)
+    return "\"" + "".join(out) + "\""
+
+
+DQ_U_RE = re.compile(r"[0-9A-Fa-f]{4}", re.ASCII)
+
+
+def _dq_text(token):
+    """The text of a double-quoted scalar `token` as _dq writes one -- \\\\, \\" and \\uXXXX its only escapes; None
+    where it holds anything else."""
+    if len(token) < 2 or token[0] != "\"" or token[-1] != "\"":
+        return None
+    body, out, i = token[1:-1], [], 0
+    while i < len(body):
+        c = body[i]
+        if c == "\"":
+            return None
+        if c != "\\":
+            out.append(c)
+            i += 1
+        elif body[i + 1:i + 2] in ("\\", "\""):
+            out.append(body[i + 1])
+            i += 2
+        elif body[i + 1:i + 2] == "u" and DQ_U_RE.fullmatch(body[i + 2:i + 6]):
+            out.append(chr(int(body[i + 2:i + 6], 16)))
+            i += 6
+        else:
+            return None
+    return "".join(out)
+
+
+def _one_line(value, cap, empty_ok=True):
+    """Whether `value` is a string a walk verb writes: at most `cap` characters, holding no line break -- \\n, \\r,
+    U+0085, U+2028 or U+2029 -- and no lone surrogate, and not empty unless `empty_ok`."""
+    if not isinstance(value, str) or len(value) > cap or (not value and not empty_ok):
+        return False
+    if any(ch in NO_LINE for ch in value):
+        return False
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
+# ---- the walkthroughs on disk ----
+
+def _walk_dir(dfd, create=False):
+    """A descriptor of walkthroughs in the open .dev-workflows `dfd`: a real directory by lstat, opened without
+    following a link; with `create`, made first where absent, mode 0777 less the umask. NotRun otherwise."""
+    try:
+        st = os.stat(WALK_DIR, dir_fd=dfd, follow_symlinks=False)
+    except FileNotFoundError:
+        if not create:
+            raise NotRun(WHY_WALK_DIR)
+        try:
+            os.mkdir(WALK_DIR, 0o777, dir_fd=dfd)
+        except FileExistsError:  # made meanwhile: tested below as any other
+            pass
+        except OSError:
+            raise NotRun(WHY_WALK_WRITE)
+        try:
+            st = os.stat(WALK_DIR, dir_fd=dfd, follow_symlinks=False)
+        except OSError:
+            raise NotRun(WHY_WALK_DIR)
+    except OSError:
+        raise NotRun(WHY_WALK_DIR)
+    if not stat.S_ISDIR(st.st_mode):
+        raise NotRun(WHY_WALK_DIR)
+    try:
+        wfd = os.open(WALK_DIR, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
+                      dir_fd=dfd)
+    except OSError:
+        raise NotRun(WHY_WALK_DIR)
+    fst = os.fstat(wfd)
+    if not stat.S_ISDIR(fst.st_mode) or (fst.st_dev, fst.st_ino) != (st.st_dev, st.st_ino):
+        os.close(wfd)
+        raise NotRun(WHY_WALK_DIR)
+    return wfd
+
+
+def _walk_probe(dfd):
+    """NotRun(WHY_WALK_DIR) where walkthroughs in the open .dev-workflows `dfd` is there and no real directory."""
+    try:
+        st = os.stat(WALK_DIR, dir_fd=dfd, follow_symlinks=False)
+    except FileNotFoundError:
+        return
+    except OSError:
+        raise NotRun(WHY_WALK_DIR)
+    if not stat.S_ISDIR(st.st_mode):
+        raise NotRun(WHY_WALK_DIR)
+
+
+def _walk_read_at(wfd, wid):
+    return _read_file_at(wfd, wid + ".yml", WALK_CAP, WHY_WALK_FILE, WHY_WALK_READ)
+
+
+def _walk_read(top, wid):
+    """(bytes, mode) of <top>'s walkthrough <id>, as _read_file_at reads a file, to WALK_CAP."""
+    dfd = _open_dir(top)
+    try:
+        wfd = _walk_dir(dfd)
+        try:
+            got = _walk_read_at(wfd, wid)
+        finally:
+            os.close(wfd)
+    finally:
+        os.close(dfd)
+    _IO["reads"] += 1
+    return got
+
+
+def _write_walk(top, wid, data, mode, expect):
+    """Replace the walkthrough with `data` by _replace_at, its last look _walk_read_at's. _Changed where the
+    walkthrough no longer holds `expect`; OSError or NotRun where it cannot write."""
+    dfd = _open_dir(top)
+    try:
+        wfd = _walk_dir(dfd)
+        try:
+            _replace_at(wfd, wid + ".yml", data, mode, expect, lambda: _walk_read_at(wfd, wid)[0])
+        finally:
+            with contextlib.suppress(OSError):
+                os.close(wfd)
+    finally:
+        with contextlib.suppress(OSError):
+            os.close(dfd)
+
+
+def _create_walk(top, wid, data):
+    """Create the walkthrough holding `data`, exclusively: a new file beside it, mode 0666 less the umask, written and
+    synced, linked to the walkthrough's name -- which fails where any entry has that name -- then removed. Makes
+    walkthroughs where it is absent. False where the name is taken; NotRun where it cannot write."""
+    dfd = _open_dir(top)
+    tmpname = wfd = None
+    try:
+        wfd = _walk_dir(dfd, create=True)
+        tmpname = ".%s.yml.%d.%s.tmp" % (wid, os.getpid(), os.urandom(4).hex())
+        fd = os.open(tmpname, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o666, dir_fd=wfd)
+        try:
+            view = memoryview(data)
+            while view:
+                view = view[os.write(fd, view):]
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        try:
+            os.link(tmpname, wid + ".yml", src_dir_fd=wfd, dst_dir_fd=wfd, follow_symlinks=False)
+        except FileExistsError:
+            return False
+        _IO["writes"] += 1
+        with contextlib.suppress(OSError):
+            os.fsync(wfd)
+        return True
+    except OSError:
+        raise NotRun(WHY_WALK_WRITE)
+    finally:
+        if tmpname is not None:
+            with contextlib.suppress(OSError):
+                os.unlink(tmpname, dir_fd=wfd)
+        for fd in (wfd, dfd):
+            if fd is not None:
+                with contextlib.suppress(OSError):
+                    os.close(fd)
+
+
+def _no_dup(pairs):
+    keys = [k for k, _ in pairs]
+    if len(set(keys)) != len(keys):
+        raise ValueError("a key twice")
+    return dict(pairs)
+
+
+def _no_constant(name):
+    raise ValueError("not JSON")
+
+
+def _read_json(path, cap, why):
+    """The JSON value in the file `path` names -- a regular file by lstat, opened without following a link and never
+    waited on, at most `cap` bytes, UTF-8, strictly, no key twice in an object and no NaN or Infinity; NotRun(why)
+    for any of it."""
+    try:
+        st = os.lstat(path)
+        if not stat.S_ISREG(st.st_mode):
+            raise NotRun(why)
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0))
+    except OSError:
+        raise NotRun(why)
+    try:
+        fst = os.fstat(fd)
+        if not stat.S_ISREG(fst.st_mode) or (fst.st_dev, fst.st_ino) != (st.st_dev, st.st_ino):
+            raise NotRun(why)
+        chunks, left = [], cap + 1
+        while left > 0:
+            b = os.read(fd, min(left, 1 << 16))
+            if not b:
+                break
+            chunks.append(b)
+            left -= len(b)
+    except OSError:
+        raise NotRun(why)
+    finally:
+        os.close(fd)
+    _IO["reads"] += 1
+    data = b"".join(chunks)
+    if len(data) > cap:
+        raise NotRun(why)
+    try:
+        return json.loads(data.decode("utf-8"), object_pairs_hook=_no_dup, parse_constant=_no_constant)
+    except Exception:  # a decode, a parse, a key twice, a constant, a nesting too deep: all one answer
+        raise NotRun(why)
+
+
+def _answer(path):
+    """walk-record's answer: {"outcome", "observed"?, "note"?}, held to its class; NotRun(WHY_ANSWER) otherwise."""
+    a = _read_json(path, ANSWER_CAP, WHY_ANSWER)
+    if not isinstance(a, dict) or a.get("outcome") not in OUTCOMES:
+        raise NotRun(WHY_ANSWER)
+    want = {"confirmed": set(), "differs": {"observed"}, "blocked": {"note"}}[a["outcome"]]
+    if set(a) != {"outcome"} | want or not all(_one_line(a[k], ANSWER_TEXT_CAP, False) for k in want):
+        raise NotRun(WHY_ANSWER)
+    return a
+
+
+def _flow_object(value):
+    """Whether `value` is an object walk-new writes as a flow mapping: each key in JSON_KEY_RE, less the words YAML
+    reads as no string, and each value a string walk-new writes."""
+    return isinstance(value, dict) and all(
+        JSON_KEY_RE.fullmatch(k) and k not in STATUS_RESERVED and _one_line(v, STEP_TEXT_CAP)
+        for k, v in value.items())
+
+
+def _steps_spec(path, new):
+    """walk-new's --from object, `new`, or walk-append's, held to its class; NotRun(WHY_STEPS_FILE) otherwise."""
+    spec = _read_json(path, STEPS_FILE_CAP, WHY_STEPS_FILE)
+    keys = {"unit", "role", "environment", "preconditions", "steps"} if new else {"steps"}
+    if not isinstance(spec, dict) or set(spec) != keys:
+        raise NotRun(WHY_STEPS_FILE)
+    steps = spec["steps"]
+    ok = isinstance(steps, list) and 1 <= len(steps) <= STEPS_CAP and all(
+        isinstance(s, dict) and set(s) == {"action", "target", "expect"} and s["action"] in ACTIONS
+        and (_one_line(s["target"], STEP_TEXT_CAP) or _flow_object(s["target"]))
+        and _flow_object(s["expect"]) and "kind" in s["expect"] for s in steps)
+    if ok and new:
+        ok = (isinstance(spec["unit"], str) and _unit_id(spec["unit"])
+              and _one_line(spec["role"], STEP_TEXT_CAP) and _one_line(spec["environment"], STEP_TEXT_CAP)
+              and isinstance(spec["preconditions"], list)
+              and all(_one_line(p, STEP_TEXT_CAP) for p in spec["preconditions"]))
+    if not ok:
+        raise NotRun(WHY_STEPS_FILE)
+    return spec
+
+
+# ---- the walk verbs ----
+
+def _flow_map(obj):
+    """A one-line flow mapping of double-quoted values."""
+    return "{ " + ", ".join("%s: %s" % (k, _dq(v)) for k, v in obj.items()) + " }" if obj else "{}"
+
+
+def _step_lines(n, step, dash, col, eol):
+    """A step's lines, its dash at `dash` and its keys at `col`: `- n: <n>`, then action plain, target double-quoted
+    or a flow mapping, and expect a flow mapping."""
+    pad, target = " " * col, step["target"]
+    return [" " * dash + "-" + " " * (col - dash - 1) + "n: %d" % n + eol,
+            pad + "action: " + step["action"] + eol,
+            pad + "target: " + (_dq(target) if isinstance(target, str) else _flow_map(target)) + eol,
+            pad + "expect: " + _flow_map(step["expect"]) + eol]
+
+
+def _lines_of(texts):
+    """The file as lines, each holding its line ending -- \\n, or \\r\\n -- but the last, which may hold none."""
+    return [t + "\n" for t in texts[:-1]] + ([texts[-1]] if texts[-1] else [])
+
+
+def _eol(lines):
+    """The file's line ending: its first line's that has one, \\n where none has."""
+    for line in lines:
+        if line.endswith("\n"):
+            return "\r\n" if line.endswith("\r\n") else "\n"
+    return "\n"
+
+
+def _splice(lines, edits, eol):
+    """(the new lines, the old lines' indexes it removed, the new lines' indexes it wrote) for `edits`, each (start,
+    stop, new lines) replacing the old lines [start, stop), sorted and apart. A kept last line with no line ending
+    that a line is written after gains `eol`, and counts as removed and written."""
+    gone = set(k for start, stop, _ in edits for k in range(start, stop))
+    if lines and not lines[-1].endswith("\n") and len(lines) - 1 not in gone and any(
+            start == len(lines) and new for start, _, new in edits):
+        edits = sorted(edits + [(len(lines) - 1, len(lines), [lines[-1] + eol])])
+        gone.add(len(lines) - 1)
+    out, added, at = [], set(), 0
+    for start, stop, new in sorted(edits, key=lambda e: (e[0], e[1])):
+        assert at <= start <= stop
+        out.extend(lines[at:start])
+        added.update(range(len(out), len(out) + len(new)))
+        out.extend(new)
+        at = stop
+    out.extend(lines[at:])
+    return out, gone, added
+
+
+def _kept(old, new, gone, added):
+    """Whether every old line the edit does not remove stands in the new lines, byte for byte and in order, and no
+    new line stands but those it wrote: checked on the lines themselves, apart from how the edit built them."""
+    return [old[k] for k in range(len(old)) if k not in gone] == [new[k] for k in range(len(new)) if k not in added]
+
+
+def _walk_load(top, wid):
+    """(bytes, mode, _Walk) of the walkthrough; (bytes, mode, Out) where it is out of shape."""
+    data, mode = _walk_read(top, wid)
+    try:
+        return data, mode, read_walk(data)
+    except Out as o:
+        return data, mode, o
+
+
+def _walk_write(top, wid, data, mode, lines, edits, check):
+    """Write the walkthrough's edit: the new lines, checked before anything is written -- every line the edit does
+    not write kept, and `check(new _Walk)` true -- then written by _write_walk, and read back. (new data, new _Walk),
+    or the refusal (exit 3) as (code, object)."""
+    new, gone, added = _splice(lines, edits, _eol(lines))
+    new_data = "".join(new).encode("utf-8")
+    if len(new_data) > WALK_CAP:
+        return _refuse("too-large")
+    try:
+        after = read_walk(new_data)
+    except Out:
+        raise NotRun(WHY_INTERNAL)
+    if not _kept(lines, new, gone, added) or not check(after):
+        raise NotRun(WHY_INTERNAL)
+    if new_data == data:  # the walkthrough already holds it: nothing is written
+        return new_data, after
+    try:
+        _write_walk(top, wid, new_data, mode, data)
+    except _Changed:
+        return _refuse("changed-while-reading")
+    except OSError:
+        raise NotRun(WHY_WALK_WRITE)
+    try:
+        landed = _walk_read(top, wid)[0]
+        back = read_walk(landed)
+    except Exception:
+        raise NotRun(WHY_WALK_RACED)
+    if landed != new_data:
+        raise NotRun(WHY_WALK_RACED)
+    return new_data, back
+
+
+def cmd_walk_check(top, wid):
+    data, _, w = _walk_load(top, wid)
+    if isinstance(w, Out):
+        return 0, {"shape": "out", "line": w.line, "reason": w.reason}
+    return 0, _walk_report(w)
+
+
+def cmd_walk_stamp(top, wid, page, blob, at):
+    data, mode, w = _walk_load(top, wid)
+    if isinstance(w, Out):
+        return _refuse("shape", w.line, w.reason)
+    lines = _lines_of(w.texts)
+    eol = _eol(lines)
+    edits = [(s.result.line - 1, s.result.last, []) for s in w.steps if s.result is not None]
+    if "stamp" in w.top:
+        edits.append((w.top["stamp"].line - 1, w.top["stamp"].last, []))
+    at_k = w.top["walkthrough"].last
+    edits.append((at_k, at_k, ["stamp:" + eol, "  page: " + page + eol, "  blob: " + blob + eol,
+                               "  at: \"" + at + "\"" + eol]))
+    edits.sort(key=lambda e: (e[0], e[1]))
+    cleared = [s.n for s in w.steps if s.result is not None]
+
+    def check(after):
+        return (_stamp_state(after) == {"state": "ok", "page": page, "blob": blob, "reason": None}
+                and [s.n for s in after.steps] == [s.n for s in w.steps]
+                and all(s.result is None for s in after.steps))
+    got = _walk_write(top, wid, data, mode, lines, edits, check)
+    if isinstance(got[0], int):
+        return got
+    return 0, {"stamp_line": got[1].top["stamp"].line, "cleared": cleared}
+
+
+def cmd_walk_record(top, wid, n, answer_path):
+    data, mode, w = _walk_load(top, wid)
+    answer = _answer(answer_path)
+    if isinstance(w, Out):
+        return _refuse("shape", w.line, w.reason)
+    step = next((s for s in w.steps if s.n == n), None)
+    if step is None:
+        return _refuse("step-absent")
+    lines = _lines_of(w.texts)
+    outcome = answer["outcome"]
+    extra = "".join(", %s: %s" % (k, _dq(answer[k])) for k in ("observed", "note") if k in answer)
+    line = " " * step.col + "result: { outcome: " + outcome + extra + " }" + _eol(lines)
+    if step.result is not None:
+        edit = (step.result.line - 1, step.result.last, [line])
+    else:
+        edit = (step.last, step.last, [line])
+
+    def recorded(after):
+        """The step's result as the answer gave it, its text decoded from what was written."""
+        s = next((x for x in after.steps if x.n == n), None)
+        if s is None or s.result is None or s.result.outcome != outcome:
+            return False
+        for key in ("observed", "note"):
+            value = getattr(s.result, key)
+            if (value is None) != (key not in answer):
+                return False
+            if value is not None and (value.kind != "dquote" or _dq_text(value.text) != answer[key]):
+                return False
+        return [x.n for x in after.steps] == [x.n for x in w.steps]
+    got = _walk_write(top, wid, data, mode, lines, [edit], recorded)
+    if isinstance(got[0], int):
+        return got
+    if not recorded(got[1]):  # the read-back, decoded
+        raise NotRun(WHY_WALK_RACED)
+    return 0, {"n": n, "line": next(x for x in got[1].steps if x.n == n).result.line}
+
+
+def cmd_walk_new(top, wid, from_path):
+    dfd = _open_dir(top)
+    try:
+        _walk_probe(dfd)
+    finally:
+        os.close(dfd)
+    spec = _steps_spec(from_path, True)
+    lines = ["walkthrough:\n", "  id: %s\n" % wid, "  unit: %s\n" % spec["unit"],
+             "  role: %s\n" % _dq(spec["role"]), "  environment: %s\n" % _dq(spec["environment"])]
+    if spec["preconditions"]:
+        lines += ["preconditions:\n"] + ["  - %s\n" % _dq(p) for p in spec["preconditions"]]
+    else:
+        lines.append("preconditions: []\n")
+    lines.append("steps:\n")
+    for k, step in enumerate(spec["steps"], 1):
+        lines += _step_lines(k, step, 2, 4, "\n")
+    data = "".join(lines).encode("utf-8")
+    numbers = list(range(1, len(spec["steps"]) + 1))
+    if len(data) > WALK_CAP:
+        return _refuse("too-large")
+    try:
+        w = read_walk(data)
+    except Out:
+        raise NotRun(WHY_INTERNAL)
+    if ([s.n for s in w.steps] != numbers or w.wt["id"].value.text != wid
+            or w.wt["unit"].value.text != spec["unit"] or w.captures or "stamp" in w.top):
+        raise NotRun(WHY_INTERNAL)
+    if not _create_walk(top, wid, data):
+        return _refuse("exists")
+    try:
+        landed = _walk_read(top, wid)[0]
+    except Exception:
+        raise NotRun(WHY_WALK_RACED)
+    if landed != data:
+        raise NotRun(WHY_WALK_RACED)
+    return 0, {"created": True, "steps": numbers}
+
+
+def cmd_walk_append(top, wid, from_path):
+    data, mode, w = _walk_load(top, wid)
+    spec = _steps_spec(from_path, False)
+    if isinstance(w, Out):
+        return _refuse("shape", w.line, w.reason)
+    if not w.steps:
+        return _refuse("no-steps")
+    last, add = w.steps[-1], spec["steps"]
+    numbers = list(range(last.n + 1, last.n + 1 + len(add)))
+    if len(w.steps) + len(add) > STEPS_CAP or not STEP_N_RE.fullmatch(str(numbers[-1])):
+        return _refuse("too-many-steps")
+    lines = _lines_of(w.texts)
+    eol = _eol(lines)
+    new = [line for k, step in zip(numbers, add) for line in _step_lines(k, step, last.dash, last.col, eol)]
+    at_k = w.top["steps"].last
+
+    def check(after):
+        return [s.n for s in after.steps] == [s.n for s in w.steps] + numbers
+    got = _walk_write(top, wid, data, mode, lines, [(at_k, at_k, new)], check)
+    if isinstance(got[0], int):
+        return got
+    return 0, {"appended": numbers}
+
+
+def cmd_id_class(value):
+    return 0, {"unit_id": _unit_id(value), "walkthrough": _walkthrough(value)}
+
+
 # ---- the command line ----
 
 class _Parser(argparse.ArgumentParser):
@@ -1687,9 +2772,23 @@ def _args(argv):
     xp.add_argument("--manifest")
     xp.add_argument("--whole", action="store_true")
     xp.add_argument("--path", action="append")
+    for verb, flags in WALK_FLAGS.items():
+        wp = sub.add_parser(verb, add_help=False, allow_abbrev=False)
+        wp.add_argument("--repo")
+        wp.add_argument("--id", action="append")
+        for flag in flags:
+            wp.add_argument(flag, dest=flag[2:] + "_arg")
+    ip = sub.add_parser("id-class", add_help=False, allow_abbrev=False)
+    ip.add_argument("--id", action="append")
     a = ap.parse_args(argv)
-    if a.verb not in ("check", "moved", "edit", "export") or not a.repo:
+    if a.verb == "id-class":  # tests its --id, reading and running nothing
+        if not a.id or len(a.id) != 1:
+            raise NotRun(WHY_USAGE)
+        return cmd_id_class, (a.id[0],)
+    if a.verb not in ("check", "moved", "edit", "export") + tuple(WALK_FLAGS) or not a.repo:
         raise NotRun(WHY_USAGE)
+    if a.verb in WALK_FLAGS:
+        return _walk_args(a)
     if a.verb == "check":
         checks = []
     elif a.verb == "moved":
@@ -1729,6 +2828,38 @@ def _args(argv):
     if _same_place(a.out, a.manifest):
         raise NotRun(WHY_MANIFEST)
     return cmd_export, (a.repo, a.commit, a.out, a.manifest, a.whole, list(dict.fromkeys(a.path or ())))
+
+
+# Each walk verb's flags besides --repo and --id, every one required.
+WALK_FLAGS = {"walk-check": (), "walk-stamp": ("--page", "--blob", "--at"), "walk-record": ("--n", "--answer"),
+              "walk-new": ("--from",), "walk-append": ("--from",)}
+
+
+def _walk_args(a):
+    """A walk verb's (function, arguments), every flag checked before anything is read."""
+    got = {flag: getattr(a, flag[2:] + "_arg") for flag in WALK_FLAGS[a.verb]}
+    if not a.id or len(a.id) != 1 or any(v is None for v in got.values()):
+        raise NotRun(WHY_USAGE)
+    wid = a.id[0]
+    # walk-new writes the id plain, as edit writes --walkthrough, so it takes that class.
+    checks = [(_walkthrough(wid), WHY_WALK_ID) if a.verb == "walk-new" else (_unit_id(wid), WHY_ID)]
+    if a.verb == "walk-stamp":
+        checks += [(_page_path(got["--page"]), WHY_PAGE), (OBJECT_ID_RE.fullmatch(got["--blob"]) is not None, WHY_BLOB),
+                   (STAMP_AT_RE.fullmatch(got["--at"]) is not None, WHY_AT)]
+    elif a.verb == "walk-record":
+        checks += [(STEP_N_RE.fullmatch(got["--n"]) is not None, WHY_N), (_abs_path(got["--answer"]), WHY_ANSWER_PATH)]
+    elif a.verb in ("walk-new", "walk-append"):
+        checks.append((_abs_path(got["--from"]), WHY_STEPS_PATH))
+    for ok, why in checks:
+        if not ok:
+            raise NotRun(why)
+    if not os.path.isdir(a.repo):
+        raise NotRun(WHY_REPO)
+    verb = {"walk-check": cmd_walk_check, "walk-stamp": cmd_walk_stamp, "walk-record": cmd_walk_record,
+            "walk-new": cmd_walk_new, "walk-append": cmd_walk_append}[a.verb]
+    rest = {"walk-stamp": lambda: (got["--page"], got["--blob"], got["--at"]),
+            "walk-record": lambda: (int(got["--n"]), got["--answer"])}.get(a.verb, lambda: tuple(got.values()))()
+    return verb, (a.repo, wid) + rest
 
 
 def _drop_stdout():
@@ -1776,7 +2907,12 @@ VIS_PATH = os.path.join(HERE, os.pardir, "references", "docs-workflow", "visibil
 DW_PATH = os.path.join(HERE, os.pardir, "commands", "docs-write.md")
 DV_PATH = os.path.join(HERE, os.pardir, "commands", "docs-verify.md")
 BR_PATH = os.path.join(HERE, os.pardir, "references", "docs-iteration", "backlog-run.md")
+EC_PATH = os.path.join(HERE, os.pardir, "references", "docs-audit", "evidence-contract.md")
+UB_PATH = os.path.join(HERE, os.pardir, "references", "docs-iteration", "unit-brief.md")
 BF_LEAD = "**The line shape a backlog run reads.**"
+WALK_LEAD = "**The shape a walkthrough is read in.**"
+# The image-slot comment's opening, page text a program matches: unit-brief section 3.3's step 5 gives the comment.
+SLOT_COMMENT = "<!-- docs-image-slot: "
 # backlog-run.md's two marker programs, section 10.1's read and section 10.2's test, find the page-level marker in
 # evidence-contract section 3 by this phrase; /docs-write runs them at its Phase 0 and Phase 9, and /docs-verify at
 # its Phase 0 and its Phases 1 and 4. docs-verify.md's own marker program, which removes the marker, finds it by the
@@ -3835,6 +4971,748 @@ def case_export_blob_absent(tmp):
     _eq(sorted(os.listdir(os.path.join(clone, ".git", "objects", "pack"))), packs, "still no fetch made")
 
 
+# ---- the walkthroughs ----
+
+OID_A = "a" * 40
+AT_1 = "2026-11-17T14:03:09Z"
+
+
+def _ec_text():
+    with open(EC_PATH, encoding="utf-8") as fh:
+        return fh.read()
+
+
+def _ec_section(k):
+    ec = _ec_text()
+    return ec[ec.index("\n## %d. " % k):ec.index("\n## %d. " % (k + 1))]
+
+
+def _yaml_blocks(text):
+    """Every ```yaml block of `text`, verbatim, each ending in a line feed."""
+    return [b.split("\n```\n", 1)[0] + "\n" for b in text.split("\n```yaml\n")[1:]]
+
+
+def _ec_example():
+    """EC section 4's walkthrough example, verbatim: the section's first ```yaml block."""
+    return _yaml_blocks(_ec_section(4))[0]
+
+
+def _ec_stamp():
+    """EC section 4's stamp, verbatim: the section's ```yaml block that opens `stamp:`."""
+    return next(b for b in _yaml_blocks(_ec_section(4)) if b.startswith("stamp:\n"))
+
+
+def _ec_result_line():
+    """EC section 5's `result:` line, verbatim, from its ```yaml block."""
+    block = _yaml_blocks(_ec_section(5))[0]
+    return next(ln for ln in block.split("\n") if ln.lstrip(" ").startswith("result:")) + "\n"
+
+
+def _step2_last(example, lines):
+    """`example` with `lines` added as step 2's last lines, directly before `captures:`."""
+    _eq(example.count("\ncaptures:\n"), 1, "the example has one captures: line")
+    return example.replace("\ncaptures:\n", "\n" + lines + "captures:\n")
+
+
+def _line_of(data, text):
+    """The 1-based number of `data`'s first line that is `text` whole."""
+    return data.split("\n").index(text) + 1
+
+
+def _wpath(top, wid="W-001"):
+    return os.path.join(top, BACKLOG_DIR, WALK_DIR, wid + ".yml")
+
+
+def _wput(top, data, wid="W-001"):
+    os.makedirs(os.path.join(top, BACKLOG_DIR, WALK_DIR), exist_ok=True)
+    with open(_wpath(top, wid), "wb") as fh:
+        fh.write(data if isinstance(data, bytes) else data.encode("utf-8"))
+
+
+def _wget(top, wid="W-001"):
+    with open(_wpath(top, wid), "rb") as fh:
+        return fh.read()
+
+
+def _wstat(top, wid="W-001"):
+    st = os.stat(_wpath(top, wid))
+    return st.st_ino, st.st_mtime_ns
+
+
+def _wcall(verb, top, *args, wid="W-001"):
+    return _call([verb, "--repo", top, "--id", wid, *args])
+
+
+def _wcheck(top, wid="W-001"):
+    code, out, err = _wcall("walk-check", top, wid=wid)
+    _eq((code, err), (0, ""), "walk-check's exit and stderr")
+    return _obj(out)
+
+
+def _wshape(tmp, data, name="top"):
+    top = os.path.join(tmp, name)
+    _wput(top, data)
+    return _wcheck(top)
+
+
+def _wout(tmp, data, line, reason, name="top"):
+    _eq(_wshape(tmp, data, name), {"shape": "out", "line": line, "reason": reason}, name)
+
+
+NO_STAMP = {"state": "none", "page": None, "blob": None, "reason": None}
+EC_SLOTS = [{"slot": "img-order-form", "after_step": 2}]
+
+
+def _wok(steps, confirmed=(), differs=(), blocked=(), dno=(), bnn=(), stamp=None, slots=(), outside=0,
+         wid="W-001", unit="U-001"):
+    answered = set(confirmed) | set(differs) | set(blocked)
+    return {"shape": "ok", "id": wid, "unit": unit, "steps": list(steps),
+            "outcomes": {"confirmed": list(confirmed), "differs": list(differs), "blocked": list(blocked),
+                         "none": [n for n in steps if n not in answered]},
+            "differs_no_observed": list(dno), "blocked_no_note": list(bnn), "stamp": stamp or NO_STAMP,
+            "slots": list(slots), "slots_outside_class": outside}
+
+
+def _json_file(tmp, obj, name="in.json"):
+    path = os.path.join(tmp, name)
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(obj if isinstance(obj, str) else json.dumps(obj))
+    return path
+
+
+def _record(top, n, answer, tmp, wid="W-001"):
+    return _wcall("walk-record", top, "--n", str(n), "--answer", _json_file(tmp, answer, "answer.json"), wid=wid)
+
+
+def case_walk_ec_example_in_shape(tmp):
+    """EC section 4's own example, read from the reference itself, is in shape: two steps, neither answered, no stamp,
+    one slot after step 2."""
+    _eq(_wshape(tmp, _ec_example()), _wok([1, 2], slots=EC_SLOTS))
+
+
+def case_walk_ec_result_example(tmp):
+    """EC section 5's `result:` line, read from the reference, on step 2 of section 4's example: step 2 differs, with
+    its observed text."""
+    _eq(_wshape(tmp, _step2_last(_ec_example(), _ec_result_line())), _wok([1, 2], differs=[2], slots=EC_SLOTS))
+
+
+def case_walk_block_result_in(tmp):
+    """The same result as a one-level block mapping reads the same."""
+    block = "    result:\n      outcome: differs\n      observed: \"Line item details\"\n"
+    _eq(_wshape(tmp, _step2_last(_ec_example(), block)), _wok([1, 2], differs=[2], slots=EC_SLOTS))
+
+
+def case_walk_unknown_outcome_out(tmp):
+    data = _step2_last(_ec_example(), "    result: { outcome: passed }\n")
+    _wout(tmp, data, _line_of(data, "    result: { outcome: passed }"), "outcome", "flow")
+    data = _step2_last(_ec_example(), "    result:\n      outcome: \"confirmed\"\n")
+    _wout(tmp, data, _line_of(data, "      outcome: \"confirmed\""), "outcome", "quoted")
+    data = _step2_last(_ec_example(), "    result: { note: \"x\" }\n")
+    _wout(tmp, data, _line_of(data, "    result: { note: \"x\" }"), "outcome", "absent")
+
+
+def case_walk_observed_on_confirmed_out(tmp):
+    line = "    result: { outcome: confirmed, observed: \"x\" }"
+    data = _step2_last(_ec_example(), line + "\n")
+    _wout(tmp, data, _line_of(data, line), "result", "flow")
+    data = _step2_last(_ec_example(), "    result:\n      note: \"why\"\n      outcome: differs\n")
+    _wout(tmp, data, _line_of(data, "      note: \"why\""), "result", "note-on-differs")
+    data = _step2_last(_ec_example(), "    result: { outcome: confirmed, seen: yes }\n")
+    _wout(tmp, data, _line_of(data, "    result: { outcome: confirmed, seen: yes }"), "result", "other-key")
+    data = _step2_last(_ec_example(), "    result: confirmed\n")
+    _wout(tmp, data, _line_of(data, "    result: confirmed"), "result", "scalar")
+
+
+def case_walk_step_opener_out(tmp):
+    """A step opening with any key but `n`, or `n` no number from 1: out of shape, step-opener."""
+    data = _ec_example().replace("  - n: 2\n    action: click\n", "  - action: click\n    n: 2\n")
+    _wout(tmp, data, _line_of(data, "  - action: click"), "step-opener", "action-first")
+    for name, opener in (("zero", "  - n: 0"), ("leading-zero", "  - n: 02"), ("quoted", "  - n: \"2\""),
+                         ("ten-digits", "  - n: 1000000000")):
+        data = _ec_example().replace("  - n: 2\n", opener + "\n")
+        _wout(tmp, data, _line_of(data, opener), "step-opener", name)
+    data = _ec_example().replace("steps:\n", "steps:\n  n: 1\n", 1)
+    _wout(tmp, data, _line_of(data, "  n: 1"), "step-opener", "mapping-under-steps")
+
+
+def case_walk_step_number_out(tmp):
+    """Step numbers strictly increase in file order: 2 then 2, and 3 then 1, are out of shape, step-number."""
+    second_line = _line_of(_ec_example(), "  - n: 2")
+    for name, first, second in (("equal", "2", "2"), ("down", "3", "1")):
+        data = _ec_example().replace("  - n: 2\n", "  - n: %s\n" % second)
+        data = data.replace("  - n: 1\n", "  - n: %s\n" % first, 1)
+        _wout(tmp, data, second_line, "step-number", name)
+
+
+def case_walk_action_out(tmp):
+    data = _ec_example().replace("    action: click\n", "    action: hover\n")
+    _wout(tmp, data, _line_of(data, "    action: hover"), "action", "hover")
+    data = _ec_example().replace("    action: click\n", "")
+    _wout(tmp, data, _line_of(data, "  - n: 2"), "action", "absent")
+    data = _ec_example().replace("    action: click\n", "    action: click\n    hover: x\n")
+    _wout(tmp, data, _line_of(data, "    hover: x"), "step-key", "step-key")
+
+
+def case_walk_top_key_out(tmp):
+    data = _ec_example() + "notes: \"x\"\n"
+    _wout(tmp, data, _line_of(data, "notes: \"x\""), "top-key", "notes")
+    data = _ec_example() + "steps: []\n"
+    _wout(tmp, data, _line_of(data, "steps: []"), "duplicate-key", "twice")
+    data = _ec_example().replace("  id: W-001\n", "")
+    _wout(tmp, data, 1, "walkthrough", "no-id")
+    data = _ec_example().replace("  unit: U-001\n", "  unit: \"U-001\"\n")
+    _wout(tmp, data, _line_of(data, "  unit: \"U-001\""), "walkthrough", "quoted-unit")
+    data = _ec_example().split("preconditions:\n", 1)[1]
+    _wout(tmp, "preconditions:\n" + data, 0, "walkthrough", "no-walkthrough")
+
+
+def case_walk_block_scalar_out(tmp):
+    """A hand-recorded observed text as a block scalar: out of shape, block-scalar, at its line."""
+    block = "    result:\n      outcome: differs\n      observed: |\n        Line item details\n"
+    data = _step2_last(_ec_example(), block)
+    _wout(tmp, data, _line_of(data, "      observed: |"), "block-scalar")
+
+
+def case_walk_too_large_out(tmp):
+    """Above 1 MiB, out of shape, too-large, line 0; at 1 MiB exactly, in shape."""
+    head = _ec_example().encode("utf-8")
+    pad = WALK_CAP - len(head)
+    at_cap = head + b"#" * (pad - 1) + b"\n"
+    _eq(len(at_cap), WALK_CAP, "the fixture is 1 MiB")
+    _eq(_wshape(tmp, at_cap, "at-cap"), _wok([1, 2], slots=EC_SLOTS), "at the cap")
+    _wout(tmp, at_cap + b"\n", 0, "too-large", "above")
+
+
+def case_walk_stamp_states(tmp):
+    """The stamp is read, never refused: none where there is none; ok in its form, EC section 4's own stamp among
+    them, page and blob printed; and otherwise out, with the reason, the file in shape."""
+    example = _ec_example()
+    after_wt = example.index("preconditions:\n")
+
+    def with_stamp(stamp):
+        return example[:after_wt] + stamp + example[after_wt:]
+    _eq(_wshape(tmp, example, "none")["stamp"], NO_STAMP, "none")
+    _eq(_wshape(tmp, with_stamp(_ec_stamp()), "ec")["stamp"],
+        {"state": "ok", "page": "docs/guides/place-an-order.md", "blob": "3f6c2a7e0d4b5c1f8a9e2b7d6c5a4f3e2d1c0b9a",
+         "reason": None}, "EC's stamp")
+    good = "stamp:\n  page: docs/a.md\n  blob: %s\n  at: \"%s\"\n" % (OID_A, AT_1)
+    _eq(_wshape(tmp, example + good, "last")["stamp"], {"state": "ok", "page": "docs/a.md", "blob": OID_A,
+                                                         "reason": None}, "after captures")
+    for name, stamp, reason in (
+            ("order", "stamp:\n  page: docs/a.md\n  at: \"%s\"\n  blob: %s\n" % (AT_1, OID_A), "keys"),
+            ("extra", good + "  by: me\n", "keys"),
+            ("missing", "stamp:\n  page: docs/a.md\n  blob: %s\n" % OID_A, "keys"),
+            ("head", good.replace(OID_A, "HEAD"), "blob"),
+            ("short-blob", good.replace(OID_A, "abc123"), "blob"),
+            ("quoted-page", good.replace("docs/a.md", "\"docs/a.md\""), "page"),
+            ("dot-page", good.replace("docs/a.md", "docs/../a.md"), "page"),
+            ("plain-at", good.replace("\"%s\"" % AT_1, AT_1), "at"),
+            ("bad-at", good.replace(AT_1, "now"), "at"),
+            ("indent", good.replace("\n  ", "\n    "), "form"),
+            ("comment", good.replace("  blob:", "  # x\n  blob:"), "form"),
+            ("trailing", good.replace("docs/a.md\n", "docs/a.md  # page\n"), "form"),
+            ("flow", "stamp: { page: docs/a.md }\n", "form"),
+            ("empty", "stamp:\n", "form")):
+        got = _wshape(tmp, with_stamp(stamp), name)
+        _eq((got["shape"], got["stamp"]), ("ok", {"state": "out", "page": None, "blob": None, "reason": reason}),
+            name)
+
+
+STAMP_IN = ("walkthrough:\n"
+            "  id: W-001\n"
+            "  unit: U-001\n"
+            "preconditions: []\n"
+            "steps:\n"
+            "  - n: 1\n"
+            "    action: navigate\n"
+            "    target: \"/a\"\n"
+            "    result: { outcome: confirmed }\n"
+            "  - n: 2\n"
+            "    action: click\n"
+            "    result:\n"
+            "      outcome: differs\n"
+            "      # seen by hand\n"
+            "      observed: \"x\"\n"
+            "    expect: { kind: visible }\n"
+            "  - n: 3\n"
+            "    action: wait\n"
+            "    result: { outcome: blocked, note: \"no env\" }  # by hand\n"
+            "captures: []\n")
+STAMP_OUT = ("walkthrough:\n"
+             "  id: W-001\n"
+             "  unit: U-001\n"
+             "stamp:\n"
+             "  page: docs/a.md\n"
+             "  blob: " + OID_A + "\n"
+             "  at: \"" + AT_1 + "\"\n"
+             "preconditions: []\n"
+             "steps:\n"
+             "  - n: 1\n"
+             "    action: navigate\n"
+             "    target: \"/a\"\n"
+             "  - n: 2\n"
+             "    action: click\n"
+             "    expect: { kind: visible }\n"
+             "  - n: 3\n"
+             "    action: wait\n"
+             "captures: []\n")
+STAMPED_OK = {"state": "ok", "page": "docs/a.md", "blob": OID_A, "reason": None}
+
+
+def _stamp(top, page="docs/a.md", blob=OID_A, at=AT_1, wid="W-001"):
+    return _wcall("walk-stamp", top, "--page", page, "--blob", blob, "--at", at, wid=wid)
+
+
+def case_walk_stamp_writes_and_clears(tmp):
+    """walk-stamp clears three results -- a flow one, a block one with a comment inside it, and one with a trailing
+    comment -- writes the stamp directly after the walkthrough: block, and keeps every other byte; a CRLF file stays
+    CRLF. Stamping again with the same values writes nothing."""
+    for name, eol in (("lf", "\n"), ("crlf", "\r\n")):
+        top = os.path.join(tmp, name)
+        _wput(top, STAMP_IN.replace("\n", eol))
+        _eq(_wshape(tmp, STAMP_IN, name + "-in"), _wok([1, 2, 3], confirmed=[1], differs=[2], blocked=[3]), "before")
+        code, out, err = _stamp(top)
+        _eq((code, err), (0, ""), name)
+        _eq(_obj(out), {"stamp_line": 4, "cleared": [1, 2, 3]}, name)
+        _eq(_wget(top), STAMP_OUT.replace("\n", eol).encode("utf-8"), name + ": every other byte")
+        _eq(_wcheck(top), _wok([1, 2, 3], stamp=STAMPED_OK), name + ": read back")
+        before = _wstat(top)
+        code, out, err = _stamp(top)
+        _eq((code, _obj(out), _IO["writes"]), (0, {"stamp_line": 4, "cleared": []}, 0), name + ": again")
+        _eq(_wstat(top), before, name + ": not rewritten")
+
+
+def case_walk_stamp_replaces(tmp):
+    """A stamp after steps: is removed, and the one stamp written directly after the walkthrough: block."""
+    data = ("walkthrough:\n  id: W-001\n  unit: U-001\nsteps:\n  - n: 1\n    action: wait\n"
+            "stamp:\n  page: docs/old.md\n  blob: %s\n  at: \"2026-01-01T00:00:00Z\"\n# the end\n" % ("b" * 40))
+    top = os.path.join(tmp, "top")
+    _wput(top, data)
+    code, out, err = _stamp(top)
+    _eq((code, err, _obj(out)), (0, "", {"stamp_line": 4, "cleared": []}))
+    _eq(_wget(top).decode("utf-8"),
+        "walkthrough:\n  id: W-001\n  unit: U-001\nstamp:\n  page: docs/a.md\n  blob: %s\n  at: \"%s\"\n"
+        "steps:\n  - n: 1\n    action: wait\n# the end\n" % (OID_A, AT_1))
+    _eq(_wcheck(top), _wok([1], stamp=STAMPED_OK))
+
+
+def case_walk_record_escapes(tmp):
+    """An observed text holding quotes, a backslash, U+202E and a tab is written on one line, after the step's last
+    line: " and \\ escaped, U+202E and the tab as \\uXXXX, nothing raw; walk-check counts it, and the read-back
+    decodes it to the answer."""
+    top = os.path.join(tmp, "top")
+    _wput(top, _ec_example())
+    text = "a \"b\" \\ c \u202e and\tz"
+    code, out, err = _record(top, 1, {"outcome": "differs", "observed": text}, tmp)
+    _eq((code, err), (0, ""))
+    line = "    result: { outcome: differs, observed: \"a \\\"b\\\" \\\\ c \\u202E and\\u0009z\" }"
+    want = _ec_example().replace("    expect: { kind: heading, text: \"New order\" }\n",
+                                 "    expect: { kind: heading, text: \"New order\" }\n" + line + "\n")
+    _eq(_obj(out), {"n": 1, "line": _line_of(want, line)})
+    _eq(_wget(top), want.encode("utf-8"), "the one line, every other byte kept")
+    _true("\u202e" not in _wget(top).decode("utf-8") and "\t" not in _wget(top).decode("utf-8"), "nothing raw")
+    _eq(_wcheck(top), _wok([1, 2], differs=[1], slots=EC_SLOTS))
+
+
+def case_walk_record_markup_is_text(tmp):
+    """Markup in an observed text is written inside the quotes unchanged: words, never structure."""
+    top = os.path.join(tmp, "top")
+    _wput(top, _ec_example())
+    code, out, err = _record(top, 2, {"outcome": "differs", "observed": "<b>[x](y) {{t}}"}, tmp)
+    _eq((code, err), (0, ""))
+    line = "    result: { outcome: differs, observed: \"<b>[x](y) {{t}}\" }"
+    _eq(_wget(top).decode("utf-8"), _step2_last(_ec_example(), line + "\n"))
+    _eq(_obj(out), {"n": 2, "line": _line_of(_step2_last(_ec_example(), line + "\n"), line)})
+
+
+def case_walk_record_replaces_block_result(tmp):
+    """A block result, a comment among its lines, is replaced by one line in its place; the step's other lines, and
+    a blocked note, are kept. A step whose last line is the file's, with no line ending, gets the file's."""
+    data = STAMP_IN
+    top = os.path.join(tmp, "top")
+    _wput(top, data)
+    code, out, err = _record(top, 2, {"outcome": "confirmed"}, tmp)
+    _eq((code, err), (0, ""))
+    want = data.replace("    result:\n      outcome: differs\n      # seen by hand\n      observed: \"x\"\n",
+                        "    result: { outcome: confirmed }\n")
+    _eq(_wget(top).decode("utf-8"), want)
+    _eq(_obj(out), {"n": 2, "line": 12})
+    code, out, err = _record(top, 3, {"outcome": "blocked", "note": "the env would not start"}, tmp)
+    _eq((code, err), (0, ""))
+    want = want.replace("    result: { outcome: blocked, note: \"no env\" }  # by hand\n",
+                        "    result: { outcome: blocked, note: \"the env would not start\" }\n")
+    _eq(_wget(top).decode("utf-8"), want)
+    _eq(_wcheck(top), _wok([1, 2, 3], confirmed=[1, 2], blocked=[3]))
+    last = "walkthrough:\r\n  id: W-001\r\n  unit: U-001\r\nsteps:\r\n  - n: 1\r\n    action: wait"
+    top = os.path.join(tmp, "last")
+    _wput(top, last)
+    code, out, err = _record(top, 1, {"outcome": "confirmed"}, tmp)
+    _eq((code, err, _obj(out)), (0, "", {"n": 1, "line": 7}), "last line")
+    _eq(_wget(top).decode("utf-8"), last + "\r\n    result: { outcome: confirmed }\r\n", "last line")
+
+
+def _record_refused(tmp, answer, name):
+    top = os.path.join(tmp, name)
+    _wput(top, _ec_example())
+    before = _wstat(top)
+    code, out, err = _record(top, 2, answer, tmp)
+    _refused(code, out, err, WHY_ANSWER)
+    _eq(_IO["writes"], 0, name + ": nothing written")
+    _eq((_wget(top), _wstat(top)), (_ec_example().encode("utf-8"), before), name + ": untouched")
+
+
+def case_walk_record_multiline_refused(tmp):
+    for k, text in enumerate(("a\nb", "a\rb", "a\u0085b", "a\u2028b", "a\u2029b")):
+        _record_refused(tmp, {"outcome": "differs", "observed": text}, "nl-%d" % k)
+    _record_refused(tmp, {"outcome": "differs", "observed": "x" * 2001}, "long")
+    _record_refused(tmp, "{\"outcome\": \"differs\", \"observed\": \"\\ud800\"}", "surrogate")
+
+
+def case_walk_record_missing_observed_refused(tmp):
+    for k, answer in enumerate(({"outcome": "differs"}, {"outcome": "differs", "observed": ""},
+                                {"outcome": "blocked"}, {"outcome": "blocked", "note": ""},
+                                {"outcome": "passed"}, {"outcome": "confirmed", "extra": "x"}, ["confirmed"],
+                                "{\"outcome\": \"confirmed\", \"outcome\": \"differs\", \"observed\": \"x\"}",
+                                "not json", {"outcome": "differs", "observed": 7})):
+        _record_refused(tmp, answer, "case-%d" % k)
+
+
+def case_walk_record_note_on_confirmed_refused(tmp):
+    for k, answer in enumerate(({"outcome": "confirmed", "note": "x"}, {"outcome": "differs", "observed": "x",
+                                                                         "note": "y"},
+                                {"outcome": "blocked", "note": "y", "observed": "x"})):
+        _record_refused(tmp, answer, "case-%d" % k)
+
+
+def case_walk_record_step_absent(tmp):
+    top = os.path.join(tmp, "top")
+    _wput(top, _ec_example())
+    before = _wstat(top)
+    code, out, err = _record(top, 3, {"outcome": "confirmed"}, tmp)
+    _eq((code, err), (3, ""))
+    _eq(_obj(out), {"refused": "step-absent", "line": None, "reason": None})
+    _eq((_wget(top), _wstat(top), _IO["writes"]), (_ec_example().encode("utf-8"), before, 0), "untouched")
+    data = _ec_example() + "notes: x\n"
+    _wput(top, data)
+    code, out, err = _record(top, 1, {"outcome": "confirmed"}, tmp)
+    _eq((code, err, _obj(out)), (3, "", {"refused": "shape", "line": 20, "reason": "top-key"}), "out of shape")
+    _eq(_wget(top), data.encode("utf-8"), "untouched")
+
+
+NEW_SPEC = {"unit": "U-001", "role": "customer \"admin\"", "environment": "staging \u202e",
+            "preconditions": ["catalog seeded", "signed in as \"customer\""],
+            "steps": [{"action": "navigate", "target": "/orders/new",
+                       "expect": {"kind": "heading", "text": "New order"}},
+                      {"action": "click", "target": {"label": "Add \"item\""},
+                       "expect": {"kind": "visible", "label": "Item details"}},
+                      {"action": "wait", "target": "", "expect": {"kind": "visible"}}]}
+NEW_TEXT = ("walkthrough:\n"
+            "  id: U-001\n"
+            "  unit: U-001\n"
+            "  role: \"customer \\\"admin\\\"\"\n"
+            "  environment: \"staging \\u202E\"\n"
+            "preconditions:\n"
+            "  - \"catalog seeded\"\n"
+            "  - \"signed in as \\\"customer\\\"\"\n"
+            "steps:\n"
+            "  - n: 1\n"
+            "    action: navigate\n"
+            "    target: \"/orders/new\"\n"
+            "    expect: { kind: \"heading\", text: \"New order\" }\n"
+            "  - n: 2\n"
+            "    action: click\n"
+            "    target: { label: \"Add \\\"item\\\"\" }\n"
+            "    expect: { kind: \"visible\", label: \"Item details\" }\n"
+            "  - n: 3\n"
+            "    action: wait\n"
+            "    target: \"\"\n"
+            "    expect: { kind: \"visible\" }\n")
+
+
+def case_walk_new_canonical(tmp):
+    """walk-new writes the canonical file -- quotes and a bidirectional control escaped, an object target as a flow
+    mapping -- that walk-check reads in shape; the walkthroughs directory is made where absent; a second walk-new is
+    refused, exists, the file as the first left it."""
+    top = os.path.join(tmp, "top")
+    os.makedirs(os.path.join(top, BACKLOG_DIR))
+    src = _json_file(tmp, NEW_SPEC)
+    code, out, err = _wcall("walk-new", top, "--from", src, wid="U-001")
+    _eq((code, err), (0, ""))
+    _eq(_obj(out), {"created": True, "steps": [1, 2, 3]})
+    _eq(_wget(top, "U-001").decode("utf-8"), NEW_TEXT, "the canonical file")
+    _eq(_wcheck(top, "U-001"), _wok([1, 2, 3], wid="U-001"))
+    _eq(sorted(os.listdir(os.path.join(top, BACKLOG_DIR, WALK_DIR))), ["U-001.yml"], "no file left beside it")
+    before = _wstat(top, "U-001")
+    code, out, err = _wcall("walk-new", top, "--from", src, wid="U-001")
+    _eq((code, err), (3, ""))
+    _eq(_obj(out), {"refused": "exists", "line": None, "reason": None})
+    _eq((_wget(top, "U-001").decode("utf-8"), _wstat(top, "U-001")), (NEW_TEXT, before), "the first file stands")
+    spec = dict(NEW_SPEC, preconditions=[])
+    code, out, err = _wcall("walk-new", top, "--from", _json_file(tmp, spec, "none.json"), wid="U-002")
+    _eq((code, err), (0, ""), "no preconditions")
+    _true("\npreconditions: []\nsteps:\n" in _wget(top, "U-002").decode("utf-8"), "preconditions: []")
+
+
+def case_walk_new_from_refused(tmp):
+    """A --from file outside its class -- a sixth verb, a line break, a string above 500 characters, an expect with
+    no kind, a key outside its class or one YAML reads as no string, an extra key, no step, above 200 steps -- is
+    exit 2, and nothing is made, the walkthroughs directory included."""
+    top = os.path.join(tmp, "top")
+    os.makedirs(os.path.join(top, BACKLOG_DIR))
+    step = NEW_SPEC["steps"][0]
+
+    def steps(*s):
+        return dict(NEW_SPEC, steps=list(s))
+    for k, spec in enumerate((
+            steps(dict(step, action="hover")), steps(dict(step, target="a\nb")), steps(dict(step, target="x" * 501)),
+            steps(dict(step, expect={"text": "x"})), steps(dict(step, expect={"kind": "x", "Text": "y"})),
+            steps(dict(step, target={"y": "10"})), steps(dict(step, note="x")), steps(dict(step, target=["a"])),
+            steps(dict(step, expect={"kind": 1})), steps(), steps(*([step] * 201)), dict(NEW_SPEC, unit="../x"),
+            dict(NEW_SPEC, role="a\u2028b"), dict(NEW_SPEC, preconditions="x"), dict(NEW_SPEC, extra=1),
+            {k2: v for k2, v in NEW_SPEC.items() if k2 != "environment"})):
+        code, out, err = _wcall("walk-new", top, "--from", _json_file(tmp, spec, "s%d.json" % k), wid="U-001")
+        _refused(code, out, err, WHY_STEPS_FILE)
+        _true(not os.path.lexists(os.path.join(top, BACKLOG_DIR, WALK_DIR)), "%d: nothing made" % k)
+    code, out, err = _wcall("walk-new", top, "--from", _json_file(tmp, steps(*([step] * 200)), "max.json"),
+                            wid="U-001")
+    _eq((code, err), (0, ""), "200 steps")
+
+
+def case_walk_append_after_last(tmp):
+    """Steps 3 and 4 go after step 2's last line, before captures:, at the existing entries' indents; captures stay
+    byte for byte; a CRLF file takes CRLF lines; a steps block ending the file with no line ending gets one."""
+    add = {"steps": [{"action": "type", "target": {"label": "Qty"}, "expect": {"kind": "value", "text": "2"}},
+                     {"action": "select", "target": "#size", "expect": {"kind": "selected"}}]}
+    added = ("  - n: 3\n"
+             "    action: type\n"
+             "    target: { label: \"Qty\" }\n"
+             "    expect: { kind: \"value\", text: \"2\" }\n"
+             "  - n: 4\n"
+             "    action: select\n"
+             "    target: \"#size\"\n"
+             "    expect: { kind: \"selected\" }\n")
+    src = _json_file(tmp, add)
+    for name, eol in (("lf", "\n"), ("crlf", "\r\n")):
+        top = os.path.join(tmp, name)
+        _wput(top, _ec_example().replace("\n", eol))
+        code, out, err = _wcall("walk-append", top, "--from", src)
+        _eq((code, err), (0, ""), name)
+        _eq(_obj(out), {"appended": [3, 4]}, name)
+        want = _step2_last(_ec_example(), added).replace("\n", eol)
+        _eq(_wget(top), want.encode("utf-8"), name + ": captures byte-equal")
+        _eq(_wcheck(top), _wok([1, 2, 3, 4], slots=EC_SLOTS), name)
+    top = os.path.join(tmp, "deep")
+    data = "walkthrough:\n  id: W-001\n  unit: U-001\nsteps:\n-   n: 7\n    action: wait"
+    _wout(tmp, data, 5, "indent", "column-0")
+    data = "walkthrough:\n  id: W-001\n  unit: U-001\nsteps:\n    -   n: 7\n        action: wait"
+    _wput(top, data)
+    code, out, err = _wcall("walk-append", top, "--from", src)
+    _eq((code, err, _obj(out)), (0, "", {"appended": [8, 9]}), "no line ending")
+    _eq(_wget(top).decode("utf-8"),
+        data + "\n    -   n: 8\n        action: type\n        target: { label: \"Qty\" }\n"
+        "        expect: { kind: \"value\", text: \"2\" }\n    -   n: 9\n        action: select\n"
+        "        target: \"#size\"\n        expect: { kind: \"selected\" }\n", "the indents of the entries there")
+
+
+def case_walk_append_no_steps(tmp):
+    src = _json_file(tmp, {"steps": [NEW_SPEC["steps"][0]]})
+    for name, data in (("absent", "walkthrough:\n  id: W-001\n  unit: U-001\n"),
+                       ("flow", "walkthrough:\n  id: W-001\n  unit: U-001\nsteps: []\n"),
+                       ("null", "walkthrough:\n  id: W-001\n  unit: U-001\nsteps:\ncaptures: []\n")):
+        top = os.path.join(tmp, name)
+        _wput(top, data)
+        code, out, err = _wcall("walk-append", top, "--from", src)
+        _eq((code, err), (3, ""), name)
+        _eq(_obj(out), {"refused": "no-steps", "line": None, "reason": None}, name)
+        _eq(_wget(top), data.encode("utf-8"), name + ": untouched")
+    top = os.path.join(tmp, "full")
+    _wput(top, "walkthrough:\n  id: W-001\n  unit: U-001\nsteps:\n"
+          + "".join("  - n: %d\n    action: wait\n" % k for k in range(1, 200)))
+    code, out, err = _wcall("walk-append", top, "--from", _json_file(tmp, {"steps": [NEW_SPEC["steps"][0]] * 2}))
+    _eq((code, err, _obj(out)), (3, "", {"refused": "too-many-steps", "line": None, "reason": None}), "201 steps")
+
+
+def case_walk_symlink_refused(tmp):
+    """A symbolic link at the walkthroughs directory, or at the walkthrough, is refused, never followed: exit 2,
+    nothing read or written, the link's target untouched."""
+    elsewhere = os.path.join(tmp, "elsewhere")
+    _wput(elsewhere, _ec_example())
+    answer = _json_file(tmp, {"outcome": "confirmed"}, "answer.json")
+    steps = _json_file(tmp, {"steps": [NEW_SPEC["steps"][0]]}, "steps.json")
+    new = _json_file(tmp, NEW_SPEC, "new.json")
+    for name, why in (("file", WHY_WALK_FILE), ("dir", WHY_WALK_DIR)):
+        top = os.path.join(tmp, name)
+        os.makedirs(os.path.join(top, BACKLOG_DIR, WALK_DIR))
+        if name == "file":
+            os.symlink(_wpath(elsewhere), _wpath(top))
+        else:
+            os.rmdir(os.path.join(top, BACKLOG_DIR, WALK_DIR))
+            os.symlink(os.path.join(elsewhere, BACKLOG_DIR, WALK_DIR), os.path.join(top, BACKLOG_DIR, WALK_DIR))
+        argvs = [["walk-check"], ["walk-stamp", "--page", "docs/a.md", "--blob", OID_A, "--at", AT_1],
+                 ["walk-record", "--n", "1", "--answer", answer], ["walk-append", "--from", steps]]
+        if name == "dir":
+            argvs.append(["walk-new", "--from", new])
+        for argv in argvs:
+            code, out, err = _call([argv[0], "--repo", top, "--id", "W-001"] + argv[1:])
+            _refused(code, out, err, why)
+            _eq((_IO["reads"], _IO["writes"]), (0, 0), "%s %s: nothing read or written" % (name, argv[0]))
+    _eq(_wget(elsewhere), _ec_example().encode("utf-8"), "the link's target")
+    _eq(os.listdir(os.path.join(elsewhere, BACKLOG_DIR, WALK_DIR)), ["W-001.yml"], "nothing made there")
+
+
+def case_walk_bad_args(tmp):
+    """Every walk verb's argument outside its class, a flag twice or as --flag=value, or a flag missing: exit 2, the
+    flag named, nothing read, run or written."""
+    top = os.path.join(tmp, "top")
+    _wput(top, _ec_example())
+    before = _wstat(top)
+    answer = _json_file(tmp, {"outcome": "confirmed"}, "answer.json")
+    stamp = ["--page", "docs/a.md", "--blob", OID_A, "--at", AT_1]
+
+    def argv(verb, *rest, wid="W-001"):
+        return [verb, "--repo", top, "--id", wid] + list(rest)
+    for args, why in (
+            (argv("walk-check", wid="../x"), WHY_ID), (argv("walk-check", wid="W-001\n"), WHY_ID),
+            (argv("walk-record", "--n", "0", "--answer", answer), WHY_N),
+            (argv("walk-record", "--n", "x", "--answer", answer), WHY_N),
+            (argv("walk-record", "--n", "01", "--answer", answer), WHY_N),
+            (argv("walk-stamp", *stamp[:3], "zz", *stamp[4:]), WHY_BLOB),
+            (argv("walk-stamp", *stamp[:5], "now"), WHY_AT),
+            (argv("walk-stamp", *stamp[:5], "2026-11-17 14:03:09Z"), WHY_AT),
+            (argv("walk-stamp", "--page", "a/../b.md", *stamp[2:]), WHY_PAGE),
+            (argv("walk-record", "--n", "1", "--answer", "relative.json"), WHY_ANSWER_PATH),
+            (argv("walk-append", "--from", "relative.json"), WHY_STEPS_PATH),
+            (argv("walk-new", "--from", answer, wid="null"), WHY_WALK_ID),
+            (argv("walk-new", "--from", answer, wid="2026-11-18"), WHY_WALK_ID),
+            (argv("walk-stamp", *stamp, "--at", AT_1), WHY_USAGE),
+            (argv("walk-stamp", *stamp[:4]), WHY_USAGE),
+            (argv("walk-record", "--n=1", "--answer", answer), WHY_USAGE),
+            (argv("walk-record", "--answer", answer), WHY_USAGE),
+            (argv("walk-check", "--status", "x"), WHY_USAGE),
+            (["walk-check", "--repo", top, "--id", "W-001", "--id", "W-002"], WHY_USAGE),
+            (["walk-check", "--repo", top], WHY_USAGE),
+            (["walk-check", "--id", "W-001"], WHY_USAGE)):
+        code, out, err = _call(args)
+        _refused(code, out, err, why)
+        _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "%r: nothing read, run or written" % (args[3:],))
+    _eq((_wget(top), _wstat(top)), (_ec_example().encode("utf-8"), before), "untouched")
+
+
+def case_walk_changed_while_reading(tmp):
+    """Another writer changes the walkthrough after a walk verb read it: the last look before the rename sees it,
+    exit 3, changed-while-reading, that writer's bytes stand and no new file is left beside them."""
+    top = os.path.join(tmp, "top")
+    _wput(top, _ec_example())
+    theirs = (_ec_example() + "# theirs\n").encode("utf-8")
+    calls = []
+    real = _walk_read
+
+    def racing(*args):
+        got = real(*args)
+        if not calls:
+            _wput(top, theirs)
+        calls.append(args)
+        return got
+    code, out, err = _with("_walk_read", racing, lambda: _record(top, 1, {"outcome": "confirmed"}, tmp))
+    _eq((code, err), (3, ""))
+    _eq(_obj(out), {"refused": "changed-while-reading", "line": None, "reason": None})
+    _eq(_wget(top), theirs, "the other writer's change stands")
+    _eq(os.listdir(os.path.join(top, BACKLOG_DIR, WALK_DIR)), ["W-001.yml"], "no new file left")
+
+
+def case_walk_changed_after_write(tmp):
+    """Another writer replaces the walkthrough after the rename: the read-back finds bytes the verb did not write,
+    exit 2 with the walkthrough's read-back text, and those bytes stand."""
+    top = os.path.join(tmp, "top")
+    _wput(top, _ec_example())
+    theirs = (_ec_example() + "# theirs\n").encode("utf-8")
+    calls = []
+    real = _walk_read
+
+    def racing(*args):
+        if len(calls) == 1:  # the read-back after the write
+            _wput(top, theirs)
+        calls.append(args)
+        return real(*args)
+    code, out, err = _with("_walk_read", racing, lambda: _stamp(top))
+    _refused(code, out, err, WHY_WALK_RACED)
+    _eq(_wget(top), theirs, "not overwritten")
+
+
+def case_walk_counts(tmp):
+    """walk-check counts, never prints: a differs with no observed text or an empty one, a blocked with no note, a
+    slot outside the unit-id class or none, an after_step that is no step number; ids outside the class print null."""
+    data = ("walkthrough:\n  id: W 001\n  unit: U-001\n"
+            "steps:\n"
+            "  - n: 1\n    action: wait\n    result: { outcome: differs }\n"
+            "  - n: 2\n    action: wait\n    result: { outcome: differs, observed: \"\" }\n"
+            "  - n: 3\n    action: wait\n    result:\n      outcome: differs\n      observed: ~\n"
+            "  - n: 5\n    action: wait\n    result: { outcome: blocked }\n"
+            "  - n: 9\n    action: wait\n    result: { outcome: blocked, note: \"no env\" }\n"
+            "  - n: 10\n    action: 'click'\n"
+            "captures:\n"
+            "  - { slot: a b, after_step: 1 }\n"
+            "  - slot: img-1\n    after_step: x\n"
+            "  - { shows: \"x\" }\n"
+            "  - { slot: \"img-2\", after_step: 9 }\n")
+    _eq(_wshape(tmp, data), _wok([1, 2, 3, 5, 9, 10], differs=[1, 2, 3], blocked=[5, 9], dno=[1, 2, 3], bnn=[5],
+                                 slots=[{"slot": "img-1", "after_step": None}, {"slot": "img-2", "after_step": 9}],
+                                 outside=2, wid=None))
+    at = _line_of(data, "  - { shows: \"x\" }")
+    _wout(tmp, data.replace("  - { shows: \"x\" }\n", "  - { shows: [x] }\n"), at, "capture", "flow-value")
+    _wout(tmp, data.replace("  - { shows: \"x\" }\n", "  - x\n"), at, "capture", "scalar")
+    _wout(tmp, data.replace("  - { shows: \"x\" }\n", "  - { slot: a, slot: b }\n"), at, "duplicate-key", "dup")
+
+
+def case_id_class_matches_walkthrough_flag(tmp):
+    """id-class answers, reading and running nothing, whether a value is in the unit-id class and in edit's
+    --walkthrough class, and its walkthrough answer is the one edit's argument test gives for each value: every form
+    YAML reads as no string refused, every string near one taken."""
+    top = _repo(tmp, MINI)
+    for v in NON_STRING_IDS + STRING_IDS + ("../x", "x y", "", "U-001\n"):
+        code, out, err = _call(["id-class", "--id", v])
+        _eq((code, err), (0, ""), repr(v))
+        _eq(_obj(out), {"unit_id": _unit_id(v), "walkthrough": v in STRING_IDS}, repr(v))
+        _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "%r: nothing read, run or written" % v)
+        code, out, err = _edit(top, "U-001", "missing", walkthrough=v)
+        _eq(code == 2 and err == "backlog-lines: not run (%s)\n" % WHY_WALKTHROUGH, v not in STRING_IDS,
+            "%r: edit --walkthrough agrees" % v)
+
+
+def case_id_class_bad_args(tmp):
+    """id-class takes one --id and nothing else."""
+    for argv in (["id-class"], ["id-class", "--id", "a", "--id", "b"], ["id-class", "--id=a"],
+                 ["id-class", "--repo", tmp, "--id", "a"], ["id-class", "--id"]):
+        code, out, err = _call(argv)
+        _refused(code, out, err, WHY_USAGE)
+
+
+def case_walk_shape_paragraph_pinned(tmp):
+    """EC section 4's shape paragraph names, in its out-of-shape list, exactly the reasons the walkthrough reader
+    gives; they are the backlog's line reasons less its four of structure, with the walkthrough's own."""
+    sec = _ec_section(4)
+    at = sec.index(WALK_LEAD)
+    bullet = next(ln for ln in sec[at:].split("\n") if ln.startswith("- **Out of shape**"))
+    words = [w for group in re.findall(r"\((`[a-z][a-z-]*`(?:, `[a-z][a-z-]*`)*)\)", bullet)
+             for w in re.findall(r"`([a-z][a-z-]*)`", group)]
+    _eq(sorted(words), sorted(WALK_REASONS), "the paragraph's reasons")
+    _eq(len(set(WALK_REASONS)), len(WALK_REASONS), "no reason twice")
+    _eq(sorted(set(REASONS) - set(WALK_REASONS)), ["entry-opener", "status", "units-not-block", "units-twice"],
+        "the backlog's structure reasons alone are not the walkthrough's")
+
+
+def case_slot_comment_pinned(tmp):
+    """The image-slot comment is page text a program matches: unit-brief section 3.3's step 5 gives it, once, as
+    the line doc-writer writes. (Task 3.3's slot program, which carries the literal's opening, joins this case when
+    it lands.)"""
+    with open(UB_PATH, encoding="utf-8") as fh:
+        ub = fh.read()
+    sec = ub[ub.index("\n### 3.3 "):ub.index("\n### 3.4 ")]
+    step5 = next(p for p in sec.split("\n\n") if p.startswith("**Step 5 "))
+    _eq(step5.count("`" + SLOT_COMMENT + "<slot> -->`"), 1, "section 3.3 step 5 gives the slot comment once")
+    _eq(step5.count(SLOT_COMMENT), 1, "and the opening nowhere else in that step")
+
+
 def case_visibility_marker_pinned(tmp):
     """The visibility marker is page text three programs match: backlog-run.md's section 10.2 program, which
     /docs-write runs at its Phase 9 and /docs-verify at its Phases 1 and 4, and docs-verify.md's marker program and
@@ -3900,6 +5778,17 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_export_out_refused, case_export_bare_repo_refused, case_export_bad_args, case_export_no_filter_run,
          case_export_timeout, case_export_name_collision, case_export_renamed_in_any_case,
          case_export_parent_ignore_files, case_export_blob_absent,
+         case_walk_ec_example_in_shape, case_walk_ec_result_example, case_walk_block_result_in,
+         case_walk_unknown_outcome_out, case_walk_observed_on_confirmed_out, case_walk_step_opener_out,
+         case_walk_step_number_out, case_walk_action_out, case_walk_top_key_out, case_walk_block_scalar_out,
+         case_walk_too_large_out, case_walk_stamp_states, case_walk_stamp_writes_and_clears, case_walk_stamp_replaces,
+         case_walk_record_escapes, case_walk_record_markup_is_text, case_walk_record_replaces_block_result,
+         case_walk_record_multiline_refused, case_walk_record_missing_observed_refused,
+         case_walk_record_note_on_confirmed_refused, case_walk_record_step_absent, case_walk_new_canonical,
+         case_walk_new_from_refused, case_walk_append_after_last, case_walk_append_no_steps,
+         case_walk_symlink_refused, case_walk_bad_args, case_walk_changed_while_reading,
+         case_walk_changed_after_write, case_walk_counts, case_id_class_matches_walkthrough_flag,
+         case_id_class_bad_args, case_walk_shape_paragraph_pinned, case_slot_comment_pinned,
          case_visibility_marker_pinned,
          case_shape_paragraph_pinned, case_marker_phrase_pinned)
 
