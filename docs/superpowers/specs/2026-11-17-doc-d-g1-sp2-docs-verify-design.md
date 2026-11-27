@@ -599,7 +599,7 @@ On any failure the results do not count, and the run reports why.
 **EC gains the stamp.** EC §4 gains the key, its form, and a note that a driver reading `steps[]` ignores it. EC §5 gains three rules:
 
 - `/docs-verify` takes results only behind a stamp naming the page as it stands;
-- a person verifying by hand (ROUTE step 6) records results with no stamp;
+- a person verifying by hand (ROUTE step 6) writes no stamp: results in a walkthrough that carries none do not count, and results added by hand behind a stamp that still names the page as it stands count as any other recorded results, shown by P-D11's question, since a stamp proves no walk;
 - `/docs-capture`'s results carry no stamp and never count.
 
 **What the stamp never authenticates**: who walked; that anybody walked; the environment; when; or the steps. Any committer can write a matching stamp, and P-D11's question is the control.

@@ -203,7 +203,7 @@ Then it rewrites each claim that reads otherwise to say what you saw or what was
 
 **Writing the observed text down on a `differs` is what pays for the exercise.** "Step 4 failed" sends somebody back to the environment to find out what it says instead; "step 4 shows *Create order*, not *New order*" **is** the page edit, already written by the person who was looking at the screen. A `differs` with nothing written down is an incomplete answer — do not record it until you have the text in front of you.
 
-Answers go back into the walkthrough file, on the step they belong to, and **each of the two extra fields belongs to exactly one outcome**: `observed` carries the text you saw and is written on a `differs` and on nothing else; `note` carries the reason and is written on a `blocked` and on nothing else. A note on a `confirmed` step is a comment nothing has a rule for. **Answers you write by hand carry no stamp**, so a later `/docs-verify` run counts none of them: it takes only answers recorded behind a stamp naming the page as it stands, which its own walk writes, and clears the rest when it walks.
+Answers go back into the walkthrough file, on the step they belong to, and **each of the two extra fields belongs to exactly one outcome**: `observed` carries the text you saw and is written on a `differs` and on nothing else; `note` carries the reason and is written on a `blocked` and on nothing else. A note on a `confirmed` step is a comment nothing has a rule for. **Verifying by hand, you write no stamp.** A later `/docs-verify` run takes only answers recorded behind a stamp naming the page as it stands, and clears the rest when it walks, so answers in a walkthrough that carries no stamp do not count. Answers you add by hand behind a stamp that still names the page — one a stopped walk left — count as any others there do: its question shows them and names the file's source, never who wrote them, since a stamp does not prove that anybody walked.
 
 ```yaml
   - n: 2
@@ -276,7 +276,7 @@ So the realistic order front-loads reference and explanation — which is also w
 - [`/document`](commands/document.md) — the two modes, and what direct mode does with the prose of a page you write yourself.
 - [The documentation backlog](reference/docs-backlog.md) — the file this route is worked through: each block, the status lifecycle, what the coverage fraction counts.
 - [The coverage model](reference/docs-coverage-model.md) — surfaces, the page types a surface earns, and what decides the order.
-- [Evidence and walkthroughs](reference/docs-evidence.md) — what a claim may rest on, what a marked claim looks like, and how to walk a checklist.
+- [Evidence and walkthroughs](reference/docs-evidence.md) — what a claim may rest on, what a marked claim looks like, and how a walkthrough is walked.
 - [Documentation visibility](reference/docs-visibility.md) — the two-build public/internal split behind step 4's `visibility` warning.
 - [Workflow overview](workflow.md) — all nine commands of this plugin, including the ones off this route.
 - [Getting started](getting-started.md) — install, the environment variables, and a first run end to end.
