@@ -128,17 +128,18 @@ numbers, come last — a key read, never one built. Run it and print what it pri
 
 ```bash
 python3 - "$SPECS_PATH" <<'EOF'
-import os, re, sys, unicodedata
+import os, re, stat, sys, unicodedata
 KEY = re.compile(r"[A-Z][A-Z0-9_]*(-[0-9]+)+")
 RESERVED = {"brd", "grounding", "interview", "dev-workflows", "design", "attachments", "revisions", "Doc screenshots"}
 root = os.path.join(sys.argv[1], "specifications") if len(sys.argv) > 1 and sys.argv[1] else ""
 if not root or not os.path.isdir(root):
     print("No specs tree to list keys from — $SPECS_PATH is unset or holds no specifications/.")
     sys.exit(0)
-def frontmatter(path):
+def frontmatter(path):  # a file that is no regular file, a FIFO say, reads as none and is never waited on
     try:
-        with open(path, encoding="utf-8-sig", errors="replace") as fh:
-            if fh.readline().strip() != "---":
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
+        with open(fd, encoding="utf-8-sig", errors="replace") as fh:
+            if not stat.S_ISREG(os.fstat(fd).st_mode) or fh.readline().strip() != "---":
                 return {}
             fields = {}
             for line in fh:
@@ -772,7 +773,7 @@ the operator's path, single-quoted with each `'` in it written `'\''`; and `<KIN
 
 ```bash
 python3 -I - "$SPECS_PATH" key '<KEY>' '<KIND>' <<'EOF'
-import os, re, sys, unicodedata
+import os, re, stat, sys, unicodedata
 RESERVED = {b"brd", b"grounding", b"interview", b"dev-workflows", b"design", b"attachments", b"revisions", b"Doc screenshots"}
 KEY = re.compile(r"[A-Z][A-Z0-9_]*(-[0-9]+)+")  # §1's grammar
 def ok(name):  # §2's class, on a name's bytes read as UTF-8
@@ -797,12 +798,15 @@ def dirs(folder):  # its directories, no symbolic link, byte-wise order; raises 
     return sorted(e.name for e in os.scandir(folder) if e.is_dir(follow_symlinks=False))
 def reserved(name):
     return name in RESERVED or name.startswith((b"bundle-", b"customer-sent-"))
-def frontmatter(path):  # raises OSError where the file is there and cannot be read
+def frontmatter(path):  # raises OSError where the file is there and cannot be read, a FIFO or other non-regular file among them, opened without waiting on it
     try:
-        with open(path, "rb") as fh:
-            lines = fh.read().decode("utf-8-sig", "replace").split("\n")
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
     except (FileNotFoundError, NotADirectoryError, IsADirectoryError):
         return {}
+    with os.fdopen(fd, "rb") as fh:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise OSError("not a regular file")
+        lines = fh.read().decode("utf-8-sig", "replace").split("\n")
     if not lines or lines[0].strip() != "---":
         return {}
     fields = {}
@@ -1057,7 +1061,9 @@ no command from a name, as `key-summary`'s program does (§1), and `specs-git.py
 reads one in-process too; each passes over a file named outside the class, as the rule above says.
 The resolution program takes a file it cannot read, among those the two steps above try before the
 carrier, as a folder it cannot read (§3, `reason: unreadable`), never as a folder with no carrier,
-since that file may be the carrier.
+since that file may be the carrier; a `brd/brd-inventory.md` that is no regular file, a FIFO say,
+counts as one it cannot read, and the program opens it without waiting on it. `key-summary`'s program
+opens such a file the same way and reads it as holding no key.
 Any other reader that opens a folder's top-level files
 with a command — a `head` or a `sed` on `<folder>/<file>` — first checks each name as §2 checks a
 folder's: as text for a `'`, then with its program, all of them in one call; on its refusal, exit 1,
