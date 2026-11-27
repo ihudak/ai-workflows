@@ -66,5 +66,5 @@ The status lines are printed in the command's configure or plan step; the off sw
 ## Design frames
 
 - **Feeds:** what an exported design shows — `design-grounder` reads each frame set and writes `[DG#n]` findings beside `/prd-ground`'s code findings.
-- **Turned on by:** a frame set under the resolved folder's `design/` subdirectory, one subdirectory per set, carrying the index `/frames` builds; no `design/` folder means the pass is skipped and the run says so.
+- **Turned on by:** a frame set under the resolved folder's `design/` subdirectory, one subdirectory per set, carrying the index `/frames` builds; no `design/` folder means the pass is skipped and the run says so. A set whose folder name is outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — is read by no command that lists the frame sets: `/frames` does not index it, `/prd-ground` records it as refused in its census, by its position, and `/brd-split`'s design gate stops on it.
 - **Off switch:** `--no-design`.

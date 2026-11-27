@@ -14,7 +14,7 @@ kind: specification          # what this document is
 key: <KEY>                   # this folder's key — must match the folder name
 upstreams:                   # the lineage record — written by workflows-core's lineage.py only
   - path: <input path, relative to $SPECS_PATH>
-    blob: <40-hex blob id of the bytes the writing run read>
+    blob: <blob id of the bytes the writing run read: 40 lowercase hex, or 64 in a SHA-256 repository>
     version: null
 ---
 ```

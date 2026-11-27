@@ -1347,7 +1347,8 @@ def _g0_block(lines, specs, default):
     a name outside §3.2's safe class (_head_branch), its Found, Not done and If ignored parts are the g0.unsafe ones,
     which name no branch."""
     sha = sb.text(sb.git(specs, "rev-parse", "HEAD"))
-    heads = sb.text(sb.git(specs, "for-each-ref", "--format=%(refname:short)", "refs/heads")).splitlines()
+    # lstrip=2, never :short -- which prints heads/<name> where a tag shares the name: the branch's own name
+    heads = sb.text(sb.git(specs, "for-each-ref", "--format=%(refname:lstrip=2)", "refs/heads")).splitlines()
     rejoin = default or next((b for b in heads if safe_branch(b)), None)
     values = {"<SPECS_PATH>": specs, "<sha7>": sha[:7], "<YYYY-MM-DD>": _today(), "<branch>": rejoin or ""}
     block = lines.fill("g0", values)

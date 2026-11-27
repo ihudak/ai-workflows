@@ -5,14 +5,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [0.13.4] — 2026-11-27
+## [0.13.6] — 2026-11-27
 
-Fix batch B51 (RECORDED-BRANCH-CLASS). **What changes for you.** A change scan tests the branch and the base an `implementation.md` block records before any command names them: a branch outside the safe class is read as naming no branch, and a base outside it gives way to the default branch, which the report says. Needs `workflows-core` 1.101.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.1 bullet).
+Fix batch B51 (RECORDED-BRANCH-CLASS). **What changes for you.** A change scan tests the branch and the base an `implementation.md` block records before any command names them: a branch outside the safe class is read as naming no branch, and a base outside it gives way to the default branch, which the report says. Needs `workflows-core` 1.101.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.3 bullet).
 
 ### Fixed
 
 - **`/scan` Phase 0 step 5** takes `<branch>` only where `workflows-core:implementation-format` §5's *A recorded branch name* holds it in the class, before the fetch by refspec; **Phase 1**'s change scan takes `<default ref>` for a null `base` and says so in `### Scope`.
 - **`docs/commands/scan.md`** says so.
+
+## [0.13.5] — 2026-11-27
+
+**What changes for you.** `/scan`'s reservation of run records on other session branches no longer drops, or misreads, a session branch that shares its name with a tag. It stands alone: it needs no other plugin's release.
+
+### Fixed
+
+- **`/scan` Phase 0 step 6, the reservations.** The session branches are listed with `%(refname)`, the full ref, and each command names the full ref; `%(refname:short)` printed `heads/session/<name>` where a tag shared the name, so the branch the checkout stands on was not left out as the step says, and a bare name read as a revision could resolve to the tag. Each name tested against `workflows-core:specs-repo-git` §3.2's safe class is the ref with its `refs/heads/` or `refs/remotes/origin/` taken off.
+
+## [0.13.4] — 2026-11-27
+
+**What changes for you.** `docs/reference/environment.md` says that a path holding a bidirectional control — a character that reorders how text shows — stops a run at resolution, as a line break or another control character does, which `workflows-core` 1.101.1 now does. Update with `workflows-core` 1.101.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.1 bullet).
+
+### Fixed
+
+- **`docs/reference/environment.md`** names a bidirectional control beside a line break and another control character among what stops a run on a path `ADDRESS_FOLDER_NAME` prints none of.
 
 ## [0.13.3] — 2026-11-27
 

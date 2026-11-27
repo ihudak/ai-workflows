@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.45.1] — 2026-11-27
+## [1.45.2] — 2026-11-27
 
 Fix batch B51. **What changes for you.** `/document`'s image candidates are listed, and the paths you type checked, by one program, and `doc-writer` copies a screenshot with a program handed the pairs as JSON, so an image whose name holds a space, `$(`, a backtick, a quote, a leading `-` or a line feed is copied as it stands and runs nothing. Couples to nothing new.
 
@@ -13,6 +13,14 @@ Fix batch B51. **What changes for you.** `/document`'s image candidates are list
 
 - **`/document` Phase 5.6** (FOLDER-NAME-CLASS (4)) lists `<specs_dir>`, `<project_dir>` and the PRD folder's `attachments/` with a `python3 -I` program that walks each folder itself, dedupes by resolved path and names a name that is not a printable value by its position, in place of two `find` commands; a manual path reaches it in a JSON file written with the Write tool.
 - **`doc-writer`** copies each screenshot with a `python3 -I` program reading `{"src", "dest"}` pairs from a JSON file it writes, in place of `command cp -- "<src>" …`, whose double quotes still ran a name's `$(` or backtick.
+
+## [1.45.1] — 2026-11-27
+
+**What changes for you.** `docs/reference/environment.md` says that a path holding a bidirectional control — a character that reorders how text shows — stops a run at resolution, as a line break or another control character does, which `workflows-core` 1.101.1 now does. Update with `workflows-core` 1.101.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.1 bullet).
+
+### Fixed
+
+- **`docs/reference/environment.md`** names a bidirectional control beside a line break and another control character among what stops a run on a path `ADDRESS_FOLDER_NAME` prints none of.
 
 ## [1.45.0] — 2026-11-27
 

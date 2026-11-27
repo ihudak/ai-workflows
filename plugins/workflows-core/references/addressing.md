@@ -55,7 +55,7 @@ in this order, the first that holds winning:
    holds the folder's path to §3's *The path's class*, and `read-key` returns **`misnamed`** where a
    component of it is outside the class, or where the program could not read it, or found none and
    could not list a directory that may hide it (§3, `reason: unreadable`), or would print a path
-   holding a control character or not UTF-8 (§3, `reason: control`), no command having named the
+   that is not a printable value (§3, `reason: control`), no command having named the
    folder; otherwise the program reads that folder's carrier (§4), and the name begins
    `<KIND>-<key>-` (§4.1, `<KIND>` one of §2's three, `<key>` the key the carrier asserts) or, a legacy name (§5), `<key>-`: `key:` that
    key and `prefix:` that kind, or `none` for a legacy name. A name that begins with neither is §4's
@@ -297,7 +297,9 @@ name that is not UTF-8 is outside. `str.isalnum()` holds for exactly the letters
 and digits of Unicode's `L` and `N` categories, and a category opening `M` is a combining mark.
 **First, as text, the name is checked for a `'`**, the one character that ends a single-quoted word:
 a name holding one is outside the class and is never handed to the program, nor is any other command
-built from it. A name read from a listing holds no line feed, since a line of a listing ends at one.
+built from it. A name read from a listing holds no line feed: git's listings quote a name holding
+one (below), and the checkout's print it as `?` (*A folder refused by its name*), so a name is one
+line either way, and a name holding `?` is outside the class whichever it held.
 **Why a name in the class is safe in a command**, single-quoted or double-quoted: no shell
 metacharacter, quote, backslash or `$` passes, nor any whitespace, nor a control or format character
 (categories `Cc` and `Cf`, a bidirectional override among them); every character it admits outside
@@ -327,22 +329,41 @@ is not tested here.
 **A folder refused by its name, among the folders a caller lists under a folder `<P>`** — `<P>`
 the folder's path relative to `$SPECS_PATH`, as the caller holds it. The caller names it by its
 position: `entry <n> of the checkout's listing of <P>'s folders`, `<n>` its place, counting from 1,
-among the lines `(cd "$SPECS_PATH" && find "./<P>" -mindepth 1 -maxdepth 1 -type d) 2>/dev/null | LC_ALL=C sort`
-prints, or, for a folder only `<default-ref>` holds, `entry <n> of the default branch's listing of
+among the lines `(cd "$SPECS_PATH" && find "./<P>" -mindepth 1 -maxdepth 1 -type d -print0) 2>/dev/null | LC_ALL=C sort -z | tr '\n\0' '?\n'`
+prints — one line per folder, in byte-wise order: `find` ends each path with a NUL, which no name
+holds, `sort -z` orders them, and `tr` prints a line feed inside a name as `?` before each NUL
+becomes a line's end, so a name holding a line feed is still one line and moves no other folder's
+place — or, for a folder only `<default-ref>` holds, `entry <n> of the default branch's listing of
 <P>'s folders`, among the lines its `git -C "$SPECS_PATH" -c core.quotePath=false ls-tree -d
 --name-only "<default-ref>" -- "./<P>/"` prints — and gives the remedy: `rename it into
 workflows-core:addressing §2's class — letters, digits and combining marks of any script and
 . _ @ + -, first a letter, a digit or _, no .. — or move it out of <P>`. **Whether it may be an
 Epic folder** — one holding an `epic.md` — is read off a listing of `<P>`'s files, compared as text,
 its name entering no command: in the checkout, a line of
-`(cd "$SPECS_PATH" && find "./<P>" -mindepth 2 -maxdepth 2 -type f -name epic.md) 2>/dev/null` that
-is, whole, `./<P>/<its name>/epic.md`; on `<default-ref>`, a line of
+`(cd "$SPECS_PATH" && find "./<P>" -mindepth 2 -maxdepth 2 -type f -name epic.md -print0) 2>/dev/null | tr '\n\0' '?\n'`
+that is, whole, `./<P>/<its name>/epic.md`, `<its name>` as the listing of `<P>`'s folders printed
+it; on `<default-ref>`, a line of
 `git -C "$SPECS_PATH" -c core.quotePath=false ls-tree -r --name-only "<default-ref>" -- "./<P>/"`
 that is, whole, `<P>/<its name>/epic.md`. A folder no such line names holds no `epic.md` either
 listing can show, and a caller that says what it leaves out for an Epic leaves it out of that.
 **Whether it may be a slice** — for a caller listing a BRD folder's subdirectories, one holding a
 `brd-link.md` — is read the same way, from the same two listings, `brd-link.md` in place of
 `epic.md`; a folder neither listing shows holding one is no slice, and the caller passes over it.
+**In the checkout's listings a `?` stands in for a line feed**, so a name printed holding `?` may
+hold either, and two folders can print alike — `a?z` for one named `a?z` and for one named `a`, a
+line feed, `z`. A line naming that printed name then holds for each, and each is said to be what it
+may be: each may be an Epic folder, or a slice, which is all either test says, and the caller names
+each by its own position. Either folder is outside the class for its name, whatever it holds, so
+neither is read.
+**A file refused by its name**, among the files a caller lists in a folder `<P>`, is named the same
+way: `entry <n> of the checkout's listing of <P>'s files`, `<n>` its place, counting from 1, among
+the lines `(cd "$SPECS_PATH" && find "./<P>" -mindepth 1 -maxdepth 1 -type f -print0) 2>/dev/null | LC_ALL=C sort -z | tr '\n\0' '?\n'`
+prints, one line per file, as the listing of its folders prints one per folder. **A folder that
+cannot be listed is never an empty one.** The checkout's listings discard `find`'s errors, so a
+caller that must tell a `<P>` it cannot read from one holding nothing runs the listing as
+`(set -o pipefail; <the listing>)` and reads its exit: where `<P>` is a directory
+(`test -d "$SPECS_PATH/<P>"`) and that exit is not 0, `find` could not read it, and the caller
+takes it as unreadable — naming it, and what it therefore did not read — never as empty.
 
 **What it covers, and what it does not.** Every name `<KIND>-<KEY>-<slug>` whose slug holds only
 letters, digits and combining marks of any script and `-` is inside it — the slug
@@ -359,8 +380,8 @@ which. And it is tested on the token `read-key`'s whole-name reading looks for, 
 (§1). **It is not tested on an `@<path>` that lies below `$SPECS_PATH` in neither of §3's two forms**
 (*The path's class*): its names are the operator's own, typed or the working directory's, against
 which a relative one is made absolute. Nor on `$SPECS_PATH` itself, which the operator set. The
-resolution program prints neither where it holds a control character or is not UTF-8, though: it
-refuses such a path wherever it lies (§3, `reason: control`). A key's
+resolution program prints neither where it is not a printable value, though (§3, *A printable
+value*): it refuses such a path wherever it lies (§3, `reason: control`). A key's
 glob candidates that do not survive its filter are not tested either: the resolution program reads
 them itself, and no command names them (§3, `resolve-key`). The callers that cite this paragraph say which names they test.
 
@@ -418,9 +439,9 @@ filter (its step 1a), every candidate having been read by the program itself, no
 Where a folder is outside the class the record is `status: misnamed`, and no command has named that
 folder or any folder under it. So a command a caller builds from a resolved folder's path — or from
 the PRD folder above an Epic, or a slice's `BRD-` folder, each a component of that path — is built
-from names in the class, and §2 says why the double quotes it stands in are then safe. **No value
-the program prints holds a control character or is not UTF-8**, a path it does not test included
-(*The resolution program*, below).
+from names in the class, and §2 says why the double quotes it stands in are then safe. **Every value
+the program prints is a printable value**, a path it does not test included (*A printable value*,
+below).
 
 **The path's class.** A folder's path is in the class where every component of it below
 `$SPECS_PATH` is in §2's class. **Two forms of the path are tested, each compared with
@@ -464,9 +485,10 @@ made absolute and which the operator chose — with no `$SPECS_PATH` there is no
 from. A folder below `$SPECS_PATH` is tested even where it lies in another repository nested there,
 which those three commands carry as `prd_outside` too. **A path below `$SPECS_PATH` in neither form
 is still checked before it is printed, though not against the class**: where it, or `$SPECS_PATH`
-itself, holds a line feed or another control character, or is not UTF-8, the program refuses it
-(`reason: control`, below) rather than print it, since a line break in a value would end the line it
-is printed on and begin one a caller reads as a field of the record.
+itself, is not a printable value (below) — it holds a line feed or another control character, or a
+bidirectional control, or is not UTF-8 — the program refuses it (`reason: control`, below) rather
+than print it, since a line break in a value would end the line it is printed on and begin one a
+caller reads as a field of the record, and a bidirectional control would show it as another path.
 
 **`status: misnamed` is a hard stop for every caller that resolves its own address**, issued here as
 `ambiguous`'s and `misrooted`'s are: a caller that maps the record's statuses onto outcomes of its own
@@ -490,7 +512,7 @@ and prints no command built from its path:
 
 **On `reason: unreadable`** the message reads, after the dash, `— could not be read, so this run cannot tell what it holds and stops before reading anything under it. Make it readable, or move it out of <P>, then re-run.`
 
-**On `reason: control`**, which the program prints with no `parent:`, the message is `ADDRESS_FOLDER_NAME: <subject> — its path holds a line feed or another control character, or is not UTF-8, so this run prints none of it and stops before reading anything under it. Rename each directory on that path whose name holds such a character or is not UTF-8 — setting SPECS_PATH anew where one is in it — then re-run.`
+**On `reason: control`**, which the program prints with no `parent:`, the message is `ADDRESS_FOLDER_NAME: <subject> — its path holds a line feed, another control character or a bidirectional control, or is not UTF-8, so this run prints none of it and stops before reading anything under it. Rename each directory on that path whose name holds such a character or is not UTF-8 — setting SPECS_PATH anew where one is in it — then re-run.`
 
 `<subject>` is the program's `subject:` line. It names the folder the branch looked for — `The
 folder the address names` on the path branch, `The folder whose whole name was typed` from
@@ -766,7 +788,7 @@ every candidate in-process, and prints the record. No command is built from a ca
 **The one way a run reads the tree for an address.** It lists and reads the folders itself, so no
 command is ever built from a folder's name it meets, and prints the record's fields, one `<field>: <value>`
 per line, a path only where every component of it below `$SPECS_PATH` is in §2's class, and no value
-that holds a control character or is not UTF-8 (below). Its arguments are `"$SPECS_PATH"` — the variable, expanded by the shell, never its text written in — the mode, and
+that is not a printable value (below). Its arguments are `"$SPECS_PATH"` — the variable, expanded by the shell, never its text written in — the mode, and
 the mode's one value: a key §1's grammar holds, a token §2's program has passed, or, in `path` mode,
 the operator's path, single-quoted with each `'` in it written `'\''`; and `<KIND>` (`brd`, `prd`,
 `epic`, or empty) last in `key` mode:
@@ -785,9 +807,10 @@ def ok(name):  # §2's class, on a name's bytes read as UTF-8
 record, subject = [], b""
 def out(*parts):  # one line of the record, which done() prints
     record.append(b"".join(p if isinstance(p, bytes) else p.encode() for p in parts))
-def printable(line):  # UTF-8 holding no control character (Cc, U+2028, U+2029), so it can neither end its line nor begin another
+BIDI = set("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")  # the bidirectional controls
+def printable(line):  # a printable value (below): UTF-8, no Cc, no U+2028 or U+2029, no bidirectional control, so it can neither end its line, begin another, nor show its characters out of order
     try:
-        return not any(unicodedata.category(c) == "Cc" or c in "  " for c in line.decode("utf-8"))
+        return not any(unicodedata.category(c) == "Cc" or c in "\u2028\u2029" or c in BIDI for c in line.decode("utf-8"))
     except UnicodeError:
         return False
 def done():  # prints the record, or, where any line of it is not printable, the refusal in its place and nothing of the record
@@ -985,11 +1008,18 @@ EOF
   omitted for a path outside `$SPECS_PATH` it could not read; or `absent` where the path names
   nothing.
 
-It reads names as bytes and writes them as UTF-8, whatever the locale. **It prints the record whole
-or not at all**: where any line of it is not UTF-8, or holds a control character — category `Cc`, a
-line feed and a carriage return among them — or U+2028 or U+2029, which a reader may take for a line
-break, it prints `status: misnamed`, `reason: control` and `subject:` in its place, so no value, a
-path it does not test included, can end its line and begin one a caller reads as a field. It walks
+It reads names as bytes and writes them as UTF-8, whatever the locale. **A printable value** is
+UTF-8 and holds no control character — category `Cc`, a line feed and a carriage return among
+them — no U+2028 or U+2029, which a reader may take for a line break, and no bidirectional control —
+U+061C, U+200E, U+200F, U+202A to U+202E, U+2066 to U+2069 — which would show its characters in
+another order than they stand. Every other character passes, the format characters among them: a
+zero-width non-joiner or joiner (U+200C, U+200D), which Persian, Arabic-script and Indic names and
+emoji hold, is part of a name, not a trick on its reader. This is the one statement of the rule, and
+each program of the family that prints a name read back from the tree, where §2's class does not
+already hold it, holds the name to it. **It prints the record whole or not at all**: where any line
+of it is not a printable value, it prints `status: misnamed`, `reason: control` and `subject:` in its
+place, so no value, a path it does not test included, can end its line, begin one a caller reads as
+a field, or show as another. It walks
 what `key-summary` walks (§1): three levels below `specifications/`, passing over a symbolic link, a
 hidden directory and every reserved subdirectory (§2) with everything under it; a directory it cannot
 list is the `unreadable` reason above, never an empty one, and so is a folder holding a file it
