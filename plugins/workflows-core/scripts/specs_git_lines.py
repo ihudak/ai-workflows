@@ -14,6 +14,7 @@ import json
 import unicodedata
 import posixpath
 import re
+import shlex
 
 # specs-repo-git §5's notice blocks, compared line for line with its three fenced blocks.
 G0 = """⚠ SPECS REPO — THIS RUN'S ARTIFACTS WILL NOT BE COMMITTED
@@ -407,6 +408,30 @@ def shown_path(path):
     return "".join(out)
 
 
+def shell_path(path):
+    """A path as a Fix line pastes it (specs-repo-git §5): shell-quoted where it is a printable value; otherwise in
+    the $'…' quoting bash and zsh read, each character that keeps it from being one written as \\xHH for each byte
+    of its UTF-8 -- or for the byte it stands for, where it stands for a byte that is not UTF-8 -- so the line can
+    neither break nor show as another, and the shell reads back the path itself."""
+    if shown_path(path) == path:
+        return shlex.quote(path)
+    out = []
+    for c in path:
+        if 0xDC80 <= ord(c) <= 0xDCFF:  # os.fsdecode's stand-in for a byte that is not UTF-8
+            out.append("\\x%02x" % (ord(c) - 0xDC00))
+        elif unicodedata.category(c) in ("Cc", "Cs") or c in _UNPRINTABLE_EXTRA:
+            out.append("".join("\\x%02x" % b for b in c.encode("utf-8", "surrogatepass")))
+        elif c in "\\'":
+            out.append("\\" + c)
+        else:
+            out.append(c)
+    return "$'" + "".join(out) + "'"
+
+
+# The placeholders that name a path: fill() writes each value given for one as shown_path writes it.
+_PATH_SPANS = ("<path>", "<path list>", "<file>")
+
+
 def artifacts(paths):
     """phase-handoff §4.1's <artifacts>: the paths comma-separated where three or fewer, else '<n> files under
     <dir>', <dir> the nearest directory holding every path, repo-relative ('.' where that is the top level); a path
@@ -524,15 +549,16 @@ def _value(span, values, used, joined, root):
         if named in root:  # an alternative that names a placeholder of the same template is that placeholder
             return _value(named, values, used, False, root)
         return _render(alternatives[value], values, used, root)
+    shown = shown_path if span in _PATH_SPANS else str  # a path that is not a printable value, escaped
     if isinstance(value, (list, tuple)):
         if joined:
-            return ", ".join(str(v) for v in value)
+            return ", ".join(shown(str(v)) for v in value)
         k = used.get(span, 0)
         if k >= len(value):
             raise ValueError("fill: no value for occurrence %d of %s" % (k + 1, span))
         used[span] = k + 1
-        return str(value[k])
-    return str(value)
+        return shown(str(value[k]))
+    return shown(str(value))
 
 
 def _render(t, values, used, root):

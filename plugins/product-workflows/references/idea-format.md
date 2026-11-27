@@ -337,12 +337,13 @@ cannot stand in a link; and a source whose basename holds one, or is empty, `.` 
 
 **One program makes all three tests**, listing the destination directory itself and reading each
 file, so no command is ever built from a name a listing printed — a `cmp` run per listed name would
-run whatever a name holds. Hand it the source file, the destination directory and the source's
-basename, each as one single-quoted argument, each `'` they hold written `'\''`:
+run whatever a name holds. Hand it the source file, the destination directory, the source's
+basename and the source root (*The source root*, below), each as one single-quoted argument, each
+`'` they hold written `'\''`:
 
 ```
 python3 -I -c 'import os, stat, sys, unicodedata as u
-src, dest, base = (os.fsencode(a) for a in sys.argv[1:4])
+src, dest, base, top = (os.fsencode(a) for a in sys.argv[1:5])
 def shown(n):
     try:
         t = n.decode("utf-8")
@@ -351,10 +352,25 @@ def shown(n):
     return None if any(u.category(c) == "Cc" for c in t) else t
 if shown(base) is None or base in (b"", b".", b"..") or b"/" in base:
     sys.exit(4)
-fd = os.open(src, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
-if not stat.S_ISREG(os.fstat(fd).st_mode):
-    sys.exit(3)
-with os.fdopen(fd, "rb") as f:
+def opened(path, top):
+    path, top = os.path.abspath(path), os.path.abspath(top)
+    here = os.path.commonpath([path, top])
+    parts = [p for p in os.path.relpath(path, here).split(b"/") if p != b"."]
+    if not parts:
+        sys.exit(3)
+    try:
+        fd = os.open(here, os.O_RDONLY | os.O_DIRECTORY)
+        for i, p in enumerate(parts):
+            last = i == len(parts) - 1
+            nxt = os.open(p, os.O_RDONLY | os.O_NOFOLLOW | (getattr(os, "O_NONBLOCK", 0) if last else os.O_DIRECTORY), dir_fd=fd)
+            os.close(fd)
+            fd = nxt
+    except OSError:
+        sys.exit(3)
+    if not stat.S_ISREG(os.fstat(fd).st_mode):
+        sys.exit(3)
+    return fd
+with os.fdopen(opened(src, top), "rb") as f:
     data = f.read()
 try:
     names = sorted(e.name for e in os.scandir(dest) if e.is_file(follow_symlinks=False))
@@ -374,14 +390,25 @@ stem, ext = os.path.splitext(base)
 k = 1
 while os.path.lexists(os.path.join(dest, stem + b"_%02d" % k + ext)):
     k += 1
-sys.stdout.buffer.write(b"taken\t" + stem + b"_%02d" % k + ext + b"\n")' '<source file>' '<destination directory>' '<basename>'
+sys.stdout.buffer.write(b"taken\t" + stem + b"_%02d" % k + ext + b"\n")' '<source file>' '<destination directory>' '<basename>' '<source root>'
 ```
 
 It prints one line: `reuse<TAB><name>` — rule 1, a file already holding exactly these bytes, which
 the link then points at; `free<TAB><basename>` — the basename is free and the file lands there; or
 `taken<TAB><name>` — the basename is taken and no file there holds these bytes, and `<name>` is the lowest free
 `_NN` name rules 2 and 3 give, where the file lands unless rule 4 refreshes the copy at the
-basename instead. Any other exit is a copy that failed, reported with the rest.
+basename instead. Exit 3 is the copy program's exit 3, below: the source is read as that program
+reads it, following no symbolic link. Any other exit is a copy that failed, reported with the rest.
+
+**The source root** is the directory of the document the walk started from
+(`${CLAUDE_PLUGIN_ROOT}/references/linked-sources.md` §4) — the customer's BRD for `/brd-intake`,
+the idea source for `/idea` — for that document itself and for every file its walk reached, inside
+that directory or outside it. Both programs read a source only through folders that are no
+symbolic link: every folder on the source's path below the deepest folder that path shares with
+the source root, and the source itself, are opened one by one, each refused where it is a link,
+so a customer's `appendix.md` that is a link to a key file outside the folder, or a folder that is
+a link to one, is copied nowhere. A folder at or above the shared one is the operator's own, and
+may be a link.
 
 **The copy is a program too, and so is the hash.** A source's name, and every folder name on the
 path it lands at, is its author's own, and a `cp`, an `install` or a `sha256sum` built from it would
@@ -390,12 +417,13 @@ destination at mode `0644` — never the source's own mode bits, so a file a mou
 is never committed executable — and appends the destination's path relative to `$SPECS_PATH`,
 ended by a NUL byte, to the caller's declared-paths file, the `deliverable_paths_file` its handoff
 takes (`workflows-core:phase-handoff` §2.9), so the copy is declared without its name being typed
-anywhere. Hand it the source file, the destination file, how to write it, `$SPECS_PATH` and that
-file, each as one single-quoted argument, each `'` they hold written `'\''`:
+anywhere. Hand it the source file, the destination file, how to write it, `$SPECS_PATH`, that
+file and the source root (*The source root*, above), each as one single-quoted argument, each `'`
+they hold written `'\''`:
 
 ```
 python3 -I -c 'import hashlib, os, stat, sys, tempfile, unicodedata as u
-src, dest, how, specs, listed = (os.fsencode(a) for a in sys.argv[1:6])
+src, dest, how, specs, listed, top = (os.fsencode(a) for a in sys.argv[1:7])
 BIDI = "\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069\u2028\u2029"
 def printable(n):
     try:
@@ -403,14 +431,27 @@ def printable(n):
     except UnicodeError:
         return False
     return not any(u.category(c) == "Cc" or c in BIDI for c in t)
-def read(path):
-    fd = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
+def read(path, top):
+    path, top = os.path.abspath(path), os.path.abspath(top)
+    here = os.path.commonpath([path, top])
+    parts = [p for p in os.path.relpath(path, here).split(b"/") if p != b"."]
+    if not parts:
+        sys.exit(3)
+    try:
+        fd = os.open(here, os.O_RDONLY | os.O_DIRECTORY)
+        for i, p in enumerate(parts):
+            last = i == len(parts) - 1
+            nxt = os.open(p, os.O_RDONLY | os.O_NOFOLLOW | (getattr(os, "O_NONBLOCK", 0) if last else os.O_DIRECTORY), dir_fd=fd)
+            os.close(fd)
+            fd = nxt
+    except OSError:
+        sys.exit(3)
     if not stat.S_ISREG(os.fstat(fd).st_mode):
         os.close(fd)
         sys.exit(3)
     with os.fdopen(fd, "rb") as f:
         return f.read()
-data = read(src)
+data = read(src, top)
 digest = hashlib.sha256(data).hexdigest().encode()
 if how == b"hash":
     sys.stdout.buffer.write(b"hash\t" + digest + b"\n")
@@ -455,7 +496,7 @@ elif how == b"mirror":
     if not there:
         write()
         outcome = b"copied"
-    elif read(target) == data:
+    elif read(target, root) == data:
         outcome = b"unchanged"
     else:
         write()
@@ -466,14 +507,14 @@ elif how == b"refresh":
     write()
     outcome = b"replaced"
 elif how == b"reuse":
-    if not there or read(target) != data:
+    if not there or read(target, root) != data:
         sys.exit(5)
     outcome = b"reused"
 else:
     sys.exit(2)
 with open(listed, "ab") as f:
     f.write(rel + b"\0")
-sys.stdout.buffer.write(outcome + b"\t" + digest + b"\n")' '<source file>' '<destination file>' '<how>' "$SPECS_PATH" '<declared-paths file>'
+sys.stdout.buffer.write(outcome + b"\t" + digest + b"\n")' '<source file>' '<destination file>' '<how>' "$SPECS_PATH" '<declared-paths file>' '<source root>'
 ```
 
 `<how>` is `new` — a name the collision rule found `free`, or the `taken` name it gave: written where
@@ -485,7 +526,9 @@ nothing stands; or `hash`, which reads the source alone, writes and declares not
 destination, `''` standing in for it. It creates each missing folder on the way down, follows no
 symbolic link, and writes through a temporary file and a rename wherever it replaces one. It prints
 one line, the outcome and the source's SHA-256: `copied`, `unchanged`, `replaced`, `reused` or `hash`,
-a tab, then the digest. Exit 3: the source is not a regular file it can read; exit 4: the
+a tab, then the digest. Exit 3: the source is not a regular file it can read, or it, or a folder
+on its path below the deepest folder that path shares with the source root, is a symbolic link
+(*The source root*, above); exit 4: the
 destination lies outside `$SPECS_PATH`, or a name on its path is not a printable value
 (`workflows-core:addressing` §3, *A printable value*), or is empty, `.` or `..`; exit 5: the
 destination, or a folder on its way, is a symbolic link or not what `<how>` needs — a file already

@@ -50,7 +50,13 @@ In this order, stopping at the first that applies:
    recorded and never followed, fetched or read.
 2. **Resolve it against the directory of the file the link sits in**, normalised **as text** — `..`
    segments collapsed, symlinks never resolved. An absolute path resolves as itself. Where it names a
-   readable existing file, that is the target. **A wikilink whose name does not already end in
+   readable regular file reached through no symbolic link, that is the target: **neither the file nor
+   any folder on its path below the deepest folder that path shares with the starting document's
+   own directory may be a link**, each tested without following it (`lstat`, never `stat`). A path
+   that is a link, or passes through one there, names no file the walk takes — the walk follows no
+   link, and `${CLAUDE_PLUGIN_ROOT}/references/idea-format.md`'s programs read none (*The source
+   root*) — so a customer's `appendix.md` that is a link to a key file elsewhere is never reached.
+   **A wikilink whose name does not already end in
    `.md`, `.markdown` or an image extension of §4's kind table is then tried with `.md` added, in the
    same place**, as Obsidian does — so `[[appendix]]` beside `appendix.md` resolves with no vault at
    all, in a customer's zipped folder as in a vault, and `[[notes.v2]]` is tried as `notes.v2.md`,
@@ -59,7 +65,8 @@ In this order, stopping at the first that applies:
    name does not already end in one of those extensions, try it with `.md` too, as step 2 does. The
    **vault** is the nearest ancestor of the **starting document** — the one the walk began from, not
    the file this link sits in — that holds a `.obsidian/` directory. A name carrying a `/` resolves
-   against the vault root; a bare name is matched by filename anywhere under it.
+   against the vault root; a bare name is matched by filename anywhere under it — either way
+   entering no folder that is a symbolic link and matching no file that is one, as step 2 tests them.
    - **Exactly one match** — that is the target.
    - **More than one** — the target is `ambiguous`. Record every candidate and **choose none**: two
      notes sharing a name are two different files, and a walk that picked one would report a file the
@@ -68,8 +75,8 @@ In this order, stopping at the first that applies:
 
    Where no ancestor holds `.obsidian/`, there is no vault and this step is skipped: the target is
    `unreadable`.
-4. **Anything else step 2 did not resolve** is `unreadable` — a path naming no file, or naming one
-   that cannot be read.
+4. **Anything else step 2 did not resolve** is `unreadable` — a path naming no file, naming one
+   that cannot be read, or naming a link or reached through one (step 2).
 
 ## 4. The walk
 

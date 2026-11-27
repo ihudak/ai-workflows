@@ -526,6 +526,9 @@ repairs where `idea.md` points.
    program too, and so is the hash*) — `new` at the name the tests gave, `reuse` for rule 1's
    re-use, `refresh` for rule 4's — never with `cp` or any command built from a source's name, which
    is its author's own and may hold a space, `$(`, a backtick, a quote, a leading `-` or a line feed.
+   Every call of either program takes the source file's own directory as its source root
+   (`idea-format.md`, *The source root*), so an entry that is a symbolic link, or that its link
+   reaches through a folder that is one, is read and copied nowhere: the programs' exit 3.
    Its declared-paths file is one this phase makes before its first copy, `command mktemp -t
    idea-declared-XXXXXX`: the program appends each copy and each re-use to it, and Phase 5 hands it
    to the handoff as `deliverable_paths_file`. Keep it until this run's `commit-artifacts` has run —

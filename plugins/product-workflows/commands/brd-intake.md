@@ -55,6 +55,15 @@ Usage: `/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [-
    what the customer asked for, with no later step positioned to catch it. Converting is the
    operator's own step, done where they can eyeball the result against the original before handing
    it back to this command.
+
+   **A source that is a symbolic link, or no regular file, is refused here too**, before anything
+   is written: Phase 2's copy program reads no link (`${CLAUDE_PLUGIN_ROOT}/references/idea-format.md`,
+   *The source root*), and a document read through one would be whatever file it points at. Test the
+   resolved source — its path made absolute as text, no link resolved — with a program handed it as
+   one single-quoted argument, each `'` it holds written `'\''`,
+   `python3 -I -c 'import os, stat, sys; sys.exit(0 if stat.S_ISREG(os.lstat(sys.argv[1]).st_mode) else 1)' '<the resolved source>'`,
+   which exits 0 where it is a regular file and no link; on any other exit, **stop**:
+   `BRD_INTAKE_SOURCE_NOT_A_FILE: the source is a symbolic link, or no regular file — this command captures a customer's document only as the file it is. Where it is a link, check that the file it points to is the customer's document, and re-run '/product-workflows:brd-intake <BRD-KEY> @<that file>'.`
 4. **Optional flags.** `--sort-existing <dir>` — if present, validate `<dir>` exists and carry it
    forward to Phase 6. `--docs <path>` — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`; **strip the flag and its value together** before any remaining-argument classification, or the path is read as part of the address. Declared for every consumer by `workflows-core:docs-grounding` *Procedure* step 1 (*Flags first*), which resolves it; this command only has to recognise it and pass the invocation through. `--no-docs` — boolean; turns documentation grounding off for this run,
    carried to Phase 1's `resolve-docs-grounding` call. **None of the three changes anything else about Phase 0:**
@@ -412,7 +421,10 @@ too, and so is the hash*), which also resets a copy an earlier run left at anoth
 replaces it — never with `cp`, `cp -p`, `cp -a` or `install`, each a command built from the
 customer's own names, which may hold a space, `$(`, a backtick, a quote, a leading `-` or a line
 feed, and a plain `cp` also giving a new file the source's own mode less the umask, so a file a
-mount marks `0777` would be committed executable. Each copy, and each file the copy program finds
+mount marks `0777` would be committed executable. Every call of that program in this phase, and of
+the collision program beside it, `hash` included, takes the document's own directory as its source
+root (`idea-format.md`, *The source root*), so a file that is a symbolic link, or is reached through
+one below that directory, is read and copied nowhere: the program's exit 3. Each copy, and each file the copy program finds
 unchanged or reuses, is declared as it is made: the program appends its path to the declared-paths
 file this phase's reset program below starts, which Phase 7 hands the handoff as
 `deliverable_paths_file`. Per
@@ -649,12 +661,12 @@ is what every later mention of *Phase 2's capture order* means.
 
 Copy each file **byte-for-byte, whatever its type** — an image, a PDF, a spreadsheet — never opened
 as text, never re-encoded, never resized, and at mode `0644`, as the document itself is copied: its
-content, never its mode bits, by the copy program, whose source and destination are each one
-single-quoted argument, each `'` written `'\''`. A copy it refuses or fails — exit 3, 4, 5 or any
+content, never its mode bits, by the copy program, whose source, destination and source root are
+each one single-quoted argument, each `'` written `'\''`. A copy it refuses or fails — exit 3, 4, 5 or any
 other — is written and declared nowhere: name it in the final report with the exit, by the path
 the walk recorded where that path is a printable value, by its link's place in the walk record
-otherwise; where the exit is 3, the target resolves to no readable file, and its link takes the link
-log's `unreadable` row below. Phase 0 step 3's markdown-only rule is about the *document*
+otherwise; where the exit is 3, the target resolves to no readable file — a symbolic link, or a file
+reached through one, among them — and its link takes the link log's `unreadable` row below. Phase 0 step 3's markdown-only rule is about the *document*
 the inventory anchors into; a file it links is captured as it stands. **What is read, and by whom, is
 Phase 2.5's and Phase 3's** — this phase copies and reads nothing.
 

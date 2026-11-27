@@ -2579,6 +2579,54 @@ def selftest(groups=None):
                       "l_fix_lines: %s's Fix part runs whole through %s -c, making its git calls (rc %s, %r, %r)"
                       % (name, shell[0], ran.returncode, calls, ran.stderr.decode("utf-8", "replace")[:200]))
 
+        # l_unprintable_paths: a path that is not a printable value (addressing §3) -- a line feed, U+202E, a byte that
+        # is not UTF-8 -- neither breaks a line nor shows as another: every path placeholder a template takes writes it
+        # with its JSON escapes (phase-handoff §2.3), G1's Found line among them, and G1's Fix part writes it in $'…'
+        # quoting, which bash and zsh read back as the path itself, so the git calls it makes name the user's own files
+        odd = ["a\nb.md", "x‮y.md", "c\udcffd.md", "my notes.md"]
+        shown = "a\\nb.md, x\\u202ey.md, c\\udcffd.md, my notes.md"
+        g1 = globals().get("_g1_block")
+        odd_blocks = [("g1", g1(lines, S, odd) if g1 else "", plain, ["status", "add"]),
+                      ("g1.landing.merged", landing(lines, g1(lines, S, odd), "prd/A-1-x", "main", S, odd, merged, None)
+                       if g1 and landing else "", landing(lines, plain, "prd/A-1-x", "main", S, paths, merged, None)
+                       if landing else "", ["switch", "add"])]
+        for name, block, printable_form, want in odd_blocks:
+            rows = block.split("\n")
+            check(block != "" and shown in block and not any(c in block for c in ("‮", "\udcff"))
+                  and len(rows) == len(printable_form.split("\n")),
+                  "l_unprintable_paths: %s writes each path that is not a printable value with its JSON escapes on its "
+                  "Found line, and no line breaks or reverses (%r)" % (name, rows[:4]))
+            i = next((k for k, row in enumerate(rows) if row.startswith("Fix:")), None)
+            part = []
+            for row in rows[i:] if i is not None else []:
+                if part and not row.startswith(" "):
+                    break
+                part.append(row[len("Fix:"):].strip() if not part else row.strip())
+            add = b"-C|" + os.fsencode(S) + b"|add|" + b"|".join(os.fsencode(p) for p in odd) + b"|\n"
+            expect = {"status": b"-C|" + os.fsencode(S) + b"|status|\n", "add": add,
+                      "switch": b"-C|" + os.fsencode(S) + b"|switch|main|\n"}
+            for shell in [["bash", "-c"]] + ([["zsh", "-c"]] if shutil.which("zsh") else []):
+                if os.path.exists(log):
+                    os.remove(log)
+                ran = subprocess.run(shell + ["\n".join(part)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                     env=dict(os.environ, PATH=shim + os.pathsep + os.environ.get("PATH", ""),
+                                              GIT_CALLS=log))
+                got = open(log, "rb").read() if os.path.exists(log) else b""
+                check(i is not None and ran.returncode == 0
+                      and got == b"".join(expect[w] for w in want) + b"-C|" + os.fsencode(S) + b"|commit|\n",
+                      "l_unprintable_paths: %s's Fix part, run through %s -c, adds the user's files under their own "
+                      "names (rc %s, %r)" % (name, shell[0], ran.returncode, got[:300]))
+        for tid, values in (("app.hook-line", {"<path>": odd[:2], "<sha7>": "abc1234"}),
+                            ("pre.held.changed", {"<path>": odd[0], "<default>": "main"}),
+                            ("reason.conflict", {"<path>": odd[1]}),
+                            ("app.start-dirty-kept", {"<path>": odd[1:3], "<branch>": "main"}),
+                            ("end.declined-unreadable", {"<file>": odd[0], "<reason>": "e"})):
+            got = lines.fill(tid, values)
+            check("\n" not in got and not any(c in got for c in ("‮", "\udcff"))
+                  and any(s in got for s in ("a\\nb.md", "x\\u202ey.md")),
+                  "l_unprintable_paths: %s writes a path that is not a printable value with its JSON escapes (%r)"
+                  % (tid, got))
+
     def scenarios_gate(tmp):
         with open(SESSION_HYGIENE, encoding="utf-8") as fh:
             hygiene = fh.read()

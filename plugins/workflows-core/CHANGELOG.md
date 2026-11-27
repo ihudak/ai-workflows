@@ -24,6 +24,12 @@ Fix batch B51. **What changes for you.** A handoff stages, accounts for, commits
 - **`implementation-format` §5's *Output*** says an out-of-class `branch` or `base`, or an out-of-shape `commit`, is null; **`source-truth` §7.8** holds a conformance record's recorded commit to a commit's shape before `/document` or `/release-notes` names it.
 - Selftest cases, written first and seen to fail: `handoff` (a declared directory over a user's staged file, an outside path, `--path=-top.md`, a non-UTF-8 declared path, the escape) and `end` (an unreadable `--declined-from`); `s_group_unknown` names the `handoff` group.
 
+### Fixed — the security check
+
+- **`scripts/specs_git_lines.py`'s `fill()`** writes every value of a path placeholder — `<path>`, `<path list>`, `<file>` — as `shown_path` writes it, each character that keeps it from being a printable value as its JSON escape, so a path holding a line feed or a U+202E neither breaks nor spoofs any notice or outcome line; G1's *Found* line printed `<path list>` raw, and so did every other line naming a held, swept, kept or conflicting path. G1's *Fix* line writes such a path with the new `shell_path`, in the `$'…'` quoting bash and zsh read, so the command still names the user's own file; a printable path is shell-quoted as before. `references/specs-repo-git.md` §5 states both.
+- Selftest case `l_unprintable_paths` (the `lines` group), written first and seen to fail: G1's plain and merged landing forms with a line feed, a U+202E and a byte that is not UTF-8 in their paths, each *Fix* part run through bash and zsh against a git that logs its arguments, and five other path-naming lines.
+
+
 ## [1.101.2] — 2026-11-27
 
 A branch name a listing prints, a path or a blob a lineage record holds, and an acceptance whose review date is faulted are each read one stated way. **What changes for you.** Wherever a command lists branches, a branch whose name holds a character other than ASCII letters, digits and `. _ / @ + -`, or begins with one other than a letter, a digit or `_`, is passed over and never printed; an upstream whose recorded path or blob is malformed is reported as not checkable rather than read; and a threat model's acceptance whose review date alone is missing or malformed reads as an acceptance, never as a Disposition in none of the three forms. Needs `product-workflows` 3.88.9 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.2 bullet).

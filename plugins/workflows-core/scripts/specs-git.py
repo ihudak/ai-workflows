@@ -2718,10 +2718,11 @@ def _advance(run, stage):
 
 
 def _g1_block(lines, specs, paths):
-    """specs-repo-git §5's G1 block for the OTHER <paths>: <path list> comma-separated on the Found line, shell-quoted
-    and space-separated on the Fix line, where it is pasted into a command."""
+    """specs-repo-git §5's G1 block for the OTHER <paths>: <path list> comma-separated on the Found line, a path that
+    is not a printable value written with its JSON escapes (fill), and shell-quoted and space-separated on the Fix
+    line, where it is pasted into a command, such a path in $'…' quoting (shell_path)."""
     return lines.fill("g1", {"<SPECS_PATH>": specs, "<N>": len(paths),
-                             "<path list>": [", ".join(paths), " ".join(shlex.quote(p) for p in paths)]})
+                             "<path list>": [", ".join(paths), " ".join(lines.shell_path(p) for p in paths)]})
 
 
 def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, committed=None):
@@ -2742,7 +2743,7 @@ def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, commi
     g1.landing.not_done.landed, which says the artifacts were committed and leaves the commit to the outcome line."""
     kind = lines.placeholder("g1.landing.not_done", "<which no key")
     v = {"<branch>": branch, "<default>": default, "<SPECS_PATH>": specs,
-         "<path list>": " ".join(shlex.quote(p) for p in paths)}
+         "<path list>": " ".join(lines.shell_path(p) for p in paths)}
     landing = {False: "g1.landing.not_done.unlanded", True: "g1.landing.not_done.landed"}.get(committed,
                                                                                           "g1.landing.not_done")
     if midrun:

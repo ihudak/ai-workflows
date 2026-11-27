@@ -389,7 +389,9 @@ attack.
   value — one holding a control character such as a line feed — a symbolic link, an entry that is
   neither a file nor a folder (a FIFO, a socket), a file that cannot be read and a folder that cannot
   be listed or entered stop the run with `BRD_PACKAGE_NAME_REFUSED`, naming each by its position in
-  its folder, since the manifest could not name it, and saying how to remove it by hand: nothing
+  its folder, since the manifest could not name it — or naming the folder, where `brd/source-external/`
+  is itself a symbolic link or a folder cannot be entered — and saying how to remove it by hand,
+  with git commands that match each folder as the literal path it is: nothing
   under the capture is ever removed by a command, `/brd-intake`'s re-runs included. Names that differ
   only in case or Unicode normalisation are told apart as two, as a filesystem that folds them would
   open them as one.

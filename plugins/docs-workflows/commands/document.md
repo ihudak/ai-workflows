@@ -619,6 +619,16 @@ unrecorded work — the probe tells the operator where to look and changes nothi
 
 Hand each resolved ref to `diff-summarizer` as a `refs[]` element — `{branch_from, branch_to, title}`,
 the shape its Inputs declare for `refs[]`, `title` optional — taken on the pure-local-git path.
+**A record entry's values are held first.** Its `commit`, `branch` and `base` are text a committed
+file holds, and `diff-summarizer` writes an element's values into git commands, so before an element
+is built from one, each value it would take is tested as `workflows-core:implementation-format` §5's
+*A recorded branch name* tests it, with that section's program, the value handed as one single-quoted
+argument: `commit` against a commit's shape, `branch` and `base` against
+`workflows-core:specs-repo-git` §3.2's safe class. An entry whose value the element would take is
+outside its class or shape builds no element and carries no commit into the run's refs; its value is
+named nowhere — no element, command, page or report line carries it — and the run reports the entry
+under Phase 9's *Refs in scope*, by its folder's key and its block's date, as
+`<repo> — the block of <KEY>'s implementation.md dated <date> — not read: it records <a recorded commit outside a commit's shape | a branch whose name is outside the safe class>, so no ref was built from it`.
 Build each element from what the run holds: a record entry is `{branch_from: <its commit — its branch
 only where the entry records none>, branch_to: <its base>}`, handed even where this clone does not
 hold the commit yet — `diff-summarizer`'s Refresh step fetches before it resolves anything, except
@@ -828,13 +838,21 @@ found, order, skipped, dropped = {}, [], [], []
 def skip(entry):  # once, though two sources walk one folder
     if entry not in skipped:
         skipped.append(entry)
-def add(path, source):
-    key = os.path.normpath(os.path.abspath(path))  # by path, never by following a link
+def add(path, st, source):
+    key = (st.st_dev, st.st_ino)  # the file itself, read without following a link: two paths to one file are one image
     if key not in found:
-        found[key] = []
+        found[key] = (os.path.normpath(os.path.abspath(path)), [])
         order.append(key)
-    if source not in found[key]:
-        found[key].append(source)
+    if source not in found[key][1]:
+        found[key][1].append(source)
+def linked(p):  # p, or a folder on its way down from the root, is a symbolic link
+    here = os.sep
+    for part in p.split(os.sep):
+        if part:
+            here = os.path.join(here, part)
+            if os.path.islink(here):
+                return True
+    return False
 for top, source in folders:
     stack = [(top, top)] if os.path.isdir(top) and not os.path.islink(top) else []
     while stack:  # walked with a stack, never by recursion, following no symbolic link
@@ -842,23 +860,23 @@ for top, source in folders:
         try:
             kinds = {"file": [], "folder": []}
             for name in os.listdir(d):
-                m = os.lstat(os.path.join(d, name)).st_mode
-                if stat.S_ISDIR(m):
-                    kinds["folder"].append(name)
-                elif stat.S_ISREG(m):
-                    kinds["file"].append(name)
+                st = os.lstat(os.path.join(d, name))
+                if stat.S_ISDIR(st.st_mode):
+                    kinds["folder"].append((name, st))
+                elif stat.S_ISREG(st.st_mode):
+                    kinds["file"].append((name, st))
         except OSError:  # a folder it cannot list or enter is never an empty one
             skip({"folder": label, "reason": "unreadable"})
             continue
         for kind in ("folder", "file"):
-            for n, name in enumerate(sorted(kinds[kind], key=os.fsencode), 1):
+            for n, (name, st) in enumerate(sorted(kinds[kind], key=lambda e: os.fsencode(e[0])), 1):
                 p = os.path.join(d, name)
                 if not printable(name):
                     skip({"folder": label, "kind": kind, "position": n, "reason": "name"})
                 elif kind == "folder":
                     stack.append((p, p))
                 elif name.lower().endswith(EXT):
-                    add(p, source)
+                    add(p, st, source)
 if manual is not None:
     try:
         with open(manual, encoding="utf-8") as fh:
@@ -876,22 +894,27 @@ if manual is not None:
             dropped.append({"entry": n, "reason": "not a printable value"})
         elif not os.path.isabs(p):
             dropped.append({"entry": n, "path": p, "reason": "not an absolute path"})
-        elif os.path.islink(p):
-            dropped.append({"entry": n, "path": p, "reason": "a symbolic link, which is followed nowhere"})
-        elif not os.path.isfile(p):
-            dropped.append({"entry": n, "path": p, "reason": "no such file"})
-        elif not p.lower().endswith(EXT):
-            dropped.append({"entry": n, "path": p, "reason": "not an image extension"})
+        elif linked(p):
+            dropped.append({"entry": n, "path": p, "reason": "a symbolic link, or a path through one, which is followed nowhere"})
         else:
-            add(p, "manual")
-sys.stdout.buffer.write(json.dumps({"candidates": [{"path": k, "sources": found[k]} for k in order],
+            try:
+                st = os.lstat(p)
+            except OSError:
+                st = None
+            if st is None or not stat.S_ISREG(st.st_mode):
+                dropped.append({"entry": n, "path": p, "reason": "no such file"})
+            elif not p.lower().endswith(EXT):
+                dropped.append({"entry": n, "path": p, "reason": "not an image extension"})
+            else:
+                add(p, st, "manual")
+sys.stdout.buffer.write(json.dumps({"candidates": [{"path": found[k][0], "sources": found[k][1]} for k in order],
     "skipped": skipped, "dropped": dropped}, ensure_ascii=False).encode("utf-8") + b"\n")
 EOF
 ```
 
-It prints one line of JSON: `candidates`, each image once, by its absolute path — the dedupe, by path and never by following a link — with every source it came from; `skipped`, each entry whose name is not a printable value (`workflows-core:addressing` §3, *A printable value*), named by its folder, its kind and its place among that folder's entries of its kind, as `workflows-core:addressing` §2's *A file refused by its name* counts them, and each folder it could not list or enter, which is never read as an empty one (§2, *A folder that cannot be listed is never an empty one*); and `dropped`, each manual path it refused, by its place in the file and why — a symbolic link among them, since a link is followed nowhere — or the file itself where it holds no JSON array of strings. Name every `skipped` and `dropped` entry to the operator with the candidates. A usage error exits 2; any exit other than 0 is reported, naming its stderr, and the add list then holds what an earlier call printed, or nothing. Remove the directory holding `paths.json` once its call has returned, with `command rm -rf -- "<the path mktemp printed>"`.
+It prints one line of JSON: `candidates`, each image once — the dedupe, by the file itself, its device and inode read without following a link, so a file two paths reach, a hard link's among them, is one candidate — by the absolute path it was first found by, with every source it came from; `skipped`, each entry whose name is not a printable value (`workflows-core:addressing` §3, *A printable value*), named by its folder, its kind and its place among that folder's entries of its kind, as `workflows-core:addressing` §2's *A file refused by its name* counts them, and each folder it could not list or enter, which is never read as an empty one (§2, *A folder that cannot be listed is never an empty one*); and `dropped`, each manual path it refused, by its place in the file and why — a symbolic link, or a path through a folder that is one, among them, each component tested without following it, since a link is followed nowhere — or the file itself where it holds no JSON array of strings. Name every `skipped` and `dropped` entry to the operator with the candidates. A usage error exits 2; any exit other than 0 is reported, naming its stderr, and the add list then holds what an earlier call printed, or nothing. Remove the directory holding `paths.json` once its call has returned, with `command rm -rf -- "<the path mktemp printed>"`.
 
-For any **manual** free-text paths, accept any absolute filesystem path (`/tmp`, home, the docs repo); accept multiple (one per line or space-separated). Validate each path exists and has an image extension (`.png|.jpg|.jpeg|.gif|.svg|.webp`) — by the images program above, handed the paths in its `paths.json`, never by a command naming one — and drop and report any it drops.
+For any **manual** free-text paths, accept any absolute filesystem path (`/tmp`, home, the docs repo) that is no symbolic link and passes through none — on macOS `/tmp` is itself one, and an image there is typed under `/private/tmp`; accept multiple (one per line or space-separated). Validate each path exists and has an image extension (`.png|.jpg|.jpeg|.gif|.svg|.webp`) — by the images program above, handed the paths in its `paths.json`, never by a command naming one — and drop and report any it drops.
 
 When you need to **add a new image** for this feature (a screenshot the docs should have but no source yet holds — including a replacement source for an accepted existing-image entry), place it in the resolved PRD folder's `Doc screenshots/` subfolder — the one Phase 1 defaults `<screenshot_staging_dir>` to — where source 3's scan of `<project_dir>` finds it. **Never in the folder's `attachments/`**, which holds only the text and markdown sources a run vendored (`workflows-core:addressing` §2, *Reserved subdirectory names*); an image found there is still read, as source 2, and left where it is. There is one home for a feature's new images, and it is a subfolder of the folder the run already resolved.
 
@@ -1591,6 +1614,7 @@ SIGNIFICANT — keyed feature documentation has large blast radius if wrong
 [One line per **resolved** `per_pr` element `diff-summarizer` returned, then one per `unresolved_prs` element — an element that resolved to nothing is printed once, from the second list. Every field below is from that agent's own Output block: it returns **no per-element `status`** — its `status` is per repo, and Phase 4 step 1 has already said there is no PR status to filter on — and `ref` is the only thing that identifies an element, `refs[]` being the only element list that agent takes.]
 - <repo> — <ref> — resolved_via: [local_ref | key_commits] — [files_changed] file(s), +[insertions]/-[deletions]
 - <repo> — <ref> — unresolved: [reason from `unresolved_prs`]
+- [each record entry Phase 3 built no element from, its value outside its class, in the form Phase 3 gives, its value never named]
 - ...
 
 ### Lineage
