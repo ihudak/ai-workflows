@@ -208,6 +208,14 @@
     "fails": "e_staged_removal:"
   },
   {
+    "id": "handoff_staged_removal",
+    "group": "handoff",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "        r = sb.git(root, \"update-index\", \"--add\", \"--remove\", \"--\", *staged, check=False)  # literal: no pathspec",
+    "new": "        r = sb.git(root, \"add\", \"-A\", \"--\", *_literal(staged), check=False)",
+    "fails": "handoff-stage: a declared path whose removal is already staged"
+  },
+  {
     "id": "gate_g_file",
     "group": "gate",
     "file": "plugins/workflows-core/scripts/specs-git.py",

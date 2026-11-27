@@ -69,7 +69,7 @@ workflows/held.json), which also journals every landing until its lift; --retry-
 <root> is the specs repository's top level (branch-merged and branch-key also accept a directory below it,
 where specs-repo-git §3.5 classifies under specs_git: misrooted); the <value> specs-root-check, start and end take is
 never checked first, so empty, a file or a subdirectory each reaches it. Nothing here but start, end, replay and land
-writes the working tree, the index or a ref, save handoff-stage, which writes the index (add -A over the declared paths),
+writes the working tree, the index or a ref, save handoff-stage, which writes the index (update-index over the declared paths),
 and handoff-commit, which commits them on HEAD's branch and restores the index. Output is one JSON object on stdout. Exit 0: it ran, whatever it found.
 Exit 2: it could not run (usage, not a repository's top level, a ref that does not resolve, an unexpected git failure,
 any other exception), printing one "specs-git: not run (...)" line on stderr; the caller reports it
@@ -306,11 +306,12 @@ def _declared(paths, files=(), unread=None):
 def handoff_stage(root, declared):
     """phase-handoff §2.3 steps 1-4 over <declared>: status -z with every untracked file, each record's path classified
     against the declared paths (a rename's or copy's original consumed with its record, as status() does), the
-    declared paths it reports staged with add -A by :(literal) pathspec, and every other declared path accounted for
-    only where HEAD holds it as a blob (cat-file -t). staged: what add -A was given; unaccounted: the declared paths
-    neither staged nor on HEAD as a blob -- one nothing wrote, one git ignores, a directory, an absolute path, a glob;
-    unreadable: each record that is not two status bytes and a space, as it stands; error: add's first line where it
-    failed."""
+    declared paths it reports staged with update-index --add --remove, each path passed literally after --, which takes
+    a path whose removal is already staged as nothing to do, where add -A refused it, and every other declared path
+    accounted for only where HEAD holds it as a blob (cat-file -t). staged: what update-index was given; unaccounted:
+    the declared paths neither staged nor on HEAD as a blob -- one nothing wrote, one git ignores, a directory, an
+    absolute path, a glob; unreadable: each record that is not two status bytes and a space, as it stands; error:
+    update-index's first line where it failed."""
     if not declared:
         raise NotRun("usage: handoff-stage needs at least one --path or --paths-from entry")
     fields = sb.git(root, "status", "--porcelain", "-z", "--untracked-files=all").stdout.decode(
@@ -331,7 +332,7 @@ def handoff_stage(root, declared):
     staged = [p for p in declared if p in reported]
     out = {"staged": staged, "unaccounted": [], "unreadable": unreadable, "error": None}
     if staged:
-        r = sb.git(root, "add", "-A", "--", *_literal(staged), check=False)
+        r = sb.git(root, "update-index", "--add", "--remove", "--", *staged, check=False)  # literal: no pathspec
         if r.returncode != 0:
             return dict(out, staged=[], error=_first_line(r, error=True))
     for p in declared:

@@ -609,6 +609,34 @@ def selftest(groups=None):
               "artifacts: a path that is not a printable value is written with its JSON escapes (%r)"
               % lines.artifacts(["a\nb.md", "x\u202ey.md"]))
 
+        # handoff_staged_removal: a declared deliverable whose removal is already staged (git rm) and one renamed with
+        # git mv, both halves declared: step 3 takes the staged removal as nothing to do, where add -A refused it
+        # (pathspec did not match) and the handoff was reported not handed off; the commit carries the removal and
+        # both halves of the rename, by literal pathspec, and leaves none of them staged
+        r = new_repo(tmp, "handoff-removal")
+        f = "specifications/PRD-A-2-z/"
+        for name in ("removed.md", "old.md"):
+            r.write(f + name, "the text of %s\n" % name)
+        r.commit_all("base")
+        r.git("rm", "-q", "--", f + "removed.md")
+        r.git("mv", "--", f + "old.md", f + "new.md")
+        decl = ["--path=" + f + n for n in ("removed.md", "old.md", "new.md")]
+        got = cli("--specs", r.path, "handoff-stage", *decl)
+        check(got.get("_rc") == 0 and got.get("error") is None and got.get("staged") == [f + "removed.md", f + "new.md"]
+              and got.get("unaccounted") == [],
+              "handoff-stage: a declared path whose removal is already staged, and a rename's new path, staged with no "
+              "error (%r)" % got)
+        with open(msg, "w", encoding="utf-8") as fh:
+            fh.write("A-2 relocate\n")
+        got = cli("--specs", r.path, "handoff-commit", "--message-file", msg, *decl)
+        carried = set(r.git("diff-tree", "--no-commit-id", "--name-only", "-r", "-z", "--no-renames",
+                            "HEAD").split("\0")) - {""}
+        check(got.get("_rc") == 0 and got.get("status") == "committed"
+              and carried == {f + "removed.md", f + "old.md", f + "new.md"}
+              and r.git("diff", "--cached", "--name-only") == "",
+              "handoff-commit: the staged removal and both halves of the rename committed, nothing left staged (%r, %r)"
+              % (got, sorted(carried)))
+
     def scenarios_mode(tmp):
         r = new_repo(tmp, "mode")
         got = cli("--specs", r.path, "mode", "--default", "main")
