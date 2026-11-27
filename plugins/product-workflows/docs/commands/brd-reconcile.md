@@ -615,7 +615,8 @@ carve-out has to be written down. That listing builds no command from a name: a 
 writes must be in the folder-name class (letters, digits and combining marks of any script and
 `. _ @ + -`, first a letter, a digit or `_`, no `..`), and a customer's captured file — under
 `brd/source/` or `brd/source-external/`, or in a dated bundle or `customer-sent-` folder — is read
-under any name that holds no control or format character, with tools that build no command from
+under any name that holds no control character and no bidirectional control — one that reorders
+how text shows — with tools that build no command from
 it. Any other entry, a symbolic link, and a folder that cannot be listed are not read: each is
 named by its position in a listing of the folder holding it, or by its path, in the report and in
 the record's *what still needs a human*, for a person to read; and a listing that cannot finish says

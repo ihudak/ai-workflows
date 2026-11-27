@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.44.6] — 2026-11-27
+
+**What changes for you.** `docs/reference/environment.md` says that a path holding a bidirectional control — a character that reorders how text shows — stops a run at resolution, as a line break or another control character does, which `workflows-core` 1.100.7 now does. Update with `workflows-core` 1.100.7 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.7 bullet).
+
+### Fixed
+
+- **`docs/reference/environment.md`** names a bidirectional control beside a line break and another control character among what stops a run on a path `ADDRESS_FOLDER_NAME` prints none of.
+
 ## [1.44.5] — 2026-11-27
 
 **What changes for you.** `/document` and `/release-notes` stop with `ADDRESS_FOLDER_NAME` where the folder their address resolves, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name; an Epic folder named outside that class under the PRD folder is named by its place in the listing, with the remedy, and read nowhere in the run. `/docs-audit` leaves out, and counts, any ARD or release-notes draft whose path holds such a folder. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).

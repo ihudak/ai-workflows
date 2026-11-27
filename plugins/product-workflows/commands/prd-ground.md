@@ -1707,9 +1707,10 @@ def ok(name):  # workflows-core:addressing §2's class, on a name's bytes read a
     except UnicodeError:
         return False
     return n != "" and ".." not in n and (n[0] == "_" or n[0].isalnum()) and all(c.isalnum() or c in "._@+-" or unicodedata.category(c).startswith("M") for c in n)
-def printable(b):  # UTF-8 holding no control or format character (Cc, Cf, U+2028, U+2029), so it can neither end its line, begin another, nor reorder what is shown
+BIDI = set("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")  # the bidirectional controls
+def printable(b):  # workflows-core:addressing §3's printable value: UTF-8, no Cc, no U+2028 or U+2029, no bidirectional control
     try:
-        return not any(unicodedata.category(c) in ("Cc", "Cf") or c in "  " for c in b.decode("utf-8"))
+        return not any(unicodedata.category(c) == "Cc" or c in "\u2028\u2029" or c in BIDI for c in b.decode("utf-8"))
     except UnicodeError:
         return False
 def out(*parts):  # one line, written as bytes whatever the locale
@@ -1805,8 +1806,8 @@ could not be listed. **`held`** is Phase 8's held-image test: it
 prints, for each regular file carrying a frame extension under the parent's `brd/source/` and
 `brd/source-external/`, `held <path>` where a file some set in the class holds has its SHA-256 and
 `not-held <path>` otherwise or where it cannot be read, `<path>` relative to the parent's `brd/` and
-printed only where it is UTF-8 and holds no control or format character — `Cc`, `Cf`, U+2028 or
-U+2029, the characters §2's class shuts out for the same reason. It walks every folder with a stack,
+printed only where it is a printable value (`workflows-core:addressing` §3, *A printable value*):
+UTF-8, with no control character, no U+2028 or U+2029 and no bidirectional control. It walks every folder with a stack,
 never by recursion, and follows no symbolic link: a `brd/`, `brd/source/` or `brd/source-external/`
 that is one is not walked, nor is one inside a set. It reads every file itself, so no
 command is built from a captured file's name or from a name inside a set. **Where `held` has not

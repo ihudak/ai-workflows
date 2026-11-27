@@ -7,11 +7,12 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.71.6] — 2026-11-27
 
-**What changes for you.** When you resume or restart a `/design` run, the files it lists as changed since the unit began now include a file added since then, as `/ready` and `/conformance` already list theirs.
+**What changes for you.** When you resume or restart a `/design` run, the files it lists as changed since the unit began now include a file added since then, as `/ready` and `/conformance` already list theirs. `docs/reference/environment.md` says that a path holding a bidirectional control stops a run at resolution, as `workflows-core` 1.100.7 now does.
 
 ### Fixed
 
 - **`/design`'s changed-files line** hashed each path its saved listing named with `git hash-object -- "$SPECS_PATH/<the path>"`, building a command from a file's name read back from the specs tree. It now compares that listing with the same listing built now, `comm -3` over the two sorted, as `/ready` and `/conformance` do, so no file's name reaches a command.
+- **`docs/reference/environment.md`** names a bidirectional control beside a line break and another control character among what stops a run on a path `ADDRESS_FOLDER_NAME` prints none of.
 
 ## [4.71.5] — 2026-11-27
 

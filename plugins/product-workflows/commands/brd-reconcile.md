@@ -512,59 +512,67 @@ write would re-ask a question already answered.
    literal pathspec, so a `$(`, a quote or a `*` in a name is only a name:
 
 ```bash
-python3 -I - "$SPECS_PATH" '<M>' "<folder>" '<default-ref>' '<BRD-KEY>' <<'EOF'
+python3 -I - "$SPECS_PATH" '<M>' "<folder>" '<default-ref>' "<review>" <<'EOF'
 import os, re, subprocess, sys, unicodedata
-KEY = re.compile(r"[A-Z][A-Z0-9_]*(-[0-9]+)+")  # workflows-core:addressing §1's grammar
-def printable(b):  # UTF-8 holding no control or format character (Cc, Cf, U+2028, U+2029)
+BIDI = set("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")
+def printable(b):  # workflows-core:addressing §3's printable value: UTF-8, no Cc, no U+2028 or U+2029, no bidirectional control
     try:
-        return not any(unicodedata.category(c) in ("Cc", "Cf") or c in "  " for c in b.decode("utf-8"))
+        return not any(unicodedata.category(c) == "Cc" or c in "\u2028\u2029" or c in BIDI for c in b.decode("utf-8"))
     except UnicodeError:
         return False
 def out(*parts):  # one line, written as bytes whatever the locale
     sys.stdout.buffer.write(b" ".join(p if isinstance(p, bytes) else p.encode() for p in parts) + b"\n")
-def git(*args):  # git run with its arguments as a list, no shell, every path a literal pathspec
+def git(*args):  # git run with its arguments as a list, no shell, every path a literal pathspec, every revision after --end-of-options
     return subprocess.run(["git", "--literal-pathspecs", "-C", specs, *args], capture_output=True)
-specs, m, folder, ref, key = sys.argv[1:6]
-if not re.fullmatch(r"[0-9a-f]{40}", m) or not KEY.fullmatch(key):
+specs, m, folder, ref, review = sys.argv[1:6]
+review = os.fsencode(review)
+review = review[2:] if review.startswith(b"./") else review
+if not re.fullmatch(r"[0-9a-f]{40}", m) or not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9._/@+-]*", ref, re.ASCII) or ".." in ref:
     out("status: invalid")  # a value the program does not take: nothing is read
     sys.exit(0)
-listed = git("diff", "-z", "--relative", "--name-status", "--no-renames", m + "^1", m, "--", folder.rstrip("/") + "/")
+listed = git("diff", "-z", "--relative", "--name-status", "--no-renames", "--end-of-options", m + "^1", m, "--", folder.rstrip("/") + "/")
 if listed.returncode != 0:
     out("status: failed diff")
     sys.exit(0)
-fields = listed.stdout.split(b"\0")[:-1]  # a status, then its path, NUL-separated
-review = re.compile(re.escape(key).encode() + rb" Customer Review [0-9]{8}\.md")
+fields = listed.stdout.split(b"\0")[:-1]  # a status, then its path, each ended by a NUL
+if len(fields) % 2:
+    out("status: failed diff")
+    sys.exit(0)
 n = 0
 for change, path in zip(fields[0::2], fields[1::2]):
-    if review.fullmatch(os.path.basename(path)):
+    if path == review:  # the review the commit M brought, and no other file however named
         continue
     n += 1
-    log = git("log", "--format=%h%x00%an%x00%s", m + "^1.." + m, "--", path)
-    since_base = git("diff", "--quiet", m + "^1", ref, "--", path)
-    since_pr = git("diff", "--quiet", m, ref, "--", path)
-    if log.returncode != 0 or since_base.returncode not in (0, 1) or since_pr.returncode not in (0, 1):
+    log = git("log", "-z", "--format=%h%x00%an%x00%s", "--end-of-options", m + "^1.." + m, "--", path)
+    since_base = git("diff", "--quiet", "--end-of-options", m + "^1", ref, "--", path)
+    since_pr = git("diff", "--quiet", "--end-of-options", m, ref, "--", path)
+    commits = log.stdout.split(b"\0")[:-1]  # hash, author, subject, each ended by a NUL, a commit's three after the last's: never split at a line break
+    if log.returncode != 0 or len(commits) % 3 or since_base.returncode not in (0, 1) or since_pr.returncode not in (0, 1) or not all(re.fullmatch(rb"[0-9a-f]{4,64}", h) for h in commits[0::3]) or not re.fullmatch(rb"[ACDMRTUX]", change):
         out("status: failed entry", str(n))
         sys.exit(0)
-    out("entry", str(n), change)
+    out(b"entry", str(n).encode(), change)
     out(b"path", path) if printable(path) else out("path-unprintable")
-    for line in log.stdout.splitlines():
-        h, _, rest = line.partition(b"\0")
-        rest = rest.replace(b"\0", b" ")
-        out(b"commit", h, rest) if printable(rest) else out(b"commit", h)
+    for h, author, subject in zip(commits[0::3], commits[1::3], commits[2::3]):
+        out(b"commit", h, author, subject) if printable(author + b" " + subject) else out(b"commit", h)
     out("now", "restored since" if since_base.returncode == 0 else "unchanged since the pull request" if since_pr.returncode == 0 else "changed again since")
 out("status: listed", str(n))
 EOF
 ```
 
    `<M>` is the full commit id the command above printed, `<folder>` this folder's path relative to
-   `$SPECS_PATH`, every component in `workflows-core:addressing` §2's class (§3), and `<BRD-KEY>`
-   the run's key. For each file the diff `-z --name-status --no-renames <M>^1 <M>` lists in the
-   folder, save one named exactly `<BRD-KEY> Customer Review <YYYYMMDD>.md`, it prints
-   `entry <n> <status>`; `path <path>`, relative to `$SPECS_PATH`, only where the path is UTF-8 and
-   holds no control or format character (`Cc`, `Cf`, U+2028, U+2029), else `path-unprintable`, the
-   file then named by its `<n>` alone; one `commit <hash> <author> <subject>` line for each commit of
-   `<M>^1..<M>` that changed it, the author and subject left off where they are not printable; and
-   `now` with its state. Its last line is `status: listed <count>`. Each path is shown to the
+   `$SPECS_PATH`, every component in `workflows-core:addressing` §2's class (§3), `<default-ref>`
+   the ref `workflows-core:specs-repo-git` §3.2 names, which the program takes only inside that
+   section's safe class and holding no `..`, and `<review>` the review's path relative to
+   `$SPECS_PATH` as the command above names it. Every revision reaches git after
+   `--end-of-options`. For each file the diff `-z --name-status --no-renames <M>^1 <M>` lists in the
+   folder, save the review that `M` brought — that one path, and no other file however it is named
+   — it prints `entry <n> <status>`; `path <path>`, relative to `$SPECS_PATH`, only where the path
+   is a printable value (`workflows-core:addressing` §3, *A printable value*), else
+   `path-unprintable`, the file then named by its `<n>` alone; one `commit <hash> <author> <subject>`
+   line for each commit of `<M>^1..<M>` that changed it, read from `git log -z` with a NUL between
+   the three fields, never split at a line break, the hash held to hexadecimal and the author and
+   subject left off where they are not a printable value; and `now` with its state. Its last line is
+   `status: listed <count>`. Each path is shown to the
    operator as text and read, where anything reads it, with the Read tool, never in a shell command.
 
    **The run reports this list and decides nothing.** The delivery note asked the pull request to add
@@ -580,7 +588,8 @@ EOF
    request rebased onto the branch — it is that commit's change alone, so an earlier commit of the
    same pull request is not in it. **Where the list cannot be made** — the command finding `M`
    exits with git's error status, or the program prints `status: failed` (a git read inside it
-   exited with git's error status, never `diff --quiet`'s 1, which only says the file differs),
+   exited with git's error status, never `diff --quiet`'s 1, which only says the file differs, or
+   git printed what it does not take, a hash that is not hexadecimal among it),
    `status: invalid`, exits non-zero, or ends on no `status:` line: `M` or `<M>^1` not resolving in
    a shallow clone, say, or no `python3` — say the list could not be made, and why, and ask the same
    array; never take what the program printed before it stopped for the whole list. The reconciliation record and the final report repeat the list, with each file's state, or
@@ -2743,9 +2752,10 @@ before anything names it. **A name under a customer folder is the customer's own
 `brd/source/` or `brd/source-external/` directly in a folder of the root, where a captured file
 keeps the name it arrived with, and in a `bundle-<YYYYMMDD>/` or `customer-sent-<YYYYMMDD>/`
 directly in one, whose files carry names made from those — so it holds spaces as a rule, and is held
-only to being printable instead: UTF-8, with no control or format character (`Cc`, `Cf`, U+2028,
-U+2029), the characters §2's class shuts out so that a name can neither break a line nor show as
-another. Such a name is read only with the Read or the Grep tool, never in a shell command:
+only to being a printable value instead (`workflows-core:addressing` §3, *A printable value*):
+UTF-8, with no control character, no U+2028 or U+2029 and no bidirectional control, so that a name
+can neither break a line nor show as another, while a zero-width joiner or non-joiner its script
+holds passes. Such a name is read only with the Read or the Grep tool, never in a shell command:
 
 ```bash
 python3 -I - "$SPECS_PATH" "<P>" <<'EOF'
@@ -2758,9 +2768,10 @@ def ok(name):  # workflows-core:addressing §2's class, on a name's bytes read a
     except UnicodeError:
         return False
     return n != "" and ".." not in n and (n[0] == "_" or n[0].isalnum()) and all(c.isalnum() or c in "._@+-" or unicodedata.category(c).startswith("M") for c in n)
-def printable(b):  # UTF-8 holding no control or format character (Cc, Cf, U+2028, U+2029)
+BIDI = set("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")  # the bidirectional controls
+def printable(b):  # workflows-core:addressing §3's printable value: UTF-8, no Cc, no U+2028 or U+2029, no bidirectional control
     try:
-        return not any(unicodedata.category(c) in ("Cc", "Cf") or c in "  " for c in b.decode("utf-8"))
+        return not any(unicodedata.category(c) == "Cc" or c in "\u2028\u2029" or c in BIDI for c in b.decode("utf-8"))
     except UnicodeError:
         return False
 def out(*parts):  # one line, written as bytes whatever the locale
