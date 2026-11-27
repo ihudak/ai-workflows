@@ -7,7 +7,7 @@ convention live in ONE place.
 
 ## Inputs
 
-`prd` (PRD key), `epic` (or `null`), `area` (or `null`), `$SPECS_PATH`, and `folder` (or `null`): the folder of the call's deepest key — `epic`'s where it is set, else `prd`'s — passed by `/product-workflows:specify`, `/product-workflows:create-ard`, `/product-workflows:epics` and `/dev-workflows:implement` only where it lies outside the work tree of the repository `$SPECS_PATH` stands in, the test `phase-handoff.md` §4.4's *The first missing document* makes (*A folder outside the work tree*, below).
+`prd` (PRD key), `epic` (or `null`), `area` (or `null`), `$SPECS_PATH`, and `folder` (or `null`): the folder of the call's deepest key — `epic`'s where it is set, else `prd`'s — passed by `/product-workflows:specify`, `/product-workflows:create-ard`, `/product-workflows:epics`, `/dev-workflows:implement` and `workflows-core:components` §3 only where it lies outside the work tree of the repository `$SPECS_PATH` stands in, the test `phase-handoff.md` §4.4's *The first missing document* makes (*A folder outside the work tree*, below).
 
 ## Resolution (most-specific first)
 
