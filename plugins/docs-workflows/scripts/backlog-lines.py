@@ -37,7 +37,9 @@ unreadable, never compared with the working backlog alone, and moves nothing. Wh
 origin/<base>, a local <base> that holds commits origin/<base> lacks -- one that is no ancestor of it -- is read as the
 base is, by the same rule, so a move made there and not pushed is seen; a local <base> that is an ancestor of
 origin/<base>, which then holds every move it holds, is not read, nor one HEAD is on, and one git cannot place is
-unreadable. It lists `git for-each-ref
+unreadable. A limit: a move the local <base> holds and origin/<base> no longer does -- origin/<base> force-pushed
+without it, or a local merge of a branch whose pull request was then closed -- is named as an unpushed move is, since
+nothing either history holds tells the two apart. It lists `git for-each-ref
 --sort=-committerdate` over refs/heads and refs/remotes/origin, each ref with its object id, full name and short name,
 and drops refs/remotes/origin/HEAD, HEAD's branch, <base> and origin/<base> -- by full name, since git shortens
 refs/remotes/origin/HEAD to "origin" and shortens a ref another one shadows to "heads/..." or "remotes/..." -- and
@@ -56,12 +58,16 @@ unit moved on the base, still holding the older status, moves nothing. That back
 kept ref's limits, and one those limits make unreadable makes the ref unreadable; no backlog there, or no entry for
 the unit, is a status that differs; and a ref sharing no merge base with the base is compared as without the flag.
 Without it a merge base's backlog is compared with the ref's by tree entry alone, never read. The flag does not change
-how the base or the local <base> is read. It prints {"moved": {<id>: [<ref>...]}, "unreadable": [<ref>...], "read": <n>, "more": <n>,
-"names_outside_class": <n>}: moved names only the ids the base or some ref moved, the base first, by the name it
+how the base or the local <base> is read. It prints {"moved": {<id>: [<ref>...]}, "unreadable": [<ref>...], "base":
+{"moved": {<id>: [<ref>...]}, "unreadable": [<ref>...]}, "read": <n>, "more": <n>, "names_outside_class": <n>}:
+moved names only the ids the base or some ref moved, the base first, by the name it
 resolved as -- origin/<base> or <base> -- then the local <base>, as <base>, where it is read, then each ref by its
 short name, newest first; unreadable lists the base first where it is unreadable, then the local <base> where it is
-read and unreadable, then each unreadable ref; read counts the refs kept, each either compared or unreadable, and
-never counts the base or the local <base>; more counts every ref past the point it stopped.
+read and unreadable, then each unreadable ref; base holds the part of moved and unreadable that the base and the
+local <base> give, so that a caller reads a base off it and never off a printed name, which a ref can share -- a local
+branch named origin/<base>, where no remote-tracking ref shadows it, is printed as origin/<base>; read counts the refs
+kept, each either compared or unreadable, and never counts the base or the local <base>; more counts every ref past
+the point it stopped.
 
 edit writes one unit's move. It refuses, exit 3, the file untouched: a backlog out of shape; an --id no entry or two
 entries hold; where --from is given, an entry whose status: is another -- tested before the refusals after it; where
@@ -920,6 +926,8 @@ def cmd_moved(top, base, ids, own_moves=False):
     else:
         for uid in by_base:
             moved[uid] = [base_name]
+    base_moved = {uid: list(names) for uid, names in moved.items()}
+    base_unreadable = list(unreadable)
     # A local <base> holding commits origin/<base> lacks -- one that is no ancestor of it, read only where the base
     # resolved as origin/<base> and HEAD is not on the local <base> -- is read as the base is, so a move made there and
     # not pushed is seen. A local <base> that is an ancestor of origin/<base> holds nothing origin/<base> lacks.
@@ -932,9 +940,11 @@ def cmd_moved(top, base, ids, own_moves=False):
                 set() if behind[0] == 0 else _base_moves(top, local_oid, own, ids))
             if by_local is UNKNOWN:
                 unreadable.append(base)
+                base_unreadable.append(base)
             else:
                 for uid in by_local:
                     moved.setdefault(uid, []).append(base)
+                    base_moved.setdefault(uid, []).append(base)
     for oid, name in remaining:
         if examined == EXAMINE_CAP or kept == READ_REFS_CAP:
             break
@@ -957,8 +967,10 @@ def cmd_moved(top, base, ids, own_moves=False):
         for uid, status in theirs.items():
             if status != own[uid] and status != at_base.get(uid):
                 moved.setdefault(uid, []).append(name)
-    return 0, {"moved": {uid: moved[uid] for uid in ids if uid in moved}, "unreadable": unreadable, "read": kept,
-               "more": len(remaining) - examined, "names_outside_class": outside}
+    return 0, {"moved": {uid: moved[uid] for uid in ids if uid in moved}, "unreadable": unreadable,
+               "base": {"moved": {uid: base_moved[uid] for uid in ids if uid in base_moved},
+                        "unreadable": base_unreadable},
+               "read": kept, "more": len(remaining) - examined, "names_outside_class": outside}
 
 
 # ---- edit ----
@@ -1419,10 +1431,22 @@ def _moved(top, *ids, base="main", own_moves=False):
     return _call(argv)
 
 
-def _moved_ok(top, *ids, base="main", own_moves=False):
+def _moved_ok(top, *ids, base="main", own_moves=False, bases=None):
+    """moved's object less its `base` member, which is checked here: against `bases`, given as {"moved": ...,
+    "unreadable": ...}, or, where none is given, against the entries of `moved` and `unreadable` named <base> or
+    origin/<base> -- right only where no ref is printed under a base's name, which a case that makes one says."""
     code, out, err = _moved(top, *ids, base=base, own_moves=own_moves)
     _eq((code, err), (0, ""), "moved's exit and stderr")
-    return _obj(out)
+    obj = _obj(out)
+    _true("base" in obj, "moved prints a base member")
+    got = obj.pop("base")
+    if bases is None:
+        names = (base, "origin/" + base)
+        bases = {"moved": {uid: [n for n in refs if n in names] for uid, refs in obj["moved"].items()
+                           if any(n in names for n in refs)},
+                 "unreadable": [n for n in obj["unreadable"] if n in names]}
+    _eq(got, bases, "moved's base member")
+    return obj
 
 
 def _edit(top, uid, status, page_path=None, frm=None, walkthrough=None, block=None):
@@ -1716,7 +1740,8 @@ def case_ref_name_outside_class(tmp):
     _branch_with(top, "x$(id)", DRAFTED)
     code, out, err = _moved(top, "U-001")
     _eq((code, err), (0, ""))
-    _eq(_obj(out), {"moved": {}, "unreadable": [], "read": 0, "more": 0, "names_outside_class": 1})
+    _eq(_obj(out), {"moved": {}, "unreadable": [], "base": {"moved": {}, "unreadable": []}, "read": 0, "more": 0,
+                    "names_outside_class": 1})
     _true("$(" not in out + err and "x$" not in out + err, "the name is printed nowhere")
 
 
@@ -2253,8 +2278,8 @@ def case_own_moves_merge_base_unreadable(tmp):
 
 
 def case_own_moves_unchanged_without_flag(tmp):
-    """Without --own-moves, moved prints what it printed before the flag existed, byte for byte: every key, a moved
-    unit, an unreadable ref and a name outside the class, pinned to a literal."""
+    """Without --own-moves, moved prints what it printed before the flag existed, byte for byte, with the `base` member
+    B48 added: every key, a moved unit, an unreadable ref and a name outside the class, pinned to a literal."""
     top = _open_draft_repo(tmp)
     _branch_with(top, "bad-shape", DRAFTED.replace("    roles: [customer]\n", "    roles: |\n"))
     _branch_with(top, "x$(id)", DRAFTED)
@@ -2272,6 +2297,10 @@ def case_own_moves_unchanged_without_flag(tmp):
              '  "unreadable": [\n'
              '    "bad-shape"\n'
              '  ],\n'
+             '  "base": {\n'
+             '    "moved": {},\n'
+             '    "unreadable": []\n'
+             '  },\n'
              '  "read": 3,\n'
              '  "more": 0,\n'
              '  "names_outside_class": 1\n'
@@ -2525,6 +2554,18 @@ def case_local_base_shallow_unknown(tmp):
     _commit_units(top, "U-001 drafted on the local main", ("U-001", "drafted"), *THREE[1:])
     _fx(top, "switch", "-q", "w")
     _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({}, unreadable=["main"], read=1))
+
+
+def case_ref_named_as_a_base(tmp):
+    """F1: with no origin the base is the local main, and a local branch named origin/main -- which git prints as
+    origin/main, no remote-tracking ref shadowing it -- drafts U-001. It is a ref, not a base: moved names it, and its
+    base member names no base, so a caller never takes it for the base by its printed name."""
+    top = _repo(tmp, _units(*THREE))
+    _fx(top, "switch", "-q", "-c", "origin/main")
+    _commit_units(top, "a branch named origin/main drafts U-001", ("U-001", "drafted"), *THREE[1:])
+    _fx(top, "switch", "-q", "-c", "w", "main")
+    _eq(_moved_ok(top, "U-001", bases={"moved": {}, "unreadable": []}),
+        _moved_json({"U-001": ["origin/main"]}, read=1))
 
 
 def case_own_moves_bad_args(tmp):
@@ -2789,7 +2830,7 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_base_orphan_unknown, case_base_fork_backlog_unreadable,
          case_local_base_unpushed_move, case_local_base_diverged, case_local_base_behind_not_read,
          case_local_base_holds_working_branch, case_local_base_same_draft_on_origin, case_local_base_head_on_it,
-         case_local_base_shallow_unknown,
+         case_local_base_shallow_unknown, case_ref_named_as_a_base,
          case_edit_from_refused, case_edit_from_ok, case_edit_walkthrough_unset, case_edit_walkthrough_other,
          case_edit_walkthrough_same, case_edit_no_walkthrough_key, case_edit_block_sets, case_edit_block_refused,
          case_edit_no_blocked_by_key, case_edit_record_noop, case_edit_new_flags_bad_args,
