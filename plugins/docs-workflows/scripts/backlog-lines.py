@@ -6035,8 +6035,10 @@ def case_slot_comment_pinned(tmp):
     """The image-slot comment is page text a program matches: unit-brief section 3.3's step 5 gives it, once, as
     the line doc-writer writes, and docs-verify.md's slot program, which /docs-verify runs at its walk to find the
     slots a page carries, holds its opening as a Python literal, once -- the program building the whole line from it
-    and the slot -- so a reword of either side turns the build red rather than leaving every slot unasked. No other
-    command or reference holds a program that matches it: docs-write.md and backlog-run.md hold the literal nowhere."""
+    and the slot -- so a reword of either side turns the build red rather than leaving every slot unasked. Run from
+    that file's own bytes on a fixture page, the program matches the one line that is the comment once the spaces, tabs
+    and CR around it are set aside, so a slot inside an indented list item is found. No other command or reference
+    holds a program that matches it: docs-write.md and backlog-run.md hold the literal nowhere."""
     with open(UB_PATH, encoding="utf-8") as fh:
         ub = fh.read()
     sec = ub[ub.index("\n### 3.3 "):ub.index("\n### 3.4 ")]
@@ -6052,6 +6054,19 @@ def case_slot_comment_pinned(tmp):
     _true(start != -1 and "'" not in dv[start + len("python3 -I -c '"):at] and end != -1,
           "the literal stands inside a python3 -I -c program")
     _true(dv[at:end].startswith(literal + " + sys.argv[2] + \" -->\""), "the program builds the whole line from it")
+    # The program, run from docs-verify.md's own bytes: a line matches where it is the comment once the spaces, tabs
+    # and CR around it are set aside -- a slot inside a list item is indented -- and exactly one line must match.
+    program = dv[start + len("python3 -I -c '"):end]
+    page = os.path.join(tmp, "slots.md")
+    with open(page, "w", encoding="utf-8", newline="") as fh:
+        fh.write("---\nunit: U-1\n---\n1. Open it.\n\n   " + SLOT_COMMENT + "a -->\n\t" + SLOT_COMMENT + "b -->  \r\n"
+                 + SLOT_COMMENT + "c -->\n" + SLOT_COMMENT + "d --> and text\n  " + SLOT_COMMENT + "e -->\n"
+                 + SLOT_COMMENT + "e -->\n")
+    got = {}
+    for slot in ("a", "b", "c", "d", "e", "f"):
+        got[slot] = subprocess.run([sys.executable, "-I", "-c", program, page, slot], capture_output=True).returncode
+    _eq(got, {"a": 0, "b": 0, "c": 0, "d": 1, "e": 1, "f": 1},
+        "indented, tab-led, CRLF and column-0 comments match; text beside one, two of one, or none do not")
     for path in (DW_PATH, BR_PATH):
         with open(path, encoding="utf-8") as fh:
             _eq(fh.read().count(literal), 0, "%s holds the literal nowhere" % os.path.basename(path))
