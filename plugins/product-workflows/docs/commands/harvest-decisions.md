@@ -40,7 +40,7 @@ flowchart TD
 ## What it needs
 
 - **`$SPECS_PATH`** — the specs repository. The harvest reads only its default branch, so an ARD on an open pull request is harvested once that pull request merges.
-- **`python3`** — the harvest is product-workflows' bundled script `scripts/architecture-harvest.py`, run with `--layout prd` (ARDs are `ard.md` and `ard-<area>.md` in `PRD-` and `EPIC-` folders).
+- **`python3`** — the harvest is product-workflows' bundled script `scripts/architecture-harvest.py`, run with `--layout prd` (ARDs are `ard.md` and `ard-<area>.md` in `PRD-` and `EPIC-` folders; `ard-seed.md`, the seed [`/brd-intake`](brd-intake.md) `--sort-existing` writes, is never one).
 - **The default branch checked out** — the harvest branches from it, so a run on any other branch stops, naming it.
 - **No earlier harvest left unmerged** — a `kb/` branch not yet merged stops the run, naming it; a squash- or rebase-merged one counts as merged.
 
