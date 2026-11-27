@@ -28,7 +28,7 @@ DOC-D-G1, sub-project 2, batch 2: the shared references register `/docs-workflow
 
 ### Fixed
 
-- **`scripts/lineage.py --selftest` no longer fails at random.** Its throwaway repository let each `git commit` start git's detached auto-maintenance. That process's `objects/maintenance.lock` could stand in the *before* snapshot of the nothing-written check in `test_capture_disk_is_what_git_add_stores` and be gone in the *after* one, so the check failed although the capture wrote nothing: 8 of 15 runs on git 2.56.1, and none of 15 with auto-maintenance off. The fixture now sets `maintenance.auto` to `false`. No command's behaviour changes, and the self-test still counts 66 cases.
+- **`scripts/lineage.py --selftest` no longer fails at random.** Its throwaway repository let each `git commit` start git's detached auto-maintenance. That process's `objects/maintenance.lock` could stand in the *before* snapshot of the nothing-written check in `test_capture_disk_is_what_git_add_stores` and be gone in the *after* one, so the check failed although the capture wrote nothing: 8 of 15 runs on git 2.56.1, and none of 15 with auto-maintenance off. The fixture now sets `maintenance.auto` to `false`. No command's behaviour changes, and the fix adds no case: the self-test counts 67, the case 1.100.5 added among them.
 
 ### Fixed — GIT-G1 sentences made false by `/docs-verify`, truth only
 

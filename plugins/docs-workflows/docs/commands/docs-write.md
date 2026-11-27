@@ -77,7 +77,7 @@ flowchart TD
 | 0 — continued | Name any directory an earlier run left under `.dev-workflows/unfinished/`; run the toolchain check; classify the run and record its model routing. |
 | 1 — Select | Take the named unit, or the actionable ones; pass over any an unmerged branch, or the default branch since yours left it, has moved; resolve each unit's repositories and records. |
 | 2 — Place | Take the unit's recorded page path, or find a place for the page; list each file that gains a link or a navigation entry; ask once, showing what the run will read, write and execute. |
-| 3 — Branch | Continue on your branch or cut a new one, told how far it is behind and of a unit the default branch moved; check the working tree; then, per unit, re-read the unit and profile there. |
+| 3 — Branch | Continue on your branch or cut a new one, told how far behind it is and where the run could not tell if the default branch moved a unit; check the working tree; per unit, re-read the unit and profile. |
 | 4 — Ground | Read each decision record at the specs default branch; scan each code repository at its default branch, at most four at a time. |
 | 5 — Write | Write the brief and have `doc-writer` draft the page and its entries; refuse any edit outside them. |
 | 6 — Style | Run the style check over the page, fix its violations once, and re-run it. |
