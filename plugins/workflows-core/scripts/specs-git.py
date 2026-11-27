@@ -69,7 +69,7 @@ workflows/held.json), which also journals every landing until its lift; --retry-
 <root> is the specs repository's top level (branch-merged and branch-key also accept a directory below it,
 where specs-repo-git §3.5 classifies under specs_git: misrooted); the <value> specs-root-check, start and end take is
 never checked first, so empty, a file or a subdirectory each reaches it. Nothing here but start, end, replay and land
-writes the working tree, the index or a ref, save handoff-stage, which writes the index (add -A over the declared paths),
+writes the working tree, the index or a ref, save handoff-stage, which writes the index (update-index over the declared paths),
 and handoff-commit, which commits them on HEAD's branch and restores the index. Output is one JSON object on stdout. Exit 0: it ran, whatever it found.
 Exit 2: it could not run (usage, not a repository's top level, a ref that does not resolve, an unexpected git failure,
 any other exception), printing one "specs-git: not run (...)" line on stderr; the caller reports it
@@ -145,7 +145,10 @@ def _flow():
 def status(root):
     """specs-repo-git §2.1 staging steps 1-2: every path git status reports, sorted into the ARTIFACT
     paths the terminal commit may stage and every OTHER path. Read with -z, whose records are never
-    quoted; a rename or copy record carries its original path as a second field, consumed with it."""
+    quoted; a rename or copy record carries its original path as a second field, consumed with it --
+    and, where the record is a rename (R in either status column: the index's, or the working tree's for
+    an intent-to-add file) and that original is OTHER, listed in OTHER too, so G1 names, and its Fix line
+    commits, both halves of the user's rename."""
     fields = sb.git(root, "status", "--porcelain", "-z", "--untracked-files=all").stdout.decode(
         "utf-8", "surrogateescape").split("\0")
     artifact, other = set(), set()
@@ -157,7 +160,10 @@ def status(root):
             continue
         path = record[3:]
         if "R" in record[:2] or "C" in record[:2]:
+            original = fields[i] if i < len(fields) else ""
             i += 1  # the original path, which is no record of its own
+            if "R" in record[:2] and original and not sb.classify(original):
+                other.add(original)  # its removal, staged or in the working tree, is the user's as much as the new path
         (artifact if sb.classify(path) else other).add(path)
     return {"artifact": sorted(artifact), "other": sorted(other)}
 
@@ -301,11 +307,13 @@ def _declared(paths, files=(), unread=None):
 def handoff_stage(root, declared):
     """phase-handoff §2.3 steps 1-4 over <declared>: status -z with every untracked file, each record's path classified
     against the declared paths (a rename's or copy's original consumed with its record, as status() does), the
-    declared paths it reports staged with add -A by :(literal) pathspec, and every other declared path accounted for
-    only where HEAD holds it as a blob (cat-file -t). staged: what add -A was given; unaccounted: the declared paths
-    neither staged nor on HEAD as a blob -- one nothing wrote, one git ignores, a directory, an absolute path, a glob;
-    unreadable: each record that is not two status bytes and a space, as it stands; error: add's first line where it
-    failed."""
+    declared paths it reports staged with update-index --add --remove --replace, each path passed literally after --,
+    which takes a path whose removal is already staged as nothing to do, where add -A refused it, and stages a folder
+    become a file and a file become a folder, and every other declared path
+    accounted for only where HEAD holds it as a blob (cat-file -t). staged: what update-index was given; unaccounted:
+    the declared paths neither staged nor on HEAD as a blob -- one nothing wrote, one git ignores, a directory, an
+    absolute path, a glob; unreadable: each record that is not two status bytes and a space, as it stands; error:
+    update-index's first line where it failed."""
     if not declared:
         raise NotRun("usage: handoff-stage needs at least one --path or --paths-from entry")
     fields = sb.git(root, "status", "--porcelain", "-z", "--untracked-files=all").stdout.decode(
@@ -326,7 +334,7 @@ def handoff_stage(root, declared):
     staged = [p for p in declared if p in reported]
     out = {"staged": staged, "unaccounted": [], "unreadable": unreadable, "error": None}
     if staged:
-        r = sb.git(root, "add", "-A", "--", *_literal(staged), check=False)
+        r = sb.git(root, "update-index", "--add", "--remove", "--replace", "--", *staged, check=False)  # literal
         if r.returncode != 0:
             return dict(out, staged=[], error=_first_line(r, error=True))
     for p in declared:
@@ -338,10 +346,19 @@ def handoff_stage(root, declared):
     return out
 
 
+def _folder(root, path):
+    """Whether the working tree at <root> holds <path> as a folder (no link): a file that became one, whose staged removal
+    a commit by pathspec carries with the files under it, and which a pathspec naming it would make the commit read as a
+    repository of its own and refuse."""
+    full = os.path.join(os.fsencode(root), os.fsencode(path))
+    return os.path.isdir(full) and not os.path.islink(full)
+
+
 def handoff_commit(root, declared, message_file):
     """phase-handoff §2.4's commit, by pathspec, never the index: the paths §2.3 step 3 staged that git still lists as
     staged -- each declared path equal, whole, to a path the index lists as staged, so a declared directory matches
-    nothing under it and a path outside the repository reaches no command -- committed by :(literal) pathspec with the
+    nothing under it and a path outside the repository reaches no command, save one the working tree holds as a folder
+    (_folder), whose staged removal the files under it carry -- committed by :(literal) pathspec with the
     message read from <message_file> (-F), then the index restore specs-repo-git §4 step 4 gives: the paths the commit
     carries whose index entry differs from the new HEAD, less a change somebody else had staged that the commit's
     pathspecs do not name. status: committed, nothing, or failed with git's or the hook's first line."""
@@ -352,7 +369,7 @@ def handoff_commit(root, declared, message_file):
     out = {"status": "nothing", "sha": None, "paths": [], "hook_paths": [], "error": None}
     before = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames"))
     staged_now = set(before)
-    listed = [p for p in declared if p in staged_now]
+    listed = [p for p in declared if p in staged_now and not _folder(root, p)]
     if not listed:
         return out
     r = sb.git(root, "commit", "-q", "-F", message_file, "--", *_literal(listed), check=False)
@@ -1068,12 +1085,16 @@ def session_subject(key, command):
 
 def commit_session_files(root, message, on_write=None, on_staged=None, exclude=()):
     """specs-repo-git §2.1 steps 1-3 and §4 step 4: stage the ARTIFACT paths status() lists, less <exclude> (the held
-    files §3.4's flush and §4 step 2 leave out: _held_unchanged), then commit, by pathspec,
+    files §3.4's flush and §4 step 2 leave out: _held_unchanged), with update-index --add --remove --replace, which
+    takes a path whose removal is already staged as nothing to do, where add -A refused it, and stages a folder become
+    a file and a file become a folder, then commit, by pathspec,
     those git still lists as staged, and bring the index back in step with the new HEAD where a pre-commit hook
     changed what the commit carries, leaving a change somebody else had staged as they staged it. locked where
     index.lock exists, tested before staging; failed where git or a hook refuses (error: the first line of git's error
     or the hook's output). paths: what the commit carries; hook_paths: those of them its pathspecs did not name.
-    <on_write> is called just before `git add`, the call's first write; <on_staged>, just before `git commit`, with
+    in-progress, naming the marker or unmerged path as error, where a rebase, merge, cherry-pick or revert, or an
+    unresolved conflict, stands (_g1_in_progress), tested before staging, so nothing is staged or committed in it.
+    <on_write> is called just before `git update-index`, the call's first write; <on_staged>, just before `git commit`, with
     {path: the blob the index holds for it, or None for a staged removal} over the paths the commit is about to name."""
     out = {"status": "nothing", "sha": None, "paths": [], "hook_paths": [], "error": None}
     lock = os.path.join(root, sb.text(sb.git(root, "rev-parse", "--git-path", "index.lock")))
@@ -1083,12 +1104,16 @@ def commit_session_files(root, message, on_write=None, on_staged=None, exclude=(
     paths = [p for p in status(root)["artifact"] if p not in left_out]
     if not paths:
         return out
+    held = _g1_in_progress(root)  # a merge's commit would carry what this stages, and a revert would be committed through
+    if held:
+        return dict(out, status="in-progress", error=held)
     if on_write:
         on_write()
-    r = sb.git(root, "add", "-A", "--", *_literal(paths), check=False)
+    r = sb.git(root, "update-index", "--add", "--remove", "--replace", "--", *paths, check=False)  # literal paths
     if r.returncode != 0:
         return dict(out, status="locked") if os.path.lexists(lock) else dict(out, status="failed", error=_first_line(r))
-    listed = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames", "--", *_literal(paths)))
+    listed = [p for p in sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames", "--",
+                                            *_literal(paths))) if not _folder(root, p)]
     if not listed:
         return out
     before = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames"))
@@ -1248,6 +1273,8 @@ def _row_line(lines, row, f):
         v["<reason>"] = f.get("reason")
     elif row == "commit-failed":
         v["<the first line of git's error or the hook's output>"] = f.get("error")
+    elif row == "in-progress":  # the marker or unmerged path commit_session_files names as its error
+        v["<path>"] = f.get("error")
     elif row == "session-not-run":
         v["<the first line of its stderr>"] = f.get("error")
     elif row == "pushed-session":
@@ -1311,8 +1338,10 @@ def _appends(lines, f):
         out += _conflict_clause(lines, "app.session.conflict-origin", "origin/" + branch, sync, v)
         if sync.get("error"):
             out += lines.fill("app.session.sync-error", dict(v, **{"<sync.error>": " ".join(str(sync["error"]).split())}))
+        word = lines.placeholder("app.session.unsettled", "<session/")  # the show's operand, pasted as one shell word
         for path in f.get("unsettled") or []:
-            out += lines.fill("app.session.unsettled", dict(v, **{"<path>": path}))
+            out += lines.fill("app.session.unsettled", dict(v, **{"<path>": path, word: lines.shell_path(
+                "%s:%s" % (branch, path))}))
         if f.get("unsettled"):
             out += T["app.session.unsettled.close"]
         if f.get("stranded"):
@@ -1571,7 +1600,7 @@ def _end_view(lines, rec, view, default, specs, stay, committed):
         return view
     return dict(view, guard_block=_make_default_fix(lines, top, default, rec.get("default_ref"), _g1_landing(
         lines, view["guard_block"], (stay or {}).get("branch"), default, top, view["guard_paths"], stay,
-        rec.get("midrun"), committed)))
+        rec.get("midrun"), committed, rec.get("guard_in_progress"))))
 
 
 def _land_clause(lines, refused, default, onto=None):
@@ -1696,7 +1725,7 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
     stamp that names no record names the run's own derived path (P35); without it, <command>.json -- save on a
     --no-preflight end that finds there a record a start of the script made, which saves and removes at a derived path
     under a stamp of its own instead, that stamp then its --started (P37). A failure before the
-    run's first write -- the catch-up's pull, else `git add`, or, before §4 step 1's landing, the record's save --
+    run's first write -- the catch-up's pull, else `git update-index`, or, before §4 step 1's landing, the record's save --
     raises, so the caller exits 2 with nothing done; after it, an exception (a signal sb.git_bounded turns into NotRun
     among them) returns error set and the end.stopped line, and the record stays for --resume: a later start replaces
     it, --no-preflight ignores it, and prune removes it after 7 days. <superseded> (--superseded): the run's state
@@ -1713,8 +1742,9 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
     run = {"state": state, "lines": lines, "specs": specs, "session": session, "command": command, "record": None,
            "wrote": False, "pre": [], "commit": None, "started": started,
            "record_path": _record_at(state, session, command, started)}
-    for f, why in declined_unread:  # a --declined-from file that cannot be read is named, and the end goes on
-        run["pre"].append(lines.fill("end.declined-unreadable", {"<file>": lines.shown_path(f), "<reason>": why}))
+    # a --declined-from file that cannot be read is named, fill escaping its path, and the end goes on
+    for f, why in declined_unread:
+        run["pre"].append(lines.fill("end.declined-unreadable", {"<file>": f, "<reason>": why}))
     if superseded:  # §4 step 1: the tree is another session's now -- nothing written in it, the record removed
         run["record"] = "missing" if state.load(session, command, at=run["record_path"]) is None else "found"
         line = lines.T["row.superseded"]
@@ -1959,7 +1989,8 @@ def _end(run, commit_key, register_rebuild, no_preflight, misrooted_notice, sess
     exclude, changed = _end_held(specs, branch, d["default"], boundary)
     c = commit_session_files(specs, message, on_write=boundary, on_staged=about_to_commit, exclude=exclude)
     if c["status"] != "committed":
-        row = {"nothing": "nothing", "locked": "locked", "failed": "commit-failed"}[c["status"]]
+        row = {"nothing": "nothing", "locked": "locked", "failed": "commit-failed", "in-progress": "in-progress"}[
+            c["status"]]
         line = _row_line(lines, row, {"error": c["error"]}) + _appends(lines, _append_facts(specs, saved, branch))
         return finish_end(run, row, line, run["view"], branch=branch)
     commit = {"sha7": c["sha"][:7], "files": len(c["paths"]), "branch": branch, "paths": c["paths"],
@@ -2480,9 +2511,9 @@ def _replay_line(lines, cls, result, f):
             t = t[:t.index("; " + remedy)]
         else:
             new = remedy
-            if cls["reason"] == "checked-out":  # run in that worktree, no switch
+            if cls["reason"] == "checked-out":  # run in that worktree, no switch; its path pasted as shell words
                 new = T["remedy.checked-out"]
-                v["<path>"] = refused["path"]
+                v["<path>"] = lines.shell_path(refused["path"])
             elif f.get("standing") != f["branch"]:
                 new = T["remedy.not-standing"]
                 v["<the branch the run stands on>"] = f.get("standing")
@@ -2717,15 +2748,80 @@ def _advance(run, stage):
     _save(run)
 
 
-def _g1_block(lines, specs, paths):
-    """specs-repo-git §5's G1 block for the OTHER <paths>: <path list> comma-separated on the Found line, a path that
-    is not a printable value written with its JSON escapes (fill), and shell-quoted and space-separated on the Fix
-    line, where it is pasted into a command, such a path in $'…' quoting (shell_path)."""
-    return lines.fill("g1", {"<SPECS_PATH>": specs, "<N>": len(paths),
-                             "<path list>": [", ".join(paths), " ".join(lines.shell_path(p) for p in paths)]})
+def _g1_fix_lists(specs, paths):
+    """specs-repo-git §5's lists for G1's Fix line over the OTHER <paths>, in their order: (staged, committed, embedded).
+    embedded: each path status lists as a directory (?? <dir>/), which --untracked-files=all does only for a repository
+    of its own inside the specs repository -- staged and committed by no part of the line, since a commit would record
+    only a link to its commit. staged, for update-index: the rest, save a path the working tree holds as a folder and
+    the index does not hold, which update-index refuses and which holds nothing of its own to stage. committed: those
+    of them the working tree holds as a file, or holds nothing at and HEAD holds, so the commit's every pathspec matches
+    what the index or HEAD knows once update-index has run, and names no folder, which the commit would try to read as a
+    repository: a path neither holds -- the new name of a rename since deleted (RD), a staged file since deleted (AD) --
+    is left out, and so is a file that became a folder, whose removal the commit carries with the files under it. Where
+    HEAD or the index cannot be listed (no repository, say), every path but an embedded one is staged and committed."""
+    embedded = [p for p in paths if p.endswith("/")]
+    rest = [p for p in paths if not p.endswith("/")]
+    if not os.path.isdir(specs):
+        return rest, list(rest), embedded
+    head = sb.git(specs, "ls-tree", "-r", "-z", "--name-only", "HEAD", check=False)
+    index = sb.git(specs, "ls-files", "-z", check=False)
+    if head.returncode != 0 or index.returncode != 0:
+        return rest, list(rest), embedded
+    in_head = set(head.stdout.decode("utf-8", "surrogateescape").split("\0"))
+    in_index = set(index.stdout.decode("utf-8", "surrogateescape").split("\0"))
+    staged, committed = [], []
+    for p in rest:
+        full = os.path.join(os.fsencode(specs), os.fsencode(p))
+        folder = _folder(specs, p)
+        if not folder or p in in_index:
+            staged.append(p)
+        if not folder and (os.path.lexists(full) or p in in_head):
+            committed.append(p)
+    return staged, committed, embedded
 
 
-def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, committed=None):
+def _g1_block(lines, specs, paths, in_progress=None):
+    """specs-repo-git §5's G1 block for the OTHER <paths>: <path list> on the Found line each path escaped as shown_path
+    writes it, comma-separated (shown_list); on the Fix line's update-index each path _g1_fix_lists stages, as it
+    stands, shell-quoted (shell_paths), and on its commit each it commits as a :(literal) pathspec (pathspecs), a path
+    that is not a printable value in $'…' quoting. Where none is left to commit, the Fix is g1.index-only.fix; where
+    none is left to stage, every path a repository of its own, g1.by-hand.fix; where any is one, the Found is
+    g1.embedded.found, naming it. Where <in_progress> names a merge's, cherry-pick's or revert's marker, or an unmerged
+    path (session-branch.py's _in_progress), its Found, Not done, Fix and If ignored are the g1.in-progress.* texts, each
+    on its one line: git commits no paths of the user's choosing during one, so the block gives no commit."""
+    shown = lines.shown_list(paths)
+    staged, committed, embedded = _g1_fix_lists(specs, paths)
+    v = {"<SPECS_PATH>": specs, "<N>": len(paths)}
+    block = lines.fill("g1", dict(v, **{"<path list>": [shown, lines.shell_paths(staged), lines.pathspecs(committed)]}))
+    if in_progress:
+        block = _block_part(block, "Found:", lines.fill("g1.in-progress.found", dict(
+            v, **{"<path list>": shown, "<path>": in_progress})))
+        block = _block_part(block, "Not done:", lines.T["g1.in-progress.not_done"])
+        block = _block_part(block, "Fix:", lines.fill("g1.in-progress.fix", v))
+        return _block_part(block, "If ignored:", lines.T["g1.in-progress.if_ignored"])
+    if embedded:
+        block = _block_part(block, "Found:", lines.fill("g1.embedded.found", dict(
+            v, **{"<path list>": shown, "<path>": embedded})))
+    if not staged:
+        block = _block_part(block, "Fix:", lines.fill("g1.by-hand.fix", v))
+    elif not committed:
+        block = _block_part(block, "Fix:", lines.fill("g1.index-only.fix", dict(
+            v, **{"<path list>": lines.shell_paths(staged)})))
+    return block
+
+
+def _g1_in_progress(specs):
+    """The path session-branch.py's _in_progress names where a merge, cherry-pick or revert, a rebase, or an unmerged
+    index stands in the checkout at <specs> (specs-repo-git §5's in-progress form of G1); None where none does, where
+    only an index.lock stands, or where the test cannot run."""
+    try:
+        got = sb._in_progress(specs)
+    except Exception:  # a test that cannot run leaves G1 in its form with a commit, as before the test existed
+        return None
+    return got["path"] if got and got.get("reason") == "in-progress" else None
+
+
+def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, committed=None, in_progress=None):
     """specs-repo-git §5's form of G1's plain <block> -- as rendered for <specs> and the OTHER <paths> -- on a branch
     the run would have left, or under a run typed mid-run, each part replaced unwrapped on its one line, its Found line
     its own. Where <midrun> (the record's: the open run) is set, the mid-run form, whatever the stay's kind and flag
@@ -2740,10 +2836,14 @@ def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, commi
     Not done is g1.landing.not_done.unlanded with a stay and g1.not_done.uncommitted without one, the mid-run form's
     included; with neither a stay nor a run typed mid-run, the If ignored is g1.if_ignored.uncommitted too (the
     not-committed form), and otherwise the Fix and If ignored are as they are; where True with a stay, the Not done is
-    g1.landing.not_done.landed, which says the artifacts were committed and leaves the commit to the outcome line."""
+    g1.landing.not_done.landed, which says the artifacts were committed and leaves the commit to the outcome line.
+    <in_progress>, the record's guard_in_progress: the plain block holds G1's in-progress Found and Fix, and the merged
+    form keeps that Fix, which gives no switch and no commit; so it keeps the plain block's Fix where _g1_fix_lists
+    leaves nothing to commit (g1.index-only.fix, g1.by-hand.fix), which commits on no branch."""
     kind = lines.placeholder("g1.landing.not_done", "<which no key")
+    staged, to_commit, _ = _g1_fix_lists(specs, paths)
     v = {"<branch>": branch, "<default>": default, "<SPECS_PATH>": specs,
-         "<path list>": " ".join(lines.shell_path(p) for p in paths)}
+         "<path list>": [lines.shell_paths(staged), lines.pathspecs(to_commit)]}
     landing = {False: "g1.landing.not_done.unlanded", True: "g1.landing.not_done.landed"}.get(committed,
                                                                                           "g1.landing.not_done")
     if midrun:
@@ -2762,7 +2862,8 @@ def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, commi
     v["<command>"] = stay.get("command")
     block = _block_part(block, "Not done:", lines.fill(landing, dict(v, **{kind: STAY_KINDS.index(stay["kind"])})))
     if stay.get("merged"):
-        block = _block_part(block, "Fix:", lines.fill("g1.merged.fix", v))
+        if not in_progress and to_commit:
+            block = _block_part(block, "Fix:", lines.fill("g1.merged.fix", v))
         return _block_part(block, "If ignored:", lines.fill("g1.merged.if_ignored", v))
     return _block_part(block, "If ignored:", lines.T["g1.landing.if_ignored"])
 
@@ -3481,7 +3582,8 @@ def _guards(run):
         listed = _status(run)
         other = listed["other"] if listed else []
         if other:
-            found = ("G1", _g1_block(lines, specs, other), other)
+            rec["guard_in_progress"] = _g1_in_progress(specs)
+            found = ("G1", _g1_block(lines, specs, other, rec["guard_in_progress"]), other)
         elif head != rec["default"] and not branch_key(head, [])["plugin_branch"]:
             values = None
             if rec["mode"] == "on" and rec["session_branch"]:
@@ -3499,7 +3601,8 @@ def _guards(run):
     if found[0] == "G1":  # after the block is in the record, so the stay's save holds both
         _ask_stay(run, head, "g1")
         shown = _g1_landing(lines, found[1], head, rec["default"], specs, found[2],
-                            rec["stay"] if _stayed_on(rec, head) else None, rec.get("midrun"))
+                            rec["stay"] if _stayed_on(rec, head) else None, rec.get("midrun"),
+                            in_progress=rec.get("guard_in_progress"))
     elif found[0] == "G2" and rec.get("midrun"):
         shown = _g2_midrun(lines, found[1], rec["midrun"])
     _emit(run, _make_default_fix(lines, specs, rec["default"], rec.get("default_ref"), shown or found[1]))
@@ -3558,6 +3661,8 @@ def _flush(run):
             _emit(run, lines.preflight_form(lines.T["row.locked"]))
         elif c["status"] == "failed":
             _emit(run, lines.preflight_form(_row_line(lines, "commit-failed", {"error": c["error"]})))
+        elif c["status"] == "in-progress":
+            _emit(run, lines.preflight_form(_row_line(lines, "in-progress", {"error": c["error"]})))
         if c["status"] != "committed":
             return _advance(run, "settle")
         for line in _held_committed(lines, specs, list(rec.get("held_changed") or []), c["paths"], default):
@@ -3741,7 +3846,7 @@ def _carry(rec, old):
             rec["misrooted_notice"] = old.get("misrooted_notice")
         else:
             rec.update(guard=old.get("guard"), guard_block=old.get("guard_block"),
-                       guard_paths=list(old.get("guard_paths") or []))
+                       guard_paths=list(old.get("guard_paths") or []), guard_in_progress=old.get("guard_in_progress"))
     snap = old.get("start_dirty")
     rec.update(advised_D=list(old.get("advised_D") or []), reported=list(old.get("reported") or []),
                b2_left=old.get("b2_left"), b4_left=old.get("b4_left"), declined=list(old.get("declined") or []),

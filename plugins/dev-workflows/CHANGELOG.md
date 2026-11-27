@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [4.71.10] — 2026-11-27
 
-DOC-D-G1, sub-project 2, batch 3: the roles page names `docs-workflows` 1.46.0's walk of a user page. No command, agent or reference changes, and nothing a run does or prints. Released with `docs-workflows` 1.46.0 and `workflows-core` 1.101.4; its page needs neither, nor they it. 4.71.10 carries 4.71.9, so the 1.101.3 bullet of `.claude/rules/plugin-updates-coupling.md` applies to it, which `workflows-core` 1.101.4, carrying 1.101.3, meets.
+DOC-D-G1, sub-project 2, batch 3: the roles page names `docs-workflows` 1.46.0's walk of a user page. No command, agent or reference changes, and nothing a run does or prints. Released with `docs-workflows` 1.46.0 and `workflows-core` 1.101.5; its page needs neither, nor they it. 4.71.10 carries 4.71.9, so the 1.101.3 bullet of `.claude/rules/plugin-updates-coupling.md` applies to it, which `workflows-core` 1.101.5, carrying 1.101.3, meets.
 
 ### Changed
 
