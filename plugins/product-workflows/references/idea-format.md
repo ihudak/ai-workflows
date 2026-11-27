@@ -320,6 +320,69 @@ is free, and rules 2–4 settle a name that is already taken:
 
 The same rule, with the same counter semantics, applies in **both** destinations.
 
+**How names and bytes are compared — in every rule above, and wherever rules 1–3 are cited alone.**
+A name is compared **byte for byte: case-sensitive, and never Unicode-normalised**, as
+`workflows-core:addressing` compares keys and folder names — `Notes.md` and `notes.md` are two names,
+and so are a name and its NFC or NFD twin. Rule 4's link test compares `idea.md`'s link target with
+the destination-relative path the same way. **A name is free only where the destination directory
+holds no entry at it, as the filesystem resolves the name**, never where a listing of the directory
+merely lacks it: a filesystem that folds case or Unicode normalisation — macOS's, by default — opens
+`notes.md` for `Notes.md`, so there that name is taken, and no rule writes over a file a byte
+comparison called different. The same test makes rule 2's integer free. **Bytes are compared whole**
+— the same length and the same bytes, the test `cmp -s` makes — and only with a regular file: a
+directory, a symbolic link or a FIFO in the destination is never identical to a source, and is never
+opened. Nor is a file whose name holds a control character or is not UTF-8 reused, since its name
+cannot stand in a link; and a source whose basename holds one, or is empty, `.` or `..`, or holds a
+`/`, is copied nowhere, the program refusing it with exit 4 before it reads anything.
+
+**One program makes all three tests**, listing the destination directory itself and reading each
+file, so no command is ever built from a name a listing printed — a `cmp` run per listed name would
+run whatever a name holds. Hand it the source file, the destination directory and the source's
+basename, each as one single-quoted argument, each `'` they hold written `'\''`:
+
+```
+python3 -I -c 'import os, stat, sys, unicodedata as u
+src, dest, base = (os.fsencode(a) for a in sys.argv[1:4])
+def shown(n):
+    try:
+        t = n.decode("utf-8")
+    except UnicodeError:
+        return None
+    return None if any(u.category(c) == "Cc" for c in t) else t
+if shown(base) is None or base in (b"", b".", b"..") or b"/" in base:
+    sys.exit(4)
+fd = os.open(src, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
+if not stat.S_ISREG(os.fstat(fd).st_mode):
+    sys.exit(3)
+with os.fdopen(fd, "rb") as f:
+    data = f.read()
+try:
+    names = sorted(e.name for e in os.scandir(dest) if e.is_file(follow_symlinks=False))
+except FileNotFoundError:
+    names = []
+for n in names:
+    p = os.path.join(dest, n)
+    if shown(n) is not None and os.path.getsize(p) == len(data):
+        with open(p, "rb") as f:
+            if f.read() == data:
+                sys.stdout.buffer.write(b"reuse\t" + n + b"\n")
+                sys.exit(0)
+if not os.path.lexists(os.path.join(dest, base)):
+    sys.stdout.buffer.write(b"free\t" + base + b"\n")
+    sys.exit(0)
+stem, ext = os.path.splitext(base)
+k = 1
+while os.path.lexists(os.path.join(dest, stem + b"_%02d" % k + ext)):
+    k += 1
+sys.stdout.buffer.write(b"taken\t" + stem + b"_%02d" % k + ext + b"\n")' '<source file>' '<destination directory>' '<basename>'
+```
+
+It prints one line: `reuse<TAB><name>` — rule 1, a file already holding exactly these bytes, which
+the link then points at; `free<TAB><basename>` — the basename is free and the file lands there; or
+`taken<TAB><name>` — the basename is taken and no file there holds these bytes, and `<name>` is the lowest free
+`_NN` name rules 2 and 3 give, where the file lands unless rule 4 refreshes the copy at the
+basename instead. Any other exit is a copy that failed, reported with the rest.
+
 **`/brd-intake` Phase 2 cites rules 1–3 by number** for `brd/source-external/`, so a rule inserted,
 removed or renumbered here must be carried to `commands/brd-intake.md` Phase 2 in the same change.
 

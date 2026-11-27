@@ -3892,6 +3892,12 @@ def selftest(groups=None):
         block = _g0_block(lines, rj.path, resolve_default(rj.path, False)["default"])
         check("switch zz-safe" in block and "$(" not in block and "`" not in block,
               "e_unsafe_names: G0's rejoin branch skips a local branch outside the class (%r)" % block)
+        # ... named as the branch it is where a tag shares its name, which a short refname prints as heads/<name>
+        rj.git("tag", "zz-safe")
+        block = _g0_block(lines, rj.path, resolve_default(rj.path, False)["default"])
+        check("switch zz-safe" in block and "heads/" not in block,
+              "e_unsafe_names: G0's rejoin branch is named as the branch, a tag sharing its name (%r)" % block)
+        rj.git("tag", "-d", "zz-safe")
         # ... and where no branch is there to rejoin, If ignored names none, in either form
         rj.git("branch", "-D", "zz-safe")
         block = _g0_block(lines, rj.path, None)

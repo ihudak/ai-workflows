@@ -434,7 +434,15 @@ write would re-ask a question already answered.
      then look for the same name, in the same folders, on every other branch of `origin`
      (`git -C "$SPECS_PATH" for-each-ref --format='%(refname)' refs/remotes/origin`, leaving out
      `refs/remotes/origin/HEAD` and the default branch's own ref, each listed as above) and in the
-     working tree. **Pass over a branch hit holding the very file `<default-ref>`'s history already
+     working tree. **Each branch's name — its ref with `refs/remotes/origin/` taken off — is held to
+     `workflows-core:specs-repo-git` §3.2's safe class, tested as §3.2 tests one, before any command
+     names the branch** (`workflows-core:read-only-repos` §3, *Branch names*): a branch whose name is
+     outside it is left out — nothing is listed, read or resolved on it, and it is never printed —
+     since git allows `$`, `(`, `)`, a backtick and a quote in a branch name, and anyone who can push
+     to `origin` can make one. **`<branch>` below is the ref as listed, `refs/remotes/origin/<name>`, in
+     every command** — the listing, `rev-parse "<branch>:<path>"` — never the bare `<name>`, which
+     names no ref on a clone with no local copy of the branch; in the stop's text it is
+     `origin/<name>`. **Pass over a branch hit holding the very file `<default-ref>`'s history already
      removed** — where `git -C "$SPECS_PATH" log --no-renames --diff-filter=D --format=%H <default-ref> -- "<path>"`
      names commits, and for any one of them, `<D>`, `git -C "$SPECS_PATH" rev-parse "<branch>:<path>"`
      prints the same object as `git -C "$SPECS_PATH" rev-parse "<D>^:<path>"` — every removal, not
@@ -447,7 +455,9 @@ write would re-ask a question already answered.
      `BRD_RECONCILE_REVIEW_NOT_MERGED: <file> is <on branch <branch>[, <branch>…] | in the working tree> but not on <default-ref> — merge the customer's pull request that adds it, then re-run '/product-workflows:brd-reconcile <KEY>'. Where that pull request was closed unmerged, ask the customer to send the file and re-run with '@<path to it>'; where you put the file there yourself, re-run with '@<path to it>' too.`
      Found nowhere, or only on branches passed over → stop with step 2's `BRD_RECONCILE_NEEDS_REVIEW`: a pull request from a fork of
      the repository, or a branch the fetch could not reach, is on none of the branches this clone
-     holds, and shows up here only once merged.
+     holds, and shows up here only once merged. Where a branch was left out for its name,
+     `BRD_RECONCILE_REVIEW_NOT_MERGED` and this stop each say so after the message, never naming it: `<n> branch(es) of origin whose name is outside
+     the safe class were not searched.`
 
    Wherever a file was found on `<default-ref>`, take step 6b's list for each before asking, and
    print it with that file.

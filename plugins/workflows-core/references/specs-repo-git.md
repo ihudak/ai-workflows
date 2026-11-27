@@ -260,7 +260,10 @@ do not justify it by claiming plain `git add` cannot stage the deletion.
 ### 2.2 Branches
 
 **The plugin manages only branches it created.** A branch is plugin-owned when
-its name matches `^(idea|prd|ard|spec|epics|design|ready|brd|frames|kb|conformance)/`. The session
+its name matches `^(idea|prd|ard|spec|epics|design|ready|brd|frames|kb|conformance)/` and is in
+§3.2's safe class, tested as §3.2 tests one before any command names it: a name outside the class
+is never a plugin branch, whatever its prefix — the plugin makes none — so a listing of branches
+passes over it unnamed (`read-only-repos.md` §3, *Branch names*). The session
 branch §8 creates is the plugin's too, for commit and push only (§1 rule 3).
 
 Any other **named** branch save the default branch — the user's own work, a
@@ -471,7 +474,9 @@ Always runs when stage 1 matched nothing **and the run does not carry `specs_git
 
 **Then, either way, settle every other local plugin branch.** List them with
 `git -C "$SPECS_PATH" for-each-ref --format='%(refname:lstrip=2)' refs/heads/`
-and keep those §2.2's pattern matches, less the current branch and any branch
+and keep those §2.2 counts plugin-owned — its pattern matches and the name is in §3.2's safe class,
+tested as §3.2 tests one before any command names it, so a name outside it never reaches
+`branch-merged` or `branch -d` — less the current branch and any branch
 the merged-branch leave above already reported this run.
 The default branch is never on that list: where HEAD is not on it, §3.2's held stage pushes it, before the guards.
 Ask each
@@ -587,7 +592,8 @@ follows these steps:
 
 1. Strip the `idea/`, `prd/`, `ard/`, `spec/`, `epics/`, `design/`, `ready/`, `brd/`, `frames/`, `kb/` or `conformance/`
    prefix (a `kb/harvest-<date>` name holds no key, so it resolves to B4). Call the remainder `R`. No prefix matches → not a plugin
-   branch, and no row here applies (§3.3 G2 already kept the run on it).
+   branch, and no row here applies (§3.3 G2 already kept the run on it). Nor is a name outside §3.2's safe class one, whatever
+   its prefix (§2.2): the script answers `plugin_branch: false` for it, and HEAD on such a branch takes G0 (§3.3).
 2. A key `K` in the run key set (§3.2) is a **candidate** when `R` is exactly `K`,
    or `R` begins with `K-` or `K_`. **The separator is required.** It is the same
    boundary folder resolution uses (`<KEY>{-|_}<slug>`,

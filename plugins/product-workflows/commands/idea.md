@@ -520,7 +520,8 @@ repairs where `idea.md` points.
 2. **Copy each entry to its destination** — text and markdown to `<PRD-folder>/attachments/`, images
    to `<PRD-folder>/design/idea-sources/` — under the name
    `${CLAUDE_PLUGIN_ROOT}/references/idea-format.md` *The collision rule* gives it: all four of its
-   rules, executed from there and restated nowhere here, since a partial copy of them is a second
+   rules, with its program for the tests they make (*How names and bytes are compared*), executed
+   from there and restated nowhere here, since a partial copy of them is a second
    rule that disagrees with the first.
 3. **Rebuild `design/idea-sources/index.md` per `workflows-core:grounding-format`
    §6.2** — the one index format and reconciliation contract every writer of a frame-set index follows,
