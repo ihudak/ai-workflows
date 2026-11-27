@@ -97,6 +97,7 @@ FIELDS = {
     "guard": None,
     "guard_block": None,
     "guard_paths": [],
+    "guard_in_progress": None,  # G1's: the marker or unmerged path of a merge, cherry-pick or revert in progress
     "default": None,
     "default_ref": None,
     "remote": None,
