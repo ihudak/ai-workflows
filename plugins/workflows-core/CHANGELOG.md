@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.105.0] — 2026-11-27
+
+**What changes for you.** Nothing changes in a command of this plugin. `product-workflows` 3.92.0's `/brd-package` now copies `question-budget` §13's customer block into the customer's prompt word for word, and its `/brd-reconcile` confirms an answer and the answers the customer's agent applied from it as one group; this release words the block, one sentence of §8 and one picker row for them, which they need (`.claude/rules/plugin-updates-coupling.md`, its 1.105.0 bullet).
+
+### Changed
+
+- **`references/question-budget.md` §13**, between its customer markers, the lines `/brd-package` copies. Item 4: an answer is applied forward only where it answers a question the package numbers `<round>/<position>`; an answer to an assumption, or to a finding the package puts to the reviewer, decides no question this way — the questions it bears on are asked, saying what it already decided. Item 6: the proposals table holds only questions that are not strategic, a strategic question's proposed answer being put with it, first (item 1).
+- **`references/question-budget.md` §8**, *When the source moves*: a proposal is never reopened, since it answers nothing, but the customer is shown it only while the decision it follows stands; where that decision is the slice's own, an answer re-deciding it under its own id and proposing nothing again for the question withdraws it; a proposal following another slice's decision is shown while that decision stands and is not withdrawn when that slice re-decides it.
+- **`references/escalation-rules.md`**, *Closed-vocabulary pickers must normalise the free-text answer*, row 1, with its generated `pickers` part: the candidate-confirmation picker gains its group form for an answer and the answers applied from it — two fixed arrays, one recommending confirmation and one, where the group's root or any member carries the line saying the basis of a proposal the package showed has moved, or that no prompt says what was proposed, recommending nothing; confirm every member, or name the ones to correct, each named re-asked on the four-option form — never a freeze of a member not confirmed. It stays one row of the eleven.
+
+### Known limits
+
+- **1.104.0's limit is lifted**: `/product-workflows:brd-package` 3.92.0 opens its customer prompt's part 7 with §13's block and puts strategic questions first, each with why it is asked, what it covers and its proposed answer.
+
 ## [1.104.0] — 2026-11-27
 
 **What changes for you.** Nothing changes in a command of this plugin. `product-workflows` 3.91.0's `/brd-interview` now runs the strategic sittings `question-budget` §7 defines, dispatching `question-planner` in mode `strategic` before each; this release brings the two texts it follows into line with that command, which needs it (`.claude/rules/plugin-updates-coupling.md`, its 1.104.0 bullet): no question is grouped twice, and the choice after a strategic sitting is made before anything is planned again.
