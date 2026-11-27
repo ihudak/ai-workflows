@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [0.13.6] — 2026-11-27
+
+Fix batch B51 (RECORDED-BRANCH-CLASS). **What changes for you.** A change scan tests the branch and the base an `implementation.md` block records before any command names them: a branch outside the safe class is read as naming no branch, and a base outside it gives way to the default branch, which the report says. Needs `workflows-core` 1.101.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.3 bullet).
+
+### Fixed
+
+- **`/scan` Phase 0 step 5** takes `<branch>` only where `workflows-core:implementation-format` §5's *A recorded branch name* holds it in the class, before the fetch by refspec; **Phase 1**'s change scan takes `<default ref>` for a null `base` and says so in `### Scope`.
+- **`docs/commands/scan.md`** says so.
+
+### Fixed — the review pass
+
+- **`/scan`** reads a null `base` as the block recording none, or one outside the class, and says which; prints no command naming an out-of-class recorded branch; and names a null recorded commit as `a recorded commit outside a commit's shape` in its confirmation.
+
 ## [0.13.5] — 2026-11-27
 
 **What changes for you.** `/scan`'s reservation of run records on other session branches no longer drops, or misreads, a session branch that shares its name with a tag. It stands alone: it needs no other plugin's release.
