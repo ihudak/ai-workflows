@@ -600,7 +600,7 @@ On any failure the results do not count, and the run reports why.
 
 - `/docs-verify` takes results only behind a stamp naming the page as it stands;
 - a person verifying by hand (ROUTE step 6) writes no stamp: results in a walkthrough that carries none do not count, and results added by hand behind a stamp that still names the page as it stands count as any other recorded results, shown by P-D11's question, since a stamp proves no walk;
-- `/docs-capture`'s results carry no stamp and never count.
+- `/docs-capture` writes no stamp and keeps its results out of any walkthrough whose stamp would count them, so they never count.
 
 **What the stamp never authenticates**: who walked; that anybody walked; the environment; when; or the steps. Any committer can write a matching stamp, and P-D11's question is the control.
 
