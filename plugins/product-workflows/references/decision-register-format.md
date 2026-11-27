@@ -26,7 +26,7 @@ shape, enforces §6, and — on §4's first cause — reopens a `decided` `[VD#n
 for a customer-authority gap that only PRD authoring could surface (§7); by `agents/brd-package-reviewer.md`, which reads them; and by
 `commands/brd-package.md`, which surfaces every open `[AS#n]` in the customer prompt (§7) and finds
 every live position and open assumption resting on a prerequisite by its `conditional_on` field
-(§5, §7); and by
+(§5, §7), and every live position following another BRD's decision by its `applied_from` (§1); and by
 `commands/brd-reconcile.md`, which mints the `[CD#n]` records — the only command that does — and
 enforces §6 on them as it freezes them, supersedes the `[AS#n]` each one settles, reopens what an incoming customer decision overturns under
 §4, re-decides in place a `[CD#n]` whose reopened question the customer has answered, and runs the propagation sweep §5 exists to serve. **It has more readers than those**: the three
@@ -917,7 +917,9 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
 - **In the question set, the `## Round <N>, question <position>` heading is the entry's boundary**,
   and its labelled lines — `- **Findings:**`, `- **Altitude:**`, and where they apply
   `- **Rejected row:**`, `- **Requirement defect:**`, `- **Defect image:**` and `- **Re-puts:**` —
-  are what `commands/brd-package.md` renders and `commands/brd-reconcile.md` copies. **The options
+  are what `commands/brd-package.md` renders and `commands/brd-reconcile.md` copies;
+  `commands/brd-package.md` renders a strategic entry's `- **Why we ask:**` and `- **Covers:**`
+  lines too, and a held `[C]`'s proposal, which it reads from the round record (below). **The options
   the customer is offered are part of the question as it will be put**, a plain list under it on no
   labelled line, which `commands/brd-reconcile.md` records as the answering `[CD#n]`'s
   `options_considered` (§1).
@@ -929,7 +931,9 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
   give, for the customer to confirm or correct, and the decision it follows — a bare id for this
   register's, the qualified prose spelling `<BRD-KEY> [VD#n]` for another's (§4); it answers
   nothing, the question stays *held for the customer*, and the last such line is the question's
-  proposal. **`- **Re-tagged:** [C] → [V] — <reason>`** says the question was the delivery team's
+  proposal — read off the round record, where alone a carried entry's is, and shown to the customer
+  by `commands/brd-package.md` only while the decision it follows reads `decided` (§3), since a
+  reopen leaves the line standing. **`- **Re-tagged:** [C] → [V] — <reason>`** says the question was the delivery team's
   to decide all along (above): an entry carrying it is no longer a question for the customer.
   `commands/brd-interview.md`'s *Hold every `[C]`* fixes when each is written.
 - **A strategic question** (`workflows-core:question-budget` §7; `commands/brd-interview.md`'s

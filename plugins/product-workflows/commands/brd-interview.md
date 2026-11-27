@@ -2160,7 +2160,8 @@ strategic sitting (*Put each `[V]` to the operator*, *Strategic sittings*), and 
 each open question it covers before `answer-applier` reads the rest (*Then the answer is applied
 forward*, step 1). A strategic `[C]` is held for the customer like any held `[C]` — never answered,
 re-tagged or narrowed by the delivery team — and carried to the customer by
-`/product-workflows:brd-package` like any other (*Hold every `[C]`*). Both are questions of the round
+`/product-workflows:brd-package`, which puts it before every other question, with why it is asked,
+what it covers and its proposed answer (*Hold every `[C]`*). Both are questions of the round
 this run works (`interview-tagging.md` §5), each at its own position, and *Write the register and
 the round record* writes them. **The registry is kept whole** (§7): a strategic question covers
 questions and replaces none, and every question no answer closes stays open, in its own words, for

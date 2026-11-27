@@ -226,7 +226,7 @@ delivery team with recorded argumentation, a `[C]` held for the customer. It ask
 of questions a sitting, and where more are open than one sitting holds, it asks a few strategic
 questions first, each answer closing every question it covers, and asks what is left one by one;
 where more questions held for the customer than one sitting holds are not grouped yet, it writes
-strategic questions for them too, which the package carries like any other. `/brd-package` takes the
+strategic questions for them too, which the package puts to the customer first. `/brd-package` takes the
 register and the held `[C]` questions, attacks the package before the customer does, refuses to
 build a bundle while any `[SR#n]` self-review finding is undisposed, refuses to ship one whose own
 identifier and filename citations do not resolve inside it, and renders the prompt, the delivery

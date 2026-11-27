@@ -284,8 +284,8 @@ Assembled from the package, never hand-written, in a fixed order that is not re-
 | 4 | Code baselines and the verification procedure | `baselines.md`, with the three pin commands written out |
 | 5 | The single most important claim to verify first | the finding the most decisions rest on, else the most-relied-on open assumption, else the finding the most held `[C]` questions bear on — or a statement that none rests on one |
 | 6 | Review scope | the ledger's dispositions — the rows this slice answers for, each orphan row (a claim the parent withdrew) as another BRD's, `<PARENT-KEY> [BR#n]`, not for review — plus every `in-scope` `[CDF#n]` |
-| 7 | The decisions the customer must make | the `[C]` question set, every open `[AS#n]`, every escalated `[SR#n]` |
-| 8 | What could still move | prerequisites not yet customer-reviewed, every live `conditional_on` position and open `conditional_on` assumption, and every `conditional` `[CDF#n]` |
+| 7 | The decisions the customer must make | the rules for putting the questions; the `[C]` question set — strategic questions first, then proposals as a table, then the rest; every open `[AS#n]`; every escalated `[SR#n]` |
+| 8 | What could still move | prerequisites not yet customer-reviewed, every live `conditional_on` position and open `conditional_on` assumption, every position applied from another BRD's decision, every `conditional` `[CDF#n]` |
 | 9 | Where to attack us hardest | every open `[AS#n]`, and every `accepted-risk` `[SR#n]` |
 | 10 | The required output file, its exact name, and the inlined schema | the one-new-file rule, the `Package reviewed` line section 1 repeats, and the rendered schema |
 | 11 | What this session cannot settle | the ledger, the prerequisites, the review's own limits, and every `out-of-scope` `[CDF#n]` |
@@ -301,6 +301,28 @@ decisions (`[CD#n]`) that rest on such a prerequisite: they are listed beside th
 decide it — an assumption corrected while it is still an assumption is the cheapest correction in the
 whole loop. Part 9 invites them to attack it. Removing either copy as redundant always loses the
 attack.
+
+**Part 7 opens with the rules for putting the questions, and puts the strategic questions first.**
+The customer's agent has nothing installed, so the rules your own sittings follow reach it as plain
+text: part 7 opens with the customer block of the `question-budget` reference (shipped in
+`workflows-core`), copied word for word — sittings of at most 25 questions, strategic questions
+first, each answer applied forward to the questions it decides and recorded in the review's decision
+log as applied from the question whose answer it follows, the applied answers shown at the end of
+each sitting, and proposed answers and confirmed requirement readings put as tables. Then come the
+held `[C]` questions, each headed `Question <round>/<position>`, the address the review's decision
+log cites, under three sub-headings: the strategic questions, each with why it is asked, the
+questions its answer settles and the answer your team proposes; then the questions carrying a
+proposed answer, as one table to confirm or correct; then the rest. A question's proposal is read
+from its round's record, so one your answer made for a question an earlier package already carried
+— whose entry is never edited — reaches the customer in the next package. A proposal is shown only
+while the decision it follows reads decided: one whose decision was reopened, superseded or
+withdrawn since, or cannot be read, is left out, the question put without it and the final report
+naming it; where the bundled question set still shows it, the prompt says it is withdrawn, and that
+the prompt governs wherever the two differ.
+
+**Part 8 also names every position applied from another BRD's decision** — a sibling slice's or a
+prerequisite's — because it moves if that decision moves. The customer is told so and asked for no
+mark on it.
 
 ## Gates
 
@@ -390,6 +412,16 @@ attack.
   `[BR#n]`, because the prompt is a bundle document and the citation-resolution check would resolve
   an example number against this package's own records — to a requirement or finding nobody meant,
   or to nothing.
+- **Phase 6 — the customer block.** Part 7 opens with the `question-budget` reference's customer
+  block, copied from between its two markers and from nowhere else in that reference, and the run
+  stops with `BRD_PACKAGE_CUSTOMER_BLOCK_MISSING` where the reference no longer carries both: rules
+  written from memory would put the customer's questions by rules nothing verified. The prompt's
+  plugin-free scan reads the copied block as it reads the rest.
+- **Phase 6 — a proposal whose decision no longer stands.** Each proposal is tested against the
+  register that holds the decision it follows — this slice's, or a sibling's or prerequisite's,
+  resolved by its key — and shown only where that decision reads decided. One left out is not a
+  stop: the question is put without it, and the final report names it with the status its decision
+  reads, or why that decision could not be read.
 - **Phases 6, 7 and 8 — the plugin-free scan.** Run over the finished prompt, the finished note and
   every bundle document, by `scripts/bundle-scan.py tokens`, so every run finds the same tokens: it
   reports each hit with its file, line and the span its position places it in — a captured file, an

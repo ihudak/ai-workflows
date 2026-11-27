@@ -1140,6 +1140,10 @@ because that is a read failure wearing the shape of a discrepancy.
   the closed list §7.1 opens with and does not name it, so a row left off that list, or named there
   that the ledger does not put out of scope, is review's to catch — as is a wrong id there, since
   §6's relation 1 discharges a qualified one rather than resolving it.
+- **The what-could-still-move part's list of positions that follow another BRD's decision**
+  (`commands/brd-package.md`'s part 8). It names records from the register the bundle carries, by
+  their `applied_from`, but relation 1's closed scope does not name it, so a position left off it,
+  or named there without such an `applied_from`, is review's to catch.
 - **A record a list mentions in an item's text rather than opening an item with.** Relation 1 reads
   members off item openers (§7.1), so a sentence inside an item that presents another record as
   listed — a withdrawn one among them — is not compared; review reads for it.
