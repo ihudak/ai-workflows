@@ -1909,7 +1909,14 @@ YAML_ESCAPES = {"0": "\x00", "a": "\x07", "b": "\x08", "t": "\x09", "\x09": "\x0
                 "f": "\x0c", "r": "\x0d", "e": "\x1b", " ": " ", "\"": "\"", "/": "/", "\\": "\\", "N": "\x85",
                 "_": "\xa0", "L": "\u2028", "P": "\u2029"}
 YAML_HEX_ESCAPES = {"x": 2, "u": 4, "U": 8}
-NULL_KEY = ("null",)  # a mapping key YAML reads as null: none, null, Null, NULL or ~
+NULL_KEY = ("null",)  # the one key every key whose text is null, Null, NULL or ~, and an absent key, counts as
+
+
+def _key_id(key):
+    """What a mapping key is compared by, the walkthrough's one rule for a key twice: its text -- a quoted key's as
+    its quotes and escapes give it -- so 1 and "1" are one key and yes and true two; except that a key whose text is
+    null, Null, NULL or ~, or no key at all, is NULL_KEY. A key that is not text (a collection) is itself."""
+    return NULL_KEY if key is None or (isinstance(key, str) and key in ("null", "Null", "NULL", "~")) else key
 
 
 def _yaml_text(kind, token):
@@ -1947,14 +1954,14 @@ def _yaml_text(kind, token):
 
 def _flow_twice(text):
     """Whether the flow collection `text`, as `_flow` admitted it on one line, holds a key twice in one of its
-    mappings, at any depth -- a mapping entry's key being the scalar before its `: `, or the whole entry where it has
-    none, compared as YAML reads it, a key YAML reads as null equal to every other such key, and a key that is itself
-    a collection equal to no other. Each frame is [bracket, keys seen, the entry's key so far, past its `: `]."""
+    mappings, at any depth -- a mapping entry's key being the scalar before its `:`, or the whole entry where it has
+    none, and two keys being one by _key_id's rule, by their text and never by the value YAML would resolve it to; a
+    key with an escape YAML does not define, or a collection, equals no other. A `:` at a token's start is the value
+    indicator, as _flow reads it. Each frame is [bracket, keys seen, the entry's key so far, past its `:`]."""
     stack, i, n = [], 0, len(text)
 
     def seen(frame, key):
-        if key is None or (isinstance(key, str) and key in ("null", "Null", "NULL", "~")):
-            key = NULL_KEY
+        key = _key_id(key)
         if key in frame[1]:
             return True
         frame[1].add(key)
@@ -1983,7 +1990,7 @@ def _flow_twice(text):
             if entry_done(stack[-1]):
                 return True
             i += 1
-        elif c == ":" and (i + 1 == n or text[i + 1] in " ,[]{}"):
+        elif c == ":":  # at a token's start, the value indicator, as _flow reads one
             frame = stack[-1]
             if frame[0] == "{" and not frame[3]:
                 if seen(frame, frame[2]):
@@ -2167,7 +2174,7 @@ class _WalkReader:
             raise WalkOut(n, "result")
         elif role == "capture" and key not in CAPTURE_KEYS:
             raise WalkOut(n, "capture")
-        if key in frame.keys and role != "stamp":  # a stamp's own keys are read as its form, never refused
+        if role != "stamp" and any(_key_id(k) == _key_id(key) for k in frame.keys):  # one rule with flow mappings
             raise WalkOut(n, "duplicate-key")
         if role == "root":
             if key == "walkthrough" and value.kind != "empty":
@@ -5841,21 +5848,31 @@ def case_walk_stamp_page_bounded(tmp):
 
 def case_walk_flow_duplicate_key_out(tmp):
     """A key twice in a flow mapping -- an expect's, a target's, one nested, one with no value, a preconditions
-    item's -- is out of shape, duplicate-key, at its line, as the same pair in a block mapping is; a quoted key and a
-    plain one YAML reads alike are one key. A key repeated in two mappings, or a value repeated in a list, is in
-    shape; and a stamp holding a key twice is read, out of its form, never refused."""
+    item's, a quoted key with no space after its colon -- is out of shape, duplicate-key, at its line, as the same
+    pair in a block mapping is. Keys are one by their text, never by the value YAML would resolve them to: a quoted
+    key and a plain one of the same text are one, 1 and "1" are one, and every key whose text is null, Null, NULL or
+    ~ is one, in a flow mapping or a block one; yes and true are two. A key repeated in two mappings, a value repeated
+    in a list, and quoted keys with no space after their colons are in shape; and a stamp holding a key twice is
+    read, out of its form, never refused."""
     expect2 = "    expect: { kind: visible, label: \"Item details\" }"
     target2 = "    target: { label: \"Add item\" }"
     for name, old, new in (("expect", expect2, "    expect: { kind: visible, kind: hidden }"),
                            ("quoted", target2, "    target: { label: \"Add item\", \"label\": x }"),
                            ("nested", target2, "    target: { within: { role: dialog, role: x } }"),
                            ("no-value", target2, "    target: { label, label }"),
-                           ("precondition", "  - \"catalog seeded\"", "  - { seeded: yes, seeded: no }")):
+                           ("precondition", "  - \"catalog seeded\"", "  - { seeded: yes, seeded: no }"),
+                           ("compact", expect2, "    expect: {\"kind\":visible,\"kind\":hidden}"),
+                           ("by-text", target2, "    target: { 1: a, \"1\": b }"),
+                           ("null-flow", target2, "    target: { ~: a, \"null\": b }"),
+                           ("null-block", target2, "    target:\n      null: a\n      Null: b")):
         data = _ec_example().replace(old + "\n", new + "\n")
-        _wout(tmp, data, _line_of(data, new), "duplicate-key", name)
-    for name, new in (("apart", "    target: { label: \"Add item\", within: { label: x } }"),
-                      ("in-a-list", "    target: { label: [a, a] }")):
-        _eq(_wshape(tmp, _ec_example().replace(target2 + "\n", new + "\n"), name)["shape"], "ok", name)
+        _wout(tmp, data, _line_of(data, new.split("\n")[-1]), "duplicate-key", name)
+    for name, old, new in (("apart", target2, "    target: { label: \"Add item\", within: { label: x } }"),
+                           ("in-a-list", target2, "    target: { label: [a, a] }"),
+                           ("compact-two", expect2, "    expect: {\"kind\":1,\"count\":1}"),
+                           ("compact-same-value", target2, "    target: {\"label\":Add,\"role\":Add}"),
+                           ("not-by-value", target2, "    target: { yes: a, true: b }")):
+        _eq(_wshape(tmp, _ec_example().replace(old + "\n", new + "\n"), name)["shape"], "ok", name)
     got = _wshape(tmp, _ec_example() + "stamp: { page: docs/a.md, page: docs/b.md }\n", "stamp")
     _eq((got["shape"], got["stamp"]["state"], got["stamp"]["reason"]), ("ok", "out", "form"), "stamp")
 
