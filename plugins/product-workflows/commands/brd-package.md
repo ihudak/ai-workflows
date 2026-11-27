@@ -523,18 +523,34 @@ cannot review, and they will not tell you that — they will review it anyway, b
    carries either a terminal disposition or the holding state *held for the customer*** — the
    vocabulary `/brd-interview`'s *Resolve the round* phase fixes, and the state that phase's
    append-only record **last** records at that question's address, which is what a re-tagged
-   question carrying two states at one number turns on. Any question in the *deferred*,
-   *needs grounding* or *untagged* holding state → stop, naming each one, its round, its holding
-   state and the concrete fix:
+   question carrying two states at one number turns on — **or is a `[V]` deferred only on questions
+   held for the customer**: its last state *deferred*, with the `- **Blocked-on:**` line written on
+   the line after that state (`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §9)
+   naming one or more `<round>/<position>` addresses, each a question whose last state in its own
+   round's record is *held for the customer* — one this package carries, or one an earlier bundle
+   already carried. Any other question in the *deferred*, *needs grounding* or *untagged* holding
+   state → stop, naming each one, its round, its holding state and the concrete fix:
    `BRD_PACKAGE_ROUND_UNSETTLED: N questions in <BRD-KEY>'s rounds are still deferred, needs-grounding or untagged — run /product-workflows:brd-interview <BRD-KEY> (a needs-grounding question is answered by /product-workflows:prd-ground <BRD-KEY> first).`
+   **A `[V]` this admits goes to the customer in no artifact this run writes** — no part of the
+   prompt renders a `[V]` question, and the delivery note is the customer's — and the final report
+   names each one, with the held questions it waits on, as a delivery decision waiting on the
+   customer's answers to them.
 
-   **Why *held for the customer* is admitted and the other three are not.** The design's
+   **Why *held for the customer* is admitted, with a `[V]` deferred only on it, and the other three
+   are not.** The design's
    precondition for this command is that the interview's open rounds are closed, and read literally
    that is a deadlock: a round holding a `[C]` stays open **until the answer comes back through the
    package**, or its question stops applying (`${CLAUDE_PLUGIN_ROOT}/references/interview-tagging.md` §5), and the package is what
    this command builds. So the only reading under which the route can run at all is the one taken
    here — everything the delivery team can settle is settled, and what remains is exactly the set
-   this package is being built to carry. The other three holding states are the opposite case: each
+   this package is being built to carry. **A `[V]` deferred only on questions held for the customer
+   is the same case from the delivery team's side**: what it still owes waits on exactly the answers
+   this package goes out to fetch, so refusing it would deadlock the route the same way — the
+   package carrying those questions could never be built while the `[V]` waiting on them is deferred.
+   Admitting it hands the customer nothing the delivery team owes: `/brd-interview` puts the `[V]`
+   again once those answers come back (its *Resolve the round*, *A deferred `[V]` whose wait is
+   over*). The other three holding states are the opposite case — a deferral that names no held
+   question, or names one no longer held, among them: each
    names work that is still ours, and packaging around one asks the customer to approve a position
    the delivery team has not finished taking.
 
@@ -2328,7 +2344,10 @@ full because those are the ones the customer will read; whether a second reviewe
 `[AS#n]`, `escalated-to-customer` findings, and the `[CDF#n]` counts parts 6, 8 and 11 each carry,
 `in-scope`, `conditional` and `out-of-scope` respectively; where Phase 0 step 7a's *Ship anyway*
 was taken, `Flagged code defects shipped: [CDF#n] (<record> › <what was found>), …`, naming every
-flag it shipped — plugin-internal, and in no customer artifact; **every prerequisite named under *what
+flag it shipped — plugin-internal, and in no customer artifact; every `[V]` Phase 0 step 7 admitted
+as deferred only on questions held for the customer, by its round and position, with each question
+it waits on, as a delivery decision waiting on the customer's answers to them — plugin-internal too;
+**every prerequisite named under *what
 could still move***, with whether it resolved, whether its decisions are customer-reviewed, and whether a
 package of its own was copied in — and every model id *Assemble the bundle* rule 7 left standing in
 a copied-in package, by bundled filename and line, as *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`,

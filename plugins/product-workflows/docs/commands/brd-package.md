@@ -195,8 +195,11 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   `[AS#n]` that [`/create-prd`](create-prd.md) wrote included — rather than being reported as a
   finished state it never reached.
 - **Every interview question settled, or held for the customer.** Any question still *deferred*,
-  *needs grounding* or *untagged* stops with `BRD_PACKAGE_ROUND_UNSETTLED` — see
-  [Gates](#gates) for why *held for the customer* is the one holding state this command admits.
+  *needs grounding* or *untagged* stops with `BRD_PACKAGE_ROUND_UNSETTLED` — save a delivery-team
+  `[V]` deferred only on questions held for the customer, which is admitted, never sent to the
+  customer, and named in the run's final report as waiting on their answers — see
+  [Gates](#gates) for why *held for the customer* is the one holding state this command admits,
+  with a `[V]` whose deferral waits on such questions alone.
 - **Something for the customer to decide.** No `[C]` question, no open `[AS#n]` and no `[VD#n]` at
   all stops with `BRD_PACKAGE_NOTHING_TO_REVIEW`: every question the rounds asked was settled from
   verified findings, so there is nothing in them to ask a customer. Whether that leaves the BRD
@@ -307,10 +310,14 @@ attack.
   other gate runs.
 - **Phase 0 — the register merged, the rounds settled, something to review.** All three run before
   anything else is read. The rounds gate admits exactly one holding state, *held for the customer*,
-  and refuses the other three. That reading is forced: a round holding a `[C]` stays open **until the
+  and refuses the other three — save a `[V]` deferred only on questions held for the customer,
+  whose round record names them on a `- **Blocked-on:**` line under its deferral. That reading is
+  forced: a round holding a `[C]` stays open **until the
   answer comes back through the package**, or the question stops applying, and the package is what this command builds, so requiring
-  every round to be closed would deadlock the route. The other three holding states each name work
-  that is still the delivery team's.
+  every round to be closed would deadlock the route — and a `[V]` waiting only on those answers
+  would deadlock it the same way, so it is admitted too, goes to the customer in no form, and is
+  named in the final report; [`/brd-interview`](brd-interview.md) puts it again once the answers are
+  recorded. The other three holding states each name work that is still the delivery team's.
 - **Phase 0 — a dated bundle is never rewritten.** A `bundle-<date>/` that already exists stops the
   run with `BRD_PACKAGE_BUNDLE_EXISTS`. Rewriting it destroys the only evidence of what the reviewer
   of that date was looking at, and the command cannot tell whether the existing directory was already

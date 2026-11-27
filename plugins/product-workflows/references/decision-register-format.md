@@ -757,11 +757,19 @@ Does a reversed transaction appear in the export as a row of its own?
 - **Re-puts:** none
 - **State:** applied — [VD#2], from [VD#1]
 
+### 6. [V] — [BR#4]
+
+Does the export also read the credit-note ledger the refunds service keeps, or the invoice table alone?
+
+- **Re-puts:** none
+- **State:** deferred — turns on whether one month's export covers credit notes, which question 4 asks the customer
+- **Blocked-on:** 1/4
+
 ## Account
 
 requirement defects: [DEF#3] asked
 code defects: raised [CDF#1]
-questions [V]: generated 3 + retagged in 0 = merged 0 + dropped 0 + applied 1 + table 0 + answered 1 + deferred 1 + open 0 + retagged out 0
+questions [V]: generated 4 + retagged in 0 = merged 0 + dropped 0 + applied 1 + table 0 + answered 1 + deferred 2 + open 0 + retagged out 0
 questions [C]: generated 1 + retagged in 0 = merged 0 + dropped 0 + applied 0 + table 0 + answered 0 + deferred 0 + open 1 + retagged out 0
 Status: open — waiting on deferred, held for the customer
 ````
@@ -771,8 +779,13 @@ it settles — the answer was read against the questions still open, and it sett
 line: a reversal settles as a transaction of its own, so it is a row of its own. That answer is
 `[VD#2]` in the register, `taken: applied` and `applied_from: [VD#1]`, its `argumentation` that one
 line and its `evidence: []`; were `[VD#1]` ever reopened, superseded or withdrawn, `[VD#2]` would be
-reopened with it (§4). The account counts it under `applied`, and the deferred question 3 under
-`deferred`.
+reopened with it (§4). The account counts it under `applied`, and the deferred questions 3 and 6
+under `deferred`.
+
+Question 6 waits on the customer: whether the export must read the credit-note ledger turns on
+question 4's answer, so the operator deferred it naming that question, and the write put the
+`- **Blocked-on:**` line beneath its state, the held question named by round and position. It is
+never put to the customer itself.
 
 Question 2's decision turned on a code defect, so the first write raised `[CDF#1]`, `conditional` on
 a decision of the sibling slice `EPIC-008-02`. That sibling's reconciliation then moved the decision,
@@ -780,31 +793,53 @@ and its record flagged the entry: `- **Hit:** PRD-EPIC-008-01-export/code-defect
 blocked_on names EPIC-008-02/[CD#2], which this pass superseded — needs-a-human`, under the heading
 of its pass over `customer-review-20261103.md`. A later run resumes the round at question 3, the
 first question carrying no terminal disposition, puts the flagged entry to the operator, who moves
-it to `in-scope`, and appends a line beneath question 3's last one, then four at the end of the
-file — applying the move to the log only after that write:
+it to `in-scope`, and puts question 6 again, naming question 4 as still held, which the operator
+defers once more, its wait carried forward. It appends a line beneath question 3's last one, two
+beneath question 6's, then four at the end of the file — applying the move to the log only after
+that write:
 
 ````markdown
 - **State:** decided — [VD#3]
 ````
 
 ````markdown
-code defects: re-dispositioned [CDF#1] #1 conditional → in-scope; flag answered [CDF#1] PRD-EPIC-008-02-refunds/reconciliation-20261103.md › customer-review-20261103.md
-questions [V]: generated 3 + retagged in 0 = merged 0 + dropped 0 + applied 1 + table 0 + answered 2 + deferred 0 + open 0 + retagged out 0
-questions [C]: generated 1 + retagged in 0 = merged 0 + dropped 0 + applied 0 + table 0 + answered 0 + deferred 0 + open 1 + retagged out 0
-Status: open — waiting on held for the customer
+- **State:** deferred — still turns on question 4, which the customer has not answered yet
+- **Blocked-on:** 1/4
 ````
 
+````markdown
+code defects: re-dispositioned [CDF#1] #1 conditional → in-scope; flag answered [CDF#1] PRD-EPIC-008-02-refunds/reconciliation-20261103.md › customer-review-20261103.md
+questions [V]: generated 4 + retagged in 0 = merged 0 + dropped 0 + applied 1 + table 0 + answered 2 + deferred 1 + open 0 + retagged out 0
+questions [C]: generated 1 + retagged in 0 = merged 0 + dropped 0 + applied 0 + table 0 + answered 0 + deferred 0 + open 1 + retagged out 0
+Status: open — waiting on deferred, held for the customer
+````
+
+`commands/brd-package.md`'s rounds gate admits the round now: question 6 is deferred, but every
+question its `- **Blocked-on:**` line names is held for the customer, and the package carries it.
 And `commands/brd-reconcile.md`, once the customer's answer to question 4 is confirmed, appends
-beneath that question, and at the end the closing line its *Freeze the customer decisions* phase
-writes where its answers leave every question in the round with a terminal disposition:
+beneath that question — and no closing line, since question 6 still holds the round open:
 
 ````markdown
 - **State:** answered by the customer — [CD#1]
 ````
 
+The next `commands/brd-interview.md` run finds question 6's wait over — question 4 is answered by
+`[CD#1]`, which reads `decided` and puts credit notes in the month's export — and puts it with that
+answer as its recommendation, reading the ledger too. Answered so, it appends beneath question 6,
+then four lines at the end, the last closing the round:
+
 ````markdown
-Status: closed 20261104 — question 4, the last held question, answered by [CD#1]
+- **State:** decided — [VD#4]
 ````
+
+````markdown
+code defects: none
+questions [V]: generated 4 + retagged in 0 = merged 0 + dropped 0 + applied 1 + table 0 + answered 3 + deferred 0 + open 0 + retagged out 0
+questions [C]: generated 0 + retagged in 0 = merged 0 + dropped 0 + applied 0 + table 0 + answered 0 + deferred 0 + open 0 + retagged out 0
+Status: closed 20261105 — question 6, the last open question, decided as [VD#4]
+````
+
+Its `questions [C]:` line counts nothing: a `[C]` answered by the customer enters no run's registry.
 
 The question set holding question 4, as `commands/brd-interview.md` writes it, the title line read
 by nobody:
@@ -851,6 +886,16 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
   the question's first state — save on a `[V]` reached by a re-tag or a rewrite, where the write
   that records it appends the line, reading `none`, beneath that state, and on a `[V]` a release
   wrote before the line existed, which `commands/brd-interview.md`'s tie picker gives it later.
+- **`- **Blocked-on:** <round>/<position>, …`** stands on the line after a `[V]`'s *deferred* state
+  where that deferral waits on the customer's answers to questions held for them, naming each by
+  its address; a later deferral of the same question writes its own beneath its own state, and
+  carries the earlier line's addresses onto it where it names none of its own. It is no state, and
+  is read only off a question whose last state is the *deferred* one it follows: by
+  `commands/brd-interview.md`'s *Resolve the round*, which puts the question with the customer's
+  answer as its recommendation — or records it applied, where a decision on file now settles it —
+  once every question it names is *answered by the customer* with a
+  `[CD#n]` that reads `decided`, and by `commands/brd-package.md`'s rounds gate (its Phase 0 step 7),
+  which admits the question while every question it names is *held for the customer*.
 - **`generated against:`** is written once, by the first write, and is what the next round's
   generation compares the findings with.
 - **The account lines and `Status:` go at the end of each write**: every write of the command

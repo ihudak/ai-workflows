@@ -3258,7 +3258,8 @@ So, by what holds a round open:
 Where the open round holds more than one of those, name the steps in the order
 `/product-workflows:brd-interview`'s `BRD_INTERVIEW_ROUND_STILL_OPEN` remedy fixes — the grounding
 pass, then the resume, then the package — since `/product-workflows:brd-package` refuses a round
-still holding a *deferred*, *needs grounding* or *untagged* question (`BRD_PACKAGE_ROUND_UNSETTLED`).
+still holding a *deferred*, *needs grounding* or *untagged* question (`BRD_PACKAGE_ROUND_UNSETTLED`),
+save a `[V]` deferred only on questions held for the customer, which it admits (its Phase 0 step 7).
 That state is reachable here: a `--sent` run, for one, reconciles a review no package gate of this
 route checked.
 

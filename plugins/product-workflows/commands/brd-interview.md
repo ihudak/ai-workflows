@@ -111,18 +111,23 @@ them is.
    someone" has no route through this command.
 5. **Every prompt this command raises is enumerated, and only two of them carry questions from the
    question set.** They are: the `SPECS_PATH` escalation in *Resolve inputs and gate the grounded
-   BRD*; the round re-open cause prompt in *Resolve the round*; the `[V]` queue, with the "why"
+   BRD*, with the plain-text question its *Set SPECS_PATH* opens; the round re-open cause prompt in *Resolve the round*; the `[V]` queue, with the "why"
    prompt that follows an answer carrying no reason and the plain-text question its defer entry
    opens; the tail table's question, with the plain-text question its *Let me name the exceptions*
    opens; the code-defect offer that follows an answer of the queue, with the
    plain-text question its *Yes* opens; the re-disposition put of a `[CDF#n]` already on file; the
    end-of-sitting list's question, with the plain-text question its *Let me name the ones to
    reopen* opens; the at-budget question, with the plain-text question its *Defer the rest* opens;
-   the will-change resolution picker; the picker that offers to close an `unsourced`
+   the will-change resolution picker, with the plain-text question its *Re-base* opens; the picker that offers to close an `unsourced`
    requirement defect a verified finding settles, at the start of *Handoff*, with the plain-text
    question its *Write some of them* opens; the handoff choice; the next-step offer;
    and, in *Put each `[V]` to the operator*, the re-put tie picker for a resumed `[V]` whose `[V]`
-   tag is on file with no `- **Re-puts:**` line. Only
+   tag is on file with no `- **Re-puts:**` line. Beside any of them it may raise two more, each
+   part of the prompt it follows and adding no question of its own: the one plain-text clarifying
+   question `workflows-core:question-budget` §4 allows where a typed answer maps to no option, and
+   the one re-ask a typed name or address gets where it matches nothing listed — a deferral's held
+   `[C]`, a table's exception, a question to reopen at an end-of-sitting list, a tie picker's
+   candidate. Only
    the third and the fourth carry questions from the set — the queue one `[V]` a prompt, the table
    the `[V]`s a sitting's plan is confident of as one prompt, and neither anything but a `[V]` —
    and the "why" prompt inside the third asks why the
@@ -962,15 +967,20 @@ the round record*), and where the two disagree the dispositions win.
   `BRD_INTERVIEW_ROUND_STILL_OPEN: <BRD-KEY> cannot open round N while round <open> is open — it still holds <each holding state a question in it is in>. <remedy> A new round opens once every round is closed.`
   `<remedy>` names one step per holding state the round holds, every one that applies, since each
   moves only by its own run. A round can hold any of four holding states (the table in *Terminal
-  dispositions and holding states*):
+  dispositions and holding states*), and a deferral takes one of two steps:
   - *needs grounding* → `Ground the questions no finding bears on with '/product-workflows:prd-ground <BRD-KEY>'.`;
-  - *deferred* or *untagged* — or *needs grounding*, once grounded → `Resume round <open> with '/product-workflows:brd-interview <BRD-KEY>'.` — the operator answers a deferred question there, an untagged one is rewritten there, and a grounded one is answered there;
-  - *held for the customer* → `Package the held questions with '/product-workflows:brd-package <BRD-KEY>', and record the customer's answers with '/product-workflows:brd-reconcile <BRD-KEY> @<review-file>'.` — no run of this command can close such a question.
+  - *deferred* — save the last case below — or *untagged* — or *needs grounding*, once grounded → `Resume round <open> with '/product-workflows:brd-interview <BRD-KEY>'.` — the operator answers a deferred question there, an untagged one is rewritten there, and a grounded one is answered there;
+  - *held for the customer* → `Package the held questions with '/product-workflows:brd-package <BRD-KEY>', and record the customer's answers with '/product-workflows:brd-reconcile <BRD-KEY> @<review-file>'.` — no run of this command can close such a question;
+  - *deferred*, on a `[V]` whose `- **Blocked-on:**` line names only questions held for the
+    customer (*A deferred `[V]` whose wait is over*, below) → the *held for the customer* step, then
+    `Resume round <open> with '/product-workflows:brd-interview <BRD-KEY>' once those answers are recorded.` — the package admits such a question, and it waits on what the package carries.
 
-  **Where round `<open>` holds more than one, name the steps in that order, the resume once.** The
-  order is forced: `/product-workflows:brd-package`'s rounds gate (its Phase 0 step 7) refuses a
-  BRD while any question is *deferred*, *needs grounding* or *untagged*, so the package can only
-  follow the grounding pass and the resume.
+  **Where round `<open>` holds more than one, name the steps in that order, the resume once before
+  the package, and once more after the reconciliation only for a `[V]` deferred on held
+  questions.** The order is forced: `/product-workflows:brd-package`'s rounds gate (its Phase 0
+  step 7) refuses a BRD while any question is *deferred* — save a `[V]` deferred only on questions
+  held for the customer — *needs grounding* or *untagged*, so the package can only follow the
+  grounding pass and the resume.
   Nothing else here forbids two open rounds at once: a `--round N` re-open of a closed round while a
   later one is open is deliberate (the round-1 test below, and *Next steps*' `defects-unasked`).
 
@@ -1046,15 +1056,18 @@ Carry the resolved round number for the whole run. Every decision, assumption an
 records is stamped with it.
 
 **A deferred `[V]` whose wait is over** (`workflows-core:question-budget` §8). A deferral may name
-the held `[C]`s it waits on, on a `- **Blocked-on:**` line written under its *deferred* state
-(*Put each `[V]` to the operator*). For each `[V]` of the round this run works whose last state is
-*deferred* and carries that line, read each `<round>/<position>` the line names in the round
+the held `[C]`s it waits on, on a `- **Blocked-on:**` line written on the line after its *deferred*
+state (*Put each `[V]` to the operator*; `decision-register-format.md` §9). For each `[V]` of the
+round this run works whose last state is *deferred* and carries that line, read each
+`<round>/<position>` the line names in the round
 records on file: the `[V]` is **unblocked** where every one of them is a `[C]` whose last state is
 *answered by the customer* naming a `[CD#n]` that `decisions.md` holds, no torn write
 (`decision-register-format.md` §8), reading `decided` — the customer's answer, frozen. Print each
 unblocked `[V]` now, its address with each `[C]` it waited on and that `[CD#n]`'s `chosen`, and hold
 the set: *Put each `[V]` to the operator* puts each with that customer answer as its
-recommendation. A deferred `[V]` that is not unblocked — some `[C]` it names still held, or
+recommendation — unless a decision on file now settles it, that `[CD#n]` among them, when the
+question registry records it applied before it is put (*Tag every question*, *Then merge*, or a
+sitting's plan), and the end-of-sitting list shows it. A deferred `[V]` that is not unblocked — some `[C]` it names still held, or
 answered by no `[CD#n]` the register holds `decided` — is put again as any deferred question is,
 its prompt naming each `[C]` it still waits on. Nothing here is written: the question stays
 *deferred* until it is answered.
@@ -1973,8 +1986,10 @@ ends when `next` prints no
 `next` still prints one (*At the budget*, below); and where its end-of-sitting list reopens a
 question, or the operator goes on at its budget, the next sitting opens. Its number is fact `p6-sitting`, `1` where unset — set to the
 next number as each new sitting opens; where the run folder is unavailable, the run holds it — and
-every event this phase records in the registry carries `--sitting <it>`. A resumed run opens the
-sitting that fact names, and never puts an earlier sitting's table or at-budget question.
+every event this phase records in the registry carries `--sitting <it>`, save *Defer the rest*'s,
+which carry the number of the sitting that ended at its budget (*At the budget*). A resumed run
+opens the sitting that fact names, once it has settled the end of any earlier sitting that ended at
+its budget (*At the budget*), and never puts an earlier sitting's table.
 
 **What a sitting has spent** is fact `p6-spent-<sitting>`, `0` where unset, set one higher after
 each prompt that counts — each `[V]` picker put, and the sitting's table. No other prompt of this
@@ -2080,8 +2095,11 @@ outside the skip set**, and never for one that puts a record again — its `- **
 the tie picker's answer, naming one: such a question is put to the person who answers it and closed
 no other way (*Tag every question*, *The question registry*) — nor for one *Resolve the round*
 found unblocked, which is put singly with the customer's answer as its recommendation (*A deferred
-`[V]` whose wait is over*). A row the planner wrote for any other question is left out, and that
-question is put singly in its turn. Show the rows kept, in the plan's order, each as its
+`[V]` whose wait is over*). **Nor is a row kept whose reason fails `decision-register-format.md`
+§2's sufficiency test** (*Then take the argumentation*, below) — a restatement of its answer, "to
+be filled in later", a name — since accepting the row records that reason as the decision's
+argumentation. A row the planner wrote for any other question, or with such a reason, is left out,
+and that question is put singly in its turn. Show the rows kept, in the plan's order, each as its
 question's address, its text as the rows file holds it, the answer the row puts forward and that
 answer's reason:
 
@@ -2144,8 +2162,9 @@ phase carries more than one. The prompt carries, in this order:
 3. **The options**, listed in prose above the array (below), each with what it does in one short
    line, which is also its description in the array: an option — "Recorded as a delivery-team
    decision, a [VD#n], with its reason as the argumentation."; *Defer this question* — "Nothing is
-   decided: the question stays open in this round with your reason, a later run puts it again, and
-   the package waits until it is answered."
+   decided: the question stays open in this round with your reason, and a later run puts it again.
+   The package waits until it is answered, unless it waits only on questions held for the
+   customer."
 4. **The recommendation** — the option this run would take, where one is safe to take: the
    strongest option, its marker reading `(Recommended — <why>)` (below), `<why>` one line written
    to the sufficiency test under *Then take the argumentation*, since choosing the option records it
@@ -2192,7 +2211,9 @@ shows what was actually on the table.
 other words kept as the reason: words choosing an entry of the array, or an option the prose above
 lists, are that option; words naming an option nobody weighed are that option, which joins
 `options_considered` as above; words saying it cannot be answered yet are *Defer this question*,
-their reason the deferral's; words to stop are an abort (below). One clarifying question, in plain
+their reason the deferral's, so the deferral's plain-text question then asks only its held-`[C]`
+half (*Deferring is a recorded holding state*, below), and nothing where those words already name the held `[C]`s, or say it
+waits on none; words to stop are an abort (below). One clarifying question, in plain
 text, is asked only where the text can be read as none of these, and **the same dialog is never
 put twice**: a question whose typed answer was read is not put again.
 
@@ -2340,13 +2361,21 @@ where it was raised (the *Generate the round's question set* phase fixes that), 
 in *Resolve the round* returns to it. A round whose remaining questions are all deferred is an open
 round with work left, and is reported as one. **A deferral may name the held `[C]`s it waits on**
 (`workflows-core:question-budget` §8): the same plain-text question asks, where the answer waits on
-the customer's answer to questions held for them, which ones, by round and position (`2/7`). Each
+the customer's answer to questions held for them, which ones, by round and position (`2/7`),
+listing as candidates the open `[C]`s of the registry that name a `[BR#n]` this question names —
+any other held `[C]` may be named too. A typed answer read as *Defer this question* has given its
+reason, so this question then asks only its held-`[C]` half, and nothing where the typed words name
+them or say it waits on none. Each
 address given is resolved against the registry's open `[C]` questions — held for the customer,
 carried or not — and one naming none of them is asked about once more; those resolved are written
-under the question's *deferred* state as `- **Blocked-on:** <round>/<position>, …` (*Write the
+on the line after the question's *deferred* state as `- **Blocked-on:** <round>/<position>, …` (*Write the
 register and the round record*), and once each carries the customer's answer, a later run puts the
-question with that answer as its recommendation (*Resolve the round*, *A deferred `[V]` whose wait
-is over*). A deferral naming none writes no such line. **This is the defer entry of the picker
+question with that answer as its recommendation, save where a decision on file now settles it
+(*Resolve the round*, *A deferred `[V]` whose wait
+is over*). **A deferral naming none carries forward the wait it had**: where the question's last
+state on file is a deferral with a `- **Blocked-on:**` line, that line's addresses are written
+under the new deferral too, so a re-deferral never loses what the question waits on; a deferral
+naming none, of a question that carried no such line, writes none. **This is the defer entry of the picker
 above, and the at-budget question's *Defer the rest* (below), and only those two**: *The will-change rule* phase's *Defer it until the prerequisite ships* resolves a
 question that was answered, records the wait on the `[VD#n]` rather than on the question, and keeps
 no round open (that phase says so). **An abort — the harness's free-text option, since the array
@@ -2384,8 +2413,9 @@ acted on as though just given. Each tie picker is recorded under gate
 number), the end-of-sitting list's question under gate `p6-end-<sitting>`, with the plain-text
 question its second option opens under `p6-end-<sitting>.which`, the tail table's question under
 gate `p6-table-<sitting>`, with the plain-text question its second option opens under
-`p6-table-<sitting>.which`, and the at-budget question under gate `p6-budget-<sitting>`, with the
-reason its third option asks for under `p6-budget-<sitting>.why` — each shown text built from the
+`p6-table-<sitting>.which`, and the at-budget question under gate `p6-budget-<n>`, `<n>` the
+sitting that ended at its budget, with the
+reason its third option asks for under `p6-budget-<n>.why` — each shown text built from the
 files, the registry, `sitting-list`'s output and the table's rows file in the order this phase fixes, so a resumed run
 builds the same bytes and reuses the answer. **An abort is never recorded**, so a resumed run puts
 that question again rather than stopping; nor is *Stop here and continue later*, which moves the
@@ -2405,10 +2435,12 @@ written as they are given*), before the next prompt is shown:
   `{"qid": …, "event": "answered", "decision": <its [VD#n]>, "answer": <its chosen>, "reason": <its argumentation>}`.
   A question whose file stands and that the registry still records open was decided by a session
   that stopped before this call: it is recorded from the file, and nothing is put.
-- **A deferral**: where it names held `[C]`s, their addresses first, one a line, with
+- **A deferral**: where it names held `[C]`s, or carries a `- **Blocked-on:**` line forward
+  (*Deferring is a recorded holding state*, above), their addresses first, one a line, with
   `put <folder> 'scratch/p6/blocked-on/<round>-<position>.txt' --from -`, the address in lower
   case — a resumed run reads them from there — or held by the run where the run folder is
-  unavailable; then `record --sitting <the sitting>`, its event
+  unavailable; then `record --sitting <the sitting>` — *Defer the rest*'s with the sitting that
+  ended (*At the budget*) — its event
   `{"qid": …, "event": "deferred", "reason": <the reason given>}`.
 - **The rows the table confirms**: as *The tail table* says, above.
 - **A re-disposition and a tie picker's answer** are held for the register phase, as above; the
@@ -2475,43 +2507,61 @@ questions it might have closed stay open, to be asked.
    matches.
 
 **At the budget** (`workflows-core:question-budget` §3). Once the sitting has spent its budget and
-`next` still prints a `[V]` of the round this run works outside the skip set, the sitting ends:
-its end-of-sitting list comes first (below), and then, where such a `[V]` still remains, this
-question, gate `p6-budget-<sitting>`, `<sitting>` the sitting that ended. Print before it, on a
-line of its own kept out of its shown text, how many such `[V]`s remain, `<k>`; its shown text is
-the question and the array, each option with its description below:
+`next` still prints a `[V]` of the round this run works outside the skip set, the sitting ends.
+**Set fact `p6-ended-<n>` to `budget`** first, where it is unset, `<n>` the number of the sitting
+that ended — the number this question and its answer use throughout, whatever `p6-sitting` reads by
+then, since an end-of-sitting reopen moves `p6-sitting` on before this question is put. Its
+end-of-sitting list comes next (below), and then, where such a `[V]` still remains, this question,
+gate `p6-budget-<n>`; where none remains, set `p6-ended-<n>` to `done` and go on to *Hold every
+`[C]`*. Print before the question, on a line of its own kept out of its shown text, how many such
+`[V]`s remain, `<k>`; its shown text is the question and the array, each option with its
+description below:
 
 ```
-Sitting <sitting> has reached its budget of <budget> questions, and every answer given so far is kept. How do you want to go on?
+Sitting <n> has reached its budget of <budget> questions, and every answer given so far is kept. How do you want to go on?
 choices: ["Continue with the next sitting now (Recommended)", "Stop here and continue later", "Defer the rest, with one reason (you'll be prompted)"]
 ```
 
 **Each option carries this description**, `<budget>` the budget in force:
 - *Continue with the next sitting now* — "Asks up to <budget> more, in the order the rest are ranked. Every answer so far is kept, and the register is written once the walk ends."
 - *Stop here and continue later* — "Ends this run; nothing it decided is written to the BRD folder yet. Running the command again resumes at the next question, every answer so far kept." — and, where the run folder is unavailable, "Ends this run; nothing it decided is written. This run keeps no run folder, so the next run puts again every question this run answered." in its place.
-- *Defer the rest, with one reason* — "Records every question still to ask in this round as deferred, with the one reason you give: the round stays open, a later run puts each again, and the package waits until they are answered."
+- *Defer the rest, with one reason* — "Records every question still to ask in this round as deferred, with the one reason you give: the round stays open, a later run puts each again, and the package waits until they are answered, save one still waiting only on questions held for the customer."
 
-- ***Continue with the next sitting now*** — set fact `p6-sitting` to `<sitting>` + 1, where an
-  end-of-sitting reopen has not already set it so, and the next sitting opens, with its own plan.
+- ***Continue with the next sitting now*** — set fact `p6-sitting` to `<n>` + 1 where it reads
+  less — an end-of-sitting reopen may have set it so already — then `p6-ended-<n>` to `done`, and
+  the next sitting opens, with its own plan.
 - ***Stop here and continue later*** — never recorded, as an abort is not: set `p6-sitting` to
-  `<sitting>` + 1 first, where it does not read that already, so that a resumed run opens the next
-  sitting with its budget whole, then stop:
-  `BRD_INTERVIEW_SITTING_STOPPED: the interview stopped after sitting <sitting> of round <N>, with <k> [V] question(s) still open; every answer given is kept, and nothing this run decided is written to the BRD folder yet. Run '/product-workflows:brd-interview <BRD-KEY>' again and resume the run to go on with the next sitting.`
+  `<n>` + 1 first, where it reads less, so that a resumed run opens the next sitting with its budget
+  whole, then `p6-ended-<n>` to `done`, then stop:
+  `BRD_INTERVIEW_SITTING_STOPPED: the interview stopped after sitting <n> of round <N>, with <k> [V] question(s) still open; every answer given is kept, and nothing this run decided is written to the BRD folder yet. Run '/product-workflows:brd-interview <BRD-KEY>' again and resume the run to go on with the next sitting.`
   `<k>` is the count printed above the question. The stop takes the refusal tail and
   `run-stop-line` (*Ending early*), which keeps the folder. Where the run folder is unavailable,
   say beside the array that stopping loses this run's answers, as an abort does (above), and end
   the stop with `This run kept no run folder, so the next run puts again every question this run answered.`
   in place of its last sentence.
 - ***Defer the rest, with one reason*** — ask in plain text for the reason, gate
-  `p6-budget-<sitting>.why`; then record each `[V]` of the round this run works that is still open
-  and outside the skip set, in `next`'s order, as event `deferred` with that reason,
-  `--sitting <the sitting>`, a question the registry already records closed being skipped — a resumed
-  run's; and the walk ends, the run going on to *Hold every `[C]`*. It is never recommended and
-  never taken by default (§3): nothing over the budget is deferred but by this choice.
+  `p6-budget-<n>.why`; then record each `[V]` of the round this run works that is still open
+  and outside the skip set, in `next`'s order, as a deferral is recorded (*Each answer is
+  recorded*: its `- **Blocked-on:**` addresses first, where its last state on file carries a
+  line to carry forward), its event `deferred` with that reason and `--sitting <n>`, the sitting
+  that ended, a question the registry already records closed being skipped — a resumed run's; then
+  set `p6-ended-<n>` to `done`, and the walk ends, the run going on to *Hold every `[C]`*. It is
+  never recommended and never taken by default (§3): nothing over the budget is deferred but by
+  this choice.
 - **A typed answer is read as the option it expresses** (§4), its other words kept: a reason
   typed with words to defer the rest is that option's reason, and no reason is asked after it; one
   clarifying question, in plain text, is asked only where it maps to no option, and the same
   dialog is never put twice.
+
+**A resumed run first settles an earlier sitting that ended at its budget.** Before it opens a
+sitting or puts a question — once it has completed any interrupted reopen (*The end-of-sitting
+list*, below) — for each sitting `<n>` below the one `p6-sitting` names whose fact `p6-ended-<n>`
+reads `budget`, it takes up that sitting's at-budget question as above: an answer gate
+`p6-budget-<n>` recorded is acted on without asking — a *Defer the rest* making each deferral the
+earlier session left unmade — and the question is put where none was recorded. A sitting whose
+end-of-sitting reopen moved `p6-sitting` on before its at-budget question was answered is reached
+this way, and so is a *Defer the rest* cut off part-way; one still current is reached as the walk
+reaches its spent budget again.
 
 **The end-of-sitting list** (`workflows-core:question-budget` §10), at the end of every sitting
 and before *Write the register and the round record*: `sitting-list --sitting <the sitting>`. Where
@@ -2938,11 +2988,12 @@ the re-open and its cause. This file is what makes the round resumable: resumabi
 of the record, not of the session (`interview-tagging.md` §5), and an interrupted run resumes at the
 first question here carrying no terminal disposition — the same test, in the same words, that
 *Resolve the round* resumes on; within one run, the run folder keeps what the record does not yet
-hold (Phase 0 step 8c). **`decision-register-format.md` §9 is a worked record** — a first write, a later write
-and `/product-workflows:brd-reconcile`'s closing write, beside the question-set entry they share —
-in the layout this phase writes: each question under a `### <position>. [<tag>] — <rows>` heading,
-each state on a line of its own labelled `- **State:**` beneath it, a later state appended under the
-last, and the account and `Status:` lines each write adds at the end.
+hold (Phase 0 step 8c). **`decision-register-format.md` §9 is a worked record** — a first write, a later write,
+`/product-workflows:brd-reconcile`'s write and the write that closes the round, beside the
+question-set entry they share — in the layout this phase writes: each question under a
+`### <position>. [<tag>] — <rows>` heading, each state on a line of its own labelled
+`- **State:**` beneath it, a deferral's `- **Blocked-on:**` line on the line after its state, a
+later state appended under the last, and the account and `Status:` lines each write adds at the end.
 
 **Every question the registry closed** (*Tag every question*, *The question registry*) in a sitting
 of this run — its `sitting` 1 or more — gets its state line at its own address, in its own round's
@@ -2954,9 +3005,11 @@ record, whichever round that is:
 - dropped — `- **State:** dropped — <reason>`, the reason recorded with it;
 - confirmed in a table — `- **State:** confirmed in a table — [VD#n]`;
 - answered — `- **State:** decided — [VD#n]`, and deferred — `- **State:** deferred — <reason>`, as
-  ever; and under a deferral that named the held `[C]`s it waits on, on the next line, those `[C]`s
-  as *Put each `[V]` to the operator* resolved them, `- **Blocked-on:** <round>/<position>, …`,
-  which *Resolve the round* reads (*A deferred `[V]` whose wait is over*).
+  ever; and under a deferral that named the held `[C]`s it waits on, or carried an earlier line
+  forward, on the next line, those `[C]`s as *Put each `[V]` to the operator* holds them,
+  `- **Blocked-on:** <round>/<position>, …` (`decision-register-format.md` §9), which *Resolve the
+  round* reads (*A deferred `[V]` whose wait is over*) and `/product-workflows:brd-package`'s rounds
+  gate reads too.
 
 **A question of another round** — one this run applied, or a merge or a drop named —
 is closed in that round's record, appended after the worked round's record is written — after any
