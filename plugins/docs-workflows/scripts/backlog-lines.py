@@ -3043,10 +3043,15 @@ DV_PATH = os.path.join(HERE, os.pardir, "commands", "docs-verify.md")
 BR_PATH = os.path.join(HERE, os.pardir, "references", "docs-iteration", "backlog-run.md")
 EC_PATH = os.path.join(HERE, os.pardir, "references", "docs-audit", "evidence-contract.md")
 UB_PATH = os.path.join(HERE, os.pardir, "references", "docs-iteration", "unit-brief.md")
+WC_PATH = os.path.join(HERE, os.pardir, "agents", "walkthrough-composer.md")
 BF_LEAD = "**The line shape a backlog run reads.**"
 WALK_LEAD = "**The shape a walkthrough is read in.**"
 # The image-slot comment's opening, page text a program matches: unit-brief section 3.3's step 5 gives the comment.
 SLOT_COMMENT = "<!-- docs-image-slot: "
+# The rule for when a walkthrough step states a claim, held in two copies: unit-brief section 2.1 and
+# walkthrough-composer's Method step 3. Each copy runs from this lead to the first STATES_END after it.
+STATES_LEAD = "**A step states a claim**"
+STATES_END = "the instruction's own effect."
 # backlog-run.md's two marker programs, section 10.1's read and section 10.2's test, find the page-level marker in
 # evidence-contract section 3 by this phrase; /docs-write runs them at its Phase 0 and Phase 9, and /docs-verify at
 # its Phase 0 and its Phases 1 and 4. docs-verify.md's own marker program, which removes the marker, finds it by the
@@ -6035,6 +6040,26 @@ def case_slot_comment_pinned(tmp):
     _eq(step5.count(SLOT_COMMENT), 1, "and the opening nowhere else in that step")
 
 
+def case_states_definition_pinned(tmp):
+    """The rule for when a walkthrough step states a claim has two copies, since walkthrough-composer reads no
+    unit-brief.md: section 2.1's coverage field, which doc-writer and doc-reviewer read -- the reviewer blocks a
+    coverage entry none of whose steps states its claim -- and the composer's Method step 3, by which it builds that
+    map. Each file holds the lead once, in that place; the sentence runs from STATES_LEAD to the first STATES_END after
+    it, on one line; and the two sentences are equal, byte for byte, so one cannot be edited without the other."""
+    spans = []
+    for path, start, stop in ((UB_PATH, "\n### 2.1 ", "\n## 3. "), (WC_PATH, "\n## Method\n", "\n## Output\n")):
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+        name = os.path.basename(path)
+        _eq(text.count(STATES_LEAD), 1, "%s holds the lead once" % name)
+        at = text.index(STATES_LEAD)
+        _true(text.index(start) < at < text.index(stop), "%s holds it in its place" % name)
+        span = text[at:text.index(STATES_END, at) + len(STATES_END)]
+        _true("\n" not in span, "%s keeps the sentence on one line" % name)
+        spans.append(span)
+    _eq(spans[0], spans[1], "unit-brief section 2.1 and walkthrough-composer state the rule alike")
+
+
 def case_visibility_marker_pinned(tmp):
     """The visibility marker is page text three programs match: backlog-run.md's section 10.2 program, which
     /docs-write runs at its Phase 9 and /docs-verify at its Phases 1 and 4, and docs-verify.md's marker program and
@@ -6113,7 +6138,7 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_id_class_bad_args, case_walk_stamp_page_bounded, case_walk_flow_duplicate_key_out,
          case_walk_too_large_and_overflow, case_walk_whitespace_is_no_text, case_constants_assigned_once,
          case_export_blob_line_pinned, case_walk_many_keys_read_in_time, case_walk_shape_paragraph_pinned,
-         case_slot_comment_pinned,
+         case_slot_comment_pinned, case_states_definition_pinned,
          case_visibility_marker_pinned,
          case_shape_paragraph_pinned, case_marker_phrase_pinned)
 
