@@ -1025,8 +1025,10 @@ key: <the key of the BRD that owns the source document>
 `kind: brd-defect-log` names this document, a kind `workflows-core:addressing` §4 passes over, as
 §1.1 says of the link log. `id` is the entry's `[DEF#n]`; `class` one of §3's six; `raised on` the
 **one** `[BR#n]` the defect was raised on; `names` the counterparts a `conflict` or `duplicate`
-names, empty for every other class; `reason` the confirmed reason, as `/brd-intake` Phase 4's
-operator confirmed or edited it; `resolution` one of the four values above. **A log holding no
+names, empty for every other class; `reason` the reason `/brd-intake` Phase 4 logged — the
+candidate's own where the operator confirmed it, the narrowed one where the operator narrowed it,
+and, on an entry the operator sent on unreviewed, the candidate's own with
+` — not reviewed at intake` after it; `resolution` one of the four values above. **A log holding no
 entry** is its frontmatter, its title and the table's header. **An entry written before this layout
 was fixed** records every row it was recorded against in one list: a reader takes the first of them
 as its `raised on` and every other as its `names`, and `/brd-intake` Phase 4 writes it that way when

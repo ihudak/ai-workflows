@@ -155,13 +155,16 @@ decides what is asked **first**, never how much is asked.
 **`/brd-intake` is the one consumer this rule is stated differently for, and it
 is a different shape rather than an exception to be tidied away.** It runs no
 grill: what it puts to a human is Phase 4's walk over the defect candidates
-`brd-reader` returned, and that walk visits every candidate regardless of
-ranking. So ranking there reorders the walk and removes nothing — and that
-command additionally lets a `docs_challenges` entry be **raised** as an
-additional defect candidate, behind the same human confirmation every other
-candidate passes through. Raising is not "adding a question": nothing is asked
-that a person does not confirm, and the ceiling the no-append rule protects is a
-*question budget*, which a walk with no budget does not have. Read the no-append
+`brd-reader` returned, and that walk accounts for every candidate regardless of
+ranking — asked, listed, tabled, sent on, or left open for a later sitting, never
+dropped to fit a sitting's budget (`workflows-core:question-budget` §2–§3). So ranking there
+orders the walk's queue and removes nothing — and that command additionally lets
+a `docs_challenges` entry be **raised** as an additional defect candidate, behind
+the same human confirmation every other candidate passes through. Raising is not
+"adding a question" in the sense the no-append rule guards: the walk's budget
+bounds one sitting, never how many candidates the walk takes, so a raised
+candidate moves the last-ranked one to a later sitting and drops none,
+where a capped grill's ceiling would leave a question out. Read the no-append
 rule as binding on a capped or convergent grill, which is what it was written
 for. Ranking also never pulls a question ahead of its prerequisites: what is
 askable now is settled by dependency (`${CLAUDE_PLUGIN_ROOT}/references/grilling-technique.md`),
