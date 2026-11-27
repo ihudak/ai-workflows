@@ -188,7 +188,15 @@ The interview runs in numbered rounds, and rounds are **resumable**.
 **A round closes only when every question in it has a disposition.** A disposition is what happened
 to the question, not merely that someone looked at it: answered from findings (`[G]`), decided by
 the delivery team with argumentation (`[V]`), answered by the customer through the review package
-(`[C]`), re-tagged under §3, or split under §4. A split question's own disposition is *split*,
+(`[C]`), re-tagged under §3, or split under §4 — or, for a question a person would otherwise be
+asked, closed without asking it, by the rules of `workflows-core:question-budget`: *applied*, a
+`[V]` an earlier answer or a decision on file determines, recorded as a `[VD#n]` naming the
+decision it follows (§8 there); *merged* into another question of its tag that asks the same
+substance, whose answer it takes (§5 there); *dropped*, with its reason, where no answer to it would
+change what gets built, what the customer is asked or a recorded decision (§2 there); or *confirmed
+in a table*, a `[V]` whose recommended answer was accepted as a table's row (§9 there). Each of
+those leaves its trace in the round record, so no question disappears without one. A split
+question's own disposition is *split*,
 naming the parts it became; the parts carry their own dispositions in whichever round can settle
 them, and the round holding a part is not necessarily the round that held the original.
 

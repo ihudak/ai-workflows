@@ -75,6 +75,8 @@ conditional_on: <BRD-KEY>/<decision-id>   # omitted unless the decision depends 
 status: open | decided | reopened | superseded | withdrawn
 consumed_by: none | [<any of PRD, ARD, specification, in that order>]
 round: 2
+taken: asked | applied | table          # omitted reads as asked
+applied_from: <decision-id>             # only where taken: applied
 ```
 
 | Field | Notes |
@@ -91,7 +93,9 @@ round: 2
 | `conditional_on` | omitted unless the decision depends on a prerequisite — §5 |
 | `status` | one of the five in §3 |
 | `consumed_by` | the same field, values, starting-at-`none` rule and add-never-replace rule as `workflows-core:grounding-format` §2, applied to a decision instead of a finding — save §4's return to `none` where a decision's position is replaced |
-| `round` | the interview round that produced the decision, per `references/interview-tagging.md` §5. **Omitted where the decision came from no round** — a `[CD#n]` answering an `[AS#n]` that itself carries none (§7) is the case that occurs, and inventing a value there would put it into the set `/brd-package` derives the rounds from. That is the only route to a round-less `[VD#n]`/`[CD#n]`: one taken in a round always carries it |
+| `round` | the interview round that produced the decision, per `references/interview-tagging.md` §5 — on a record taken `applied`, the round of the question it closed, whose record names it (§8). **Omitted where the decision came from no round** — a `[CD#n]` answering an `[AS#n]` that itself carries none (§7) is the case that occurs, and inventing a value there would put it into the set `/brd-package` derives the rounds from. That is the only route to a round-less `[VD#n]`/`[CD#n]`: one taken in a round always carries it |
+| `taken` | how the decision was taken (`workflows-core:question-budget` §8): `asked` — its question was put and answered; `applied` — no one was asked, because the decision `applied_from` names determines it; `table` — confirmed as a row of a table (`workflows-core:question-budget` §9). **Omitted, it reads `asked`**, so every record written before the field existed stays valid; `commands/brd-interview.md` writes it on every `[VD#n]` it records first |
+| `applied_from` | the one decision a record taken `applied` follows, the whole of its basis — a decision of this register, by its bare id. **Only where `taken: applied`**, and omitted otherwise. That decision reopened, superseded or withdrawn reopens this record (§4). An applied record writes `evidence: []`: it rests on no finding of its own, so §6 never fires on it. A decision of another BRD's register would be named in the cross-BRD form §5 uses, `<BRD-KEY>/[VD#n]` or `<BRD-KEY>/[CD#n]`, which no writer uses until `references/bundle-packaging.md` §6.2 lists this field among those its citation check reads as qualified |
 
 **Which prefix a decision gets is fixed by the tag of the question it answers, not by who typed it.**
 A question tagged `[V]` produces a `[VD#n]`; a question tagged `[C]` produces a `[CD#n]`
@@ -114,7 +118,7 @@ resolve each one `resolved-by: <SLICE-KEY>/[CD#n]` (`references/brd-format.md` �
 rather than from a reading of the customer's prose.
 
 `options_considered` and `chosen` do not apply to an `[AS#n]`, which is not a choice; §7 accounts
-for all thirteen of these fields on an assumption record, one by one.
+for all fifteen of these fields on an assumption record, one by one.
 
 ### 1.1 How a record is serialised
 
@@ -219,6 +223,19 @@ Nothing else. Not a later reader's discomfort, not a fresh idea, not a review pa
 decided differently. A decision the register holds as `decided` is settled until one of those two
 arrives.
 
+**A cause reaches every decision applied from the one it moves.** A record taken `applied` (§1)
+rests on the decision its `applied_from` names and on nothing else, so where that decision is
+reopened, superseded or withdrawn — by one of the two causes above, or by this rule — the same cause
+reaches the record applied from it: **reopening, superseding or withdrawing a decision reopens every
+decision whose `applied_from` names it, and every decision applied from those in turn**, in its own
+register or, through the cross-BRD form, in another BRD's. A record already `reopened`, or
+terminal, does not move again. Its `Reopened <YYYYMMDD>:` paragraph names the decision its
+`applied_from` names and how that decision moved, whose own record names the finding or the
+customer decision behind it. A decision never stands on a basis that is gone.
+`commands/brd-interview.md` applies the rule in the register write that moves a record of its own
+register, to the records of that register applied from it, and, in the next round it opens, to a
+record of its register whose basis another run moved (its *A decision reopened elsewhere*).
+
 **The reopening records its cause**, naming the finding or the customer decision that triggered it.
 A `reopened` record whose cause is unnamed is indistinguishable from someone simply changing their
 mind, and once one of those exists nobody can trust that the rest were caused either. The cause is
@@ -228,7 +245,7 @@ and the original `chosen` stands.
 
 **The cause is written in the record's `argumentation`**, as a closing paragraph appended beneath
 what the field already holds and opening `Reopened <YYYYMMDD>:` — never in place of the reasoning
-the re-decision has to argue against. None of §1's thirteen fields is a cause, and `argumentation`
+the re-decision has to argue against. None of §1's fifteen fields is a cause, and `argumentation`
 is the one that already answers *why*. On a `[CD#n]`, whose `argumentation` is the customer's own
 reason quoted, the paragraph follows the quotation and leaves it exactly as written; its opening
 marker is what tells the plugin's words from the customer's (`references/bundle-packaging.md` §6.3).
@@ -275,7 +292,7 @@ re-grounds it `will-change` again — the ground as it stood. A successor that h
 was decided on moved with it. A record whose successors confirm is not reopened — the ground was
 re-derived and came back as it stood, which is no cause.
 
-**This section names one set — a record's *decision fields*, all thirteen §1 defines — and fixes
+**This section names one set — a record's *decision fields*, all fifteen §1 defines — and fixes
 what each of them does when a record already on file is written again.** A re-decision and a
 reversion both write in place, against the record's own id. **A file that needs to name the fields
 of a decision record cites this set, never part of it**: an enumeration written somewhere else is
@@ -283,10 +300,12 @@ an enumeration that omits whichever field mattered on the day it was read, which
 stale-reference sweep came to leave `settles` — the one structured field holding a `[DEF#n]` —
 outside a rule built for exactly that id.
 
-**Seven are written afresh** — `statement`, `options_considered`, `chosen`, `evidence`, `defects`,
-`conditional_on` and `status` — each under the rule §1 gives it, and `evidence` and `conditional_on`
-under §6's will-change rule as well; on an `[AS#n]`, only those of them §7 admits, an assumption
-having no `options_considered` and no `chosen`. **`argumentation` is appended to and never
+**Nine are written afresh** — `statement`, `options_considered`, `chosen`, `evidence`, `defects`,
+`conditional_on`, `status`, `taken` and `applied_from` — each under the rule §1 gives it, and
+`evidence` and `conditional_on` under §6's will-change rule as well, so a record re-decided by an
+answer put to the operator reads `taken: asked` and loses its `applied_from`; on an `[AS#n]`, only
+those of them §7 admits, an assumption having no `options_considered`, no `chosen`, no `taken` and
+no `applied_from`. **`argumentation` is appended to and never
 rewritten**: what stands in it stays, and both writes go after it. **`round`, on these two writes
 and on no other**, takes the round that produced the position now on record — on a re-decision, the
 round that re-decided it; on a reversion, the round of the position being restored, a propagation
@@ -301,7 +320,7 @@ what §1's starting-at-`none` rule is for, and what lets `commands/create-prd.md
 `commands/create-ard.md` and `commands/specify.md` report the record as unconsumed at their own
 altitude. **`altitude` stays**: re-deciding moves the answer, never the level the question sits at.
 **`id` and `settles` stand** — the record's identity, and the `[DEF#n]` the `[C]` question it
-answers was raised by, which the answer's being re-taken does not change. That is all thirteen.
+answers was raised by, which the answer's being re-taken does not change. That is all fifteen.
 
 A **re-decision**, taken by the run that reopened the record or by a
 later one, writes its argumentation after the `Reopened` paragraph: why the change moves the answer,
@@ -455,9 +474,9 @@ something — rests on exactly what it rested on before, minus the record of it.
 ## 7. Assumptions — `[AS#n]`
 
 An `[AS#n]` records **something the package asserts without evidence.** It is not a decision: nothing
-was chosen, so nothing was weighed. It uses the same thirteen fields as §1, and because `/brd-package`
+was chosen, so nothing was weighed. It uses the same fifteen fields as §1, and because `/brd-package`
 puts every open one of them in front of the customer (below), which fields apply is not a
-detail an author may settle for themselves. All thirteen are accounted for here.
+detail an author may settle for themselves. All fifteen are accounted for here.
 
 | §1 field | On an `[AS#n]` |
 |---|---|
@@ -474,6 +493,8 @@ detail an author may settle for themselves. All thirteen are accounted for here.
 | `status` | **Narrowed vocabulary**, from §3's five: an `[AS#n]` reaches `open`, `superseded` and `withdrawn` only. `decided` cannot apply — an assumption is never settled by being chosen; when the customer confirms it, the confirmation is a `[CD#n]` and the assumption is `superseded` by it (below). `reopened` follows `decided`, so it is unreachable too |
 | `consumed_by` | **As-is**, with the same starting-at-`none` rule |
 | `round` | **As-is where there is one, and omitted where there is not.** An assumption recorded in an interview round carries that round. One recorded outside any round — `/create-prd` writing a customer-authority gap at PRD authoring (below) — **omits the field entirely**, per `workflows-core:grounding-format` §2.1's rule that a field which does not apply is omitted rather than written empty. It is not given the last closed round's number, which would claim it was in front of whoever answered that round, and not given an invented value, which `/brd-package` would read as a round and demand a round record for |
+| `taken` | **Not applicable.** An assumption is asserted, never asked, applied or confirmed in a table as an answer to a question; a customer who confirms one does so in a `[CD#n]` |
+| `applied_from` | **Not applicable**, for the same reason: no decision determines an assumption, which rests on nothing by construction (`evidence`, above) |
 
 **`evidence` is the field that carries the why-no-evidence explanation.** This is the same
 discipline `workflows-core:grounding-format` §2 applies to a finding asserting an absence — an
@@ -562,9 +583,11 @@ same way, by the decision that contradicts it, and everything that was built on 
 
 `commands/brd-interview.md` writes a round's deliverables in one phase, *Write the register and the
 round record*, and in one order: `code-defect-log.md`, then `decisions.md`, then
-`interview/customer-questions.md`, then `interview/round-<N>.md` **last** — the log first, so a
-counted decision never cites a `[CDF#n]` that is on no file. **The round record is the commit
-point**: a round's deliverables count only once its record names them. Two writes sit outside that
+`interview/customer-questions.md`, then `interview/round-<N>.md` **last** — after it only the
+record of each other round one of whose questions the run closed without asking, which names the
+`[VD#n]` it applied there — the log first, so a counted decision never cites a `[CDF#n]` that is on
+no file. **The round record is the commit point**: a round's deliverables count only once its
+record names them. Two writes sit outside that
 order, each keyed to the record so that no interruption can falsify it: a **baseline** line,
 appended to a round record that predates the lines below before anything new is written, and each
 **re-disposition** of a `[CDF#n]`, applied to the log only **after** the round record names it. A run that stops
@@ -579,7 +602,7 @@ means:
 
 | Item | Stamped with round N by | Named by round N's record where |
 |---|---|---|
-| a `[VD#n]` whose `argumentation` carries no `Reopened` paragraph | its `round: N` | a question in the record carries the state *decided* naming that id |
+| a `[VD#n]` whose `argumentation` carries no `Reopened` paragraph | its `round: N` | a question in the record carries the state *decided*, *applied* or *confirmed in a table* naming that id |
 | an `[AS#n]` | its `round: N` | the record exists: an assumption is recorded only by the run that generates its round (`commands/brd-interview.md`, *Generate the round's question set*), and that run's write of the record is its first |
 | a `[CDF#n]` (`references/code-defect-log-format.md`) | its `round: N` | one of the record's `code defects:` lines names it raised, or its `code defects on file:` baseline line lists it; or a record that is not itself a torn write cites it in `defects`. A record carrying neither line was written before both existed, and names every `[CDF#n]` of its round — no run that writes to such a record leaves it so (the baseline, below) |
 | an entry in `interview/customer-questions.md` | its heading, `## Round <N>, question <position>` | the question at `<position>` carries the tag `[C]` in its last recorded state — *held for the customer*, or *answered by the customer* |
@@ -591,7 +614,8 @@ means:
   it, so no rule may remove it. A re-decision a stopped run wrote onto it stands and is counted:
   what it replaced survives only in `argumentation` (§4) and cannot be restored. A reopen a stopped
   run wrote stands too, and the question that run held for it, never on a counted record, is put
-  again by `commands/brd-interview.md`'s *A decision reopened elsewhere*.
+  again by `commands/brd-interview.md`'s *A decision reopened elsewhere* — save where that run is
+  resumed from its run folder, which completes the write it began, round record included.
 - **A `[CD#n]`.** `commands/brd-reconcile.md` mints it by its own rules, and a customer's answer is
   never removed by a rule about another command's interruption.
 - **A record carrying no `round`** (§1, §7), and an entry whose heading has not that form.
@@ -725,12 +749,29 @@ Which invoices should one month's export cover?
 
 - **State:** held for the customer — `interview/customer-questions.md`, Round 1, question 4
 
+### 5. [V] — [BR#2]
+
+Does a reversed transaction appear in the export as a row of its own?
+
+- **Re-puts:** none
+- **State:** applied — [VD#2], from [VD#1]
+
 ## Account
 
 requirement defects: [DEF#3] asked
 code defects: raised [CDF#1]
+questions [V]: generated 3 + retagged in 0 = merged 0 + dropped 0 + applied 1 + table 0 + answered 1 + deferred 1 + open 0 + retagged out 0
+questions [C]: generated 1 + retagged in 0 = merged 0 + dropped 0 + applied 0 + table 0 + answered 0 + deferred 0 + open 1 + retagged out 0
 Status: open — waiting on deferred, held for the customer
 ````
+
+Question 5 was put to no one. Once question 2 was answered — `[VD#1]`, each transaction recorded as
+it settles — the answer was read against the questions still open, and it settled question 5 in one
+line: a reversal settles as a transaction of its own, so it is a row of its own. That answer is
+`[VD#2]` in the register, `taken: applied` and `applied_from: [VD#1]`, its `argumentation` that one
+line and its `evidence: []`; were `[VD#1]` ever reopened, superseded or withdrawn, `[VD#2]` would be
+reopened with it (§4). The account counts it under `applied`, and the deferred question 3 under
+`deferred`.
 
 Question 2's decision turned on a code defect, so the first write raised `[CDF#1]`, `conditional` on
 a decision of the sibling slice `EPIC-008-02`. That sibling's reconciliation then moved the decision,
@@ -738,15 +779,17 @@ and its record flagged the entry: `- **Hit:** PRD-EPIC-008-01-export/code-defect
 blocked_on names EPIC-008-02/[CD#2], which this pass superseded — needs-a-human`, under the heading
 of its pass over `customer-review-20261103.md`. A later run resumes the round at question 3, the
 first question carrying no terminal disposition, puts the flagged entry to the operator, who moves
-it to `in-scope`, and appends a line beneath question 3's last one, then two at the end of the file —
-applying the move to the log only after that write:
+it to `in-scope`, and appends a line beneath question 3's last one, then four at the end of the
+file — applying the move to the log only after that write:
 
 ````markdown
-- **State:** decided — [VD#2]
+- **State:** decided — [VD#3]
 ````
 
 ````markdown
 code defects: re-dispositioned [CDF#1] #1 conditional → in-scope; flag answered [CDF#1] PRD-EPIC-008-02-refunds/reconciliation-20261103.md › customer-review-20261103.md
+questions [V]: generated 3 + retagged in 0 = merged 0 + dropped 0 + applied 1 + table 0 + answered 2 + deferred 0 + open 0 + retagged out 0
+questions [C]: generated 1 + retagged in 0 = merged 0 + dropped 0 + applied 0 + table 0 + answered 0 + deferred 0 + open 1 + retagged out 0
 Status: open — waiting on held for the customer
 ````
 
@@ -799,7 +842,10 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
   later write appends a new line beneath the question's last one and never edits one, and **the last
   is the question's state** — what that command's resume and closure rules read, what
   `commands/brd-package.md`'s rounds gate reads (its Phase 0 step 7), and the line §8 reads for a
-  `[VD#n]` named *decided*.
+  `[VD#n]` named *decided*, *applied* or *confirmed in a table*. Those three, *merged* and *dropped*
+  are written `- **State:** decided — [VD#n]`, `- **State:** applied — [VD#n], from <decision-id>`,
+  `- **State:** confirmed in a table — [VD#n]`, `- **State:** merged into <round>/<position>` and
+  `- **State:** dropped — <reason>`.
 - **`- **Re-puts:**`** stands on every `[V]` and on every question that puts a record again, above
   the question's first state — save on a `[V]` reached by a re-tag or a rewrite, where the write
   that records it appends the line, reading `none`, beneath that state, and on a `[V]` a release
@@ -809,7 +855,9 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
 - **The account lines and `Status:` go at the end of each write**: every write of the command
   appends a `code defects:` line and a `Status:` line — the baseline append aside (§8) — and the
   record carries the `requirement defects:` account line the command fixes, which round 1's record is
-  read for. `commands/brd-reconcile.md` appends a `Status: closed` line alone, and only where its
+  read for. A run's last write of the round it works adds the two `questions [V]:` and
+  `questions [C]:` account lines before its `Status:` line, over every question in that run's
+  registry; no command reads them back. `commands/brd-reconcile.md` appends a `Status: closed` line alone, and only where its
   answers close the round; the last `Status:` line is the round's, outvoted by the questions' own
   states where the two disagree.
 - **In the question set, the `## Round <N>, question <position>` heading is the entry's boundary**,

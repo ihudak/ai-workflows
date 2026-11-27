@@ -365,7 +365,7 @@ command removes none of them; the next `/brd-interview` run does.
   (`proposal.md` or `proposal-brief.md`, a slice's or the umbrella's, reachable only where a
   `--sent` package carried one, since a package [`/brd-package`](brd-package.md) builds carries
   none). A row asking to change a coverage-ledger `disposition`, an inventory row's
-  `id`/`text`/`source_anchor`, **any field of a register record** — all thirteen of them,
+  `id`/`text`/`source_anchor`, **any field of a register record** — all fifteen of them,
   `argumentation` among them —
   `brd-link.md`'s `parent:`/`claims:`, any field of a `[CDF#n]` in the code-defect log, or any line
   of an effort proposal or of an archived revision of one is **`refused-with-reason`** — each is

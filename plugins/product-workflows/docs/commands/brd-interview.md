@@ -2,8 +2,10 @@
 
 Turns a grounded, fully-allocated BRD into a **decided** one. It generates a round of open questions,
 tags every one of them `[G]`, `[V]` or `[C]` **before a single one is asked**, answers every `[G]`
-from the grounding findings without asking anybody, puts each `[V]` to the operator one at a time
-with mandatory argumentation, and holds every `[C]` for the customer. It writes `decisions.md`, the
+from the grounding findings without asking anybody, merges questions that ask the same thing, puts
+each `[V]` nothing has settled to the operator one at a time with mandatory argumentation —
+applying every answer to the questions still open, so that one an answer settles is recorded
+without being asked — and holds every `[C]` for the customer. It writes `decisions.md`, the
 round's own record, the `[C]` question set, and — where a decision raises a defect in the code or
 re-dispositions one already on file — the code-defect log; and, on the operator's confirmation, it
 writes a resolution into the parent BRD's requirement-defect log for an `unsourced` defect a
@@ -19,7 +21,7 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
 ## Synopsis
 
 ```
-/brd-interview <BRD-KEY> [--round N] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
+/brd-interview <BRD-KEY> [--round N] [--budget <N>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<BRD-KEY>`** (mandatory) — the slice whose questions this run decides. `resolve-address` searches every
@@ -113,6 +115,10 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
   already asked, where any slice — this one included — owns that defect through a live row, whose
   question names this row as context, or where another slice carries it. A deferred row raises a
   question only where no rationale for the deferral was ever recorded.
+- **`--budget <N>`** (optional) — the run's question budget, a whole number from 5 to 50; anything
+  else stops the run with `BRD_INTERVIEW_BAD_BUDGET` before anything is written. Without it, a run
+  that resumes takes the budget its question registry recorded, and any other run takes 25. The
+  run's question registry records the budget when it is made.
 
 There is **no `--no-docs` flag**, because this command does no documentation grounding at all — see
 [What it does not do](#what-it-does-not-do).
@@ -184,7 +190,7 @@ that settles the row is an absence finding, the row raises one premise-moved que
 all, never one per repository. A finding showing the surface present and behaving otherwise than the requirement
 says is a genuine amendment and is asked as before.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 12's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins the one dispatched agent in this run — `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the round's reading, tagging and interactive walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 12's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every agent this run dispatches — `workflows-core:question-planner` and `workflows-core:answer-applier`, and `workflows-core:impl-maintenance` or, under `--skip-feedback`, `defect-reporter` — to one model; the round's reading, tagging and interactive walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 
@@ -214,9 +220,12 @@ was closed; otherwise it hands off what it wrote — `decisions.md`
 as its header line alone where none was on file, any file a torn-write removal or a completed
 re-disposition changed, a code-defect log an earlier run left changed and uncommitted, and the
 parent's defect log where Phase 10 wrote a resolution into it.
-`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK` — and no other
-subagent is dispatched — every finding this command reads was already independently re-derived by
+`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. Beside it the run dispatches two agents that read no code, each on the Opus tier: `workflows-core:question-planner` once tagging is done, to find the questions that ask the same thing, those no answer would change and those a decision on file already settles, and `workflows-core:answer-applier` after each answer, to find the open questions that answer settles or narrows. No grounding or review agent is dispatched — every finding this command reads was already independently re-derived by
 `/prd-ground`'s own verifier pass.
+
+**Questions are kept in a registry, and every answer is applied to it.** Once every question of the round is tagged, the run builds one registry of every `[V]` and `[C]` question on file in the slice — every round's, rounds written before this release included, with the state each record last gives it. A held `[C]` that a review package has already carried to the customer — its round and position found in one of the slice's `bundle-*/` directories, or any such directory unreadable — is marked carried and left exactly as the customer holds it. Before the first question, `question-planner` proposes merges of questions asking the same substance (never across tags, never a carried question), drops of questions whose answer would change nothing, and answers a decision on file already determines; the run records them. A question that puts a decision on file again is never merged, dropped or applied: it is always asked. Then each `[V]` of the round is put in the registry's order, never one already closed, and after each answer `answer-applier` reads every other open `[V]` against it: a question the answer settles in one line is recorded as an applied `[VD#n]` naming the decision it follows, and one it settles in part is narrowed to what is still open. At the end of each pass the run lists everything it closed without asking — each applied answer grouped by the decision it follows, each merge and each drop with its reason — and asks once whether all of it stands, or which to reopen; a reopened question returns to the queue, with every answer applied from it.
+
+**A stopped run resumes with its answers kept.** The run keeps a run folder outside every repository: the round as it was generated, the registry and every answer recorded in it, and the two agents' results. A run stopped mid-way — by an abort, at a compaction or a restart — offers on its next start to resume, and the resumed run puts no answered question again and goes on at the next unanswered one. Choosing *Start over*, or running without a run folder, works from the round records alone, as before.
 
 **The register records its lineage**: the exact version (git blob id) of the slice's two grounding files and its `brd/brd-inventory.md` the run read, never another BRD's files or this run's own interview records. Before anything is decided, the run checks the grounding up its chain: where a grounding file was built from an inventory that has since changed, or carries no lineage record yet, it shows what moved and asks whether to re-ground first or proceed, recording your answer in the register. **A run that finds no question still re-stamps the register** and offers the handoff where that changed it: after a `--rebaseline` whose new findings raise nothing, that is what tells every later command the register was checked against the grounding as it now stands. A run that only resumes an open round keeps the register's record as it stands, since an earlier run generated that round's questions.
 
@@ -224,7 +233,8 @@ subagent is dispatched — every finding this command reads was already independ
 
 - **`<BRD-KEY>`** — mandatory, unless an `@<path>` address names the folder; absent with no such address, or malformed, stops the run with `BRD_INTERVIEW_NEEDS_KEY`. A
   malformed `--round` value stops with `BRD_INTERVIEW_BAD_ROUND` rather than quietly running a
-  different round from the one asked for.
+  different round from the one asked for, and a `--budget` value that is not a whole number from 5
+  to 50 stops with `BRD_INTERVIEW_BAD_BUDGET`.
 - **A slice, not a root and not an idea-route PRD folder.** The moment the folder resolves, its
   prefix is tested — `BRD-` is a root, `EPIC-` an Epic folder, `PRD-` a slice or an idea-route PRD folder — never the
   folder's asserted `kind:`. An `EPIC-` folder stops with `BRD_INTERVIEW_EPIC_LEVEL` before any gate runs: an Epic holds none of what this command reads, so the stop names `/brd-interview <SLICE-KEY>` on the slice above it where there is one — a `PRD-` folder carrying a `brd-link.md`, whatever its `parent:` says, the run stopping with `BRD_INTERVIEW_BRD_LINK_NO_PARENT` on that slice instead where it names none — and no command where there is none. A `PRD-` folder carrying no `brd-link.md` was never carved from a BRD
@@ -326,10 +336,15 @@ Under the resolved BRD folder — `$SPECS_PATH/specifications/BRD-<BRD-KEY>-<slu
 BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
 
 - `decisions.md` — the decision register: one block per `[VD#n]` delivery-team decision and per
-  `[AS#n]` assumption. A decision carries thirteen fields — `id`, `statement`,
+  `[AS#n]` assumption. A decision carries fifteen fields — `id`, `statement`,
   `options_considered`, `chosen`, `argumentation`, `evidence`, `defects`, `settles`, `altitude`,
-  `conditional_on`, `status`, `consumed_by` and `round`; an assumption carries every one that applies to it
-  and omits the three that do not — `options_considered`, `chosen` and `settles` — rather than writing them empty, and its
+  `conditional_on`, `status`, `consumed_by`, `round`, `taken` and `applied_from`. `taken` says how
+  the decision was taken — `asked`, `applied` from another decision without being asked, or
+  confirmed in a `table` — and reads `asked` where a record written before it existed carries none;
+  `applied_from` names the decision an applied one follows, and that decision being reopened,
+  superseded or withdrawn reopens it. An applied decision rests on that decision alone, so it
+  carries no findings. An assumption carries every one that applies to it
+  and omits the five that do not — `options_considered`, `chosen`, `settles`, `taken` and `applied_from` — rather than writing them empty, and its
   `argumentation` and `evidence` mean something different there: why the package proceeds without
   establishing the assumption, and why no evidence exists. Ids are contiguous within their
   own prefix, assigned once, never renumbered, and never reused after a terminal status, a removed
@@ -354,8 +369,12 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   again, from those that could be, or none, and writes the answer as the line, so it is asked once;
   an ordinary `[V]` the run tags carries `none` and is never asked about — every re-tag with the finding that caused it,
   every split with the parts it became, and each question's state — either a **terminal disposition** (*answered from findings*,
-  *decided*, *answered by the customer*, *re-tagged*, *split*) or a **holding state** (*held for the
-  customer*, *deferred*, *needs grounding*, *untagged*). A re-tagged question keeps its number, so
+  *decided*, *answered by the customer*, *re-tagged*, *split*, *applied* naming the decision it
+  follows, *merged* naming the question it was merged into, *dropped* with its reason, *confirmed in
+  a table*) or a **holding state** (*held for the
+  customer*, *deferred*, *needs grounding*, *untagged*). A question of another round that this run
+  closed — applied, merged or dropped — gets its state in its own round's record, appended after
+  this round's. A re-tagged question keeps its number, so
   two states sit at that one address — *re-tagged*, and whatever the question reached under its new
   tag — and, the file being append-only, the **last** of them is the question's state: a question
   re-tagged and then deferred holds its round open and is resumed at, rather than reading as
@@ -363,7 +382,11 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   finding on file not reading `SUPERSEDED`, with its verdict and verifier outcome — what the next
   round's generation compares against to learn what changed. Plus one line naming the requirement
   defects the round asked and those it withheld, each with its cause, or saying there were none for
-  this BRD to ask. Every write of it ends with a `Status:` line — `open`, naming what the round
+  this BRD to ask. Each run that writes it adds, once, two account lines, one for `[V]` and one for
+  `[C]`, counting every question in the registry — generated and re-tagged in, against merged,
+  dropped, applied, confirmed in a table, answered, deferred, still open and re-tagged out — so that
+  no question disappears without a trace; a sum that does not close is reported as a defect of the
+  run. Every write of it ends with a `Status:` line — `open`, naming what the round
   waits on, or `closed` with the date and why — and, the file being append-only, its **last**
   `Status:` line records the round's state, which its questions' dispositions decide: where the two
   disagree, the dispositions win. [`/brd-reconcile`](brd-reconcile.md) appends the closing line
@@ -371,7 +394,8 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   otherwise, so a line it leaves naming a holding state no question is in any more is outvoted by
   the dispositions until the next `/brd-interview` write appends one that agrees. This file is what
   makes a round resumable — an interrupted run returns to the first question carrying no terminal
-  disposition rather than restarting the round. Each question sits under a
+  disposition rather than restarting the round; within one run, its run folder keeps the answers
+  the record does not hold yet. Each question sits under a
   `### <position>. [<tag>] — <rows>` heading, with each state it reaches on a line of its own
   labelled `- **State:**` beneath it.
 - `interview/customer-questions.md` — the `[C]` questions held for the customer, each with the
@@ -427,7 +451,10 @@ run that stopped in between is completed by the next one's Phase 0. Every phase 
 held entry, a `--round N` re-open, a question the round-1 test adds — builds its part and holds it
 there, so a `Cancel`, an abort or an interruption before Phase 9 writes nothing the run decided into
 the BRD folder — the one earlier write being Phase 0's completion of a code-defect re-disposition a
-round record already names, which decides nothing.
+round record already names, which decides nothing. Where the run keeps a run folder, a stop keeps
+it, and a resumed run takes up what the earlier session held — and, where that session stopped part
+way through Phase 9's writes, makes them again from the whole texts it composed first, so nothing is
+written twice and nothing is left torn.
 The round record is the commit point: an item stamped
 with a round whose record does not exist or does not name it — what a run that stopped between those
 writes leaves behind — is a **torn write**. No reader counts one: not this command's
@@ -442,8 +469,8 @@ queued and put to nobody, and it makes that round askable by itself, so the roun
 for `/brd-package` to find. Where its round is one on file — the interrupted run was resuming it —
 the question whose `- **Re-puts:**` line names the record is recorded *decided* as the round is
 resumed, and put to nobody either. A reopen an interrupted run wrote stands as well, and the
-question it held for that decision, lost with the run, is put again by the next round opened
-(Phase 3, below).
+question it held for that decision, lost with the run where the run is not resumed from its run
+folder, is put again by the next round opened (Phase 3, below).
 
 **No `[CD#n]` is ever minted by this command.** A customer decision enters the register only once
 the customer has actually answered and an operator has confirmed the answer; the customer answering
@@ -504,11 +531,19 @@ option is picked.
   the current findings, quoting each `Reopened` paragraph as context. The answer re-decides it in
   place: here for a `[V]`, by `/brd-reconcile` from the customer's answer for a `[C]`. One reopened
   while a round is still open waits for the next round, and the run says so. A decision moved to
-  `superseded` or `withdrawn` raises nothing.
+  `superseded` or `withdrawn` raises nothing of its own — but every decision applied from it, which
+  rested on it alone, is put again the same way, this run reopening it as it writes the answer.
 - **Phase 4 — the tagging gate.** Nothing is asked of anybody until every question in the round
   carries exactly one tag. A question that cannot be resolved into one of the three is left
   in the *untagged* holding state, with what is wrong with it recorded; it is never asked in that
   state.
+- **Phase 4 — merging before the first question.** Once tagging is final, questions asking the
+  same substance are merged into one, which cites every row and finding of the ones merged into it;
+  a question no answer would change is dropped with its reason; and a `[V]` a decision on file
+  already determines is recorded as applied. Never across a tag, never a question a package has
+  already carried to the customer, never a question that puts a decision on file again, and never a
+  held `[C]` whose entry is already written, which the next package would carry whatever was
+  recorded here.
 - **Phase 5 — a re-tag needs a cause.** A `[G]` grounding cannot settle is re-tagged only against a
   named `NOT-PROVABLE` finding or an `unprovable` verifier outcome, and never while another
   repository's finding settles it. A finding reading `SUPERSEDED`
@@ -523,6 +558,13 @@ option is picked.
   answer to change. Each `[V]`'s picker and each prompt that follows its answer — the
   argumentation prompt, the code-defect offer and the question its *Yes* opens, a re-disposition —
   is asked on its own, never batched with another into one prompt.
+- **Phase 6 — every answer is applied forward, and checked at the end of the pass.** After each
+  answer, the open `[V]` questions are read against it, and one it settles in a line is recorded as
+  an applied decision, never asked; nothing is closed on a guess. The end-of-pass list shows every
+  question closed without being asked, grouped by the decision each follows, and the operator
+  confirms it all or names what to reopen — a reopened applied answer takes every answer applied
+  from it back to the queue with it, and nothing it lists was recorded as decided before that
+  answer.
 - **Phase 6 — a code defect a reconciliation flagged is put again.** A later round puts an entry of
   the code-defect log to the operator where it is still `open`, `conditional` on something the
   round has settled, or **flagged**: a [`/brd-reconcile`](brd-reconcile.md) run of any slice under
@@ -570,7 +612,9 @@ option is picked.
   nothing, closing the
   question whichever way the operator takes the answer.
   **Cancel on this picker writes nothing the run decided**: it stops the run before the register phase, so no
-  decision this run took is written, and no `[C]` question it held either, and the next run puts the question again — or, for a round
+  decision this run took is written, and no `[C]` question it held either. The run folder keeps
+  every answer, so the next run, resumed, puts this picker again with those answers kept; started
+  over, or without a run folder, the next run puts the question again — or, for a round
   this run opened, regenerates it and asks only what is still askable.
 - **Phase 10 — an `unsourced` defect a verified finding settles may be closed, on confirmation.**
   Before the handoff, each `unsourced` requirement defect still `open` in the parent's defect log,
@@ -595,13 +639,13 @@ option is picked.
   where it is unsettled the run writes nothing there and prints each value instead; that gate never
   stops the run. A written resolution rides this run's pull request with the rest.
 - **Round closure.** A round closes only when every question in it carries a **terminal**
-  disposition. A holding state — *held for the customer*, *deferred*, *needs grounding*, *untagged* — is not one
+  disposition — applied, merged, dropped and confirmed in a table among them. A holding state — *held for the customer*, *deferred*, *needs grounding*, *untagged* — is not one
   and keeps the round open, so a round never closes around a question the run promised to return to:
   not when the interesting ones are answered, not when the remainder was deferred, and not around a
   `[C]` still waiting on a customer. The resume rule and the closure rule are stated in the same
   vocabulary so they cannot drift apart.
 
-A run that stops — on a refusal under *What it needs*, a gate above, or a `Cancel` or an abort that ends the run — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer, and makes no next-step offer. That commit holds only the session's own bookkeeping, so the decisions the stopped run took are lost, as above. Cancelling the handoff is not a stop: the files stay written and the run goes on to its next-step offer. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
+A run that stops — on a refusal under *What it needs*, a gate above, or a `Cancel` or an abort that ends the run — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer, and makes no next-step offer. That commit holds only the session's own bookkeeping, so the decisions the stopped run took are not written; they stay in its run folder, which the stop keeps and names, and running the command again offers to resume with them — or, started over or without a run folder, they are lost, as above. Cancelling the handoff is not a stop: the files stay written and the run goes on to its next-step offer. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
 
 ## What it does not do
 
@@ -633,7 +677,9 @@ Work the first round of a slice of a synthetic customer BRD, once the slice's ow
 
 The run gates on the grounding being merged and verified and the ledger being fully allocated, opens
 round 1, generates its questions, tags every one of them, answers the `[G]`s from the findings,
-walks the `[V]`s past the operator one at a time, holds the `[C]`s, writes the register, and offers
+merges those that ask the same thing, walks the `[V]`s nothing has settled past the operator one at
+a time, applying each answer to the rest, lists what it closed without asking for you to confirm,
+holds the `[C]`s, writes the register, and offers
 to branch, commit, push, and open a pull request. Its next-step offer names
 [`/brd-package`](brd-package.md) **only when both of that command's own content gates would pass** —
 every question in every round carrying a terminal disposition or held for the customer, *and* the
