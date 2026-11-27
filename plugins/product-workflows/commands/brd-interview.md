@@ -611,7 +611,7 @@ and nothing downstream can tell the difference afterwards.
    undecidable, as an unreadable question set does (*Round 1 is generated from the grounding*).
    **Report each torn write in this BRD's folder now**, before anything is written — each record by
    id, each `[CDF#n]` by id, each entry by its heading, each defect line by its `[DEF#n]` and
-   entry, and each proposal or re-tag line (*Hold every `[C]`*) by its entry, with the round it claims and whether that round has no record or a record that does not
+   entry, and each proposal, withdrawal or re-tag line (*Hold every `[C]`*) by its entry, with the round it claims and whether that round has no record or a record that does not
    name it — and say that this run removes them if it reaches its handoff. They are
    what a run that stopped before its round record was written left behind, whether an earlier
    version wrote them before its own register phase or this one was interrupted inside it; a record
@@ -2785,9 +2785,9 @@ holds `open` or `conditional_on` its prerequisite unless re-based, and one writt
 a prerequisite's decision. Nothing is applied from either, by its coverage or by the applier: an
 answer applied from it would stand `decided` while its source waits on a prerequisite, and carry no
 `conditional_on` of its own for `/product-workflows:brd-reconcile`'s propagation sweep to find. The
-questions it might have closed stay open, to be asked. Where such an answer re-decides a reopened
-record, the proposals that followed the answer it replaced are withdrawn all the same, as step 2's
-*Where the answer re-decides a reopened record* says, no result of this answer proposing again.
+questions it might have closed stay open, to be asked. Where such an answer is a re-decision, the
+proposals that followed the answer it replaces are withdrawn all the same, as step 2's *Where the
+answer is a re-decision* says, no result of this answer proposing again.
 
 1. **Coverage first** (§8 step 1). Where the answer chose one of the options its question was put
    with, each question its `covers` names that the registry records open and not carried — of any
@@ -2853,10 +2853,13 @@ record, the proposals that followed the answer it replaced are withdrawn all the
    one is declined as *Hold every `[C]`* declines a re-tag of a carried question (*A held `[C]` an
    answer reaches*).
 
-   **Where the answer re-decides a reopened record** — the `[VD#n]` its question puts again reads
-   `reopened` when the answer is taken (*That list is for a decision first recorded here*, above)
-   — **a proposal that followed the answer it replaced is withdrawn, unless this answer proposes
-   again**: each held `[C]` of the registry, of any round, carried or not, whose round record's
+   **Where the answer is a re-decision** — the `[VD#n]` its question puts again reads `reopened`
+   when the answer is taken, **or is one this run reopens in the same register write**: a plain
+   record *A decision the re-grounding moved* reopens, or one whose basis moved (*A decision reopened
+   elsewhere*), which still reads `decided` while the operator answers, its reopen and the answer
+   written together (*That list is for a decision first recorded here*, above) — **a proposal that
+   followed the answer it replaces is withdrawn, unless this answer proposes again**: each held
+   `[C]` of the registry, of any round, carried or not, whose round record's
    last line of the two kinds, `- **Proposed answer:**` and `- **Proposal withdrawn:**`, at its
    address is a proposal ending `— follows <that [VD#n]>`, which the registry's `proposed` still
    holds — no proposal recorded on it in this run — and on which this answer's results recorded no
@@ -3274,10 +3277,11 @@ on a carried entry — beneath its entry's last line in `interview/customer-ques
 entry is on file, an entry this run builds carrying its proposal already:
 
 - a proposal as `- **Proposed answer:** <text> — follows <decision-id>`, the registry's `proposed`
-  as the run ends, where the registry holds one and it differs from the question's last line of
-  the two kinds, `- **Proposed answer:**` and `- **Proposal withdrawn:**`, in its round record — so
-  a proposal `init` read from the record is not written twice, and one made again after a
-  withdrawal is; one whose decision this run took
+  as the run ends, where the registry holds one, it is not a proposal this run withdrew (below),
+  and it differs from the question's last line of the two kinds, `- **Proposed answer:**` and
+  `- **Proposal withdrawn:**`, in its round record as it stands on file before this write — so a
+  proposal `init` read from the record is not written twice, and one made again after an earlier
+  run's withdrawal is; one whose decision this run took
   and an end-of-sitting list then reopened is written nowhere, its basis gone
   (`workflows-core:question-budget` §8, *When the source moves*).
   **A carried entry is never touched** (`workflows-core:question-budget` §8): its proposal goes
@@ -3451,7 +3455,7 @@ round-1 test reads `requirement defects:` alone.
 removal alone where this round writes nothing else to that file — remove them before appending this
 run's own** — every torn write in this BRD's folder, the ones the *Resolve inputs and gate the
 grounded BRD* phase reported: a torn record from `decisions.md`, a torn `[CDF#n]` from
-`code-defect-log.md`, a torn entry, a torn defect line or a torn proposal or re-tag line from
+`code-defect-log.md`, a torn entry, a torn defect line or a torn proposal, withdrawal or re-tag line from
 `interview/customer-questions.md`;
 and, where a torn `[VD#m]` superseded a record, that record's `Superseded <YYYYMMDD>: by [VD#m]`
 paragraph with it, its `status` restored as §8 says. It is the one deletion this command makes in a
@@ -3610,7 +3614,7 @@ hold (Phase 0 step 8c). **`decision-register-format.md` §9 is a worked record**
 question-set entry they share — in the layout this phase writes: each question under a
 `### <position>. [<tag>] — <rows>` heading, each state on a line of its own labelled
 `- **State:**` beneath it, a deferral's `- **Blocked-on:**` line on the line after its state, a
-held `[C]`'s `- **Proposed answer:**` and `- **Re-tagged:**` lines each on a line of its own, a
+held `[C]`'s `- **Proposed answer:**`, `- **Proposal withdrawn:**` and `- **Re-tagged:**` lines each on a line of its own, a
 later state appended under the last, and the account and `Status:` lines each write adds at the end.
 
 **Every question the registry closed** (*Tag every question*, *The question registry*) in a sitting
@@ -3804,8 +3808,9 @@ file is rewritten.
 
 **`<BRD-dir>/interview/customer-questions.md`** — every entry the *Hold every `[C]`* phase built,
 appended after the entries on file, every defect line *One question per row* decided to add,
-appended to the held entry it joins, and every `- **Proposed answer:**` and `- **Re-tagged:**` line
-*Hold every `[C]`* holds for an entry already on file, appended beneath that entry's last line —
+appended to the held entry it joins, and every `- **Proposed answer:**`,
+`- **Proposal withdrawn:**` and `- **Re-tagged:**` line *Hold every `[C]`* and *Then the answer is
+applied forward* hold for an entry already on file, appended beneath that entry's last line —
 never to a carried entry (*A held `[C]` an answer reaches*). Written third, after the register and the log and before the
 round record, so a question reaches the file only in the write that precedes the record naming it.
 Where no `[C]` was held and no line added, the file is not written, save to remove a torn write.
@@ -3998,7 +4003,7 @@ grounded BRD* phase, `branch_fact: p10-handoff-branch` where the run folder is o
 anything is pushed), `deliverable_paths` = every file this run wrote or updated under `<BRD-dir>`
 (`decisions.md`, `interview/round-<N>.md` and each other round's record this run added a line to,
 `interview/customer-questions.md` when this round held a
-`[C]`, appended a defect, proposal or re-tag line to a held entry already on file or removed a torn write from it, and
+`[C]`, appended a defect, proposal, withdrawal or re-tag line to a held entry already on file or removed a torn write from it, and
 `code-defect-log.md` when this round raised a `[CDF#n]`, **re-dispositioned one already on file**,
 removed a torn write from it or completed an earlier run's re-disposition in it — a run that only
 re-dispositioned still wrote the file, and leaving it out of the set would hand off a round record
@@ -4016,6 +4021,7 @@ answers and the re-tags with their causes; the `[VD#n]`, `[AS#n]` and `[CDF#n]` 
 written and every `[CDF#n]` re-dispositioned, each with its old and new disposition, and every
 re-disposition completed for an interrupted run; every torn write removed; the `[C]` count
 held, and every defect line appended to a held entry; every proposal written beside a held `[C]`,
+and every proposal withdrawn there, with the decision it followed,
 and every held `[C]` re-tagged `[V]` with its cause; every will-change resolution taken; every
 held record put again, with the record that superseded it where this round wrote one; every
 reopened record a propagation sweep reverted whose re-put question this round answered, with the

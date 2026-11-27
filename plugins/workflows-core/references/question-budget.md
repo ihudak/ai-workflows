@@ -247,8 +247,10 @@ answer applied from those in turn (`reopen --follows`, §12). Every reopening ap
 `conditional_on` — so a customer-side applied answer that became a `[CD#n]` is reopened too. A
 decision never stands on a basis that is gone. **Nor does a proposal**, though it is never
 reopened, since it answers nothing: the customer is shown it only while the decision it follows
-stands, and an answer that re-decides that decision under its own id, proposing nothing again for
-the question, withdraws it.
+stands, and where that decision is the slice's own, an answer that re-decides it under its own id,
+proposing nothing again for the question, withdraws it. A decision of another slice's register is
+re-decided by that slice's run, which writes nothing beside this slice's questions, so a proposal
+following one is shown while that decision stands and is not withdrawn when it is re-decided.
 
 ## 9. The tail table
 

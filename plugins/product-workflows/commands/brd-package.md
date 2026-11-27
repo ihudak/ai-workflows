@@ -1430,12 +1430,15 @@ sibling slice's or a `depends-on:` BRD's. The proposal is rendered only where th
 `withdrawn` leaves the proposal out, and so does a decision that step could not read. Nothing that
 reopens, supersedes or withdraws a decision takes the line off a question, which is why this run
 tests the decision rather than trusting the line; a re-decision, which leaves the decision reading
-`decided` with a different answer under the same id, is the one move that test cannot see, and the
-interview's withdrawal line answers it (`decision-register-format.md` §9). A proposal left out or
-withdrawn leaves its question with none — an earlier proposal line never stands in for it — and
-the question goes under 7.3, **save a strategic question**, which stays under 7.1: there its own
-planned answer, the `- **Proposed answer:**` line with no `follows` its first write carries, stands
-in, since it follows no decision and so no decision's status tests it
+`decided` with a different answer under the same id, is the one move that test cannot see. The
+interview's withdrawal line answers it for a decision of this slice's own register; a decision of
+another BRD's register is re-decided by that BRD's interview, which writes no withdrawal here, so a
+proposal following one is shown while that decision reads `decided`
+(`decision-register-format.md` §9). On a question that is not strategic, a proposal left out or
+withdrawn leaves it with none — an earlier proposal line never stands in for it — and the question
+goes under 7.3. **A strategic question** stays under 7.1, and there its own planned answer, the
+`- **Proposed answer:**` line with no `follows` its first write carries, stands in, since it
+follows no decision and so no decision's status tests it
 (`decision-register-format.md` §9, *A strategic question*). The Final report names each proposal
 left out or withdrawn. A line with no `follows` is a strategic question's own planned answer, and
 is rendered as written.
@@ -1443,9 +1446,11 @@ is rendered as written.
 **The bundle carries the question set whole** (*Assemble the bundle*), so where a question's entry
 there shows, on its last `- **Proposed answer:**` line, a proposal this part does not put — it puts
 none, or, on a strategic question, the planned answer standing in — the question's rendering says
-so in one fixed line — *the proposed answer* the question set's bundled filename
-*shows for this question is withdrawn: put the question without it* — beside the line under the
-customer block saying that this part governs wherever the two differ. Without both, the
+so in one fixed line — *the proposed answer* the question set's bundled filename *shows last for
+this question is withdrawn: put the question as this prompt puts it* — which holds both where this
+part puts the question with no proposal and where, on a strategic question, it puts the planned
+answer, beside the line under the customer block saying that this part governs wherever the two
+differ. Without both, the
 customer's agent meets in the file a proposal the package no longer stands behind, and puts it.
 
 **Part 7 and part 9 both carry every open `[AS#n]`, and that duplication is deliberate.** They ask
