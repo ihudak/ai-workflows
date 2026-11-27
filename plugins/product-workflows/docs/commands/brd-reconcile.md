@@ -56,7 +56,8 @@ raised only about the defects of a requirement the customer withdrew, to close t
   reconciled later supersedes an earlier one's answer wherever the two differ, so a corrected resend
   goes last; a review on a branch of the repository not merged yet stops with
   `BRD_RECONCILE_REVIEW_NOT_MERGED`, naming the branch — a pull request from a fork shows up only once
-  merged. Either way you say which file is
+  merged, and a branch whose name holds a character other than ASCII letters, digits and `. _ / @ + -`,
+  or begins with one other than a letter, a digit or `_`, is not searched, the stop saying how many such branches it left out. Either way you say which file is
   the review — by naming it, or by confirming the one found — and a committed review is moved to its
   canonical name rather than copied, so the folder holds it once. `--sent` needs the path.
 - **`--free-text`** (optional) — you are telling the run the review is prose, so the reader reads it
@@ -610,8 +611,17 @@ the customer's image shows, which no decision changes, a proposal moves only by 
 re-running [`/prd-proposal`](prd-proposal.md) or [`/brd-proposal`](brd-proposal.md), which archives
 the prior and classifies each change as a correction or a re-estimate, is the fix the reconciliation
 record names — and the customer's document and every file captured with it are never touched at all.
-The scope is every markdown file under the parent, which is exactly why the carve-out has to be
-written down. The record writes every hit as one line,
+The scope is every markdown file under the parent that its listing reads, which is exactly why the
+carve-out has to be written down. That listing builds no command from a name: a name the family
+writes must be in the folder-name class (letters, digits and combining marks of any script and
+`. _ @ + -`, first a letter, a digit or `_`, no `..`), and a customer's captured file — under
+`brd/source/` or `brd/source-external/`, or in a dated bundle or `customer-sent-` folder — is read
+under any name that holds no control character and no bidirectional control — one that reorders
+how text shows — with tools that build no command from
+it. Any other entry, a symbolic link, and a folder that cannot be listed are not read: each is
+named by its position in a listing of the folder holding it, or by its path, in the report and in
+the record's *what still needs a human*, for a person to read; and a listing that cannot finish says
+so rather than passing for the whole tree. The record writes every hit as one line,
 `- **Hit:** <path> › <entry> — <what was found> — <outcome>`, the entry being the `[CDF#n]` a hit in
 a code-defect log landed in and `none` elsewhere; so the next [`/brd-interview`](brd-interview.md)
 run on the slice owning that log — a slice under the parent, or one under another parent that

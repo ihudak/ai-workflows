@@ -726,6 +726,16 @@ hand-export it fires on is the ordinary way a frame set arrives.
 **The location is stated here once and cited, never restated.** A command that re-derived it would
 be a second copy of a path rule, which is how the copies drift.
 
+**A frame set's name is read back from the tree, so a reader holds it to
+`${CLAUDE_PLUGIN_ROOT}/references/addressing.md` §2's class before any command is built from it.**
+A command that lists a `design/` folder's subdirectories tests each name — as text for a `'`, then
+with that section's program, or inside a program that builds no command from a name — and a set
+named outside the class is one it reads nowhere: it is named by its position, with its remedy, as
+§2's *A folder refused by its name* says, `<P>` the `design/` folder's path, and an agent with no
+shell is handed only a set its caller has tested. `/frames` indexes no such set,
+`/product-workflows:prd-ground` records it `refused: name` in its census and grounds it nowhere, and
+`/product-workflows:brd-split`'s design gate stops on it.
+
 **Defining the location is not the same as consuming it.** `design-grounder` is dispatched by
 `/prd-ground` and by nothing else — `/frames` indexes a set on any route; it never reconciles one.
 `/prd-ground` now reads a `design/` folder as a frame set on both routes: the BRD route's `[BR#n]`

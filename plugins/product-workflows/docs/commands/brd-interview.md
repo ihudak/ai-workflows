@@ -538,7 +538,9 @@ option is picked.
   contradicts an on-file finding, or whose horizon pass moves one's horizon — has superseded any
   finding a `decided` decision the will-change rule did not hold rests on, the successor findings —
   the same requirement's — or, for a design finding tied to no requirement, one citing the same
-  frames — grounded against the same repository or frame set and minted later —
+  frames — grounded against the same repository or frame set and minted later, a frame set being
+  one whose folder name is in the folder-name class, and a design/ folder that cannot be listed
+  stopping the run with `BRD_INTERVIEW_DESIGN_UNREADABLE` —
   either confirm its premise — each superseded finding with a successor, and each successor carrying
   the verdict its superseded finding carried, which that finding keeps as `prior_verdict`, and the
   horizon that finding carried — or the decision is reopened, naming the successors as the cause,

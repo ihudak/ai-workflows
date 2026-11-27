@@ -347,7 +347,14 @@ reads was already independently verified by `/prd-ground`'s own agents.
   missing. A **design/** subdirectory that no
   entry in `design-grounding.md`'s frame-set list covers — absent from it, or listed as having no
   index or a stale one (an index whose frames are all gone) — stops with `BRD_SPLIT_DESIGN_NOT_GROUND`, which names `/prd-ground <KEY> --no-code` as
-  the repair so the missing design pass can be added without re-deriving verified code findings. A
+  the repair so the missing design pass can be added without re-deriving verified code findings.
+  A subdirectory named outside the folder-name class — letters, digits and combining marks of any
+  script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — stops the same way first, before
+  `design-grounding.md` is gated, whatever its list records: nothing indexes or grounds such a set,
+  so the stop names it by its position in a listing of **design/**'s folders and says to rename it
+  and run `/workflows-core:frames` before the re-run. A **design/** folder that cannot be listed
+  stops the run before either, with `BRD_SPLIT_DESIGN_UNREADABLE`, since it may hold sets no
+  grounding covers. A
   set the operator explicitly skipped with `--no-design` passes, and is recorded in `slices.md` as
   a limit on what the split could check.
 - **On a slice: every finding verified.** A finding with no recorded verifier outcome (`agree` /

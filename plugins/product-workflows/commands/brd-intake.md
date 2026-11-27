@@ -527,7 +527,9 @@ is what every later mention of *Phase 2's capture order* means.
   name is already taken: rule 1 compares the bytes against every file already there, so a renamed
   but byte-identical file is reused rather than copied as a twin. Where rule 1 finds no identical
   file and the file's basename is already taken there, apply rules 2–3; otherwise the file lands at
-  its basename. Its rule 4 never applies here: nothing under `brd/source-external/` is overwritten,
+  its basename. Make each of those tests as that rule's *How names and bytes are compared* says, by
+  its one program: `reuse` is rule 1's re-use, `free` the basename, and `taken` the name rules 2–3
+  give. Its rule 4 never applies here: nothing under `brd/source-external/` is overwritten,
   and no link is rewritten — the mapping table below names the copy. A file rule 1 reuses — its
   identical bytes already on file, so nothing is written — **counts as copied** wherever this
   command says a file was copied: the link log below, every later phase that says
