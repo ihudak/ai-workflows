@@ -87,6 +87,7 @@ notes: "<…>"
 - **`steps`**, in `compose`, is the whole walkthrough's, `[]` only where every claim is `uncoverable`; in `extend`, those to append, in order, and `[]` where every claim is already covered. A step carries `action`, `target` and `expect`, each once, and no other key — no `n`, no `result`.
 - **Every string** — `role`, each precondition, a string `target`, each value of a `target` or `expect` mapping, each `quote`, each `uncoverable`, and `notes` — is one line of at most 500 characters: a double-quoted YAML scalar, each `\` and `"` escaped and each other control character written as its escape, holding no line break, raw or escaped — no `\n`, `\r`, and no U+0085, U+2028 or U+2029 in any spelling — and no lone surrogate.
 - **A mapping's values are strings**, a number among them: `value: "2"`, never `value: 2`. Its keys are as *Hard rules* says.
+- **What a person must find is never blank**: a string `target`; a `target` mapping, which holds at least one key, and each of its values but `value`; an `expect`'s `kind`; `role`; and each precondition each hold more than whitespace. A `type` step's `value` alone may be empty, or whitespace, for a step that clears a field. Your caller refuses a return that breaks this, and the unit ends unverified.
 - **`line`** is a number, 1 or more; **`steps`** in a coverage entry holds at least one step number.
 - **`BLOCKED`** where *Entry validation* or *Hard rules* says, with no `steps` and no `coverage`.
 
@@ -97,6 +98,7 @@ notes: "<…>"
 - NEVER write a `target` or `expect` key outside `^[a-z_][a-z0-9_]{0,31}$` — a lowercase ASCII letter or `_`, then lowercase letters, digits and `_`, at most 32 characters in all — or one that YAML 1.1 reads as a boolean or as null, in any case: `y`, `n`, `on`, `off`, `yes`, `no`, `true`, `false`, `null`. A key stands once in its mapping, and an `expect` holds `kind`.
 - NEVER write a `target` that is neither a string nor a one-level mapping of strings, or an `expect` that is not a one-level mapping of strings.
 - NEVER return a string above 500 characters, or one holding a line break.
+- NEVER return a blank string `target`, an empty `target` mapping, a blank value of a `target` mapping but its `value`, a blank `expect` `kind`, a blank `role` or a blank precondition — blank meaning empty or whitespace alone (*Output*).
 - NEVER let the walkthrough pass 200 steps, or a step's number pass 999,999,999: in `compose` return at most 200; in `extend` at most 200 less the steps it holds, the last numbered at most 999,999,999. Where the page needs more, return `BLOCKED`, `notes` saying how many steps it needs.
 - NEVER name in `coverage` a step that neither stands in the walkthrough nor is one you return.
 - NEVER rewrite, renumber, reorder or remove an existing step, change the walkthrough's `walkthrough:` block or `preconditions:`, or propose a `captures` entry, in either mode.
