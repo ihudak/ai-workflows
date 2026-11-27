@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.88.5] — 2026-11-27
+## [3.88.6] — 2026-11-27
 
-DOC-D-G1, sub-project 2, batch 2: two pages name `docs-workflows` 1.45.0's `/docs-workflows:docs-verify`. No command, agent or reference changes. Released with `docs-workflows` 1.45.0 and `workflows-core` 1.101.0; its pages need neither, nor they it. 3.88.5 carries 3.88.4, so the 1.100.4 bullet of `.claude/rules/plugin-updates-coupling.md` applies to it, which `workflows-core` 1.101.0, carrying 1.100.4, meets.
+DOC-D-G1, sub-project 2, batch 2: two pages name `docs-workflows` 1.45.0's `/docs-workflows:docs-verify`. No command, agent or reference changes. Released with `docs-workflows` 1.45.0 and `workflows-core` 1.101.0; its pages need neither, nor they it. 3.88.6 carries 3.88.5 and 3.88.4, so the 1.100.5 and 1.100.4 bullets of `.claude/rules/plugin-updates-coupling.md` apply to it, which `workflows-core` 1.101.0, carrying both, and `dev-workflows` 4.71.5, carrying 4.71.4, meet.
 
 ### Changed
 
