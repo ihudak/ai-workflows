@@ -1843,12 +1843,12 @@ failing: it is made once more, and where that fails too, the run goes on with no
 dropped or applied here — every question stays to be asked, which loses no question — and the final
 report names the failure, with the planner's last reply line or why its file could not be read, as a
 defect of the run. A result read is recorded `done <folder> p4-planner`. Then record, each with
-`--sitting 1` so that the first sitting's end-of-sitting list shows it (§10):
+`--sitting 1` so that the first sitting's end-of-sitting list shows it (§10) — each merge's and each
+drop's reason being the planner's own text, written between single quotes, each `'` in it written
+`'\''`, so the shell expands nothing in it:
 
 - **each merge** — `merge --into <its into> --from <its from, comma-separated> --reason '<its reason>' --sitting 1`;
-- **each drop** — `drop --qid <its qid> --reason '<its reason>' --sitting 1` — each reason the
-  planner wrote, between single quotes, each `'` in it written `'\''`, so the shell expands nothing
-  in it;
+- **each drop** — `drop --qid <its qid> --reason '<its reason>' --sitting 1`;
 - **each applied entry** — a `[V]` a decision on file determines (§2, §8): `record --sitting 1`,
   its event `{"qid": …, "event": "applied", "decision": <the next [VD#n], Decision ids above>, "applied_from": <its applied_from>, "answer": <its answer>, "reason": <its reason>}`
   — its `applied_from` the decision's id as `decisions` gives it: a bare id for this register's,
