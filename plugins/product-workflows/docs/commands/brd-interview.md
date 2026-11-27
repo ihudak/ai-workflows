@@ -227,7 +227,7 @@ was closed; otherwise it hands off what it wrote — `decisions.md`
 as its header line alone where none was on file, any file a torn-write removal or a completed
 re-disposition changed, a code-defect log an earlier run left changed and uncommitted, and the
 parent's defect log where Phase 10 wrote a resolution into it.
-`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. Beside it the run dispatches two agents that read no code, each on the Opus tier: `workflows-core:question-planner` once tagging is done, to find the questions that ask the same thing, those no answer would change and those a decision on file already settles, and again at the opening of each sitting, to rank the questions left and pick those whose answer it is confident of for the sitting's table; and `workflows-core:answer-applier` after each answer, to find the open questions that answer settles or narrows, and the questions held for the customer it gives a proposed answer or shows were yours to decide. No grounding or review agent is dispatched — every finding this command reads was already independently re-derived by
+`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. Beside it the run dispatches two agents that read no code, each on the Opus tier: `workflows-core:question-planner` once tagging is done, to find the questions that ask the same thing, those no answer would change and those a decision on file already settles, and again at the opening of each sitting, to rank the questions left, pick those whose answer it is confident of for the sitting's table, and name any question whose findings cite something other than the BRD showing the code fails what it was itself meant to do; and `workflows-core:answer-applier` after each answer, to find the open questions that answer settles or narrows, and the questions held for the customer it gives a proposed answer or shows were yours to decide. No grounding or review agent is dispatched — every finding this command reads was already independently re-derived by
 `/prd-ground`'s own verifier pass.
 
 **Questions are kept in a registry, and every answer is applied to it.** Once every question of the round is tagged, the run builds one registry of every `[V]` and `[C]` question on file in the slice — every round's, rounds written before this release included, with the state each record last gives it. A held `[C]` that a review package has already carried to the customer — its round and position found in one of the slice's `bundle-*/` directories, or any such directory unreadable — is marked carried and left exactly as the customer holds it. A resumed run checks the bundles again before it goes on, since a package may have been built between its sessions: a question carried since is marked carried too, and anything the run had done to it that a carried question may not take — a re-tag, the decision it led to, any answer applied from that decision — is undone and reported. Before the first question, `question-planner` proposes merges of questions asking the same substance (never across tags, never a carried question), drops of questions whose answer would change nothing, and answers a decision on file already determines — a decision of this slice's register, of a sibling slice's under the same parent, or of a BRD this slice's `depends-on:` names, the last two cited with their BRD's key — and the run records them, with the answer a decision on file lets your team propose for a question held for the customer. A question that puts a decision on file again is never merged, dropped, applied, given a proposed answer, re-tagged or put in a table: it is always asked on its own.
@@ -582,7 +582,7 @@ option is picked.
   The test is whether a reader who was not in the room can say what would have to change for the
   answer to change. The recommended option carries its reason, written to that test; any other
   choice made with no reason is asked why. Each `[V]`'s picker and each prompt that follows its
-  answer — the "why", the code-defect offer and the question its *Yes* opens, a re-disposition —
+  answer — the "why", the code-defect question and the question its *Yes* opens, a re-disposition —
   is asked on its own, never batched with another into one prompt. The two prompts that carry
   several questions are named: a sitting's table, whose rows are `[V]`s the plan is confident of,
   and the end-of-sitting list.
@@ -597,6 +597,22 @@ option is picked.
   applied one grouped by the decision it follows, and the operator confirms it all or names what
   to reopen — a reopened applied answer or table row takes every answer applied from it back to
   the queue with it, and nothing it lists was recorded as decided before that answer.
+- **Phase 6 — a code defect is asked about only where something other than the BRD says what the
+  code was meant to do.** A finding that says the code differs from the BRD is no sign of a defect:
+  on a change request that is the normal state. So the run asks whether to record a code defect
+  only where the sitting's plan finds, in the findings already on file, a test, a code comment, a
+  document, a design or another path of the same code showing that the existing code fails what it
+  was itself meant to do — rare by design. The question opens by saying what a code defect means
+  here — existing code that fails what it was itself meant to do, a bug that exists today,
+  independent of this BRD — shows the behaviour and the cited intent, and recommends *Yes*. *No*
+  records nothing. *Yes* asks for the defect's scope decision — in scope, out of scope, conditional
+  on what would settle it, open, or withdrawn — and records a `[CDF#n]`, which goes to the customer
+  in the package and is priced by [`/prd-proposal`](prd-proposal.md). It is asked whichever way the
+  question closed: right after your answer where the question was put on its own, and after the
+  end-of-sitting list for one applied or confirmed in a table. It counts nothing against the
+  budget, and one defect is never asked about twice. You can still raise a code defect yourself at
+  any point, and the package's review still flags a decision whose argumentation asserts a defect
+  no record names.
 - **Phase 6 — a code defect a reconciliation flagged is put again.** A later round puts an entry of
   the code-defect log to the operator where it is still `open`, `conditional` on something the
   round has settled, or **flagged**: a [`/brd-reconcile`](brd-reconcile.md) run of any slice under
