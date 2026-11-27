@@ -1880,9 +1880,12 @@ registry as the cause.
   set can carry the same heading, which marks the question carried when it was not, the safe side —
   and every held `[C]` whose entry is on file enters carried where such a directory, or a markdown
   file in it, exists and cannot be read, since no reading can say which questions it carried.
-  **A held `[C]` whose round record carries a `- **Proposed answer:**` line at its address enters
-  with `"proposed"`**, the text after the label on the last such line, so that no planner proposes
-  it again (*Hold every `[C]`*, *A held `[C]` an answer reaches*).
+  **A held `[C]` whose round record's last line of the two kinds, `- **Proposed answer:**` and
+  `- **Proposal withdrawn:**`, at its address is a proposal enters with `"proposed"`**, the text
+  after the label on that line, so that no planner proposes it again; **one whose last such line is
+  a withdrawal enters with none**, its proposal withdrawn when the decision it followed was
+  re-decided (`decision-register-format.md` §9; *Hold every `[C]`*, *A held `[C]` an answer
+  reaches*).
 
 **A resumed run's carried check.** A package built between two sessions of this run carries the
 held `[C]`s whose entries were on file then, and a registry made before it does not say so. So a
@@ -1901,8 +1904,8 @@ where it is tagged `[V]`, its re-tag undone, `record --sitting <the sitting fact
 then `carry --qid <its qid>`. A decision this undoes is freed, and every answer applied from it is
 open again, as at an end-of-sitting reopen (*Write the register and the round record*, *Ids this
 run took and freed*). **Every later step holds a question this check finds carried as carried,
-whatever a refused call left in the registry**: it takes a proposal and nothing else, its proposal
-goes into its round record alone, and it is written *held for the customer*, with no re-tag line
+whatever a refused call left in the registry**: it takes a proposal, or a proposal's withdrawal,
+and nothing else, each going into its round record alone, and it is written *held for the customer*, with no re-tag line
 and no `[VD#n]`. The final report names each, with what was undone.
 
 **Decision ids.** Every `[VD#n]` this run takes — asked, applied, or confirmed in a table — takes,
@@ -2782,7 +2785,9 @@ holds `open` or `conditional_on` its prerequisite unless re-based, and one writt
 a prerequisite's decision. Nothing is applied from either, by its coverage or by the applier: an
 answer applied from it would stand `decided` while its source waits on a prerequisite, and carry no
 `conditional_on` of its own for `/product-workflows:brd-reconcile`'s propagation sweep to find. The
-questions it might have closed stay open, to be asked.
+questions it might have closed stay open, to be asked. Where such an answer re-decides a reopened
+record, the proposals that followed the answer it replaced are withdrawn all the same, as step 2's
+*Where the answer re-decides a reopened record* says, no result of this answer proposing again.
 
 1. **Coverage first** (§8 step 1). Where the answer chose one of the options its question was put
    with, each question its `covers` names that the registry records open and not carried — of any
@@ -2846,8 +2851,28 @@ questions it might have closed stay open, to be asked.
    `narrowed` naming a question the registry now marks carried — an input written before a resumed
    run's carried check found it carried (*Tag every question*) — is not recorded, and a `retag` on
    one is declined as *Hold every `[C]`* declines a re-tag of a carried question (*A held `[C]` an
-   answer reaches*). Once every result is recorded — or once the answer is applied
-   no further than its coverage, the dispatch having failed twice — set fact
+   answer reaches*).
+
+   **Where the answer re-decides a reopened record** — the `[VD#n]` its question puts again reads
+   `reopened` when the answer is taken (*That list is for a decision first recorded here*, above)
+   — **a proposal that followed the answer it replaced is withdrawn, unless this answer proposes
+   again**: each held `[C]` of the registry, of any round, carried or not, whose round record's
+   last line of the two kinds, `- **Proposed answer:**` and `- **Proposal withdrawn:**`, at its
+   address is a proposal ending `— follows <that [VD#n]>`, which the registry's `proposed` still
+   holds — no proposal recorded on it in this run — and on which this answer's results recorded no
+   `proposal`, whether the applier said so, its dispatch failed twice, or nothing was applied from
+   the answer (*Save a decision whose position may yet be held*, above). That line rested on the
+   answer the re-decision writes over under the same id, and nothing else takes it off the
+   question: `reopen --follows` reopens applied answers and never a proposal, and the re-decided
+   record reads `decided` again, which is all a reader of its status sees
+   (`decision-register-format.md` §9). Record each with
+   `put <folder> 'scratch/p6/withdrawn/<round>-<position>.txt' --from -`, its stdin that
+   `[VD#n]`, the address in lower case — a resumed run reads it there — or held by the run where
+   the run folder is unavailable; *Write the register and the round record* writes its withdrawal
+   line (*A held `[C]` an answer reaches*), and the final report names each.
+
+   Once every result is recorded, or once the answer is applied no further than its coverage, the
+   dispatch having failed twice — and, either way, every withdrawal above recorded — set fact
    `p6-applied-<round>-<position>` to `done`. **A resumed run first finishes every answer an earlier
    session recorded and left unapplied**: before it puts a question, each question the registry
    records `answered` or `table` in a sitting of this run (its `sitting` 1 or more) whose fact is unset is
@@ -3249,12 +3274,19 @@ on a carried entry — beneath its entry's last line in `interview/customer-ques
 entry is on file, an entry this run builds carrying its proposal already:
 
 - a proposal as `- **Proposed answer:** <text> — follows <decision-id>`, the registry's `proposed`
-  as the run ends, where it differs from the last such line the question's round record carries —
-  so a proposal `init` read from the record is not written twice; one whose decision this run took
+  as the run ends, where the registry holds one and it differs from the question's last line of
+  the two kinds, `- **Proposed answer:**` and `- **Proposal withdrawn:**`, in its round record — so
+  a proposal `init` read from the record is not written twice, and one made again after a
+  withdrawal is; one whose decision this run took
   and an end-of-sitting list then reopened is written nowhere, its basis gone
   (`workflows-core:question-budget` §8, *When the source moves*).
   **A carried entry is never touched** (`workflows-core:question-budget` §8): its proposal goes
   into its round's record alone, beside the entry the customer holds;
+- a withdrawal as `- **Proposal withdrawn:** <decision-id> was re-decided`, `<decision-id>` the
+  `[VD#n]` *Then the answer is applied forward* withdrew it for, where the registry's `proposed` as
+  the run ends is still the proposal withdrawn — where a proposal was recorded on the question
+  after it, that proposal is written as above, and no withdrawal; on a carried entry, in its
+  round's record alone, as a proposal is (`decision-register-format.md` §9);
 - a re-tag as `- **Re-tagged:** [C] → [V] — <reason>`, the reason kept for it above, and in the
   round record `- **Re-puts:** none` and the state the question then reached as a `[V]` after it
   (*Write the register and the round record*, *Every question the registry closed*) — **only
@@ -3600,13 +3632,14 @@ record, whichever round that is:
 
 **Every held `[C]` an answer reached** (*Hold every `[C]`*, *A held `[C]` an answer reaches*) gets
 the lines that section fixes, at its own address in its own round's record, whichever round that
-is, beneath the question's last line: a proposal's `- **Proposed answer:**` line, for a carried
-question as for any other; and a re-tag's `- **Re-tagged:** [C] → [V] — <reason>` line, then
+is, beneath the question's last line: a proposal's `- **Proposed answer:**` line and a
+withdrawal's `- **Proposal withdrawn:**` line, for a carried question as for any other; and a
+re-tag's `- **Re-tagged:** [C] → [V] — <reason>` line, then
 `- **Re-puts:** none`, then the state line the list above gives the question as a `[V]`, written
 once — the three in one write, never the re-tag line alone. A question the registry records tagged
-`[V]` and first tagged `[C]` is one this run re-tagged. The proposal and re-tag lines go beneath
-its entry's last line in `interview/customer-questions.md` too, where that section says; the
-`- **Re-puts:**` and state lines are the record's alone.
+`[V]` and first tagged `[C]` is one this run re-tagged. The proposal, withdrawal and re-tag lines
+go beneath its entry's last line in `interview/customer-questions.md` too, where that section
+says; the `- **Re-puts:**` and state lines are the record's alone.
 
 **Every strategic question a strategic plan of this run added** (*Plan the sittings*) is a question
 of the worked round, written after its other questions, in position order — appended to a record on
@@ -3621,8 +3654,9 @@ none`; then its state, where it reached one — as *Every question the registry 
 strategic `[V]`'s answer closed through its coverage takes its applied state at its own address, in
 its own round's record, like any applied answer.
 
-**A question of another round** — one this run applied, re-tagged or recorded a proposal on, or a
-merge or a drop named — gets its lines in that round's record, appended after the worked round's
+**A question of another round** — one this run applied, re-tagged, recorded a proposal on or
+withdrew a proposal from, or a merge or a drop named — gets its lines in that round's record,
+appended after the worked round's
 record is written — after any baseline line that record lacks (above): its lines at its address,
 then that record's
 `code defects: none` line and a `Status:` line, each as below, and no account line or

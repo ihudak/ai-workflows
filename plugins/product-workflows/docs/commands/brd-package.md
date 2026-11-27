@@ -306,19 +306,24 @@ attack.
 The customer's agent has nothing installed, so the rules your own sittings follow reach it as plain
 text: part 7 opens with the customer block of the `question-budget` reference (shipped in
 `workflows-core`), copied word for word — sittings of at most 25 questions, strategic questions
-first, each answer applied forward to the questions it decides and recorded in the review's decision
-log as applied from the question whose answer it follows, the applied answers shown at the end of
-each sitting, and proposed answers and confirmed requirement readings put as tables. Then come the
+first, each answer to a question applied forward to the questions it decides and recorded in the
+review's decision log as applied from the question whose answer it follows — never an answer to an
+assumption or a finding, whose bearing is asked about — the applied answers shown at the end of
+each sitting, and proposed answers to the questions that are not strategic, and confirmed
+requirement readings, put as tables. Then come the
 held `[C]` questions, each headed `Question <round>/<position>`, the address the review's decision
 log cites, under three sub-headings: the strategic questions, each with why it is asked, the
 questions its answer settles and the answer your team proposes; then the questions carrying a
 proposed answer, as one table to confirm or correct; then the rest. A question's proposal is read
 from its round's record, so one your answer made for a question an earlier package already carried
 — whose entry is never edited — reaches the customer in the next package. A proposal is shown only
-while the decision it follows reads decided: one whose decision was reopened, superseded or
-withdrawn since, or cannot be read, is left out, the question put without it and the final report
-naming it; where the bundled question set still shows it, the prompt says it is withdrawn, and that
-the prompt governs wherever the two differ.
+while the decision it follows reads decided and the interview has not withdrawn it: one whose
+decision was reopened, superseded or withdrawn since, or cannot be read, is left out, and one the
+interview marked `Proposal withdrawn` — because one of your answers re-decided its decision and
+proposed nothing again — is not shown either. The question is then put without it, or, on a
+strategic question, with the answer its plan recommended; the final report names each, and where
+the bundled question set still shows the proposal, the prompt says it is withdrawn, and that the
+prompt governs wherever the two differ.
 
 **Part 8 also names every position applied from another BRD's decision** — a sibling slice's or a
 prerequisite's — because it moves if that decision moves. The customer is told so and asked for no
@@ -356,6 +361,20 @@ mark on it.
   once its last check passes, so a build that stops leaves no directory for this gate to refuse. The next run that day overwrites a stopped
   run's files whole, never reads its self-review as a prior review, and says the disposition walk
   starts again.
+- **Phase 0 — the customer block.** Part 7 opens with the `question-budget` reference's customer
+  block, read in Phase 0 from between its two markers and from nowhere else in that reference, and
+  the run stops there, before the self-review, with `BRD_PACKAGE_CUSTOMER_BLOCK_MISSING` where the
+  reference no longer carries both — most likely a `workflows-core` older than this plugin needs:
+  update it, restart, and re-run. Rules written from memory would put the customer's questions by
+  rules nothing verified. The prompt's plugin-free scan reads the copied block as it reads the rest.
+- **Phase 0 and Phase 6 — a proposal whose decision no longer stands.** Phase 0 reads the decision
+  each proposal follows — in this slice's register, or in a sibling's or prerequisite's, resolved
+  by its key there, so a key naming more than one folder, or a folder named outside the allowed
+  characters, stops the run before the self-review, while one naming no folder only leaves that
+  decision unread — and Phase 6 shows a proposal only where that decision reads decided and no
+  withdrawal line follows it. One left out is not a stop: the question is put without it, and the
+  final report names it with the status its decision reads, why that decision could not be read,
+  or its withdrawal.
 - **Phase 4 — the disposition gate.** No bundle is built while any `[SR#n]` is undisposed. The gate
   is keyed on **every finding carrying a non-`undisposed` value**, and on nothing else: the reviewer
   agent returns no severity and no PASS/BLOCK verdict by design, so the disposition is the only gate
@@ -412,16 +431,6 @@ mark on it.
   `[BR#n]`, because the prompt is a bundle document and the citation-resolution check would resolve
   an example number against this package's own records — to a requirement or finding nobody meant,
   or to nothing.
-- **Phase 6 — the customer block.** Part 7 opens with the `question-budget` reference's customer
-  block, copied from between its two markers and from nowhere else in that reference, and the run
-  stops with `BRD_PACKAGE_CUSTOMER_BLOCK_MISSING` where the reference no longer carries both: rules
-  written from memory would put the customer's questions by rules nothing verified. The prompt's
-  plugin-free scan reads the copied block as it reads the rest.
-- **Phase 6 — a proposal whose decision no longer stands.** Each proposal is tested against the
-  register that holds the decision it follows — this slice's, or a sibling's or prerequisite's,
-  resolved by its key — and shown only where that decision reads decided. One left out is not a
-  stop: the question is put without it, and the final report names it with the status its decision
-  reads, or why that decision could not be read.
 - **Phases 6, 7 and 8 — the plugin-free scan.** Run over the finished prompt, the finished note and
   every bundle document, by `scripts/bundle-scan.py tokens`, so every run finds the same tokens: it
   reports each hit with its file, line and the span its position places it in — a captured file, an

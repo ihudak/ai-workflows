@@ -607,7 +607,7 @@ means:
 | an `[AS#n]` | its `round: N` | the record exists: an assumption is recorded only by the run that generates its round (`commands/brd-interview.md`, *Generate the round's question set*), and that run's write of the record is its first |
 | a `[CDF#n]` (`references/code-defect-log-format.md`) | its `round: N` | one of the record's `code defects:` lines names it raised, or its `code defects on file:` baseline line lists it; or a record that is not itself a torn write cites it in `defects`. A record carrying neither line was written before both existed, and names every `[CDF#n]` of its round — no run that writes to such a record leaves it so (the baseline, below) |
 | an entry in `interview/customer-questions.md` | its heading, `## Round <N>, question <position>` | the question at `<position>` carries the tag `[C]` in its last recorded state — *held for the customer*, or *answered by the customer* — or the record carries, at that address, the `- **Re-tagged:** [C] → [V]` line the entry carries too (§9) |
-| a `- **Proposed answer:**`, `- **Re-tagged:**`, `- **Why we ask:**` or `- **Covers:**` line beneath an entry that is not itself a torn write | its entry's heading | the record carries the same line at the question's address (§9) |
+| a `- **Proposed answer:**`, `- **Proposal withdrawn:**`, `- **Re-tagged:**`, `- **Why we ask:**` or `- **Covers:**` line beneath an entry that is not itself a torn write | its entry's heading | the record carries the same line at the question's address (§9) |
 | a `- **Requirement defect:** [DEF#n]` line on an entry that is not itself a torn write and carries no `- **Re-puts:**` line | its entry's heading | one of the record's `requirement defects:` lines lists that `[DEF#n]` asked, or its `requirement defects on file:` baseline line lists it. A record carrying neither line was written before both existed, and names every such line — no run that writes to such a record leaves it so (the baseline, below) |
 
 **Nothing else is ever a torn write**, and four things in particular are not:
@@ -923,17 +923,27 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
   the customer is offered are part of the question as it will be put**, a plain list under it on no
   labelled line, which `commands/brd-reconcile.md` records as the answering `[CD#n]`'s
   `options_considered` (§1).
-- **Two lines record what a delivery-team answer did to a held `[C]`**
+- **Three lines record what a delivery-team answer did to a held `[C]`**
   (`workflows-core:question-budget` §8), each beneath the question's last line in its round record
   and beneath its entry's last line in the question set — save on an entry a package has already
   carried, which is never edited, so its round record alone carries the line.
   **`- **Proposed answer:** <text> — follows <decision-id>`** is the answer the delivery team would
   give, for the customer to confirm or correct, and the decision it follows — a bare id for this
   register's, the qualified prose spelling `<BRD-KEY> [VD#n]` for another's (§4); it answers
-  nothing, the question stays *held for the customer*, and the last such line is the question's
-  proposal — read off the round record, where alone a carried entry's is, and shown to the customer
-  by `commands/brd-package.md` only while the decision it follows reads `decided` (§3), since a
-  reopen leaves the line standing. **`- **Re-tagged:** [C] → [V] — <reason>`** says the question was the delivery team's
+  nothing, and the question stays *held for the customer*. A reopen leaves the line standing, and so
+  does a re-decision, which writes the decision's fields afresh under the same id (§4) — so the line
+  can come to rest on an answer that no longer stands.
+  **`- **Proposal withdrawn:** <decision-id> was re-decided`** says so: `commands/brd-interview.md`
+  writes it where an answer of its run re-decides, in this slice's register, the decision the
+  question's last proposal follows, and that answer proposes nothing for the question again — a
+  decision of another BRD's register is re-decided by that BRD's own interview, which writes into
+  no other slice. **Its label is its own, not the proposal's, because a proposal's text is free**: a team may
+  propose `withdrawn` as an answer, so no value under the proposal's label could be told from one,
+  while no writer writes a proposal under this label. **The question's proposal is the last of its
+  `- **Proposed answer:**` and `- **Proposal withdrawn:**` lines, read off the round record**, where
+  alone a carried entry's lines are: a withdrawal last means it has none, to every reader, and a
+  proposal last is shown to the customer by `commands/brd-package.md` only while the decision it
+  follows reads `decided` (§3). **`- **Re-tagged:** [C] → [V] — <reason>`** says the question was the delivery team's
   to decide all along (above): an entry carrying it is no longer a question for the customer.
   `commands/brd-interview.md`'s *Hold every `[C]`* fixes when each is written.
 - **A strategic question** (`workflows-core:question-budget` §7; `commands/brd-interview.md`'s
@@ -946,6 +956,9 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
   state, **`- **Proposed answer:** <recommended> — <reason>`**, the answer the plan recommends and why,
   with no `follows`, since it follows no decision: it is the question's proposal until one a
   delivery-team answer makes is written beneath it, which, as the last such line, takes its place.
+  Where the line that took its place is withdrawn, or is a proposal `commands/brd-package.md` leaves
+  out because its decision does not read `decided`, the package puts this planned answer in its
+  place again: it follows no decision, so no decision's status tests it.
   Its entry in the question set carries the same three lines, after its `- **Findings:**` and
   `- **Altitude:**` lines, and its options as a plain list, as any entry's are; it carries no
   `- **Rejected row:**`, `- **Requirement defect:**`, `- **Defect image:**` or `- **Re-puts:**`

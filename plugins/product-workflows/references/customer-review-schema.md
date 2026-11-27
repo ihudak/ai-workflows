@@ -34,8 +34,9 @@ this repository's design spec, and the decision rows above:
   package's own records, which is why section 1 forbids one even as an example —
   `references/bundle-packaging.md` §6.2, relation 1
 - the rules the reviewer's agent puts the package's questions by — sittings within a budget,
-  strategic questions first, each answer applied forward, proposals and requirement confirmations
-  put as tables — which the prompt carries beside this body, copied verbatim into the part that
+  strategic questions first, each answer to a numbered question applied forward, proposals for the
+  questions that are not strategic and requirement confirmations put as tables — which the prompt
+  carries beside this body, copied verbatim into the part that
   asks the questions, and two of which the body states as *the pre-fill rule* and *the
   applied-answer rule* — `workflows-core:question-budget` §13
 
@@ -90,10 +91,12 @@ to the reader who matters.
 **The prompt carries a second block of rules beside this body**: how the reviewer's agent puts the
 package's questions to the reviewer, copied verbatim, in the part of the prompt that asks them, from
 the reference the preamble names. Two of its rules shape the returned review itself, and the body
-states both in full — *the pre-fill rule* for the review's section 4 and *the applied-answer rule*
-for its section 7 — so the review's shape never rests on a reader having met that block first. The
-two texts must agree: a change to either rule is made in the block and in the body in one change,
-and the body never contradicts the block. The block is held to this section's prohibitions as the body is, and
+states both in full — *the pre-fill rule* for the review's section 4, and *the applied-answer
+rule* for its section 7, which also says which answers an applied row may follow and how a proposal
+confirmed in a table is recorded — so the review's shape never rests on a reader having met that
+block first. The two texts must agree: a change to the block's rules for applying an answer
+forward, for putting proposals as a table or for section 4 is made in the block and in the body in
+one change, and the body never contradicts the block. The block is held to this section's prohibitions as the body is, and
 the prompt's plugin-free scan reads both.
 
 **Documents are named, never pathed.** The review refers to a bundle document by its filename, and
@@ -235,7 +238,10 @@ alone is passed to the delivery team and drops nothing until they act on it.
 answer plainly decided it, still gets a row of its own: the question's round and position, the
 answer it takes, the one-line reason, and, after the reason, `applied from <round>/<position>` —
 those two words, a space, and the round and position of the question whose answer it follows,
-written as the prompt heads that question — once on the row. The marker is how the delivery team
+written as the prompt heads that question — once on the row. **It names a question only**: an
+answer to anything else the package asks — an assumption, or a finding it puts to the reviewer —
+decides no other question this way, and a question it bears on is asked and answered in a row of
+its own, without the marker. The marker is how the delivery team
 tells an answer the reviewer gave from one their agent derived from it, and an answer is recorded on
 the delivery side only once it is confirmed there, either way. A row the reviewer reopened at the
 end of a sitting and then answered is an ordinary row and carries no marker, and so is a proposed

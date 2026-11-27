@@ -722,6 +722,27 @@ cannot review, and they will not tell you that — they will review it anyway, b
     the target as written it names beside a captured file, markdown or image (rule 6). Only a link
     that does not resolve as written has a row there; one that does reaches its copy by its own
     path, which the manifest's map already carries, so no target as written is named for it.
+
+    **Read the customer block here too, before anything is composed or reviewed.** Load
+    `workflows-core:question-budget` (`Skill(skill: "workflows-core:reference", args: "question-budget")`)
+    and take every line strictly between its `<!-- question-budget:customer:begin -->` and
+    `<!-- question-budget:customer:end -->` markers (§13) — the lines the prompt's part 7 opens with,
+    copied there verbatim (*Render the customer prompt*). Where the reference does not carry both
+    markers, once each and in that order, stop:
+    `BRD_PACKAGE_CUSTOMER_BLOCK_MISSING: workflows-core:question-budget carries no customer block between its two markers — the likeliest cause is a workflows-core older than this product-workflows needs. Update the workflows-core plugin, restart Claude Code, and re-run '/product-workflows:brd-package <BRD-KEY>'. Nothing was written: a prompt whose rules for putting the questions are written from memory, or taken from the rest of that reference, puts this package's questions by rules nothing verified, and cites what the customer cannot resolve.`
+
+    **And read what each held `[C]`'s proposal follows**, so that a folder the proposals name stops
+    the run here, before the self-review, rather than after it. For each held entry, read the last
+    of its `- **Proposed answer:**` and `- **Proposal withdrawn:**` lines at its address in its
+    round record (`decision-register-format.md` §9); where that line is a proposal ending
+    `— follows <decision-id>`, read the decision it follows: a bare id in this slice's
+    `decisions.md`, read above; `<BRD-KEY> [VD#n]` in that BRD's `decisions.md`, its folder resolved
+    with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`,
+    §3) and read as it stands in that folder, as step 7a reads another folder's records. An
+    `ambiguous`, `misnamed` or `misrooted` resolution stops the run with `resolve-address`'s own
+    stop, as everywhere; `absent` or `invalid`, a register missing or unreadable, or no record of
+    that id leaves the decision unread, which is no stop. Carry, per such proposal, the decision's
+    `status` and `statement`, or why it could not be read, to *Render the customer prompt*'s part 7.
 11. **Fix the run's date.** One `<YYYYMMDD>` stamp, taken once, used for every artifact this run
     writes. If `bundle-<YYYYMMDD>/` already exists in the BRD folder, stop:
     `BRD_PACKAGE_BUNDLE_EXISTS: <BRD-dir>/bundle-<YYYYMMDD>/ already exists — a dated bundle is never rewritten. Package on the next date; or, where it was never sent, move the directory out of the specs repository and delete this date's self-review, prompt and delivery note beside it too, since a run reads them as its own once no bundle of this date stands.`
@@ -1345,17 +1366,15 @@ a `[V]` (its *Hold every `[C]`*), so no part of the prompt renders it, as no par
 (`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §9).
 
 **Part 7 — the decisions the customer must make.** It opens, directly under its heading, with
-the customer block: load `workflows-core:question-budget`
-(`Skill(skill: "workflows-core:reference", args: "question-budget")`) and copy every line between
-its `<!-- question-budget:customer:begin -->` and `<!-- question-budget:customer:end -->` markers
-(§13), the markers left out and nothing reworded, reordered or added. It is how the customer's
-agent, which has nothing installed, puts this package's questions in sittings, applies each answer
-forward, puts the proposals and the review's section 4 confirmations as tables, and records an
-answer it applied in section 7 — the reference's other sections are never copied, since their
-citations and section numbers resolve for no reader of the prompt. Where the reference does not
-carry both markers, once each and in that order, stop before anything is rendered:
-`BRD_PACKAGE_CUSTOMER_BLOCK_MISSING: workflows-core:question-budget no longer carries its customer block between its two markers — a prompt whose rules for putting the questions are written from memory, or taken from the rest of that reference, puts this package's questions by rules nothing verified, and cites what the customer cannot resolve.`
-Under the block, where the package holds a question set, one fixed line: *each question below is
+the customer block Phase 0 step 10 read — the lines between the two markers
+`workflows-core:question-budget` §13 sets, copied verbatim, the markers left out and nothing
+reworded, reordered or added. It is how the customer's agent, which has nothing installed, puts
+this package's questions in sittings, applies each answer forward, puts the proposals and the
+review's section 4 confirmations as tables, and records an answer it applied in section 7 — the
+reference's other sections are never copied, since their citations and section numbers resolve for
+no reader of the prompt; a reference carrying no block stopped the run at that step
+(`BRD_PACKAGE_CUSTOMER_BLOCK_MISSING`), before anything was composed or reviewed. Under the
+block, where the package holds a question set, one fixed line: *each question below is
 headed by its round and its position in that round, `<round>/<position>`, and is the entry headed
 `Round <round>, question <position>` in* the question set's bundled filename (*Assemble the bundle*
 rule 1) *— cite it by that address in your section 7; where this part and that file differ, this
@@ -1374,7 +1393,7 @@ escalated findings under a sub-heading of their own:
   `<round>/<position>`, from its entry's `- **Covers:**` line — naming only questions this part
   renders, since one no longer held (answered, or re-tagged) is nothing left for the customer to
   settle, and is never named as open; and the package's proposed answer, its proposal by the rule
-  below, or one line saying it carries none.
+  below — its own planned answer where a later one is left out or withdrawn.
 - **`### 7.2 Proposed answers to confirm or correct`** — every other held entry whose proposal
   stands, under the fixed line *confirm these as one table, or name the ones to correct, and ask
   each one named as an ordinary question*: one table, `| Question | Proposed answer | Why |`, a row
@@ -1387,38 +1406,44 @@ escalated findings under a sub-heading of their own:
 
 Each keeps its sub-heading where it has nothing to list, and says `None` and why.
 
-**A held `[C]`'s proposal is read from its round record, never from its entry**: the last
-`- **Proposed answer:**` line at the question's address in `interview/round-<N>.md`, the round its
-heading names. A carried entry — one an earlier bundle already put to the customer — is never
-edited, so a proposal found for it after it was sent is on the record alone, and the next package
-shows it from there (`workflows-core:question-budget` §8;
-`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §9); an entry not yet carried holds
-the same line, written in the same write, or it is a torn write step 5c has already refused (§8
-there). Either way the entry's own text is rendered unchanged: the review cites the question by its
-round and position, and nothing rewrites what a customer may already hold.
+**A held `[C]`'s proposal is read from its round record, never from its entry**: the last of its
+`- **Proposed answer:**` and `- **Proposal withdrawn:**` lines at the question's address in
+`interview/round-<N>.md`, the round its heading names, as Phase 0 step 10 read it — **a
+withdrawal last means the question has none**: `/product-workflows:brd-interview` writes one where
+an answer re-decided the decision the proposal followed and proposed nothing again, the line having
+rested on an answer that no longer stands
+(`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §9). A carried entry — one an
+earlier bundle already put to the customer — is never edited, so a proposal or a withdrawal found
+for it after it was sent is on the record alone, and the next package shows what it says
+(`workflows-core:question-budget` §8; `decision-register-format.md` §9); an entry not yet carried
+holds the same lines, written in the same write, or it is a torn write step 5c has already refused
+(§8 there). Either way the question's own text is rendered unchanged, and of its entry's labelled
+lines only what this part takes from them above — never a proposal line, which this paragraph
+and the next settle: the review cites the question by its round
+and position, and nothing rewrites what a customer may already hold.
 
 **A proposal stands only while the decision it follows does.** A line ending
-`— follows <decision-id>` names the delivery-team decision it rests on: a bare id, in this slice's
-`decisions.md`; or `<BRD-KEY> [VD#n]`, in that BRD's own register — a sibling slice's, or a
-`depends-on:` BRD's — its folder resolved with `resolve-address`
-(`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3) and its
-`decisions.md` read as it stands in that folder, as step 7a reads another folder's records. The
-proposal is rendered only where that decision reads `decided`
-(`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §3). One reading `open`,
-`reopened`, `superseded` or `withdrawn` leaves the proposal out, and so does a decision this run
-cannot read — a key resolving `absent` or `invalid`, a register missing or unreadable, no record of
-that id — while `ambiguous`, `misnamed` and `misrooted` stop the run with `resolve-address`'s own
-stops, as they do everywhere. A reopen does not take the line off the question
-(`workflows-core:question-budget` §8, *When the source moves*), which is why this run tests the
-decision rather than trusting the line. A proposal left out leaves its question with none — an
-earlier `- **Proposed answer:**` line never stands in for it — so a strategic question stays under
-7.1, saying it carries no proposed answer, and any other goes under 7.3; the Final report names each
-one left out. A line with no `follows` is a strategic question's own planned answer, which follows
-no decision, and is rendered as written.
+`— follows <decision-id>` names the delivery-team decision it rests on, which Phase 0 step 10 read
+— a bare id in this slice's `decisions.md`, or `<BRD-KEY> [VD#n]` in that BRD's own register, a
+sibling slice's or a `depends-on:` BRD's. The proposal is rendered only where that decision reads
+`decided` (`decision-register-format.md` §3). One reading `open`, `reopened`, `superseded` or
+`withdrawn` leaves the proposal out, and so does a decision that step could not read. Nothing that
+reopens, supersedes or withdraws a decision takes the line off a question, which is why this run
+tests the decision rather than trusting the line; a re-decision, which leaves the decision reading
+`decided` with a different answer under the same id, is the one move that test cannot see, and the
+interview's withdrawal line answers it (`decision-register-format.md` §9). A proposal left out or
+withdrawn leaves its question with none — an earlier proposal line never stands in for it — and
+the question goes under 7.3, **save a strategic question**, which stays under 7.1: there its own
+planned answer, the `- **Proposed answer:**` line with no `follows` its first write carries, stands
+in, since it follows no decision and so no decision's status tests it
+(`decision-register-format.md` §9, *A strategic question*). The Final report names each proposal
+left out or withdrawn. A line with no `follows` is a strategic question's own planned answer, and
+is rendered as written.
 
 **The bundle carries the question set whole** (*Assemble the bundle*), so where a question's entry
-there shows a `- **Proposed answer:**` line and this part renders no proposal for it, the question's
-rendering says so in one fixed line — *the proposed answer* the question set's bundled filename
+there shows, on its last `- **Proposed answer:**` line, a proposal this part does not put — it puts
+none, or, on a strategic question, the planned answer standing in — the question's rendering says
+so in one fixed line — *the proposed answer* the question set's bundled filename
 *shows for this question is withdrawn: put the question without it* — beside the line under the
 customer block saying that this part governs wherever the two differ. Without both, the
 customer's agent meets in the file a proposal the package no longer stands behind, and puts it.
@@ -2460,9 +2485,10 @@ full because those are the ones the customer will read; whether a second reviewe
 `fixed` correction and what it added; the counts the prompt carries — `[C]` questions, and of them
 the strategic ones and those put with a proposal, open
 `[AS#n]`, `escalated-to-customer` findings, positions that follow another BRD's decision, and the `[CDF#n]` counts parts 6, 8 and 11 each carry,
-`in-scope`, `conditional` and `out-of-scope` respectively; every proposal part 7 left out, by its
-question's `<round>/<position>`, with the decision it follows and why — the status that decision
-reads, or why it could not be read — plugin-internal; where Phase 0 step 7a's *Ship anyway*
+`in-scope`, `conditional` and `out-of-scope` respectively; every proposal part 7 left out or found
+withdrawn, by its question's `<round>/<position>`, with the decision it follows and why — the
+status that decision reads, why it could not be read, or the withdrawal line — and, on a strategic
+question, that its planned answer stood in — plugin-internal; where Phase 0 step 7a's *Ship anyway*
 was taken, `Flagged code defects shipped: [CDF#n] (<record> › <what was found>), …`, naming every
 flag it shipped — plugin-internal, and in no customer artifact; every `[V]` Phase 0 step 7 admitted
 as deferred only on questions held for the customer, by its round and position, with each question
