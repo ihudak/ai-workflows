@@ -384,10 +384,15 @@ attack.
   is listed, named and copied by `scripts/bundle-scan.py place`, and Phase 6 reads the same names
   from it before writing the prompt, so no file's name is ever typed into a shell command: a name
   holding a space, `$(`, a backtick, a quote or a leading `-` is copied, staged and committed as it
-  stands. A captured file whose name is not a printable value — one holding a control character such
-  as a line feed — and a symbolic link among the captured files stop the run with
-  `BRD_PACKAGE_NAME_REFUSED`, naming each by its position in its folder, since the manifest could not
-  name it.
+  stands. Every copy and every name is decided before anything is copied, so the names the prompt
+  carries are the ones the bundle gets. Among the captured files, a name that is not a printable
+  value — one holding a control character such as a line feed — a symbolic link, an entry that is
+  neither a file nor a folder (a FIFO, a socket), a file that cannot be read and a folder that cannot
+  be listed or entered stop the run with `BRD_PACKAGE_NAME_REFUSED`, naming each by its position in
+  its folder, since the manifest could not name it, and saying how to remove it by hand: nothing
+  under the capture is ever removed by a command, `/brd-intake`'s re-runs included. Names that differ
+  only in case or Unicode normalisation are told apart as two, as a filesystem that folds them would
+  open them as one.
 - **Phases 6, 7 and 8 — the plugin-free scan.** Run over the finished prompt, the finished note and
   every bundle document, by `scripts/bundle-scan.py tokens`, so every run finds the same tokens: it
   reports each hit with its file, line and the span its position places it in — a captured file, an

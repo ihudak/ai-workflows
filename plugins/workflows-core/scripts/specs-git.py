@@ -36,9 +36,12 @@ declined appends paths to the run's state record (specs_git_state.py, one file p
 every repository), creating the record where the command's start never ran. handoff-stage, handoff-commit and
 handoff-diff are phase-handoff's path work over a handoff's declared paths: §2.3's staging and its account of every
 declared path, §2.4's commit by pathspec and its index restore, and the two-dot or three-dot diff §2.2 and §2.3 test.
-Every path command here takes its paths as data -- each --path, then each NUL-terminated entry of each --paths-from file
--- and hands them to git as :(literal) pathspecs in an argument list, never in a shell word, so a name a customer or a
-designer gave a file, holding a space, $(, a backtick, a quote, a leading - or a line feed, is a path and nothing else. specs-root-check runs addressing §3's
+Every path command here takes its paths as data -- each --path=<path> (the = form, so a path opening with - is never
+read as an option), then each NUL-terminated entry of each --paths-from file -- and hands them to git as :(literal)
+pathspecs in an argument list, never in a shell word, so a name a customer or a designer gave a file, holding a space,
+$(, a backtick, a quote, a leading - or a line feed, is a path and nothing else; handoff-commit commits only the declared
+paths equal, whole, to a path the index lists as staged, and handoff-diff passes over a path outside the repository,
+naming it. A path that is not UTF-8 is stored in the run's record as its own bytes. specs-root-check runs addressing §3's
 entry point on SPECS_PATH as set, "" meaning unset. start is specs-repo-git §3's specs-preflight for the run of this
 session and command: it prints the Environment: line and what §3.1 reports, opens the run's record, then runs §3.2 to
 §3.5 in stages saved in that record -- each resumable from its start -- and prints what each does; a push rejected as
@@ -90,6 +93,7 @@ import importlib.util
 import json
 import math
 import os
+import posixpath
 import re
 import shlex
 import shutil
@@ -270,9 +274,10 @@ def push_scope(root, branch, session_default_ref=None):
     return {"base": base, "commits": commits, "in_scope": failed is None, "failed": failed}
 
 
-def _declared(paths, files=()):
+def _declared(paths, files=(), unread=None):
     """The paths a caller hands over: each of <paths> (--path), then each NUL-terminated entry of each of <files>
-    (--paths-from), in that order, each once; an empty entry is no path. A file that cannot be read is NotRun."""
+    (--paths-from), in that order, each once; an empty entry is no path. A file that cannot be read is NotRun -- or,
+    where <unread> is a list, appended to it as (file, reason) and passed over, as end's --declined-from is."""
     out = []
     for p in paths:
         if p and p not in out:
@@ -282,7 +287,10 @@ def _declared(paths, files=()):
             with open(f, "rb") as fh:
                 data = fh.read()
         except OSError as e:
-            raise NotRun("cannot read %s: %s" % (f, e.strerror or e.__class__.__name__))
+            if unread is None:
+                raise NotRun("cannot read %s: %s" % (f, e.strerror or e.__class__.__name__))
+            unread.append((f, e.strerror or e.__class__.__name__))
+            continue
         for raw in data.split(b"\0"):
             p = raw.decode("utf-8", "surrogateescape")
             if p and p not in out:
@@ -331,20 +339,22 @@ def handoff_stage(root, declared):
 
 
 def handoff_commit(root, declared, message_file):
-    """phase-handoff §2.4's commit, by pathspec, never the index: the declared paths git still lists as staged,
-    committed by :(literal) pathspec with the message read from <message_file> (-F), then the index restore
-    specs-repo-git §4 step 4 gives -- the paths the commit carries whose index entry differs from the new HEAD, less a
-    change somebody else had staged that the commit's pathspecs do not name. status: committed, nothing, or failed
-    with git's or the hook's first line."""
+    """phase-handoff §2.4's commit, by pathspec, never the index: the paths §2.3 step 3 staged that git still lists as
+    staged -- each declared path equal, whole, to a path the index lists as staged, so a declared directory matches
+    nothing under it and a path outside the repository reaches no command -- committed by :(literal) pathspec with the
+    message read from <message_file> (-F), then the index restore specs-repo-git §4 step 4 gives: the paths the commit
+    carries whose index entry differs from the new HEAD, less a change somebody else had staged that the commit's
+    pathspecs do not name. status: committed, nothing, or failed with git's or the hook's first line."""
     if not declared:
         raise NotRun("usage: handoff-commit needs at least one --path or --paths-from entry")
     if not os.path.isfile(message_file):
         raise NotRun("usage: --message-file names no file: %s" % message_file)
     out = {"status": "nothing", "sha": None, "paths": [], "hook_paths": [], "error": None}
-    listed = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames", "--", *_literal(declared)))
+    before = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames"))
+    staged_now = set(before)
+    listed = [p for p in declared if p in staged_now]
     if not listed:
         return out
-    before = sb.nul_list(sb.git(root, "diff", "--cached", "--name-only", "-z", "--no-renames"))
     r = sb.git(root, "commit", "-q", "-F", message_file, "--", *_literal(listed), check=False)
     if r.returncode != 0:
         return dict(out, status="failed", error=_first_line(r))
@@ -362,16 +372,24 @@ def handoff_diff(root, declared, base, fork=False):
     """git diff --quiet over <declared> by :(literal) pathspec: <base> against the working tree, or, with <fork>,
     <base>...HEAD -- what HEAD's branch changed since it forked from <base>. differ: true where git exits 1, false
     where it exits 0; any other exit is NotRun. paths: the declared paths the same diff names (--name-only -z), the
-    first of which phase-handoff §4.1's stacked clause names."""
+    first of which phase-handoff §4.1's stacked clause names. ignored: each declared path outside the repository --
+    absolute, or climbing out with .. -- which no diff can take and which §2.3 step 4 names as unaccounted; where
+    every path is one, the diff runs over none and nothing differs."""
     if not declared:
         raise NotRun("usage: handoff-diff needs at least one --path or --paths-from entry")
     _commit(root, base)
+    inside, ignored = [], []
+    for p in declared:
+        norm = posixpath.normpath(p)
+        (ignored if p.startswith("/") or norm == ".." or norm.startswith("../") else inside).append(p)
+    if not inside:
+        return {"differ": False, "paths": [], "ignored": ignored}
     rng = base + "...HEAD" if fork else base
-    r = sb.git(root, "diff", "--quiet", rng, "--", *_literal(declared), check=False)
+    r = sb.git(root, "diff", "--quiet", rng, "--", *_literal(inside), check=False)
     if r.returncode not in (0, 1):
         raise NotRun("git diff: %s" % _first_line(r))
-    named = sb.nul_list(sb.git(root, "diff", "--name-only", "-z", "--no-renames", rng, "--", *_literal(declared)))
-    return {"differ": r.returncode == 1, "paths": named}
+    named = sb.nul_list(sb.git(root, "diff", "--name-only", "-z", "--no-renames", rng, "--", *_literal(inside)))
+    return {"differ": r.returncode == 1, "paths": named, "ignored": ignored}
 
 
 def declined(command, paths, started=None):
@@ -1467,8 +1485,12 @@ def _resume_next(command, args, budget=None, started=None):
 def _stop(run, row, printed, line):
     """An outcome of §4 step 1 -- superseded, misrooted, blocked or silent: what it prints, the record removed. A blocked row's
     <line> already carries §6's declined append where it takes one (_declined, _declined_checked); the misrooted row
-    takes none, so no git status runs in a path the run has found wrong (§6), and the silent no-op prints nothing."""
+    takes none, so no git status runs in a path the run has found wrong (§6), and the silent no-op prints nothing.
+    A line run["pre"] holds by then -- a --declined-from file end could not read -- comes first, save on the silent
+    no-op."""
     _remove(run)
+    if printed:
+        printed = list(run.get("pre") or []) + list(printed)
     return _end_result(print=printed, line=line, row=row, record=run["record"])
 
 
@@ -1666,7 +1688,7 @@ def _record_at(state, session, command, started):
 
 
 def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=False, misrooted_notice=None,
-        session_branch_created=None, declined=(), resume=False, started=None, superseded=False):
+        session_branch_created=None, declined=(), resume=False, started=None, superseded=False, declined_unread=()):
     """specs-repo-git §4's commit-artifacts for the run of this session and <command>, steps 1-7, on <specs>
     (SPECS_PATH as set, "" meaning unset). <misrooted_notice>: the lines of a notice that set misrooted outside the
     script (--misrooted-stdin), [] for none. <declined>: paths a declined call could not record. <started>: the run's
@@ -1691,6 +1713,8 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
     run = {"state": state, "lines": lines, "specs": specs, "session": session, "command": command, "record": None,
            "wrote": False, "pre": [], "commit": None, "started": started,
            "record_path": _record_at(state, session, command, started)}
+    for f, why in declined_unread:  # a --declined-from file that cannot be read is named, and the end goes on
+        run["pre"].append(lines.fill("end.declined-unreadable", {"<file>": lines.shown_path(f), "<reason>": why}))
     if superseded:  # §4 step 1: the tree is another session's now -- nothing written in it, the record removed
         run["record"] = "missing" if state.load(session, command, at=run["record_path"]) is None else "found"
         line = lines.T["row.superseded"]
@@ -5237,9 +5261,11 @@ def main():
             notice = None
             if a.misrooted_stdin:
                 notice = [line for line in sys.stdin.buffer.read().decode("utf-8", "replace").splitlines() if line.strip()]
+            unread = []
+            declined_paths = _declared(a.declined, a.declined_from, unread)
             print(json.dumps(end(a.specs, a.command, a.commit_key, a.register_rebuild, a.no_preflight, notice,
-                                 a.session_branch_created, _declared(a.declined, a.declined_from), a.resume, a.started,
-                                 a.superseded), indent=2,
+                                 a.session_branch_created, declined_paths, a.resume, a.started,
+                                 a.superseded, unread), indent=2,
                              ensure_ascii=False))
             return 0
         if not a.specs:

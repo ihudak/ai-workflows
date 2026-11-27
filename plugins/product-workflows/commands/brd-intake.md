@@ -407,10 +407,15 @@ Then copy `@<brd-file>` **verbatim, byte-for-byte** into `<BRD-dir>/brd/source/<
 `brd/source/` inside the folder) — on a re-run, only as the copy rule below allows. **Byte-for-byte
 covers the content only, never the source's mode bits**, here and at every copy this phase makes
 under `brd/source/` and `brd/source-external/`, the linked files included: write each copy at mode
-`0644` with `install -m 0644 <source> <copy>`, which also resets a copy an earlier run left at another
-mode when it replaces it — never with `cp -p` or `cp -a`, and never with a plain `cp` either, which
-gives a new file the source's own mode less the umask, so a file a mount marks `0777` would be
-committed executable. Per
+`0644` with `${CLAUDE_PLUGIN_ROOT}/references/idea-format.md`'s copy program (*The copy is a program
+too, and so is the hash*), which also resets a copy an earlier run left at another mode when it
+replaces it — never with `cp`, `cp -p`, `cp -a` or `install`, each a command built from the
+customer's own names, which may hold a space, `$(`, a backtick, a quote, a leading `-` or a line
+feed, and a plain `cp` also giving a new file the source's own mode less the umask, so a file a
+mount marks `0777` would be committed executable. Each copy, and each file the copy program finds
+unchanged or reuses, is declared as it is made: the program appends its path to the declared-paths
+file this phase's reset program below starts, which Phase 7 hands the handoff as
+`deliverable_paths_file`. Per
 `${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §1, nothing under
 `brd/source/` is ever edited, reworded, or reformatted, no matter how badly worded a requirement
 inside it is — defects found in it are logged beside it (Phase 4), never corrected in it — and this
@@ -423,8 +428,8 @@ which is not the same as unchanged since the last copy: a run that stopped after
 read that found no requirement (Phase 3's `EMPTY`), can have replaced a copy with nothing reconciled
 against it. So the state is judged against the record the inventory itself carries, its
 `document:` and its `captured:` map (`brd-format.md` §2), never against the copy on disk. Compute
-the SHA-256 of each file this run takes — under `brd/source/` and `brd/source-external/` alike — and
-record it:
+the SHA-256 of each file this run takes — under `brd/source/` and `brd/source-external/` alike — with
+the copy program's `hash` (`idea-format.md`), never a command naming the file, and record it:
 - **unchanged** → the map holds that hash at the file's path relative to `brd/`;
 - **replaced** → the map holds another hash there;
 - **new** → the map holds no entry for it.
@@ -455,92 +460,133 @@ the two exists, whose mode is not `0644` is reset to `0644`, whether or not this
 earlier intake that copied with a plain `cp` can have left a copy executable, and the rule below
 writes nothing over an unchanged file, so nothing else would ever normalise it. Each file reset
 counts as written by this run: name it in the final report, and Phase 7 declares it, so the mode
-change is committed. **The names there are the customer's own** — a space, `$(`, a backtick, a
-quote, a leading `-` and a line feed are all names a customer's file can carry — so no command is
-built from one: the reset runs in this program, which walks both folders itself, following no
-symbolic link, resets each file with `os.chmod`, and writes each path it reset, relative to
-`$SPECS_PATH` and ended by a NUL byte, to a file of its own, `command mktemp -t
-brd-intake-declared-XXXXXX` — the `deliverable_paths_file` Phase 7 hands the handoff. It writes there
-too each untracked file already under either folder, one an earlier intake copied and never handed
-off, read from `git status --porcelain -z --untracked-files=all` over the two folders, which it
-runs with an argument list. Run it on every run, before copying anything: on a first intake neither
-folder exists yet, and it finds nothing.
+change is committed. **So does a file an earlier run reset and never handed off** — a run that
+stopped before its handoff, or declined it — which now holds mode `0644` and differs from what git
+holds in its mode alone: nothing would reset it again, so it is found by that difference and
+declared beside the files this run resets. **The names there are the customer's own** — a space,
+`$(`, a backtick, a quote, a leading `-` and a line feed are all names a customer's file can carry —
+so no command is built from one: the reset runs in this program, which walks both folders itself,
+following no symbolic link, decides every reset before it makes one, resets each file with
+`os.chmod`, and writes each path it changed, relative to `$SPECS_PATH` and ended by a NUL byte, to a
+file of its own, `command mktemp -t brd-intake-declared-XXXXXX` — the `deliverable_paths_file` Phase 7
+hands the handoff, to which this phase's copies are appended too (above). It writes there too each
+untracked file already under either folder that its walk read as a regular file, one an earlier
+intake copied and never handed off, read from `git status --porcelain -z --untracked-files=all` over
+the two folders, which it runs with an argument list — never a symbolic link its walk passed over.
+Where `$SPECS_PATH` is no git repository it reads no git at all, as `workflows-core:specs-repo-git`
+§3.1 lets such a run go on, and still resets. Run it on every run, before copying anything: on a
+first intake neither folder exists yet, and it finds nothing.
 
 ```bash
 python3 -I - "$SPECS_PATH" "<BRD-dir>" "<the file mktemp printed>" <<'EOF'
 import json, os, stat, subprocess, sys, unicodedata
 specs, brd, out = (os.fsencode(a) for a in sys.argv[1:4])
-BIDI = set("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")  # the bidirectional controls
-def printable(b):  # UTF-8, no Cc, no U+2028 or U+2029, no bidirectional control
+BIDI = set("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069\u2028\u2029")  # addressing section 3's printable value: no Cc, no U+2028 or U+2029, no bidirectional control
+def printable(b):
     try:
-        return not any(unicodedata.category(c) == "Cc" or c in "\u2028\u2029" or c in BIDI for c in b.decode("utf-8"))
+        return not any(unicodedata.category(c) == "Cc" or c in BIDI for c in b.decode("utf-8"))
     except UnicodeError:
         return False
-def shown(rel, label, n):  # a path the report can print, or its place in its folder's byte-wise listing
-    return os.fsdecode(rel) if printable(rel) else {"folder": label, "position": n}
-reset, untracked, skipped, declared = [], 0, [], []
+def shown(rel, label, kind, n):  # a path the report can print, else its place among its folder's entries of its kind
+    return os.fsdecode(rel) if printable(rel) else {"folder": label, "kind": kind, "position": n}
+def git(*args):
+    try:
+        return subprocess.run(["git", "-C", os.fsdecode(specs), *args], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except OSError:
+        return None
 tops = [os.path.join(brd, b"brd", t) for t in (b"source", b"source-external")]
-spec = [":(literal)" + os.fsdecode(os.path.relpath(t, specs)) for t in tops]  # read first, so a failure here resets nothing
-r = subprocess.run(["git", "-C", os.fsdecode(specs), "status", "--porcelain", "-z", "--untracked-files=all", "--", *spec],
-                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-if r.returncode != 0:
-    sys.stderr.write("git status: " + r.stderr.decode("utf-8", "replace").strip()[:300] + "\n")
-    sys.exit(1)
-fields = r.stdout.split(b"\0")
-i = 0
-while i < len(fields):
-    rec = fields[i]
-    i += 1
-    if rec[:3] == b"?? ":
-        declared.append(rec[3:])
-        untracked += 1
-    elif rec[:1] in (b"R", b"C") or rec[1:2] in (b"R", b"C"):
-        i += 1  # a rename's or copy's original, consumed with its record
+# 1. Decide: walk both folders, following no symbolic link, and change nothing yet.
+regular, todo, skipped = set(), [], []
 for top in tops:  # <BRD-dir> passed addressing's class test, so a top folder's path prints
     stack = [(top, os.fsdecode(os.path.relpath(top, specs)))] if os.path.isdir(top) and not os.path.islink(top) else []
-    while stack:  # walked with a stack, never by recursion, following no symbolic link
+    while stack:  # walked with a stack, never by recursion
         d, label = stack.pop()
         try:
-            names = sorted(os.listdir(d))
-        except OSError:
+            kinds = {"file": [], "folder": [], "link": [], "other": []}
+            for name in os.listdir(d):
+                m = os.lstat(os.path.join(d, name)).st_mode
+                kinds["link" if stat.S_ISLNK(m) else "folder" if stat.S_ISDIR(m) else "file" if stat.S_ISREG(m) else "other"].append((name, m))
+        except OSError:  # a folder it cannot list or enter is never an empty one
             skipped.append({"folder": label, "reason": "unreadable"})
             continue
-        for n, name in enumerate(names, 1):
-            p = os.path.join(d, name)
-            rel = os.path.relpath(p, specs)
-            st = os.lstat(p)
-            if stat.S_ISLNK(st.st_mode):
-                skipped.append({"entry": shown(rel, label, n), "reason": "link"})
-            elif stat.S_ISDIR(st.st_mode):
-                stack.append((p, shown(rel, label, n)))
-            elif stat.S_ISREG(st.st_mode) and stat.S_IMODE(st.st_mode) != 0o644:
-                try:
-                    os.chmod(p, 0o644)
-                except OSError as e:
-                    skipped.append({"entry": shown(rel, label, n), "reason": e.strerror or "chmod"})
-                    continue
-                declared.append(rel)
-                reset.append(shown(rel, label, n))
-with open(out, "ab") as fh:
-    fh.write(b"".join(p + b"\0" for p in declared))
-sys.stdout.buffer.write(json.dumps({"reset": reset, "untracked": untracked, "skipped": skipped}, ensure_ascii=False).encode("utf-8") + b"\n")
+        for kind, entries in kinds.items():
+            for n, (name, m) in enumerate(sorted(entries), 1):  # byte-wise, as addressing section 2 counts them
+                p = os.path.join(d, name)
+                rel = os.path.relpath(p, specs)
+                if kind == "folder":
+                    stack.append((p, shown(rel, label, kind, n)))
+                elif kind == "file":
+                    regular.add(rel)
+                    if stat.S_IMODE(m) != 0o644:
+                        todo.append((p, rel, shown(rel, label, kind, n)))
+                else:
+                    skipped.append({"entry": shown(rel, label, kind, n), "reason": kind})
+untracked, leftover, repo = [], [], git("rev-parse", "--is-inside-work-tree")
+if repo is not None and repo.returncode == 0 and repo.stdout.strip() == b"true":  # no repository: nothing to read
+    spec = [":(literal)" + os.fsdecode(os.path.relpath(t, specs)) for t in tops]
+    r = git("status", "--porcelain", "-z", "--untracked-files=all", "--", *spec)
+    raw = git("diff", "--raw", "-z", "--no-renames", "--", *spec)
+    content = git("-c", "core.fileMode=false", "diff", "--name-only", "-z", "--no-renames", "--", *spec)
+    for got in (r, raw, content):
+        if got is None or got.returncode != 0:
+            sys.stderr.write("git: " + (got.stderr.decode("utf-8", "replace").strip()[:300] if got else "not found") + "\n")
+            sys.exit(1)
+    top = git("rev-parse", "--show-prefix").stdout.strip()  # SPECS_PATH below its repository's top: paths are relative to it
+    def own(p):
+        return p[len(top):] if top and p.startswith(top) else p
+    fields = r.stdout.split(b"\0")
+    i = 0
+    while i < len(fields):
+        rec = fields[i]
+        i += 1
+        if rec[:3] == b"?? " and own(rec[3:]) in regular:  # a file the walk read, never a link it passed over
+            untracked.append(own(rec[3:]))
+        elif rec[:1] in (b"R", b"C") or rec[1:2] in (b"R", b"C"):
+            i += 1  # a rename's or copy's original, consumed with its record
+    changed = set(own(p) for p in content.stdout.split(b"\0") if p)
+    fields = raw.stdout.split(b"\0")
+    for k in range(0, len(fields) - 1, 2):  # :<old mode> <new mode> <old sha> <new sha> <status>, then the path
+        meta, path = fields[k].split(), own(fields[k + 1])
+        if len(meta) == 5 and meta[0] != b":100644" and meta[1] == b"100644" and path in regular and path not in changed:
+            leftover.append(path)  # set to 0644 and changed in nothing else: an earlier run's reset, never committed
+# 2. Act, recording each path as it is changed, and write the record whatever stops the loop.
+declared, reset = untracked + leftover, []
+try:
+    for p, rel, label in todo:
+        try:
+            os.chmod(p, 0o644)
+        except OSError as e:
+            skipped.append({"entry": label, "reason": e.strerror or "chmod"})
+            continue
+        declared.append(rel)
+        reset.append(label)
+finally:
+    with open(out, "ab") as fh:
+        fh.write(b"".join(p + b"\0" for p in declared))
+sys.stdout.buffer.write(json.dumps({"reset": reset, "untracked": len(untracked), "left_reset": [os.fsdecode(p) if printable(p) else "a path that is not a printable value" for p in leftover], "skipped": skipped, "repository": repo is not None and repo.returncode == 0}, ensure_ascii=False).encode("utf-8") + b"\n")
 EOF
 ```
 
 It prints one line of JSON: `reset`, each file it reset — its path relative to `$SPECS_PATH`, or,
-where that path is not a printable value (UTF-8 holding no control character, no U+2028 or U+2029
-and no bidirectional control), its position in its folder's listing, sorted byte-wise, which is how
-the final report names it; `untracked`, how many untracked files it declared; and `skipped`, each
-symbolic link it did not follow, each folder it could not list and each file it could not reset,
-named the same way. Name each `skipped` entry in the final report: a link under either folder is no
-file `/brd-intake` writes, a folder that cannot be listed is never read as an empty one, and a file
-it could not reset keeps its mode. Any exit other than 0 stops the
-run, naming its stderr: it reads `git status` before it resets anything, so a failure there changes
-no mode. Keep the file until Phase 7 has handed it to the handoff, or to the decline's record, and
-remove it then, or where the run ends earlier, with `command rm -f -- "<the file mktemp printed>"`.
+where that path is not a printable value (`workflows-core:addressing` §3, *A printable value*), its
+folder, its kind and its place among that folder's entries of its kind, as `workflows-core:addressing`
+§2's *A file refused by its name* counts them, which is how the final report names it; `untracked`,
+how many untracked files it declared; `left_reset`, each file an earlier run reset that it declared;
+`skipped`, each symbolic link and each entry neither a file nor a folder it passed over, each folder
+it could not list or enter — never an empty one (§2, *A folder that cannot be listed is never an
+empty one*) — and each file it could not reset, named the same way; and `repository`, whether it
+read git. Name each `skipped` entry in the final report: a link under either folder is no file
+`/brd-intake` writes, a folder it could not enter holds files it did not reset, and a file it could
+not reset keeps its mode. Any exit other than 0 stops the run, naming its stderr: it reads git before
+it resets anything, so a failure there changes no mode, and it writes each path it changed to the
+file whatever ends its loop. Keep the file until this run's `commit-artifacts` has run — its handoff,
+or its decline's record, reads it, and the end's fallback can take it as `--declined-from`
+(`workflows-core:specs-git`) — and remove it then, or where the run ends earlier, with `command rm -f
+-- "<the file mktemp printed>"`.
 
-**Then copy, writing only what differs from the copy at the destination.** Where a copy with
-identical bytes already stands there, write nothing: the file counts as copied wherever this command
+**Then copy, writing only what differs from the copy at the destination** — the copy program's
+`mirror`, which makes this test itself. Where a copy with identical bytes already stands there,
+write nothing: the file counts as copied wherever this command
 says a file was copied, as a file collision rule 1 re-uses does (below). Where a copy with different
 bytes stands there, replace it whole — `brd-format.md` §1: a re-run over a revised source is the one
 time a copy is written again, and git keeps the earlier one. Where none stands, copy the file as on a
@@ -590,18 +636,25 @@ is what every later mention of *Phase 2's capture order* means.
   file and the file's basename is already taken there, apply rules 2–3; otherwise the file lands at
   its basename. Make each of those tests as that rule's *How names and bytes are compared* says, by
   its one program: `reuse` is rule 1's re-use, `free` the basename, and `taken` the name rules 2–3
-  give. Its rule 4 never applies here: nothing under `brd/source-external/` is overwritten,
+  give. Then copy with the copy program: `new` at the `free` or `taken` name, `reuse` for a re-use.
+  Its rule 4 never applies here: nothing under `brd/source-external/` is overwritten,
   and no link is rewritten — the mapping table below names the copy. A file rule 1 reuses — its
   identical bytes already on file, so nothing is written — **counts as copied** wherever this
   command says a file was copied: the link log below, every later phase that says
-  "Phase 2 copied", and Phase 7's `deliverable_paths`, which must declare it. An earlier intake
+  "Phase 2 copied", and Phase 7's declaration, which must declare it — as the copy program's
+  `reuse` does. An earlier intake
   that stopped before its handoff, or declined it, left that file uncommitted, and nothing else in
   this plugin ever stages it; a declared file already committed unchanged costs nothing, since the
   handoff accounts for such a file as already on its branch.
 
 Copy each file **byte-for-byte, whatever its type** — an image, a PDF, a spreadsheet — never opened
 as text, never re-encoded, never resized, and at mode `0644`, as the document itself is copied: its
-content, never its mode bits. Phase 0 step 3's markdown-only rule is about the *document*
+content, never its mode bits, by the copy program, whose source and destination are each one
+single-quoted argument, each `'` written `'\''`. A copy it refuses or fails — exit 3, 4, 5 or any
+other — is written and declared nowhere: name it in the final report with the exit, by the path
+the walk recorded where that path is a printable value, by its link's place in the walk record
+otherwise; where the exit is 3, the target resolves to no readable file, and its link takes the link
+log's `unreadable` row below. Phase 0 step 3's markdown-only rule is about the *document*
 the inventory anchors into; a file it links is captured as it stands. **What is read, and by whom, is
 Phase 2.5's and Phase 3's** — this phase copies and reads nothing.
 
@@ -640,7 +693,8 @@ counts and the same list, each entry with its reason, in the final report.
 no cap on how many.** A cap would leave an image's obligations outside the record exactly as not
 reading it did (`brd-format.md` §1.2).
 
-1. **Re-use before reading.** Compute each copied image's SHA-256. Where
+1. **Re-use before reading.** Take each copied image's SHA-256 from the line the copy program
+   printed for it in Phase 2 — never a command naming the file. Where
    `<BRD-dir>/brd/brd-figures.md` already holds a section for that image whose *Content hash* matches,
    keep that section's transcription — the lines `brd-format.md` §1.2 names — **verbatim** and do not
    dispatch the image — a writer preserves what it did not produce, as
@@ -1572,17 +1626,16 @@ choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write 
 On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: brd`, `feature_folder` as resolved in Phase 0, `deliverable_paths` = **every file under
 `<BRD-dir>` this run captured or wrote** — a file counting as captured whether this run copied its
 bytes or found an identical copy already standing, which covers both collision rule 1's re-use and a
-re-run that left an unchanged copy untouched (Phase 2), neither of which this run *wrote* — **enumerated, one literal repo-relative path each: never a glob and never a directory**, because §2.3 stages neither, so a declaration that looks complete ships nothing — §2.3 step 4 names each in §4.1's *declaration unaccounted for* clause, so the failure is reported rather than silent, but nothing it names lands. That is the customer's document and every file Phase 2 captured into `brd/source/` or `brd/source-external/`, whether or not this run wrote any of them — named individually (the copy step knows them; neither `brd/source/**` nor `brd/source-external/**` is a path), plus `brd/brd-inventory.md`, `brd/brd-defect-log.md`, `brd/brd-link-log.md`, `brd/brd-figures.md` wherever it exists after Phase 2.5,
+re-run that left an unchanged copy untouched (Phase 2), neither of which this run *wrote* — **enumerated, one literal repo-relative path each: never a glob and never a directory**, because §2.3 stages neither, so a declaration that looks complete ships nothing — §2.3 step 4 names each in §4.1's *declaration unaccounted for* clause, so the failure is reported rather than silent, but nothing it names lands. **The customer's document and every file Phase 2 captured into `brd/source/` or `brd/source-external/`**, whether or not this run wrote any of them, are declared through `deliverable_paths_file` — the file Phase 2's reset program started, to which the copy program appended each copy, each unchanged copy and each re-use by its path — never typed, since their names are the customer's (neither `brd/source/**` nor `brd/source-external/**` is a path). `deliverable_paths` names the files this run writes under names of its own: `brd/brd-inventory.md`, `brd/brd-defect-log.md`, `brd/brd-link-log.md`, `brd/brd-figures.md` wherever it exists after Phase 2.5,
 `coverage-ledger.md`, and — only when Phase 6 ran — `prd-seed.md`, `ard-seed.md`, `spec-seed.md`.
 **Declare, too, every file Phase 2's mode reset changed**, whether or not this run took it, so its
 mode change is committed. **Declare, too, every untracked file already under `brd/source/` or `brd/source-external/` that this
 run did not take** — one an earlier intake copied and never handed off, or copied before it was
 interrupted: nothing else in the plugin ever stages it, so undeclared it stays untracked and the
 specs-repo preflight reports it as an unrelated dirty path (`workflows-core:specs-repo-git` §3.3 G1)
-on every later run. **Both sets are declared through `deliverable_paths_file`**, the file Phase 2's
-program wrote, which lists each by its path, NUL-terminated, so no customer's name is typed into a
-command (`workflows-core:phase-handoff` §2.9); a path it holds that this run also captured is one
-declared path, not two),
+on every later run. **Both sets are declared through `deliverable_paths_file` too**, the reset
+program having written them there, NUL-terminated, so no customer's name is typed into a command
+(`workflows-core:phase-handoff` §2.9); a path the file holds twice is one declared path, not two),
 `title: <BRD-KEY> Intake BRD source and requirement inventory`, `inputs_read` = the files Phase 0
 step 6's *Record what the run reads* noted, and `body_facts` = the requirement
 count, the confirmed-defect count by class, and whether Phase 6 wrote seeds; emit its §4.1 outcome
@@ -1590,7 +1643,7 @@ line in the final report.
 
 **On the second or third choice `handoff-to-main` does not run, and the final report still carries
 an outcome line**: §4.1's *Declined by the user* row, its `<artifacts>` the `deliverable_paths` set
-above as that row counts it, and its `<next-phase-clause>` the **gated — stopping** one (`The next phase will stop until it is.`),
+above and the paths its `deliverable_paths_file` holds, as that row counts them, and its `<next-phase-clause>` the **gated — stopping** one (`The next phase will stop until it is.`),
 which is what the array's parenthetical promised (`workflows-core:phase-handoff` §4.1, §4.3).
 Either way the run goes on to Phase 8 and Phase 9's emitter tail.
 

@@ -88,26 +88,45 @@ with the Write tool, as a JSON array of `{"src", "dest"}` objects, each an absol
 ```bash
 python3 -I - "<the path mktemp printed>/copies.json" <<'EOF'
 import json, os, shutil, sys
-with open(sys.argv[1], encoding="utf-8") as fh:
-    pairs = json.load(fh)
-done, failed = [], []
-for n, pair in enumerate(pairs, 1):
-    src, dest = pair.get("src"), pair.get("dest")
+done, failed, pairs = [], [], []
+try:
+    with open(sys.argv[1], encoding="utf-8") as fh:
+        pairs = json.load(fh)
+    if not isinstance(pairs, list):
+        failed.append({"entry": None, "error": "the file holds no JSON array"})
+        pairs = []
+except (OSError, ValueError) as e:
+    failed.append({"entry": None, "error": "the file cannot be read: " + e.__class__.__name__})
+checked = []
+for n, pair in enumerate(pairs, 1):  # every pair checked before any is copied
+    src = pair.get("src") if isinstance(pair, dict) else None
+    dest = pair.get("dest") if isinstance(pair, dict) else None
     if not (isinstance(src, str) and isinstance(dest, str) and os.path.isabs(src) and os.path.isabs(dest)):
-        failed.append({"entry": n, "error": "src and dest are absolute paths"})
-        continue
-    try:
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
-        shutil.copyfile(src, dest)  # the bytes; a file already at dest is replaced, as a copy must
-        done.append(dest)
-    except OSError as e:
-        failed.append({"entry": n, "error": e.strerror or e.__class__.__name__})
-sys.stdout.buffer.write(json.dumps({"copied": done, "failed": failed}, ensure_ascii=False).encode("utf-8") + b"\n")
+        failed.append({"entry": n, "error": "each element is an object whose src and dest are absolute paths"})
+    elif os.path.islink(src) or os.path.islink(dest):
+        failed.append({"entry": n, "error": "a symbolic link, which is followed nowhere"})
+    elif not os.path.isfile(src):
+        failed.append({"entry": n, "error": "src names no file"})
+    else:
+        checked.append((n, src, dest))
+try:
+    for n, src, dest in checked:
+        try:
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            shutil.copyfile(src, dest)  # the bytes; a file already at dest is replaced, as a copy must
+            done.append(dest)
+        except OSError as e:
+            failed.append({"entry": n, "error": e.strerror or e.__class__.__name__})
+finally:  # the report is printed whatever stops the loop
+    sys.stdout.buffer.write(json.dumps({"copied": done, "failed": failed}, ensure_ascii=False).encode("utf-8") + b"\n")
 EOF
 ```
 
-It prints one line of JSON: `copied`, each destination written, and `failed`, each pair it could
-not copy, by its place in the file, with the reason — name each in `notes`, and place no image
+It checks every pair before it copies any — an element that is not an object holding an absolute
+`src` and `dest`, a `src` naming no file, and either path a symbolic link, which is followed nowhere,
+each failing that pair alone — and prints one line of JSON whatever stops it: `copied`, each
+destination written, and `failed`, each pair it could not copy, by its place in the file, with the
+reason, or the file itself where it holds no JSON array — name each in `notes`, and place no image
 reference for a pair that failed. Remove the directory once the call has returned, with
 `command rm -rf -- "<the path mktemp printed>"`. Your Bash tool starts every call in the session's
 directory, not in `docs_repo_path`, and a `cd` does not persist between calls, so a relative path

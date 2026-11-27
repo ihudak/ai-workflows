@@ -14,6 +14,10 @@ Fix batch B51 (RECORDED-BRANCH-CLASS). **What changes for you.** A change scan t
 - **`/scan` Phase 0 step 5** takes `<branch>` only where `workflows-core:implementation-format` §5's *A recorded branch name* holds it in the class, before the fetch by refspec; **Phase 1**'s change scan takes `<default ref>` for a null `base` and says so in `### Scope`.
 - **`docs/commands/scan.md`** says so.
 
+### Fixed — the review pass
+
+- **`/scan`** reads a null `base` as the block recording none, or one outside the class, and says which; prints no command naming an out-of-class recorded branch; and names a null recorded commit as `a recorded commit outside a commit's shape` in its confirmation.
+
 ## [0.13.5] — 2026-11-27
 
 **What changes for you.** `/scan`'s reservation of run records on other session branches no longer drops, or misreads, a session branch that shares its name with a tag. It stands alone: it needs no other plugin's release.

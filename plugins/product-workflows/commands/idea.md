@@ -522,7 +522,17 @@ repairs where `idea.md` points.
    `${CLAUDE_PLUGIN_ROOT}/references/idea-format.md` *The collision rule* gives it: all four of its
    rules, with its program for the tests they make (*How names and bytes are compared*), executed
    from there and restated nowhere here, since a partial copy of them is a second
-   rule that disagrees with the first.
+   rule that disagrees with the first. **Copy with that file's copy program** (*The copy is a
+   program too, and so is the hash*) — `new` at the name the tests gave, `reuse` for rule 1's
+   re-use, `refresh` for rule 4's — never with `cp` or any command built from a source's name, which
+   is its author's own and may hold a space, `$(`, a backtick, a quote, a leading `-` or a line feed.
+   Its declared-paths file is one this phase makes before its first copy, `command mktemp -t
+   idea-declared-XXXXXX`: the program appends each copy and each re-use to it, and Phase 5 hands it
+   to the handoff as `deliverable_paths_file`. Keep it until this run's `commit-artifacts` has run —
+   the handoff, or the decline's record, reads it, and the end's fallback can take it as
+   `--declined-from` (`workflows-core:specs-git`) — and remove it then, or where the run ends earlier,
+   with `command rm -f -- "<the file mktemp printed>"`. A copy the program refuses or fails is
+   written and declared nowhere, and reported with the rest.
 3. **Rebuild `design/idea-sources/index.md` per `workflows-core:grounding-format`
    §6.2** — the one index format and reconciliation contract every writer of a frame-set index follows,
    executed inline and restated nowhere. That section owns the filename, the frontmatter, the table
@@ -609,8 +619,9 @@ repairs where `idea.md` points.
    indexed as `_no description on record_`, and every index row step 3 dropped because its image is gone.
 
 Hold the vendoring outcome — what landed in each destination, what was skipped and why, and any name
-substituted or refreshed by the collision rule — for the Final report, and carry into Phase 5's
-`deliverable_paths` the literal list of paths this phase **wrote or reused**. Reused belongs in it:
+substituted or refreshed by the collision rule — for the Final report, and carry into Phase 5 the
+paths this phase **wrote or reused**, which the copy program has written to the declared-paths file,
+`index.md` aside, which Phase 5 names in `deliverable_paths`. Reused belongs among them:
 a byte-identical copy was not written by this run, but `idea.md` links it and an earlier run may have
 left it on no ref, so omitting it is a link to a file that never lands.
 
@@ -674,10 +685,12 @@ the next phase — **adapted to status**:
   before the offer): a declined edit of a merged copy meets `/create-prd`'s gate at the C rows, a
   stop (`workflows-core:phase-handoff` §4.1, *Row F is the next phase's reading only where …*), so that run presents the
   **gated — stopping** array instead: `choices: ["Branch + commit + push + open PR to main (Recommended)", "Just write the files — I'll handle git (the next phase will stop until this is on main)", "Cancel"]`.
-  Then on the first option execute `handoff-to-main` (§2) with all six of its §2.9 inputs: `prefix: idea`;
+  Then on the first option execute `handoff-to-main` (§2) with all six of its required §2.9 inputs, and its optional `deliverable_paths_file` where Phase 4.5 copied or reused anything: `prefix: idea`;
   `feature_folder` = the folder Phase 4 wrote `idea.md` into; `deliverable_paths` = `idea.md`,
-  **plus every file Phase 4.5 wrote or reused** — each copy under `attachments/`, each image copy
-  under `design/idea-sources/`, and that frame set's `index.md`. **Reused counts**: a copy the
+  and `design/idea-sources/index.md` where Phase 4.5 wrote it; `deliverable_paths_file` = Phase 4.5's
+  declared-paths file, which holds **every file Phase 4.5 copied or reused** — each copy under
+  `attachments/` and each image copy under `design/idea-sources/`, by its path, never typed, since
+  each carries its author's name. **Reused counts**: a copy the
   collision rule matched byte-for-byte was not written by this run, but `idea.md`'s link points at it
   and an earlier run may have left it on no ref — naming a path whose content is unchanged stages
   nothing, while omitting one is a link to a file that never lands; `title: <KEY> Add idea brief`;
@@ -698,7 +711,8 @@ the next phase — **adapted to status**:
   phase existed — save one over a folder an earlier run had populated a frame set in, which passes
   that set's `index.md` beside it, Phase 4.5 step 6 having rewritten it.
   On option 2 or 3 `handoff-to-main` does not run; emit §4.1's *Declined by the user*
-  line (§4.3, *What each option means*), and the run's emitter tail still runs, as it does after
+  line (§4.3, *What each option means*), its `<artifacts>` the `deliverable_paths` above and the paths
+  the declared-paths file holds, and the run's emitter tail still runs, as it does after
   option 1. Then, **whichever option was taken**, recommend
   `/product-workflows:create-prd <KEY>` `<merge-clause>`, which finds `idea.md` in that folder —
   `<merge-clause>` resolved from the `Phase handoff:` line §4.1 just emitted, per
@@ -848,7 +862,7 @@ names which of the four states it was (the operator's *Only what the source link
 a copy the collision rule reused rather than wrote, a copy that failed at Phase 4.5 step 7, or a
 markdown source step 1 dropped as already inside the PRD folder) rather than asserting the relation;
 and of images copied into `design/idea-sources/`; **and beside both, every copy
-the collision rule *reused* rather than wrote** (its rule 1), which is in `deliverable_paths` and in
+the collision rule *reused* rather than wrote** (its rule 1), which is in the declared-paths file and in
 neither count and is otherwise reported nowhere — the one run state that rule exists to serve;
 whether that frame set's `index.md` was written and how many rows it now
 holds against how many this run added, every name the collision rule substituted or refreshed, the

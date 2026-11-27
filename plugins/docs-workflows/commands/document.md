@@ -800,62 +800,88 @@ Build this list only when `new_images_wanted` is `true` (Phase 1); when `false`,
 3. **Recursive scan of `<project_dir>`** — when Phase 1 resolved a `<project_dir>` (the folder this run resolved), recursively scan it for image files. This surfaces images you keep in the project folder (custom diagrams, curated screenshots). When `<project_dir>` is null, this source contributes nothing.
 4. **Manual paths** — the paths the operator types after choosing *Use all auto-discovered + add manual paths* or *Provide screenshot paths manually only* (plain text, see the `choices` below).
 
-**The images program lists, checks and dedupes every source, and no image's name is typed into a command.** An image keeps the name whoever saved it gave it — a designer's export, a screenshot tool's default, a file the operator named — which may hold a space, `$(`, a backtick, a quote, a leading `-` or a line feed, which a shell command would run or split; so the three folders are walked, and each manual path checked, by this one program, which builds no command from a name. Its arguments are `<specs_dir>`, `<project_dir>` and the resolved PRD folder's `attachments/` — each a folder the run resolved, held to `workflows-core:addressing` §2's class, and `''` for one this run does not have — and a file of manual paths, `''` before the operator gives any: once they do, write them with the Write tool, as a JSON array of strings, to `paths.json` in a directory of its own (`command mktemp -d -t dw-images-XXXXXX`), and run the program again with that file, so a typed path reaches it as data too.
+**The images program lists, checks and dedupes every source, and no image's name is typed into a command.** An image keeps the name whoever saved it gave it — a designer's export, a screenshot tool's default, a file the operator named — which may hold a space, `$(`, a backtick, a quote, a leading `-` or a line feed, which a shell command would run or split; so the three folders are walked, and each manual path checked, by this one program, which builds no command from a name. Hand it `--specs <specs_dir>`, `--project <project_dir>` and `--attachments <the resolved PRD folder's attachments/>`, each a folder the run resolved, held to `workflows-core:addressing` §2's class, and each **left out** where the run has none — `specs_dir` `none`, `<project_dir>` null, no `attachments/` — never passed empty. The first call carries no `--manual`. Once the operator types manual paths, write them with the Write tool, as a JSON array of strings, to `paths.json` in a directory of its own (`command mktemp -d -t dw-images-XXXXXX`), and run the program again with the same folder flags and `--manual "<that directory>/paths.json"`, so a typed path reaches it as data too: that call's `candidates` are the add list, the folders' images and the typed paths deduped together.
 
 ```bash
-python3 -I - "<specs_dir or ''>" "<project_dir or ''>" "<attachments/ or ''>" "<paths.json or ''>" <<'EOF'
+python3 -I - [--specs "<specs_dir>"] [--project "<project_dir>"] [--attachments "<attachments/>"] [--manual "<paths.json>"] <<'EOF'
 import json, os, stat, sys, unicodedata
 EXT = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
-BIDI = set("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")  # the bidirectional controls
-def printable(s):  # UTF-8, no Cc, no U+2028 or U+2029, no bidirectional control
+BIDI = set("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069\u2028\u2029")  # addressing section 3's printable value: no Cc, no U+2028 or U+2029, no bidirectional control
+def printable(s):
     try:
         s.encode("utf-8")
     except UnicodeError:
         return False
-    return not any(unicodedata.category(c) == "Cc" or c in "\u2028\u2029" or c in BIDI for c in s)
+    return not any(unicodedata.category(c) == "Cc" or c in BIDI for c in s)
+args, folders, manual = sys.argv[1:], [], None
+while args:  # --specs, --project, --attachments: a folder each, left out where the run has none; --manual: the file
+    flag, value = args[0], args[1] if len(args) > 1 else None
+    if flag not in ("--specs", "--project", "--attachments", "--manual") or value is None:
+        sys.stderr.write("usage: [--specs <folder>] [--project <folder>] [--attachments <folder>] [--manual <paths.json>]\n")
+        sys.exit(2)
+    if flag == "--manual":
+        manual = value
+    else:
+        folders.append((value, flag[2:]))
+    args = args[2:]
 found, order, skipped, dropped = {}, [], [], []
 def skip(entry):  # once, though two sources walk one folder
     if entry not in skipped:
         skipped.append(entry)
 def add(path, source):
-    key = os.path.realpath(path)
+    key = os.path.normpath(os.path.abspath(path))  # by path, never by following a link
     if key not in found:
         found[key] = []
         order.append(key)
     if source not in found[key]:
         found[key].append(source)
-for top, source in ((sys.argv[1], "specs"), (sys.argv[3], "attachments"), (sys.argv[2], "project")):
-    stack = [(top, top)] if top and os.path.isdir(top) else []
+for top, source in folders:
+    stack = [(top, top)] if os.path.isdir(top) and not os.path.islink(top) else []
     while stack:  # walked with a stack, never by recursion, following no symbolic link
         d, label = stack.pop()
         try:
-            names = sorted(os.listdir(d), key=os.fsencode)
-        except OSError:
+            kinds = {"file": [], "folder": []}
+            for name in os.listdir(d):
+                m = os.lstat(os.path.join(d, name)).st_mode
+                if stat.S_ISDIR(m):
+                    kinds["folder"].append(name)
+                elif stat.S_ISREG(m):
+                    kinds["file"].append(name)
+        except OSError:  # a folder it cannot list or enter is never an empty one
             skip({"folder": label, "reason": "unreadable"})
             continue
-        for n, name in enumerate(names, 1):
-            p = os.path.join(d, name)
-            st = os.lstat(p)
-            if not printable(name):
-                skip({"folder": label, "position": n, "reason": "name"})
-            elif stat.S_ISDIR(st.st_mode):
-                stack.append((p, p))
-            elif stat.S_ISREG(st.st_mode) and name.lower().endswith(EXT):
-                add(p, source)
-if sys.argv[4]:
-    with open(sys.argv[4], encoding="utf-8") as fh:
-        typed = json.load(fh)
-    for n, p in enumerate(typed, 1):
-        if not isinstance(p, str) or not printable(p):
+        for kind in ("folder", "file"):
+            for n, name in enumerate(sorted(kinds[kind], key=os.fsencode), 1):
+                p = os.path.join(d, name)
+                if not printable(name):
+                    skip({"folder": label, "kind": kind, "position": n, "reason": "name"})
+                elif kind == "folder":
+                    stack.append((p, p))
+                elif name.lower().endswith(EXT):
+                    add(p, source)
+if manual is not None:
+    try:
+        with open(manual, encoding="utf-8") as fh:
+            typed = json.load(fh)
+    except (OSError, ValueError) as e:
+        typed = None
+        dropped.append({"entry": None, "reason": "the file of typed paths cannot be read: " + e.__class__.__name__})
+    if typed is not None and not isinstance(typed, list):
+        dropped.append({"entry": None, "reason": "the file of typed paths holds no JSON array"})
+        typed = None
+    for n, p in enumerate(typed or [], 1):
+        if not isinstance(p, str):
+            dropped.append({"entry": n, "reason": "not a JSON string"})
+        elif not printable(p):
             dropped.append({"entry": n, "reason": "not a printable value"})
         elif not os.path.isabs(p):
             dropped.append({"entry": n, "path": p, "reason": "not an absolute path"})
+        elif os.path.islink(p):
+            dropped.append({"entry": n, "path": p, "reason": "a symbolic link, which is followed nowhere"})
         elif not os.path.isfile(p):
             dropped.append({"entry": n, "path": p, "reason": "no such file"})
         elif not p.lower().endswith(EXT):
             dropped.append({"entry": n, "path": p, "reason": "not an image extension"})
-        elif not printable(os.path.realpath(p)):
-            dropped.append({"entry": n, "path": p, "reason": "resolves to a name that is not a printable value"})
         else:
             add(p, "manual")
 sys.stdout.buffer.write(json.dumps({"candidates": [{"path": k, "sources": found[k]} for k in order],
@@ -863,52 +889,7 @@ sys.stdout.buffer.write(json.dumps({"candidates": [{"path": k, "sources": found[
 EOF
 ```
 
-It prints one line of JSON: `candidates`, each image once, by its resolved absolute path — the dedupe — with every source it came from; `skipped`, each entry whose name is not a printable value (UTF-8 holding no control character, no U+2028 or U+2029 and no bidirectional control), named by its folder and its position in that folder's listing, sorted byte-wise, and each folder it could not list, which is never read as an empty one; and `dropped`, each manual path it refused, by its place in the file and why. A symbolic link is followed nowhere. Name every `skipped` and `dropped` entry to the operator with the candidates. Any exit other than 0 is reported, naming its stderr, and the add list then holds what an earlier call printed, or nothing. Remove the directory holding `paths.json` once its call has returned, with `command rm -rf -- "<the path mktemp printed>"`.
-
-### Existing-image list (staleness review)
-
-**Always build this list** — it does not depend on `new_images_wanted`. The orchestrator owns it (`doc-planner` runs later, at Phase 5.7, and never supplies or reads this list). For every `extend-existing` write target in Phase 5.5's confirmed `write_targets`, read the target file and record **every image reference in document order** — one row per occurrence, not per unique URL: the same URL can recur several times on one page, and each occurrence is decided separately (two sections can carry the same stale URL, and only one of them may need the fix). For each occurrence record:
-- `target` — the write target's path.
-- `occurrence` — the 1-based index of this image reference within the whole target, counted in document order across **all** image references in the file — never filtered by `old_url`, never scoped to a section.
-- `old_url` — the image reference's current URL/path.
-- `section` — the nearest enclosing heading.
-
-A target with no image references contributes nothing.
-
-### Merged prompt
-
-Present both lists — "Found `<N>` add-list candidate(s) (`<count>` from specs scan, `<count>` from folder attachments, `<count>` from the project folder)" and "Found `<M>` existing image(s) across `<K>` edited page(s) to review for staleness" — then ask, the question's own text carrying both lines and naming each edited page with the number of its images, since *Add-list only — existing images are current* declares them current unreviewed (`workflows-core:epic-picker` *The cap*):
-```
-choices: ["Review both lists item by item (Recommended)", "Add-list only — existing images are current", "Nothing to do — no image work this run", "Cancel"]
-```
-When both lists are empty, skip presenting this prompt — there is nothing to show — and set `screenshots[] = []`, `existing_image_decisions[] = []` directly.
-
-- **Review both lists item by item**:
-  - **Add list**, if non-empty, asks:
-    ```
-    "Found <N> candidate image(s): <count> from specs scan, <count> from folder attachments, <count> from the project folder: <every deduped candidate, one per line — its path and its source>. How would you like to source screenshots?"
-    choices: ["Use all auto-discovered + add manual paths (you'll be prompted) (Recommended)", "Use all auto-discovered only", "Select a subset (you'll pick per candidate)", "Provide screenshot paths manually only (you'll be prompted)"]
-    ```
-    The question's own text names every deduped candidate, its path and source, since both *Use all* options take them all (`workflows-core:epic-picker` *The cap*).
-    - **Use all auto-discovered + add manual** → take every deduped candidate, then prompt for additional free-text absolute paths to append.
-    - **Use all auto-discovered only** → take every deduped candidate; no manual prompt.
-    - **Select a subset** → present the deduped candidates and let the user pick which to keep.
-    - **Provide screenshot paths manually only** → ignore the auto-discovered candidates; ask for the paths in plain text and take only those.
-    - **No images after all** is not listed — the outer prompt already offered *Nothing to do — no image work this run*, and a user who changes their mind here says so through the harness's own free-text option, which resolves to this: leave `screenshots[]` empty; the add list contributes nothing further.
-  - **Existing-image list**, if non-empty, walks each occurrence in order — showing `target`, `section`, and `old_url` — and asks per item (no default is safe to recommend across arbitrary items, so no `(Recommended)` marker):
-    ```
-    choices: ["Replace (you'll be prompted for the new screenshot, staged via Phase 6.1)", "Leave as is — still accurate", "Cancel"]
-    ```
-    "Replace" asks in plain text for the replacement's source, then appends an `existing_image_decisions[]` entry `{target, occurrence, old_url, new_url, section, decision: accepted}` with `new_url` left pending (Phase 6.1 resolves it) and records the replacement's source (a path from the add list just reviewed, or a new free-text path). "Leave as is" appends the same shape with `decision: declined` and no `new_url`.
-- **Add-list only — existing images are current** → run the add-list sub-flow above (if non-empty); `existing_image_decisions[] = []` — the user's verbatim choice is the record of the (skipped) existing-image review, not a per-item entry.
-- **Nothing to do — no image work this run** → `screenshots[] = []`, `existing_image_decisions[] = []`.
-- **Cancel** → stop and summarise.
-- **The harness's free-text option** (supplied automatically, never authored into the array — `workflows-core:escalation-rules` §0) → takes free text and resolves to one of the three dispositions above — "Review both lists item by item", "Add-list only", or "Nothing to do" — and the run then behaves exactly as if that option had been chosen directly, including which ledger row it writes. There is no fourth disposition and no "skip on my own judgement" path here.
-
-**Append the `image_review` ledger row once this phase's outcome is settled — by the user's answer to the merged prompt above, or by the both-lists-empty precondition when that prompt itself was skipped — outside any conditional branch above**, so every path through this phase writes exactly one row (schema: `${CLAUDE_PLUGIN_ROOT}/references/gate-ledger.md` §3; registry entry: §4):
-- `RAN` — the choice was "Review both lists item by item" and at least one of the two lists was non-empty; `mechanism: "per-item user review of the add list and the existing-image list built from extend-existing write targets"`; `findings:` = the count of existing-image occurrences reviewed.
-- `SKIPPED_BY_USER` — the choice was "Add-list only — existing images are current" or "Nothing to do — no image work this run"; `user_decision` quotes the choice verbatim.
-- `NOT_APPLICABLE` — both lists were empty (the prompt above was skipped); `precondition_unmet: "no add-list candidates and no image references on any extend-existing write target"`.
+It prints one line of JSON: `candidates`, each image once, by its absolute path — the dedupe, by path and never by following a link — with every source it came from; `skipped`, each entry whose name is not a printable value (`workflows-core:addressing` §3, *A printable value*), named by its folder, its kind and its place among that folder's entries of its kind, as `workflows-core:addressing` §2's *A file refused by its name* counts them, and each folder it could not list or enter, which is never read as an empty one (§2, *A folder that cannot be listed is never an empty one*); and `dropped`, each manual path it refused, by its place in the file and why — a symbolic link among them, since a link is followed nowhere — or the file itself where it holds no JSON array of strings. Name every `skipped` and `dropped` entry to the operator with the candidates. A usage error exits 2; any exit other than 0 is reported, naming its stderr, and the add list then holds what an earlier call printed, or nothing. Remove the directory holding `paths.json` once its call has returned, with `command rm -rf -- "<the path mktemp printed>"`.
 
 For any **manual** free-text paths, accept any absolute filesystem path (`/tmp`, home, the docs repo); accept multiple (one per line or space-separated). Validate each path exists and has an image extension (`.png|.jpg|.jpeg|.gif|.svg|.webp`) — by the images program above, handed the paths in its `paths.json`, never by a command naming one — and drop and report any it drops.
 
@@ -997,7 +978,7 @@ the row `DEGRADED`, with `not_run:` naming what did not run (e.g.
    - **The winning entry first, then whether it decides.** Where two or more open entries match one warning, §7.8's *Two entries on one claim* picks the winner, and each entry that precedence sets aside is outranked on that claim. Where the entries it leaves stand equal — one status, and decisions that map alike, as an `amend-document` and an `accept` do — each is a winner, and each applies. Then the winning `decision:` maps by §7.8's *The mapping*: `fix-code` → `skip-and-report`, the claim left out, whatever the warning's finding; `amend-document` or `accept` → `document-as-code`, written from the warning's `source_phrasing` — what the source says today, never the entry's `shipped:` sentence — save on a `no-source-evidence` warning (§7.7) or an `AMBIGUOUS` one, which has no single source phrasing to write: there no entry decides the warning, and it is asked in steps 1–3 as before.
    - **Record each warning an entry decided, and keep it out of the questions.** Append it to `discrepancy_decisions` with the fields step 4 gives any decision — its `decision` the mapped one, and `rationale: "taken from <KEY>/[DD#n], <status>"`, where `<KEY>/[DD#n]` is the entry as its record cites it, `<KEY>` that record's own `key:`, and `<status>` the entry's `proposed` or `final`. Append it to `recorded_decisions` too, as `{claim_number: <the warning's number>, entry: <KEY>/[DD#n], decision: <fix-code | amend-document | accept>, status: <proposed | final>, applied_as: <skip-and-report | document-as-code>}`. Print one line for each, before step 1's table or, where nothing is left to ask, in its place: `#<n> <claim> — taken from <KEY>/[DD#n] (<decision>, <status>): <documented as the source has it | left out, its fix pending>`. Where more than one winner decided the warning, record it once, naming each winner, comma-separated, wherever this bullet names the entry or its decision — `rationale`, `recorded_decisions`' `entry` and `decision`, and the printed line. Steps 1–3 then carry only the escalating warnings this step did not decide — the table, §7.2's question and its count, and the per-discrepancy questions alike — and where it decided every one, steps 1–3 do not run and nothing is asked. A decision taken here draws no §7.6 marker, writes nothing into `<KEY>-implementation-gaps.md` and holds no release, whatever its mapped decision (§7.8, *A recorded decision drafts no gap*).
    - **Account for every open entry**, for Phase 9's `### Conformance`. An entry a still-flagged warning matched is listed once per claim it bears on: as **applied** — `<KEY>/[DD#n]` → the claim's number and name and its documentation decision, marked `(proposed)` where its `status:` was `proposed`; as **outranked** — naming each entry that outranks it on that claim, comma-separated; or as **asked** — a winner on a warning it could not decide, with why: `no-source-evidence` or `AMBIGUOUS`. An open entry no still-flagged warning matched is listed once, as **met by the code** — the code now matches its requirement — where a `VERIFIED` warning, or a `SPEC-VS-PRD` warning the first bullet counts as one, names its requirement, and otherwise as **matching no discrepancy this run found** — the code may have caught up, or this run made no claim from that requirement.
-   - **How far the code has moved since** (§7.8's last paragraph). For each record Phase 3 took and each line of its `Code checked:` header, `<repo> at <ref> @ <commit>`, take the clone Phase 4 resolved for `<repo>` — its `repo_path` — and in it resolve the default ref by `workflows-core:read-only-repos` §3's chain, reads only, then count `git -C <clone> rev-list --count <commit>..<default-ref>`. Report `<repo>: <n> commit(s) on <default-ref> since <commit>`; where `<ref>` is neither `<default-ref>` nor the name after its `origin/` — with `<default-ref>` `origin/main`, both `origin/main`, which a PRD run records, and `main` name the default branch, and any other `<ref>` is an Epic run's branch traced before its pull request merged — say the code *may* have moved by that many, since a squash merge leaves the recorded commit out of the default branch's history. Where Phase 4 resolved no clone of `<repo>` — none in scope, or one left missing — report `not measured — no clone of <repo> resolved`; where the chain yields no ref, `<commit>` does not resolve in the clone, or the count fails, `not measured — <reason>`, git's first error line where git gave one. The count changes no decision, and nothing is asked about it.
+   - **How far the code has moved since** (§7.8's last paragraph). For each record Phase 3 took and each line of its `Code checked:` header, `<repo> at <ref> @ <commit>`, take the clone Phase 4 resolved for `<repo>` — its `repo_path` — and in it resolve the default ref by `workflows-core:read-only-repos` §3's chain, reads only, then, `<commit>` held first to a commit's shape as §7.8 says — one outside it reported as `not measured — a recorded commit outside a commit's shape`, and named in no command — count `git -C <clone> rev-list --count <commit>..<default-ref>`. Report `<repo>: <n> commit(s) on <default-ref> since <commit>`; where `<ref>` is neither `<default-ref>` nor the name after its `origin/` — with `<default-ref>` `origin/main`, both `origin/main`, which a PRD run records, and `main` name the default branch, and any other `<ref>` is an Epic run's branch traced before its pull request merged — say the code *may* have moved by that many, since a squash merge leaves the recorded commit out of the default branch's history. Where Phase 4 resolved no clone of `<repo>` — none in scope, or one left missing — report `not measured — no clone of <repo> resolved`; where the chain yields no ref, `<commit>` does not resolve in the clone, or the count fails, `not measured — <reason>`, git's first error line where git gave one. The count changes no decision, and nothing is asked about it.
 
 1. **Present the analysis table** (informational, before asking):
    ```

@@ -577,7 +577,10 @@ Spawn `diff-summarizer` in batches of up to 4 concurrent agents per Agent messag
 **Test each conformance record against what this run read.** A record checked the code at the commit
 its `Code checked:` line names, and the entries Phase 3 carried follow the decisions taken then,
 which no question re-opens — so where this note covers later work, say so. For each record Phase 0
-found, and each repository that line names in which the settled read set holds a commit, run
+found, and each repository that line names in which the settled read set holds a commit, hold
+the recorded commit to a commit's shape first, as `workflows-core:source-truth` §7.8 says — one
+outside it is a commit this clone does not hold, the line below printed with `whose recorded commit
+is outside a commit's shape` in place of the count, and named in no command — then run
 `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -C <clone> merge-base --is-ancestor <sha> <recorded commit>`
 for each such commit (`workflows-core:bounded-run`). Where one is not an ancestor, print
 `⚠ Conformance: <the record's key> checked <repo> at <recorded commit>, before <n> commit(s) this note read there — what it settled may have changed since; re-run /dev-workflows:conformance on <the record's key>, then this command`;

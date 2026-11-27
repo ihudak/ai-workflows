@@ -548,6 +548,58 @@ def selftest(groups=None):
         got = cli("declined", "--command", "/brd-package", env=e)
         check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: "),
               "declined: neither --path nor --paths-from is a usage error (%r)" % got)
+        # a path that is not UTF-8 is stored and read back as the bytes it is (surrogateescape)
+        raw = os.path.join(tmp, "handoff-raw")
+        with open(raw, "wb") as fh:
+            fh.write(b"specifications/x/\xff-bin.md\0")
+        got = cli("declined", "--command", "/idea", "--paths-from", raw, env=e)
+        os.environ.update(HOME=home, CLAUDE_CODE_SESSION_ID="h1")
+        try:
+            rec = state.load("h1", "/idea")
+        finally:
+            for k, v in keep.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+        check(got.get("_rc") == 0 and rec and rec["declined"] == [os.fsdecode(b"specifications/x/\xff-bin.md")],
+              "declined: a path that is not UTF-8 is recorded and read back as its own bytes (%r)" % got)
+        # a path opening with - reaches --path as --path=<path>
+        r.write("-top.md", "top\n")
+        got = cli("--specs", r.path, "handoff-stage", "--path=-top.md")
+        check(got.get("_rc") == 0 and got.get("staged") == ["-top.md"],
+              "handoff-stage: a path opening with - is taken in the --path=<path> form (%r)" % got)
+        r.git("restore", "--staged", "--", ":(literal)-top.md")
+        # handoff-commit commits exactly the declared files git lists as staged: a declared directory never matches a
+        # path under it by prefix, and a path outside the repository fails nothing (phase-handoff §2.3 step 4)
+        r.write("specifications/D-1 y/user.md", "the user's own\n")
+        r.git("add", "--", ":(literal)specifications/D-1 y/user.md")
+        r.write("specifications/D-1 y/deliverable.md", "ours\n")
+        decl = ["--path=specifications/D-1 y", "--path=specifications/D-1 y/deliverable.md", "--path=/abs/outside.md",
+                "--path=../outside.md"]
+        got = cli("--specs", r.path, "handoff-stage", *decl)
+        check(got.get("_rc") == 0 and got.get("staged") == ["specifications/D-1 y/deliverable.md"]
+              and sorted(got.get("unaccounted") or []) == sorted(["specifications/D-1 y", "/abs/outside.md",
+                                                                 "../outside.md"]),
+              "handoff-stage: a declared directory and a path outside the repository are unaccounted (%r)" % got)
+        got = cli("--specs", r.path, "handoff-commit", "--message-file", msg, *decl)
+        carried = set(r.git("diff-tree", "--no-commit-id", "--name-only", "-r", "-z", "HEAD").split("\0")) - {""}
+        check(got.get("_rc") == 0 and got.get("status") == "committed"
+              and carried == {"specifications/D-1 y/deliverable.md"}
+              and "specifications/D-1 y/user.md" in r.git("diff", "--cached", "--name-only"),
+              "handoff-commit: only the declared files git lists as staged are committed, never a staged file under a "
+              "declared directory, and an outside path fails nothing (%r, %r)" % (got, sorted(carried)))
+        r.git("restore", "--staged", "--", ":(literal)specifications/D-1 y/user.md")
+        got = cli("--specs", r.path, "handoff-diff", "--base", "HEAD~1", *decl)
+        check(got.get("_rc") == 0 and got.get("differ") is True
+              and sorted(got.get("ignored") or []) == ["../outside.md", "/abs/outside.md"],
+              "handoff-diff: a path outside the repository is ignored and named, never a fatal diff (%r)" % got)
+        # specs-repo-git §6's declined append writes a path that is not a printable value with its JSON escapes
+        lines = _load_module("specs_git_lines")
+        check(lines.artifacts(["a\nb.md", "x\u202ey.md"]) == "a\\nb.md, x\\u202ey.md"
+              and lines.artifacts(["Kunde BRD.md"]) == "Kunde BRD.md",
+              "artifacts: a path that is not a printable value is written with its JSON escapes (%r)"
+              % lines.artifacts(["a\nb.md", "x\u202ey.md"]))
 
     def scenarios_mode(tmp):
         r = new_repo(tmp, "mode")
@@ -3360,6 +3412,12 @@ def selftest(groups=None):
         check(got.get("record") == "missing" and got.get("row") == "blocked"
               and got.get("print") in [[BLOCKED + appended(ard), b] for b in g0_on(r, h, days)] and head(r) == h,
               "e_declined_blocked: a --declined-from file's NUL-terminated path counts as a --declined one (%r)" % got)
+        gone = os.path.join(tmp, "e-declined-blocked-gone")
+        got, days, _ = dated(lambda: run_end(env, "/specify", "--no-preflight", "--declined-from", gone))
+        check(got.get("_rc") == 0 and got.get("row") == "blocked" and (got.get("print") or [""])[0].startswith(
+                  "Specs repo: the declined paths in %s could not be read" % gone) and head(r) == h,
+              "e_declined_blocked: a --declined-from file that cannot be read is named before the line, and the end "
+              "goes on (%r)" % got)
         # ... and only where --specs still names the repository the start checked (§6): the review's two reproductions,
         # --specs "" from a cwd that is no repository and from another repository holding the path dirty, and --specs
         # naming that other repository -- each the blocked line and G0's block, exit 0, no append
@@ -12961,7 +13019,7 @@ def selftest(groups=None):
         bites = ((skill + "\n`--no-such-option`\n", "--no-such-option is no option"),
                  (skill.replace("- `--no-preflight` (end)", "- `--no-preflight` (start)"), "--no-preflight, named for start"),
                  (skill.replace(other, "started `--inline-x`"), "--inline"),
-                 (skill.replace(" --path '<path>'`", " --paths '<path>'`"), "--paths, in the declined call"),
+                 (skill.replace(" --path='<path>'`", " --paths='<path>'`"), "--paths, in the declined call"),
                  (skill.replace("- `--started <stamp>` (end, and start with", "- `--started <stamp>` (start and end, and start with"),
                   "--started is named for 'start and end, and start"),
                  (skill.replace("- `--started <stamp>` (end, and start with `--rerun` or `--resume`)",

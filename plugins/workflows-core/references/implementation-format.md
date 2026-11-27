@@ -478,7 +478,7 @@ Each runs this entry point for that, never a guess. The branch is the one this f
    - Otherwise, `refs/remotes/origin/<branch>` resolves: `remote`.
    - Otherwise: `missing`. The branch is gone, or was never pushed from the machine that ran `/implement`. A block that names no branch (*A recorded branch name*) reads `missing` at once, none of the three tests above run.
 
-**Output:** `{state, branch, base, commit, tip, after_merge}`. `branch`, `base` and `commit` are the block's. `tip` is the commit step 2 calls the tip, or null where neither ref resolves.
+**Output:** `{state, branch, base, commit, tip, after_merge}`. `branch`, `base` and `commit` are the block's, each null where *A recorded branch name* holds it outside its class or its shape. `tip` is the commit step 2 calls the tip, or null where neither ref resolves.
 
 **`after_merge`** is true exactly where step 2 found the merged test passing and the tip adding work both `M` and `<ref>` lack, and false everywhere else. The unit's pull request has then merged — save the subject leg's misses toward merged (the merged test, below), where it is still open — while its branch differs from what merged, and the state alone reads as it would for an open pull request, so a consumer that needs to know whether the branch's pull request is still open reads `after_merge`.
 

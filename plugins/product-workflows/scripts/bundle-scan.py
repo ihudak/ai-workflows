@@ -139,6 +139,7 @@ import io
 import json
 import os
 import re
+import stat
 import sys
 import tempfile
 import unicodedata
@@ -1746,7 +1747,7 @@ def sets_selftest(check):
 # be its test; it is held only to being a printable value -- UTF-8, holding no control character (category Cc), no
 # U+2028 or U+2029 and no bidirectional control -- so that it can neither break the line a manifest or a report writes
 # it on nor show as another, and it never reaches a shell: this script lists, names and copies itself.
-BIDI = set("؜‎‏‪‫‬‭‮⁦⁧⁨⁩")
+BIDI = set("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")
 PLAN_KEYS = ("captured_images", "frames", "prereq_aux", "prereq_captured")
 KEY_RE = re.compile(KEY_TOKEN + r"\Z")
 
@@ -1758,19 +1759,57 @@ def printable(name):
         name.encode("utf-8")
     except UnicodeEncodeError:
         return False
-    return not any(unicodedata.category(c) == "Cc" or c in "  " or c in BIDI for c in name)
+    return not any(unicodedata.category(c) == "Cc" or c in "\u2028\u2029" or c in BIDI for c in name)
 
 
 def _bytewise(names):
     return sorted(names, key=lambda n: os.fsencode(n))
 
 
+def _readable(path):
+    """Whether <path> opens for reading as a regular file, opened without blocking so a FIFO never hangs the read."""
+    try:
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOFOLLOW", 0))
+    except OSError:
+        return False
+    try:
+        return stat.S_ISREG(os.fstat(fd).st_mode)
+    finally:
+        os.close(fd)
+
+
+def _entries(full):
+    """{kind: [names]} for the entries of folder <full>, each kind in byte-wise order -- file, folder, link, other --
+    as workflows-core:addressing section 2's checkout listings count a folder's files and its folders (find -type f,
+    -type d), links and anything else counted the same way; None where the folder cannot be listed or an entry in it
+    cannot be read (a folder that can be listed and not entered), which is never an empty folder."""
+    try:
+        names = os.listdir(full)
+    except OSError:
+        return None
+    kinds = {"file": [], "folder": [], "link": [], "other": []}
+    for name in names:
+        try:
+            mode = os.lstat(os.path.join(full, name)).st_mode
+        except OSError:
+            return None
+        kind = ("link" if stat.S_ISLNK(mode) else "folder" if stat.S_ISDIR(mode) else
+                "file" if stat.S_ISREG(mode) else "other")
+        kinds[kind].append(name)
+    return {k: _bytewise(v) for k, v in kinds.items()}
+
+
 def _captured(brd):
     """(files, refused): every regular file under <brd>/source and <brd>/source-external, as its path relative to
-    <brd>, walked with a stack and following no symbolic link. A folder that cannot be listed, an entry that is a
-    symbolic link or neither a file nor a folder, and a name that is not a printable value are refused by position --
-    the folder's path relative to <brd> and the entry's place, from 1, in that folder's byte-wise listing -- and never
-    by name. A missing source-external is no capture; a missing source is refused (exit 2)."""
+    <brd>, walked with a stack and following no symbolic link -- <brd> itself, source and source-external included.
+    Each refused entry is named by position, never by name -- its folder's path relative to <brd>, its kind and its
+    place, from 1, among that folder's entries of its kind in byte-wise order (workflows-core:addressing section 2's
+    *A file refused by its name*): a name that is not a printable value (section 3), a symbolic link, an entry that is
+    neither a file nor a folder, and a file that cannot be read; a folder that cannot be listed or entered is refused
+    whole, with no position, and never read as an empty one. A missing source-external is no capture; a missing
+    source, or a brd/ that is a symbolic link, is refused (exit 2)."""
+    if os.path.islink(brd):
+        raise Refused(brd + " is a symbolic link, which is never followed")
     if not os.path.isdir(os.path.join(brd, "source")) or os.path.islink(os.path.join(brd, "source")):
         raise Refused("no brd/source/ folder to read the capture from under " + os.path.dirname(brd))
     files, refused = [], []
@@ -1779,26 +1818,29 @@ def _captured(brd):
         rel = stack.pop()
         full = os.path.join(brd, rel)
         if os.path.islink(full):
-            refused.append({"folder": rel, "position": None, "reason": "link"})
+            refused.append({"folder": rel, "kind": "link", "position": None, "reason": "link"})
             continue
-        try:
-            names = _bytewise(os.listdir(full))
-        except OSError:
-            refused.append({"folder": rel, "position": None, "reason": "unreadable"})
+        kinds = _entries(full)
+        if kinds is None:
+            refused.append({"folder": rel, "kind": "folder", "position": None, "reason": "unreadable"})
             continue
+        for n, name in enumerate(kinds["link"], 1):
+            refused.append({"folder": rel, "kind": "link", "position": n, "reason": "link"})
+        for n, name in enumerate(kinds["other"], 1):
+            refused.append({"folder": rel, "kind": "other", "position": n, "reason": "kind"})
         subs = []
-        for n, name in enumerate(names, 1):
-            path = os.path.join(full, name)
-            if os.path.islink(path):
-                refused.append({"folder": rel, "position": n, "reason": "link"})
-            elif not printable(name):
-                refused.append({"folder": rel, "position": n, "reason": "name"})
-            elif os.path.isdir(path):
+        for n, name in enumerate(kinds["folder"], 1):
+            if printable(name):
                 subs.append(rel + "/" + name)
-            elif os.path.isfile(path):
-                files.append(rel + "/" + name)
             else:
-                refused.append({"folder": rel, "position": n, "reason": "kind"})
+                refused.append({"folder": rel, "kind": "folder", "position": n, "reason": "name"})
+        for n, name in enumerate(kinds["file"], 1):
+            if not printable(name):
+                refused.append({"folder": rel, "kind": "file", "position": n, "reason": "name"})
+            elif not _readable(os.path.join(full, name)):
+                refused.append({"folder": rel, "kind": "file", "position": n, "reason": "unreadable"})
+            else:
+                files.append(rel + "/" + name)
         stack.extend(reversed(subs))
     return _bytewise(files), refused
 
@@ -1816,6 +1858,8 @@ def _inside(root, rel, what):
             raise Refused("the plan's %s entry %r passes through a symbolic link" % (what, rel))
     if not os.path.isfile(path):
         raise Refused("the plan's %s entry %r names no file" % (what, rel))
+    if not _readable(path):
+        raise Refused("the plan's %s entry %r names a file that cannot be read" % (what, rel))
     return path
 
 
@@ -1832,10 +1876,28 @@ def _read_plan(plan):
     for k in ("captured_images", "frames"):
         if not isinstance(got.get(k, []), list) or not all(isinstance(x, str) for x in got.get(k, [])):
             raise Refused("the plan's %s is a list of paths" % k)
+        seen = set()
+        for x in got.get(k, []):
+            if x in seen:
+                raise Refused("the plan's %s names %r twice" % (k, x))
+            seen.add(x)
     for k in ("prereq_aux", "prereq_captured"):
         if not isinstance(got.get(k, {}), dict):
             raise Refused("the plan's %s is an object keyed by a prerequisite's key" % k)
+    for k, v in got.get("prereq_aux", {}).items():
+        if not isinstance(v, list) or not all(isinstance(x, str) for x in v) or len(set(v)) != len(v):
+            raise Refused("the plan's prereq_aux for %s is a list of names, each once" % k)
+    for k, v in got.get("prereq_captured", {}).items():
+        if not isinstance(v, list) or not all(isinstance(e, dict) and isinstance(e.get("path"), str)
+                                              and isinstance(e.get("name"), str) for e in v):
+            raise Refused("the plan's prereq_captured for %s is a list of {\"path\", \"name\"} objects" % k)
     return got
+
+
+def _fold(name):
+    """A name as a filesystem that folds case and Unicode normalisation -- macOS's, by default, and Windows' -- opens
+    it: two names equal here are one file once the bundle is unpacked there, so rule 1 counts them as coinciding."""
+    return unicodedata.normalize("NFC", name).casefold()
 
 
 def _suffixed(name):
@@ -1868,13 +1930,14 @@ def bundle_names(key, own, fixed):
                     break
             names[p] = key + "-" + "-".join(reversed(run)) + "-" + b
     order = sorted(names, key=os.fsencode)
+    folded = {_fold(n) for n in fixed}
     while True:
         holders = {}
         for p in order:
-            holders.setdefault(names[p], []).append(p)
+            holders.setdefault(_fold(names[p]), []).append(p)
         moved = False
         for name, ps in holders.items():
-            losers = ps if name in fixed else ps[1:]
+            losers = ps if name in folded else ps[1:]
             for p in losers:
                 names[p] = _suffixed(names[p])
                 moved = True
@@ -1932,17 +1995,19 @@ def place(bundle, key, source_dir, brd_dir, plan=None, prereqs=(), reserve=(), d
         aux = aux_plan.get(pk)
         if not isinstance(aux, list) or not all(isinstance(x, str) for x in aux):
             raise Refused("the plan names no prompt and manifest for %s (prereq_aux)" % pk)
-        try:
-            names = _bytewise(os.listdir(d))
-        except OSError as e:
-            raise Refused("cannot list %s's bundle %s: %s" % (pk, d, e.__class__.__name__))
+        kinds = None if os.path.islink(d) else _entries(d)
+        if kinds is None:
+            raise Refused("cannot list %s's bundle %s, or it is a symbolic link" % (pk, d))
         mine = []
-        for n, name in enumerate(names, 1):
+        for kind in ("link", "folder", "other"):
+            for n, name in enumerate(kinds[kind], 1):
+                refused.append({"folder": pk, "kind": kind, "position": n, "reason": "link" if kind == "link" else "kind"})
+        for n, name in enumerate(kinds["file"], 1):
             path = os.path.join(d, name)
-            if os.path.islink(path) or not os.path.isfile(path):
-                refused.append({"folder": pk, "position": n, "reason": "link" if os.path.islink(path) else "kind"})
-            elif not printable(name):
-                refused.append({"folder": pk, "position": n, "reason": "name"})
+            if not printable(name):
+                refused.append({"folder": pk, "kind": "file", "position": n, "reason": "name"})
+            elif not _readable(path):
+                refused.append({"folder": pk, "kind": "file", "position": n, "reason": "unreadable"})
             elif not name.startswith(pk + "-"):
                 out["prereq_other"].append({"key": pk, "name": name})
             elif name in aux:
@@ -1959,9 +2024,10 @@ def place(bundle, key, source_dir, brd_dir, plan=None, prereqs=(), reserve=(), d
                 raise Refused("the plan's prereq_captured for %s holds an entry naming none of its copied files" % pk)
             pre_captured.append(entry["name"])
             out["captured_paths"].append(entry["path"])
-    for pk in cap_plan:
-        if pk not in keys:
-            raise Refused("the plan's prereq_captured names %s, which no --prereq names" % pk)
+    for field, named in (("prereq_aux", aux_plan), ("prereq_captured", cap_plan)):
+        for pk in named:
+            if pk not in keys:
+                raise Refused("the plan's %s names %s, which no --prereq names" % (field, pk))
     fixed = set(reserve) | {name for _, _, name in pre_copies}
     names = bundle_names(key, [(p, f, b, img) for p, f, b, img, _, _ in own], fixed)
     own_captured = []
@@ -2199,10 +2265,79 @@ def place_selftest(check):
         work2 = os.path.join(t, "work2")
         os.makedirs(work2)
         code, got, err = call(["place", work2, "--key", "K-1", "--source-dir", bad, "--brd-dir", bad])
-        check("place: a captured name that is not a printable value, and a symbolic link, are refused by position, "
-              "and nothing is copied (%r)" % (got,),
-              code == 0 and bool(got) and sorted((r["folder"], r["position"], r["reason"]) for r in got["refused"])
-              == [("source", 2, "name"), ("source", 3, "link")] and got["copied"] == [] and os.listdir(work2) == [])
+        check("place: a captured name that is not a printable value, and a symbolic link, are refused by position "
+              "among their folder's files or links, as addressing section 2 counts them, and nothing is copied (%r)"
+              % (got,),
+              code == 0 and bool(got) and sorted((r["folder"], r.get("kind"), r["position"], r["reason"])
+                                                 for r in got["refused"])
+              == [("source", "file", 2, "name"), ("source", "link", 1, "link")]
+              and got["copied"] == [] and os.listdir(work2) == [])
+        # decided before anything is copied: an unreadable file, a FIFO, a folder that cannot be entered
+        und = os.path.join(t, "undecided")
+        put(os.path.join(und, "brd", "source", "BRD.md"))
+        put(os.path.join(und, "brd", "source", "locked.md"))
+        os.chmod(os.path.join(und, "brd", "source", "locked.md"), 0)
+        os.mkfifo(os.path.join(und, "brd", "source", "pipe.md"))
+        os.makedirs(os.path.join(und, "brd", "source", "shut"))
+        put(os.path.join(und, "brd", "source", "shut", "x.md"))
+        os.chmod(os.path.join(und, "brd", "source", "shut"), 0o600)
+        work3 = os.path.join(t, "work3")
+        os.makedirs(work3)
+        try:
+            code, dry, err = call(["place", "-", "--key", "K-1", "--source-dir", und, "--brd-dir", und, "--dry-run"])
+            code2, got, err2 = call(["place", work3, "--key", "K-1", "--source-dir", und, "--brd-dir", und])
+        finally:
+            os.chmod(os.path.join(und, "brd", "source", "locked.md"), 0o644)
+            os.chmod(os.path.join(und, "brd", "source", "shut"), 0o755)
+        want_ref = [("source", "file", 2, "unreadable"), ("source", "other", 1, "kind"),
+                    ("source/shut", "folder", None, "unreadable")]
+        check("place: an unreadable file, a FIFO and a folder it cannot enter are refused in the decision, by the dry "
+              "run as by the real run, which copies nothing (%r, %r)" % (dry, got),
+              code == 0 and code2 == 0 and bool(dry) and bool(got)
+              and sorted((r["folder"], r.get("kind"), r["position"], r["reason"]) for r in dry["refused"]) == want_ref
+              and sorted((r["folder"], r.get("kind"), r["position"], r["reason"]) for r in got["refused"]) == want_ref
+              and os.listdir(work3) == [])
+        # a brd/ that is a symbolic link is never followed
+        lnk = os.path.join(t, "linked")
+        os.makedirs(lnk)
+        os.symlink(os.path.join(und, "brd"), os.path.join(lnk, "brd"))
+        code, got, err = call(["place", "-", "--key", "K-1", "--source-dir", lnk, "--brd-dir", lnk, "--dry-run"])
+        check("place: a brd/ that is a symbolic link is refused (exit 2)", code == 2 and "symbolic link" in err)
+        # names equal under case folding or Unicode normalisation coincide, as a folding filesystem opens them
+        fold = os.path.join(t, "fold")
+        put(os.path.join(fold, "brd", "source", "Notes.md"), b"upper")
+        put(os.path.join(fold, "brd", "source", "notes.md"), b"lower")
+        put(os.path.join(fold, "brd", "source", "caf\u00e9.md".encode().decode()), b"nfc")
+        put(os.path.join(fold, "brd", "source", "cafe\u0301.md".encode().decode()), b"nfd")
+        code, got, err = call(["place", "-", "--key", "K-1", "--source-dir", fold, "--brd-dir", fold, "--dry-run"])
+        names = sorted(c["name"] for c in (got or {}).get("copied", []))
+        check("place: names equal under case folding or Unicode normalisation take rule 1's -2 (%r)" % (names,),
+              code == 0 and len(names) == 4
+              and len({unicodedata.normalize("NFC", n).casefold() for n in names}) == 4
+              and "K-1-Notes.md" in names and "K-1-notes-2.md" in names)
+        # duplicates in the plan, and a prereq_aux naming no --prereq
+        with open(plan, "w", encoding="utf-8") as fh:
+            json.dump({"frames": ["design/login/01.png", "design/login/01.png"]}, fh)
+        code, got, err = call(["place", "-", "--key", "K-1", "--source-dir", parent, "--brd-dir", slice_,
+                               "--plan", plan, "--dry-run"])
+        check("place --dry-run: a frame the plan names twice is refused, as the real run refuses it (exit 2)",
+              code == 2 and "twice" in err)
+        with open(plan, "w", encoding="utf-8") as fh:
+            json.dump({"captured_images": ["source/img/a.png", "source/img/a.png"]}, fh)
+        code, got, err = call(["place", "-", "--key", "K-1", "--source-dir", parent, "--brd-dir", slice_,
+                               "--plan", plan, "--dry-run"])
+        check("place --dry-run: a captured image the plan names twice is refused (exit 2)", code == 2 and "twice" in err)
+        with open(plan, "w", encoding="utf-8") as fh:
+            json.dump({"prereq_aux": {"Q-9": ["Q-9-x.md"]}}, fh)
+        code, got, err = call(["place", "-", "--key", "K-1", "--source-dir", parent, "--brd-dir", slice_,
+                               "--plan", plan, "--dry-run"])
+        check("place: a prereq_aux naming a key no --prereq names is refused, as prereq_captured is (exit 2)",
+              code == 2 and "Q-9" in err)
+        with open(plan, "w", encoding="utf-8") as fh:
+            json.dump({"frames": "design/login/01.png"}, fh)
+        code, got, err = call(["place", "-", "--key", "K-1", "--source-dir", parent, "--brd-dir", slice_,
+                               "--plan", plan, "--dry-run"])
+        check("place: a plan field of the wrong type is refused (exit 2)", code == 2)
         with open(plan, "w", encoding="utf-8") as fh:
             json.dump({"captured_images": ["source/img/nope.png"]}, fh)
         code, got, err = call(["place", work2, "--key", "K-1", "--source-dir", parent, "--brd-dir", slice_,

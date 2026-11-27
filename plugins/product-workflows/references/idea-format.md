@@ -383,6 +383,115 @@ the link then points at; `free<TAB><basename>` — the basename is free and the 
 `_NN` name rules 2 and 3 give, where the file lands unless rule 4 refreshes the copy at the
 basename instead. Any other exit is a copy that failed, reported with the rest.
 
+**The copy is a program too, and so is the hash.** A source's name, and every folder name on the
+path it lands at, is its author's own, and a `cp`, an `install` or a `sha256sum` built from it would
+run what it holds; so no command names one. This program reads the source, writes the
+destination at mode `0644` — never the source's own mode bits, so a file a mount marks executable
+is never committed executable — and appends the destination's path relative to `$SPECS_PATH`,
+ended by a NUL byte, to the caller's declared-paths file, the `deliverable_paths_file` its handoff
+takes (`workflows-core:phase-handoff` §2.9), so the copy is declared without its name being typed
+anywhere. Hand it the source file, the destination file, how to write it, `$SPECS_PATH` and that
+file, each as one single-quoted argument, each `'` they hold written `'\''`:
+
+```
+python3 -I -c 'import hashlib, os, stat, sys, tempfile, unicodedata as u
+src, dest, how, specs, listed = (os.fsencode(a) for a in sys.argv[1:6])
+BIDI = "\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069\u2028\u2029"
+def printable(n):
+    try:
+        t = n.decode("utf-8")
+    except UnicodeError:
+        return False
+    return not any(u.category(c) == "Cc" or c in BIDI for c in t)
+def read(path):
+    fd = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
+    if not stat.S_ISREG(os.fstat(fd).st_mode):
+        os.close(fd)
+        sys.exit(3)
+    with os.fdopen(fd, "rb") as f:
+        return f.read()
+data = read(src)
+digest = hashlib.sha256(data).hexdigest().encode()
+if how == b"hash":
+    sys.stdout.buffer.write(b"hash\t" + digest + b"\n")
+    sys.exit(0)
+root = os.path.abspath(specs)
+rel = os.path.relpath(os.path.abspath(dest), root)
+parts = rel.split(b"/")
+if os.path.isabs(rel) or any(p in (b"", b".", b"..") or not printable(p) for p in parts):
+    sys.exit(4)
+here = root
+for p in parts[:-1]:
+    here = os.path.join(here, p)
+    if os.path.islink(here) or (os.path.lexists(here) and not os.path.isdir(here)):
+        sys.exit(5)
+    if not os.path.lexists(here):
+        if how in (b"reuse", b"refresh"):
+            sys.exit(5)
+        os.mkdir(here)
+target = os.path.join(root, rel)
+there = os.path.lexists(target)
+if there and (os.path.islink(target) or not os.path.isfile(target)):
+    sys.exit(5)
+def write():
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(target), prefix=b".copy-")
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+            os.fchmod(f.fileno(), 0o644)
+        os.replace(tmp, target)
+    except BaseException:
+        os.unlink(tmp)
+        raise
+if how == b"new":
+    if there:
+        sys.exit(5)
+    fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    with os.fdopen(fd, "wb") as f:
+        f.write(data)
+        os.fchmod(f.fileno(), 0o644)
+    outcome = b"copied"
+elif how == b"mirror":
+    if not there:
+        write()
+        outcome = b"copied"
+    elif read(target) == data:
+        outcome = b"unchanged"
+    else:
+        write()
+        outcome = b"replaced"
+elif how == b"refresh":
+    if not there:
+        sys.exit(5)
+    write()
+    outcome = b"replaced"
+elif how == b"reuse":
+    if not there or read(target) != data:
+        sys.exit(5)
+    outcome = b"reused"
+else:
+    sys.exit(2)
+with open(listed, "ab") as f:
+    f.write(rel + b"\0")
+sys.stdout.buffer.write(outcome + b"\t" + digest + b"\n")' '<source file>' '<destination file>' '<how>' "$SPECS_PATH" '<declared-paths file>'
+```
+
+`<how>` is `new` — a name the collision rule found `free`, or the `taken` name it gave: written where
+nothing stands, never over anything; `reuse` — rule 1's re-use: nothing is written, the file standing
+there must hold the source's bytes, and it is declared; `refresh` — rule 4's: the file standing there
+is replaced whole; `mirror` — `/brd-intake`'s copies under `brd/source/`: nothing is written where the
+destination already holds these bytes, it is replaced whole where it holds others, and written where
+nothing stands; or `hash`, which reads the source alone, writes and declares nothing, and needs no
+destination, `''` standing in for it. It creates each missing folder on the way down, follows no
+symbolic link, and writes through a temporary file and a rename wherever it replaces one. It prints
+one line, the outcome and the source's SHA-256: `copied`, `unchanged`, `replaced`, `reused` or `hash`,
+a tab, then the digest. Exit 3: the source is not a regular file it can read; exit 4: the
+destination lies outside `$SPECS_PATH`, or a name on its path is not a printable value
+(`workflows-core:addressing` §3, *A printable value*), or is empty, `.` or `..`; exit 5: the
+destination, or a folder on its way, is a symbolic link or not what `<how>` needs — a file already
+there for `new`, none or other bytes for `reuse`, none for `refresh`. Any of those, and any other
+exit, is a copy that failed, written nowhere and declared nowhere, and reported with the rest.
+
 **`/brd-intake` Phase 2 cites rules 1–3 by number** for `brd/source-external/`, so a rule inserted,
 removed or renumbered here must be carried to `commands/brd-intake.md` Phase 2 in the same change.
 

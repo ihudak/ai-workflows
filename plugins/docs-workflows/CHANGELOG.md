@@ -7,12 +7,18 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.45.2] — 2026-11-27
 
-Fix batch B51. **What changes for you.** `/document`'s image candidates are listed, and the paths you type checked, by one program, and `doc-writer` copies a screenshot with a program handed the pairs as JSON, so an image whose name holds a space, `$(`, a backtick, a quote, a leading `-` or a line feed is copied as it stands and runs nothing. Couples to nothing new.
+Fix batch B51. **What changes for you.** `/document`'s image candidates are listed, and the paths you type checked, by one program, and `doc-writer` copies a screenshot with a program handed the pairs as JSON, so an image whose name holds a space, `$(`, a backtick, a quote, a leading `-` or a line feed is copied as it stands and runs nothing; and a conformance record's recorded commit is tested before `/document` or `/release-notes` names it. Needs `workflows-core` 1.101.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.3 bullet).
 
 ### Fixed
 
 - **`/document` Phase 5.6** (FOLDER-NAME-CLASS (4)) lists `<specs_dir>`, `<project_dir>` and the PRD folder's `attachments/` with a `python3 -I` program that walks each folder itself, dedupes by resolved path and names a name that is not a printable value by its position, in place of two `find` commands; a manual path reaches it in a JSON file written with the Write tool.
 - **`doc-writer`** copies each screenshot with a `python3 -I` program reading `{"src", "dest"}` pairs from a JSON file it writes, in place of `command cp -- "<src>" …`, whose double quotes still ran a name's `$(` or backtick.
+
+### Fixed — the review pass
+
+- **`/document` Phase 5.6's images program** takes `--specs`, `--project`, `--attachments` and `--manual`, each left out where the run has none — the literal `''` its template showed opened a file named `''` and crashed — and checks the file of typed paths: a JSON array of strings, a symbolic link dropped, since a link is followed nowhere; it dedupes by path rather than by following links, counts refusals per kind as `workflows-core:addressing` §2 counts them, and its prose cites §2 and §3 in place of restating them.
+- **`doc-writer`'s copy program** checks every pair before it copies any — a non-object element, a missing `src`, a symbolic link — and prints its report whatever stops it.
+- **`/document`'s *How far the code has moved since* and `/release-notes`' conformance test** hold a record's recorded commit to a commit's shape (`workflows-core:source-truth` §7.8) before a command names it.
 
 ## [1.45.1] — 2026-11-27
 
