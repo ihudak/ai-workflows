@@ -165,7 +165,10 @@ recoverable direction of §2's asymmetry is kept: a correction that was itself w
 its reasoning on the page. **It is never made on a `[C]` a package has already carried** — the
 customer holds it as asked, and `commands/brd-reconcile.md` matches their answer to it by round and
 position — **nor on one that is a `[C]` by rule**: a requirement defect's question (§1), or a
-rejected row's, whose acceptance only the customer can give. Short of a re-tag, the same answer may
+rejected row's, whose acceptance only the customer can give — **nor on a strategic `[C]`, or on one
+a strategic `[C]` covers**: the strategic question is the customer's to answer, and its
+`- **Covers:**` line names each question it covers as one its answer decides, so a covered question
+re-tagged away would leave that line naming a question no package puts to the customer. Short of a re-tag, the same answer may
 put the answer the delivery team would propose beside a held `[C]`, for the customer to confirm or
 correct; that answers nothing, and the question stays held.
 

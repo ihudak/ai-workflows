@@ -499,9 +499,9 @@ command removes none of them; the next `/brd-interview` run does.
   derived from the answer to that question, and shown to the customer with it at the end of a
   sitting. The answer and every row applied from it — and from those, in turn — are shown together,
   each with its quotation, and asked once:
-  `choices: ["Confirm the answer and every answer applied from it (Recommended)", "Let me name the ones to correct"]`
+  `choices: ["Confirm the answer and every answer applied from it (Recommended)", "Let me name the ones to correct (you'll be prompted)"]`
   — or, where any of them carries the line saying the basis of a proposal the package showed has
-  moved (below), `choices: ["Confirm the answer and every answer applied from it", "Let me name the ones to correct"]`,
+  moved (below), `choices: ["Confirm the answer and every answer applied from it", "Let me name the ones to correct (you'll be prompted)"]`,
   which recommends nothing. The second option asks which, by `<round>/<position>`, and asks again
   for a name that matches none of them; each one named goes to the ordinary four-option picker on
   its own, and the rest are confirmed. Every check that follows a confirmation — the
@@ -534,8 +534,8 @@ command removes none of them; the next `/brd-interview` run does.
   none — is the customer's own answer, and nothing tests it. A proposal is matched to its line
   exactly, never to a later, longer line following the same decision, and is shown in the prompt's
   own words. Where the run cannot tell which package the review answers, it says that no prompt
-  says what was proposed for each question carrying a proposal, and that line takes the group
-  array that recommends nothing too.
+  says what was proposed for each question carrying a proposal that follows a decision, and that
+  line takes the group array that recommends nothing too.
 - **Phase 4 — a reason nobody gave.** A confirmed candidate, or a corrected row, whose reason is
   `not stated` takes one of exactly two routes: ask the customer and freeze nothing, or freeze it `status: open`, which
   puts the answer on the record and makes it unusable downstream until the reason arrives. The picker's third option, *Cancel — return to this candidate's four options*, resolves nothing: it puts the candidate back on the four-option picker, so *Correct it* can be taken there. Supplying

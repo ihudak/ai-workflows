@@ -320,7 +320,10 @@ from its round's record, so one your answer made for a question an earlier packa
 while the decision it follows reads decided and the interview has not withdrawn it: one whose
 decision was reopened, superseded or withdrawn since, or cannot be read, is left out, and one the
 interview marked `Proposal withdrawn` — because one of your answers re-decided its decision and
-proposed nothing again — is not shown either. The question is then put without it, or, on a
+proposed nothing again — is not shown either. Nor is one following a sibling's or a prerequisite's
+decision that was ever reopened: that slice's own interview may have re-decided it in place, which
+writes nothing into this slice, so the package leaves the proposal out whenever that decision
+carries a `Reopened` paragraph, even where your team proposed it again since. The question is then put without it, or, on a
 strategic question, with the answer its plan recommended; the final report names each, and where
 the bundled question set still shows the proposal, the prompt says it is withdrawn, and that the
 prompt governs wherever the two differ.
@@ -372,9 +375,10 @@ mark on it.
   by its key there, so a key naming more than one folder, or a folder named outside the allowed
   characters, stops the run before the self-review, while one naming no folder only leaves that
   decision unread — and Phase 6 shows a proposal only where that decision reads decided and no
-  withdrawal line follows it. One left out is not a stop: the question is put without it, and the
-  final report names it with the status its decision reads, why that decision could not be read,
-  or its withdrawal.
+  withdrawal line follows it, and, for a sibling's or prerequisite's decision, only where it
+  carries no `Reopened` paragraph. One left out is not a stop: the question is put without it, and
+  the final report names it with the status its decision reads, the `Reopened` paragraph, why that
+  decision could not be read, or its withdrawal.
 - **Phase 4 — the disposition gate.** No bundle is built while any `[SR#n]` is undisposed. The gate
   is keyed on **every finding carrying a non-`undisposed` value**, and on nothing else: the reviewer
   agent returns no severity and no PASS/BLOCK verdict by design, so the disposition is the only gate

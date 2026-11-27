@@ -1546,8 +1546,8 @@ failure is reported rather than silent, but nothing it names lands. On a removal
 --porcelain -z` reports three ` D` records, a folder-shaped declaration matches none of them, so `slices.md`
 and the parent ledger land on the default branch while the removal does not — and the next run's
 Phase 0 step 9 re-enumerates the child as still standing. —
-§2.3's `-A` staging is what stages a removal, exactly as it does for `/idea`'s or `/update-prd`'s
-own deletions — and it stages a Phase 4.5 removal on the reconcile path the same way), `title:` — `<BRD-KEY> Split into slices and allocate coverage` in `full` mode,
+§2.3 step 3's `update-index --add --remove --replace` staging is what stages a removal, its
+`--remove` exactly as it does for `/idea`'s or `/update-prd`'s own deletions — and it stages a Phase 4.5 removal on the reconcile path the same way), `title:` — `<BRD-KEY> Split into slices and allocate coverage` in `full` mode,
 `<BRD-KEY> Allocate slice coverage` in `allocate-only`, because a pull request titled "split" that
 created nothing would misdescribe itself — `inputs_read` = the files Phase 0 step 3's *Record what
 the run reads* noted, and `body_facts` = the run mode,

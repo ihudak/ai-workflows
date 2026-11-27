@@ -22,7 +22,7 @@ row has been given a fate.
 
 Usage: `/brd-intake <BRD-KEY> @<brd-file> [--budget <N>] [--sort-existing <dir>] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]`
 
-**Ending early.** Every stop this run takes — each `BRD_INTAKE_*` stop (Phase 0's, Phase 1's `BRD_INTAKE_UNREAD_ATTACHMENTS`, Phase 3's `BRD_INTAKE_DANGLING_ANCHOR`, Phases 3's and 4's `BRD_INTAKE_DISPATCH_FAILED`, Phase 4's `BRD_INTAKE_WALK_STOPPED`), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s), Phase 3's stop where no anchor parses and its `NOT_FOUND` stop — and every run-ending answer — the `$SPECS_PATH` *Cancel*, Phase 0's re-run *Cancel*, Phase 1's *Stop*, *Stop and convert* and *Cancel*, every *Cancel* in Phases 3 and 4, and Phase 4's *Stop here and continue later* — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 9's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. `emit-block` still fires wherever a stop's own text calls it, at the halt. Where a stop or answer says nothing is written, that means the run's own work: the cost entry is bookkeeping and is written all the same. A stop after Phase 2's first write leaves what the run wrote in the BRD folder uncommitted, since the tail commits only the bookkeeping paths. **Every stop taken once Phase 0 step 7 has opened the run folder** runs `run-stop-line` (`Skill(skill: "workflows-core:reference", args: "run-folder run-stop-line")`) right after its own message: it logs the stop, by its code where it has one, and prints the `Run folder kept:` line, `<command>` there being `/product-workflows:brd-intake <BRD-KEY> @<brd-file>` — its start-over form on `BRD_INTAKE_RUN_RECORD_LOST`, which a resume meets again (Phase 0 step 7). `BRD_INTAKE_RUN_TAKEN_OVER` is the exception: it takes no tail at all and prints no such line (Phase 0 step 7). The stop message, the `Run folder kept:` line where one prints, then the cost and `Specs repo:` lines, end the run; the Final report is not printed. Phase 7's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the files stay written, and the run goes on through Phases 8 and 9.
+**Ending early.** Every stop this run takes — each `BRD_INTAKE_*` stop (Phase 0's, Phase 1's `BRD_INTAKE_UNREAD_ATTACHMENTS`, Phase 3's `BRD_INTAKE_DANGLING_ANCHOR` and `BRD_INTAKE_DISPATCH_FAILED`, Phase 4's `BRD_INTAKE_WALK_STOPPED`), a `RUN_FLAGS_*` stop, every stop a shared reference's return leads it to take (an address stop, `branch-check`'s), Phase 3's stop where no anchor parses and its `NOT_FOUND` stop — and every run-ending answer — the `$SPECS_PATH` *Cancel*, Phase 0's re-run *Cancel*, Phase 1's *Stop*, *Stop and convert* and *Cancel*, every *Cancel* in Phases 3 and 4, and Phase 4's *Stop here and continue later* — takes `workflows-core:specs-repo-git` §4's refusal tail: Phase 9's step 3, the cost entry (unless `--skip-costs`), and its step 5, `commit-artifacts`, which prints the run's `Specs repo:` line — with no `resume.md` and no maintenance or feedback step. `emit-block` still fires wherever a stop's own text calls it, at the halt. Where a stop or answer says nothing is written, that means the run's own work: the cost entry is bookkeeping and is written all the same. A stop after Phase 2's first write leaves what the run wrote in the BRD folder uncommitted, since the tail commits only the bookkeeping paths. **Every stop taken once Phase 0 step 7 has opened the run folder** runs `run-stop-line` (`Skill(skill: "workflows-core:reference", args: "run-folder run-stop-line")`) right after its own message: it logs the stop, by its code where it has one, and prints the `Run folder kept:` line, `<command>` there being `/product-workflows:brd-intake <BRD-KEY> @<brd-file>` — its start-over form on `BRD_INTAKE_RUN_RECORD_LOST`, which a resume meets again (Phase 0 step 7). `BRD_INTAKE_RUN_TAKEN_OVER` is the exception: it takes no tail at all and prints no such line (Phase 0 step 7). The stop message, the `Run folder kept:` line where one prints, then the cost and `Specs repo:` lines, end the run; the Final report is not printed. Phase 7's *Cancel* is not one of these: on the handoff's consent choice it declines the handoff, the files stay written, and the run goes on through Phases 8 and 9.
 
 ---
 
@@ -1069,15 +1069,15 @@ Act on the result's `status`:
   numbers its own read from `BR#1`; a `conflict` naming its `BR#7`, an image said to illustrate its
   `BR#7`, or a reason saying a flow is *"inventoried in words as BR#6, BR#7 and BR#8"*, means
   whatever rows the reconciliation matched to those numbers, and writing the agent's numbers through
-  would attach the candidate, the image or a confirmed defect's own reason to a different
+  would attach the candidate, the image or a logged defect's own reason to a different
   requirement. The one exception is a span that quotes the customer verbatim, which is never
   rewritten.
 
   **On a first intake, leave each row's `defects` column empty for now** — it is filled in Phase 4,
-  once a candidate is actually confirmed into a `[DEF#n]`, never before. **On a re-run, give each row
+  once a candidate is actually logged as a `[DEF#n]`, never before. **On a re-run, give each row
   that kept its id the `defects` it carries on file**, and nothing more yet: a `[DEF#n]` is
   permanent (`${CLAUDE_PLUGIN_ROOT}/references/brd-format.md` §4), Phase 4 keeps every entry already
-  logged, and it adds only what it newly confirms. Carry the standing read's `defect_candidates`
+  logged, and it adds only what it newly logs. Carry the standing read's `defect_candidates`
   and its `splits` forward into Phase 4 — a re-read's replace the first read's wholesale, save an
   `EMPTY` re-read's, which replace nothing, as its `figures` entries and its `notes` do (below) —
   and nothing here treats a candidate as a decision, or a split as a defect: a row the read lists
@@ -1466,6 +1466,8 @@ it has no entry point. Its §3 budget, §4 question shape, §6 ranking, §9 tabl
 list, §11 account and §12 registry are cited here by number and not restated: this phase writes
 only what is intake's own — which candidates are put, what each answer writes, and when a sitting
 starts. Strategic sittings (§7) are `/product-workflows:brd-interview`'s; this walk plans none.
+Nor does it apply an answer forward (§8, also the interview's): no answer here closes another
+candidate, and candidates with a common cause are put as one question instead (*Plan the rest*).
 
 **A run Phase 4 wrote.** On a run that resumed, read `effect <folder> p4-write state` first
 (*The write*, below):
@@ -1688,7 +1690,9 @@ open: no end-of-sitting list can have come between, since none is shown before t
 - **A typed answer is read as the option it expresses** (§4): one naming rows is the second option
   with its names given.
 
-**Plan the rest** (§6, §9). Where any candidate is still open, write the planner's input as
+**Plan the rest** (§6, §9). Where fact `walk-plan-done` reads `unplanned`, an earlier session's
+planner failed twice (below): nothing in this paragraph or its list is dispatched or recorded, and
+the walk goes on unplanned, as there. Otherwise, where any candidate is still open, write the planner's input as
 indented JSON, `{"mode": "intake", "budget": <the budget in force>, "questions": [each open candidate's object as the registry file holds it, in qid order], "decisions": [], "findings": []}`,
 with `put <folder> 'scratch/p4/planner-input.json' --from -` — a resumed run that finds the file
 reads it and builds none, so the plan it reuses is the one its walk was built from — or, where the
@@ -1706,9 +1710,15 @@ block's first line, its bracket replaced by the input file's path, the `result_p
 Where the folder is unavailable, `result_path` is a file `command mktemp` creates. It replies
 `RESULT <result_path> mode=intake …` and writes one JSON object there (`question-planner`'s
 *Output*): read that file. A `REFUSED` reply, or a file missing or not that object, is the dispatch
-failing, met as `brd-reader`'s is (Phase 3) — made once more, and where that fails too, stop:
-`BRD_INTAKE_DISPATCH_FAILED: question-planner returned no usable result twice (<its last reply line, or why its file could not be read>) — nothing is logged yet, and every answer given is kept where the run folder is open. Re-run '/product-workflows:brd-intake <BRD-KEY> @<brd-file>' and resume the run.`
-`emit-block` fires at that halt too (Phase 9). A result read is recorded `done <folder> p4-planner`.
+failing: it is made once more, and where that fails too, **the walk goes on unplanned**, as
+`/product-workflows:brd-interview` goes on where its planner fails — no group and no tail table,
+every open candidate put singly, in candidate order, up to the budget a sitting, which loses no
+candidate — and the Final report names the failure, with the planner's last reply line or why its
+file could not be read, as a defect of the run. Nothing in the list below is recorded. Instead make one
+`rank` call, its stdin each open candidate's qid with its number less one (`cand/1` 0, `cand/2` 1,
+…), so that `next`, which breaks equal ranks by the qid's text, prints `cand/2` before `cand/10`;
+then set fact `walk-plan-done` to `unplanned` before the first question — held by the run where the
+run folder is unavailable — so a resumed run walks the same way and dispatches no planner. A result read is recorded `done <folder> p4-planner`.
 Then:
 - **each group** in `groups` becomes one question. First take out of its `covers` each candidate
   whose question would carry an *On file* or *Settled* line (below), to be asked singly, since one
@@ -1861,15 +1871,16 @@ candidate is about.
 
 **At the budget.** Once the sitting has spent its budget and that call still prints a qid not in
 the skip set, the sitting ends: show its end-of-sitting list (below), then ask, saying how many
-candidates are still open and that every answer given so far is kept, each option with what it does
-(§4):
+candidates are still open — `<k>`, below — and that every answer given so far is kept, each option
+with what it does (§4):
 
 ```
 choices: ["Continue with the next sitting now (Recommended)", "Stop here and continue later", "Send the rest on as open defects, unreviewed"]
 ```
 
 **Each option carries this description**, `<k>` the number of candidates still open outside the
-skip set and `<budget>` the budget in force:
+skip set — a group counting each candidate it covers, since each is logged as an entry of its own
+(*The write*) — and `<budget>` the budget in force:
 - *Continue with the next sitting now* — "Asks up to <budget> more, in the order the rest are ranked. Every answer so far is kept, and nothing is logged until the walk ends."
 - *Stop here and continue later* — "Ends this run with nothing logged yet. Running the command again resumes at the next question, every answer so far kept." — and, where the run folder is unavailable, "Ends this run with nothing logged. This run keeps no run folder, so the next run asks every question again." in its place.
 - *Send the rest on as open defects, unreviewed* — "Logs each of the <k> left as an open [DEF#n] marked not reviewed at intake, with no question to you. The interview later asks the customer about each, save an unsourced one."
@@ -2106,7 +2117,7 @@ program having written them there, NUL-terminated, so no customer's name is type
 step 6's *Record what the run reads* noted, `branch_fact: p7-handoff-branch` where the run folder
 is open (`workflows-core:phase-handoff` §2.9: the branch §2.2 settles is recorded as that fact
 before anything is pushed), and `body_facts` = the requirement
-count, the confirmed-defect count by class, and whether Phase 6 wrote seeds; emit its §4.1 outcome
+count, the logged-defect count by class and how many of them were sent on unreviewed, and whether Phase 6 wrote seeds; emit its §4.1 outcome
 line in the final report.
 
 **On the second or third choice `handoff-to-main` does not run, and the final report still carries
@@ -2230,7 +2241,7 @@ unset `$SPECS_PATH` are all environment / user halts, never a plugin
 capability gap, so `emit-block` never fires from this command's own Phase 0. Nor does Phase 1's
 `BRD_INTAKE_UNREAD_ATTACHMENTS`: linked files the operator must convert first are an operator halt,
 as Phase 1 says where it stops; nor Phase 4's `BRD_INTAKE_WALK_STOPPED`, the operator's own choice
-between sittings. `BRD_INTAKE_DISPATCH_FAILED` does fire it, as its own text says. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
+between sittings. Phase 3's `BRD_INTAKE_DISPATCH_FAILED` does fire it, as its own text says; Phase 4's planner failing twice stops nothing, and fires none. The one exception is a halt on a tool the ai-containers image lacks, which `workflows-core:feedback-emission` §6 `emit-block` defines.
 
 **Under `run_flags.skip_feedback`** (`workflows-core:run-flags` §4), dispatch `workflows-core:defect-reporter` instead of `impl-maintenance` in step 1, with the same handoff plus `Plugin root: ${CLAUDE_PLUGIN_ROOT}` (literal — it expands in command bodies to this command's own plugin location), and `model: <§2.1 Sonnet chain, or run_flags.enforced_model>`; if it returns at least one defect, persist them with `emit-bugs` (`Skill(skill: "workflows-core:reference", args: "feedback-emission emit-bugs")`) in place of `emit-auto`, otherwise load nothing. Surface `Session feedback: bugs-only (--skip-feedback) — N defect(s) persisted` or `— no defects` in place of step 2's persisted-path line. Capture-at-block (`emit-block`) is unaffected by the flag.
 
@@ -2253,10 +2264,10 @@ phase runs as below, unguarded.
 1. **Invoke `impl-maintenance`** (subagent_type: "workflows-core:impl-maintenance", model:
    `<detection_model — §2.1 Sonnet chain>`) with a compact handoff: command `/brd-intake`; what was
    produced (the copied source and the files it links, the figures transcriptions, the inventory,
-   the confirmed defect log, the link log, the ledger skeleton); key events (a rejected PDF, an
+   the defect log, the link log, the ledger skeleton); key events (a rejected PDF, an
    *other* file the operator accounted for, an `EMPTY` read, a link the copy did not capture, an
    `ambiguous` wikilink, an image not read, a walk over more than one sitting, candidates sent on
-   unreviewed, an account that does not close, docs grounding OFF or a docs-raised defect — or
+   unreviewed, a `question-planner` dispatch that failed twice and a walk that went on unplanned, an account that does not close, docs grounding OFF or a docs-raised defect — or
    "none"); workarounds; test result N/A; project root = the BRD folder.
 2. **Persist plugin feedback (automatic).** Invoke `Skill(skill: "workflows-core:reference", args: "feedback-emission emit-auto")` and call its `emit-auto` entry point (§6)
    with the Lessons Learned report, `command: /brd-intake`, the run's `key` (the `<BRD-KEY>`),
@@ -2332,7 +2343,9 @@ which never drops, applies or retags a candidate, and are added to the line only
 every term 0 where the walk made no registry — and where `account` exits 4, the sum does not close, reported as a defect of this run
 with the counts it printed (§11); where the registry exited 2, that the walk ended for it, and
 which candidates it left unasked (§12); a registry refusal sent twice, as a defect of this run,
-with each candidate it put in the skip set, by class and row, left open and unlogged (Phase 4); and, on a run that resumed, `run-dispatch`'s `Resumed:` line (Phase 0 step 7); the `docs grounding:` line from
+with each candidate it put in the skip set, by class and row, left open and unlogged (Phase 4); a
+`question-planner` dispatch that failed twice, with its last reply line or why its file could not
+be read, as a defect of this run, the walk having gone on unplanned (Phase 4); and, on a run that resumed, `run-dispatch`'s `Resumed:` line (Phase 0 step 7); the `docs grounding:` line from
 Phase 1 verbatim, and — when it was ON — the `docs_references` list of requirements the shipped
 documentation describes as already built, flagged for `/prd-ground` to check against code; whether
 Phase 6 wrote seeds and which; resolved model routing (+ any Opus degradation, or `Model routing: bypassed — enforced <id> (flag|env)` in its place wherever `run_flags.enforced_model` is set, per `workflows-core:model-routing/classification` §10); the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); every agent's

@@ -299,6 +299,9 @@ slice's `/brd-reconcile`, which waits at its gate on the defect log.
     allows, those the reader was most sure of, and whose recommendation the planner puts forward
     too, may be put as one table to accept, or to name the exceptions in, which are then asked
     singly; nothing raised from documentation, or that the reader was less sure of, goes in it.
+    Where `question-planner` fails twice, the walk does not stop: nothing is grouped or tabled, the
+    rest is asked one by one in the order the candidates are numbered, and the final report names
+    the failure.
   - **Each question stands on its own.** It opens *This is about the wording of requirement
     [BR#n] in the BRD.*, quotes the row, says what the reader saw — the two readings side by side,
     what two rows clash over, what cannot be measured, the implementation detail a row prescribes —
@@ -308,10 +311,13 @@ slice's `/brd-reconcile`, which waits at its gate on the defect log.
     narrowed reason, which the customer's question is later built from. An answer you type is read
     as the option it expresses, and the same question is never put to you twice; you are asked why
     only where you chose against the recommendation without saying.
-  - **At the budget** the sitting ends: what it closed without asking you singly — the groups, the
-    list and the table — is shown once for you to accept or reopen, and you choose to go on with the
-    next sitting now (recommended), stop and continue later, or send the rest on as open defects,
-    unreviewed, each marked so in the defect log. Sending the rest on is never the default, since
+  - **At the end of each sitting** — at the budget, or once nothing is left to ask — what it closed
+    without asking you singly is shown once for you to accept or reopen: each group with the
+    candidates it covers, each candidate folded into another, each restatement the list noted and each row of the table. The `unsourced`
+    candidates the list logged are not shown again. **At the budget** you then choose to go on with
+    the next sitting now (recommended), stop and continue later, or send the rest on as open
+    defects, unreviewed — one for each candidate still open, a group counting each it covers — each
+    marked so in the defect log. Sending the rest on is never the default, since
     an open defect becomes a question to the customer.
   - **Only what the walk logs becomes a `[DEF#n]`**, numbered once the walk ends, in the order of
     the row it was raised on — never in the order the questions were asked. The customer's document

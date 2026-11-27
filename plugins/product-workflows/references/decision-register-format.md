@@ -95,7 +95,7 @@ applied_from: <decision-id>             # only where taken: applied
 | `consumed_by` | the same field, values, starting-at-`none` rule and add-never-replace rule as `workflows-core:grounding-format` §2, applied to a decision instead of a finding — save §4's return to `none` where a decision's position is replaced |
 | `round` | the interview round that produced the decision, per `references/interview-tagging.md` §5 — on a record taken `applied`, the round of the question it closed, whose record names it (§8). **Omitted where the decision came from no round** — a `[CD#n]` answering an `[AS#n]` that itself carries none (§7) is the case that occurs, and inventing a value there would put it into the set `/brd-package` derives the rounds from. That is the only route to a round-less `[VD#n]`/`[CD#n]`: one taken in a round always carries it |
 | `taken` | how the decision was taken (`workflows-core:question-budget` §8): `asked` — its question was put and answered; `applied` — no one was asked, because the decision `applied_from` names determines it; `table` — confirmed as a row of a table (`workflows-core:question-budget` §9). **Omitted, it reads `asked`**, so every record written before the field existed stays valid; `commands/brd-interview.md` writes it on every `[VD#n]` it records first, and `commands/brd-reconcile.md` writes `applied` on a `[CD#n]` frozen from a review's row the reviewer's agent applied from another answer, `applied_from` naming the `[CD#n]` of that answer (its *Confirm every candidate*) |
-| `applied_from` | the one decision a record taken `applied` follows, the whole of its basis — a decision of this register by its bare id, or one of another BRD's register — a sibling slice's under the same parent, or a `depends-on:` BRD's — in the cross-BRD form §5 uses, `<BRD-KEY>/[VD#n]` or `<BRD-KEY>/[CD#n]`, which `references/bundle-packaging.md` §6.2 reads as qualified. **Only where `taken: applied`**, and omitted otherwise. That decision reopened, superseded or withdrawn reopens this record (§4). An applied record writes `evidence: []`: it rests on no finding of its own, so §6 never fires on it. Prose naming another BRD's decision — the record's `argumentation`, a `Reopened` paragraph — writes it `<BRD-KEY> [VD#n]`, the qualified prose spelling §4 gives a cause from another BRD, never the slash form |
+| `applied_from` | the one decision a record taken `applied` follows, the whole of its basis — a decision of this register by its bare id, or one of another BRD's register — a sibling slice's under the same parent, or a `depends-on:` BRD's — in the cross-BRD form §5 uses, `<BRD-KEY>/[VD#n]` or `<BRD-KEY>/[CD#n]`, which `references/bundle-packaging.md` §6.2 reads as qualified. **Only where `taken: applied`**, and omitted otherwise. That decision reopened, superseded or withdrawn reopens this record (§4). An applied record writes `evidence: []`: it rests on no finding of its own, so §6 never fires on it. Prose naming another BRD's decision — the record's `argumentation`, a `Reopened` paragraph — writes it `<BRD-KEY> [VD#n]`, the qualified prose spelling §4 gives a cause from another BRD, never the slash form. **A record applied from another BRD's decision is dated**: its `argumentation` opens `Applied from <BRD-KEY> [VD#n] on <YYYYMMDD>: `, the first day the run that applied it read that register, so that the decision reopened and re-decided in place since — reading `decided` again, with a `Reopened` paragraph dated on or after that day — is read as moved (§4) |
 
 **Which prefix a decision gets is fixed by the tag of the question it answers, not by who typed it.**
 A question tagged `[V]` produces a `[VD#n]`; a question tagged `[C]` produces a `[CD#n]`
@@ -228,7 +228,11 @@ rests on the decision its `applied_from` names and on nothing else, so where tha
 reopened, superseded or withdrawn — by one of the two causes above, or by this rule — the same cause
 reaches the record applied from it: **reopening, superseding or withdrawing a decision reopens every
 decision whose `applied_from` names it, and every decision applied from those in turn**, in its own
-register or, through the cross-BRD form, in another BRD's. A record already `reopened`, or
+register or, through the cross-BRD form, in another BRD's. **So does another BRD's decision
+reopened and re-decided in place since the record was applied**, which leaves it reading `decided`
+again: its `Reopened` paragraph dated on or after the date the record's `argumentation` opens with
+(§1) — or, on a record carrying no such date, any `Reopened` paragraph — says it moved
+(`commands/brd-interview.md`, *A decision reopened elsewhere*). A record already `reopened`, or
 terminal, does not move again. Its `Reopened <YYYYMMDD>:` paragraph names the decision its
 `applied_from` names — another BRD's with that BRD's key, in prose (*A cause from another BRD*,
 below) — and how that decision moved, whose own record names the finding or the customer decision
@@ -589,8 +593,9 @@ same way, by the decision that contradicts it, and everything that was built on 
 `commands/brd-interview.md` writes a round's deliverables in one phase, *Write the register and the
 round record*, and in one order: `code-defect-log.md`, then `decisions.md`, then
 `interview/customer-questions.md`, then `interview/round-<N>.md` **last** — after it only the
-record of each other round one of whose questions the run closed without asking, which names the
-`[VD#n]` it applied there — the log first, so a counted decision never cites a `[CDF#n]` that is on
+record of each other round this write adds a line to: a state for a question of that round the run
+closed without asking, naming the `[VD#n]` it applied there, and its proposal, withdrawal and
+re-tag lines (§9) — the log first, so a counted decision never cites a `[CDF#n]` that is on
 no file. **The round record is the commit point**: a round's deliverables count only once its
 record names them. Two writes sit outside that
 order, each keyed to the record so that no interruption can falsify it: a **baseline** line,
@@ -947,7 +952,10 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
   `- **Proposed answer:**` and `- **Proposal withdrawn:**` lines, read off the round record**, where
   alone a carried entry's lines are: a withdrawal last means it has none, to every reader of the
   question's proposal as it stands, and a proposal last is shown to the customer by
-  `commands/brd-package.md` only while the decision it follows reads `decided` (§3).
+  `commands/brd-package.md` only while the decision it follows reads `decided` (§3) — and, for a
+  decision of another BRD's register, which no withdrawal here can follow, only while its
+  `argumentation` carries no `Reopened` paragraph (§4), since one ever reopened may have been
+  re-decided in place since.
   `commands/brd-reconcile.md` reads, instead, the proposal the sent prompt showed — matched to its
   line here — since a line written after the package does not take back what the customer was
   shown; such a line is one of the moves it names beside the customer's answer. **`- **Re-tagged:** [C] → [V] — <reason>`** says the question was the delivery team's

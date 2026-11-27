@@ -282,7 +282,11 @@ The next `/brd-interview` round opened on that BRD puts the decision's question 
 tag and against the current findings, with each `Reopened` paragraph quoted as context, unless a
 question already putting it is still unanswered; the answer re-decides it in place, keeping its id.
 Every question that puts a decision again names it on a `- **Re-puts:**` line, and that line is how
-each command ties the answer back to the decision.
+each command ties the answer back to the decision. A decision applied from another BRD's decision is put again too where
+that decision was reopened and re-decided in place since it was applied — that BRD's own interview
+writes nothing into this slice, so the applied decision is dated, and a `Reopened` paragraph on the
+decision it follows, dated that day or later, says it moved. For the same reason, `/brd-package`
+never shows the customer a proposal following another BRD's decision that was ever reopened.
 
 **Where the route hands over is `/brd-reconcile`**: a BRD whose customer decisions are frozen and
 whose tree holds nothing the review made false is the state the PRD pipeline is entered from.

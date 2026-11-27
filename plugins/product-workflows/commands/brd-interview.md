@@ -605,7 +605,11 @@ and nothing downstream can tell the difference afterwards.
    beside this one — each with the `interview/round-<N>.md` files beside it, through which §8 reads
    it; and every markdown file under each `bundle-*/` directory of this BRD's folder,
    which say which held `[C]` a package has already carried. A register or a bundle file that exists
-   and cannot be read is reported now, by path. **Every read above is
+   and cannot be read is reported now, by path. **Where fact `p0-read-date` is unset, set it to
+   today's date, `<YYYYMMDD>`** — held by the run where the run folder is unavailable — so that it
+   records the first day this run read those registers: a record this run applies from another
+   BRD's decision is dated by it (*Write the register and the round record*), never later than
+   the read its answer was derived from. **Every read above is
    through `decision-register-format.md` §8: no torn write counts**, in this BRD's folder, a
    sibling's or a `depends-on:` slice's, and a round record that exists and cannot be read leaves the items it would name
    undecidable, as an unreadable question set does (*Round 1 is generated from the grounding*).
@@ -1091,8 +1095,9 @@ recommendation — unless a decision on file now settles it, that `[CD#n]` among
 question registry records it applied before it is put (*Tag every question*, *Then merge*, or a
 sitting's plan), and the end-of-sitting list shows it. A deferred `[V]` that is not unblocked — some `[C]` it names still held, or
 answered by no `[CD#n]` the register holds `decided`, or re-tagged `[V]` since (*Hold every `[C]`*)
-— is put again as any deferred question is, its prompt naming each `[C]` it still waits on, and
-each question it named that was re-tagged `[V]`, with the state that question reached, as a wait on
+— is put again as any deferred question is, its prompt naming each `[C]` it still waits on — one
+whose last state is still *held for the customer* — and each other question it named, answered by
+the customer, closed or re-tagged `[V]` since, with the state that question reached, as a wait on
 the customer no longer. Nothing here is written: the question stays *deferred* until it is
 answered.
 
@@ -1613,7 +1618,16 @@ Only an answer to a question that puts such a record again re-decides it
 register (§8) — a decision of this register, named by its bare id, or, named in the cross-BRD form
 `<BRD-KEY>/<id>`, of the register of a sibling slice or a `depends-on:` slice whose key is
 `<BRD-KEY>`, read as *Resolve inputs and gate the grounded BRD*, step 9, reads it: from the working
-tree, through §8, with that slice's round records. `<BRD-KEY>` is matched against the keys of the
+tree, through §8, with that slice's round records. **Named in the cross-BRD form, its basis has
+moved too where that decision reads `decided` again but carries a `Reopened <YYYYMMDD>:` paragraph
+dated on or after the date the record was applied** — the date its `argumentation` opens with,
+`Applied from <BRD-KEY> <its id> on <YYYYMMDD>:` (*Write the register and the round record*), a
+reopening that day counting as after it, the safe side, since a register dates paragraphs and not
+times; or, where its `argumentation` carries no such date, any `Reopened` paragraph. That slice's
+own run reopened the decision and re-decided it in place, which writes into no other slice, so its
+status alone never shows it (`decision-register-format.md` §4). A decision of this register keeps
+the status test alone: this run's own cascade reaches what is applied from it (*Write the register
+and the round record*). `<BRD-KEY>` is matched against the keys of the
 registers that step read, a known set, and resolved no further. A record taken `applied` rests on
 that decision and on nothing else, so §4's cause reaches it through that decision, and nothing has
 reopened it yet. **Where its key matches none of those registers, or names one that cannot be
@@ -1621,7 +1635,8 @@ read**, nothing on file says whether its basis stands: the record is reported, b
 named, and not taken. The *Write the register and the round record* phase of the run that puts its
 question reopens it in the same write as the answer — `status: reopened` and a closing
 `Reopened <YYYYMMDD>:` paragraph naming the decision its `applied_from` names, another BRD's as
-`<BRD-KEY> [VD#n]` or `<BRD-KEY> [CD#n]` in prose (§4), and how that decision moved — as *A
+`<BRD-KEY> [VD#n]` or `<BRD-KEY> [CD#n]` in prose (§4), and how that decision moved — re-decided
+in place since its `Reopened` date, where that is how — as *A
 decision the re-grounding moved* reopens a plain record; on a `[CD#n]` the status and that
 paragraph are all this command writes.
 
@@ -1847,7 +1862,13 @@ in this run's **skip set**: no later step sends it another event or puts it — 
 that undoes a re-tag of this run's own (*Hold every `[C]`*, *A held `[C]` an answer reaches*) — so
 a question the registry keeps refusing is never asked round and round; on 2, nothing more is asked, *Write the
 register and the round record* writes every answer this run holds, and the final report names the
-registry as the cause.
+registry as the cause. **A second refusal of `init` whose stderr names a question of its input** —
+`question "<qid>"` — **leaves that question out, not the registry**: `init` is sent once more
+without it, and so on for each question a further refusal names, so that one question on file the
+registry cannot hold — a legacy record's, say — never costs every later run its registry. Each one
+left out is in the skip set, is written in its round record as it stands, and is named in the
+final report beside the account, which does not count it, as a defect of the run. A refusal naming
+no question of the input leaves the run with no registry, as on 2.
 
 - **Where the run resumed and `<folder>/scratch/question-registry.json` stands**, it is reused as
   it stands, and `init` is never called: the questions and answers it records are this run's, and
@@ -1910,10 +1931,15 @@ and nothing else, each going into its round record alone, and it is written *hel
 and no `[VD#n]`. The final report names each, with what was undone.
 
 **Decision ids.** Every `[VD#n]` this run takes — asked, applied, or confirmed in a table — takes,
-as it is recorded, one past the highest `[VD#n]` that `decisions.md` holds, torn writes included
-(`decision-register-format.md` §8), or that the registry records, whichever is higher; *Write the
-register and the round record* closes any gap an id this run took and an end-of-sitting list, or a
-resumed run's carried check, then freed would leave.
+as it is recorded, one past the highest of three: the `[VD#n]`s `decisions.md` holds, torn writes
+included (`decision-register-format.md` §8); those the registry records; and fact `p6-vd-high`, the
+highest this run has taken, `0` where unset. **The fact is set to the new id before the call that
+records it** — held by the run where the run folder is unavailable — so **no id is taken twice in
+a run**: one an end-of-sitting list, the reopens that follow it or a resumed run's carried check
+freed stays spent, since the registry clears a reopened question's `decision`, and a proposal or an
+answer already recorded as following that id must never read as following a later answer given
+under it. *Write the register and the round record* closes every gap an id this run took and then
+freed, or took and never recorded, would leave.
 
 **A question that puts a record again is put to the person who answers it, and closed no other
 way**: no merge or drop names it, no answer is applied to it, no strategic question covers it
@@ -1972,7 +1998,8 @@ drop's reason being the planner's own text, written between single quotes, each 
   the cross-BRD form for a sibling slice's or a `depends-on:` BRD's
   (`decision-register-format.md` §1), which the package's citation check reads as qualified
   (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6.2). One naming a decision the input
-  does not hold is not recorded;
+  does not hold is not recorded, nor one naming a strategic question, whose own answer closes what
+  it covers (`workflows-core:question-budget` §8);
 - **each proposal** — a held `[C]`, carried or not, for which a decision on file determines what
   the delivery team would propose (§8): recorded as *Hold every `[C]`* records one (*A held `[C]` an
   answer reaches*), with `--sitting 1`. One naming a decision the input does not hold is not
@@ -2126,6 +2153,16 @@ made again. Otherwise, in order:
    - its `tag` is `V` where the `[V]` trigger fired, or `C` where the `[C]` trigger fired;
    - its `text` and `why` are not empty; its `options` hold two to four distinct labels; its
      `recommended` is one of them, beside a `reason` that is not empty, or `""` on a `V` entry;
+   - **its `why` is checked** (`workflows-core:question-budget` §4: every claim a question makes
+     about a `[BR#n]`, a finding or the code is checked before the question is written). Each fact
+     it states about a row is read against that row's text in `brd/brd-inventory.md`, and each fact
+     about a finding or the code against the findings its covered questions carry, by their verdict
+     and evidence in the grounding files. An entry whose `why` those sources contradict is left
+     out. Where its `why` states no such fact, or one those sources cannot settle, a `V` entry is
+     kept with its `why` written `The planner's reading, not checked against the rows or findings: <its why>`,
+     in the entries file step 3 writes, and so in its prompt and its `- **Why we ask:**` line. A `C` entry whose `why` states
+     a fact those sources cannot settle is left out, since its line reaches the customer, who is
+     never shown a claim no one checked; one stating no such fact is kept as it stands;
    - its `covers` — once each question closed no other way is removed from it: one in the skip
      set, one putting a record again (its `- **Re-puts:**` line, or this run's tie picker's
      answer, naming one), and a `[V]` whose `[V]` tag is on file with no such line and no such
@@ -2299,8 +2336,10 @@ in order:
 - **each `applied` entry** — recorded as *Then merge* records one, with `--sitting <the sitting>`
   in place of `--sitting 1`, so that this sitting's end-of-sitting list shows it; none naming a
   question that puts a record again, or a `[V]` whose `[V]` tag is on file with no
-  `- **Re-puts:**` line and no tie picker's answer, is recorded (*Then merge*), and one naming a
-  question the registry already records closed is skipped;
+  `- **Re-puts:**` line and no tie picker's answer, is recorded (*Then merge*), nor one naming a
+  strategic question, whose own answer closes what it covers (`workflows-core:question-budget` §8),
+  nor one naming a question of the **put-singly set** (*The end-of-sitting list*, below), which the
+  operator asked to answer; one naming a question the registry already records closed is skipped;
 - **each `proposals` entry** — recorded as *Then merge* records one, with `--sitting <the
   sitting>`, none on a question that puts a record again;
 - **the ranks** — `rank`, its stdin the result's `ranks` less every qid no longer open or now
@@ -2329,13 +2368,17 @@ of every round, and this phase puts its own round's alone — **and a row only f
 is a `[V]` of the round this run works, open in the registry and
 outside the skip set**, and never for one that puts a record again — its `- **Re-puts:**` line, or
 the tie picker's answer, naming one: such a question is put to the person who answers it and closed
-no other way (*Tag every question*, *The question registry*) — nor for one *Resolve the round*
+no other way (*Tag every question*, *The question registry*) — nor for one of the put-singly set
+(*The end-of-sitting list*, below), which the operator asked to answer on its own — nor for one *Resolve the round*
 found unblocked, which is put singly with the customer's answer as its recommendation (*A deferred
 `[V]` whose wait is over*) — nor for a strategic question, which is put singly with its own
 options, since its answer closes what it covers (*Strategic sittings*, below). **Nor is a row kept whose reason fails `decision-register-format.md`
 §2's sufficiency test** (*Then take the argumentation*, below) — a restatement of its answer, "to
 be filled in later", a name — since accepting the row records that reason as the decision's
-argumentation. A row the planner wrote for any other question, or with such a reason, is left out,
+argumentation; **nor one whose reason states a fact about a `[BR#n]`, a finding or the code that
+its question's rows and findings, read as the strategic `why` is read (*Plan the sittings*, the
+keep test), contradict or cannot settle**, since accepting it would record an unchecked claim as
+that argumentation (`workflows-core:question-budget` §4). A row the planner wrote for any other question, or with such a reason, is left out,
 and that question is put singly in its turn. Show the rows kept, in the plan's order, each as its
 question's address, its text as the rows file holds it, the answer the row puts forward and that
 answer's reason:
@@ -2365,9 +2408,12 @@ unset acts on the reused answer for each row still open.
   reads. Then each row so recorded is applied forward as an answer is (*Then the answer is applied
   forward*, below), in the rows' order.
 - ***Let me name the exceptions*** — ask in plain text which rows, by address, gate
-  `p6-table-<sitting>.which`. Each row named stays open and is put singly in its turn, and every
-  other is recorded as on *Accept all as recommended*. A name matching no row is asked about once
-  more.
+  `p6-table-<sitting>.which`. First write the qids named, as one JSON list, with
+  `put <folder> 'scratch/p6/exceptions-<sitting>.json' --from -` — a resumed run that finds the file
+  reads it and builds none — or held by the run where the run folder is unavailable: they join the
+  put-singly set (*The end-of-sitting list*, below). Each row named stays open and is put singly in
+  its turn, and every other is recorded as on *Accept all as recommended*. A name matching no row is
+  asked about once more.
 - **A typed answer is read as the option it expresses** (§4): one naming rows is the second option
   with those names given, and one accepting the rows is the first; one clarifying question, in
   plain text, is asked only where it maps to no option, and the same dialog is never put twice.
@@ -2698,10 +2744,12 @@ is over*). **A deferral naming none carries forward the wait it had**: where the
 state on file is a deferral with a `- **Blocked-on:**` line, that line's addresses are written
 under the new deferral too, so a re-deferral never loses what the question waits on; a deferral
 naming none, of a question that carried no such line, writes none. **The line names only questions
-held for the customer**: an address whose question an answer re-tags `[V]` (*Hold every `[C]`*) —
-in this run, before the deferral named it or after, a re-tag still standing when the line is
-written, or in an earlier run, its record carrying a `- **Re-tagged:**` line — is left off the line
-*Write the register and the round record* writes,
+held for the customer**, a carried-forward address as much as one named now: an address whose
+question is held no longer — its last state on file a terminal disposition, *answered by the
+customer* among them, or closed in the registry by this run — or whose question an answer re-tags
+`[V]` (*Hold every `[C]`*) — in this run, before the deferral named it or after, a re-tag still
+standing when the line is written, or in an earlier run, its record carrying a `- **Re-tagged:**`
+line — is left off the line *Write the register and the round record* writes,
 since that question waits on no customer now and `/product-workflows:brd-package`'s rounds gate
 admits a deferral only while every question its line names is held for the customer. A deferral
 left naming none writes no line, and is one the package waits on until a run puts it again; the
@@ -2797,8 +2845,9 @@ answer is a re-decision* says, no result of this answer proposing again.
 1. **Coverage first** (§8 step 1). Where the answer chose one of the options its question was put
    with, each question its `covers` names that the registry records open and not carried — of any
    round (§8, *Reach*) — is recorded applied from it, save one the applier's input below leaves
-   out (in the skip set, putting a record again, or a `[V]` a later tie picker may tie), which
-   stays open, to be asked: `record --sitting <the sitting>`, event `applied`, `decision` the next
+   out (in the skip set, putting a record again, or a `[V]` a later tie picker may tie), and save
+   one of the put-singly set (*The end-of-sitting list*, below), each of which stays open, to be
+   asked: `record --sitting <the sitting>`, event `applied`, `decision` the next
    `[VD#n]`, `applied_from` the answer's `[VD#n]`, `answer` the covered question's text as the
    registry holds it, then ` — `, then the option chosen, so that the decision reads on its own,
    without the strategic question it came from, and `reason` `covered by <round>/<position>`, the
@@ -2840,7 +2889,9 @@ answer is a re-decision* says, no result of this answer proposing again.
    asked — and the final report names the failure as a defect of the run. A result read is
    recorded `done <folder> p6-apply-<round>-<position>`. Then record its results, in order:
    - **`determined`** — `record --sitting <the sitting>`, event `applied`, `decision` the next
-     `[VD#n]`, `applied_from` the answer's `[VD#n]`, `answer` and `reason` the result's;
+     `[VD#n]`, `applied_from` the answer's `[VD#n]`, `answer` and `reason` the result's — save on a
+     strategic question, on which nothing is recorded, as on `untouched`: its own answer closes what
+     it covers (`workflows-core:question-budget` §8);
    - **`narrowed`** — `record --sitting <the sitting>`, event `narrowed`, `text` the result's: the
      question stays open and is put as that text — a held `[C]` only where this run builds its
      entry. It is not recorded on a carried question, nor on a strategic one of either tag, whose
@@ -2988,6 +3039,18 @@ choices: ["All correct (Recommended)", "Let me name the ones to reopen (you'll b
   one whose `scratch/p6/reopen-<sitting>.json` stands and whose fact `p6-reopen-<sitting>` is unset,
   it makes that file's reopens as above, then sets the fact. Where the run folder is unavailable,
   the run holds the list and makes the reopens as above.
+- **The put-singly set** (`workflows-core:question-budget` §10): every qid a
+  `scratch/p6/reopen-<sitting>.json` of this run names — each question named here, every one of a
+  named group, and the question of each named merge or drop — and every qid a
+  `scratch/p6/exceptions-<sitting>.json` names (*The tail table*, above), read from those files, or
+  held by the run where the run folder is unavailable. A question reopened only because its basis
+  was, by `reopen --follows`, is not in it. A question of the set is put singly in its turn — one
+  of another round by a run that works that round — and for the rest of this run no sitting's plan
+  records it applied (*Each sitting opens with its plan*), no table keeps it as a row (*The tail
+  table*), and no strategic answer closes it through its coverage (*Then the answer is applied
+  forward*, step 1). Otherwise the next plan, re-deriving it
+  from the decision it was applied from, would close it again, and the operator's reopen would never
+  reach a question.
 - **A typed answer is read as the option it expresses** (`workflows-core:question-budget` §4); one
   naming questions is the second option with those names given. A name that matches nothing listed
   is asked about once more.
@@ -3257,7 +3320,10 @@ forward*). None reaches a question that puts a record again, whose tag never mov
   question of another round whose last state is *deferred* names on its `- **Blocked-on:**` line,
   since this run writes nothing more under that deferral and `/product-workflows:brd-package`'s
   rounds gate would then refuse it for naming a question no longer held — that is not strategic
-  (*Plan the sittings*), since what it covers is held for the customer — and only
+  (*Plan the sittings*), since what it covers is held for the customer — that no strategic `[C]` of
+  the registry names in its `covers`, whatever that question's state, since the strategic
+  question's `- **Covers:**` line names it as one the customer's answer decides, and the package
+  would then name a question it renders nowhere — and only
   where it is a question of the round this run works, or the verdict carries `answer`: first the
   verdict's reason, with `put <folder> 'scratch/p6/retagged/<round>-<position>.txt' --from -`, the
   address in lower case — a resumed run reads it there — or held by the run where the run folder is
@@ -3524,7 +3590,10 @@ plan in *Put each `[V]` to the operator*) — is a
 `[VD#n]` block written from the registry's record of it: `id`, its `decision`; `statement`, its
 `answer`; `options_considered`, that answer alone, and `chosen`, the same, since nothing else was
 put; `argumentation`, its `reason`, after `Applied from <the decision>: ` — its bare id, or, for
-another BRD's, `<BRD-KEY> [VD#n]`, the qualified prose spelling (§4), never the slash form;
+another BRD's, `<BRD-KEY> [VD#n] on <YYYYMMDD>` — the qualified prose spelling (§4), never the slash
+form, then the date fact `p0-read-date` holds, the first day this run read that register (*Resolve
+inputs and gate the grounded BRD*, step 9), against which *A decision reopened elsewhere* tests that
+decision's `Reopened` paragraphs;
 `evidence: []`, since it rests on the decision it follows and on no finding (§1); `altitude`, by
 §1's test from the question it closes; `status: decided`; `consumed_by: none`; `round`, the round
 of the question it closes, whose record names it; `taken: applied`; and `applied_from`, the
@@ -3553,8 +3622,10 @@ confirmed in a table in this
 run (*Put each `[V]` to the operator*), or a resumed run's carried check reopened one a re-tag of
 this run had closed, applied, decided or confirmed in a table (*Tag every question*, *A resumed
 run's carried check*), the `[VD#n]` it had names no block this write makes — an
-answer it takes later takes the next id (*Tag every question*, *Decision ids*): before the write, every `[VD#n]` this run took above it moves down to
-close the gap, in the order they were taken, and every `applied_from`, every state line and
+answer it takes later takes the next id, never that one (*Tag every question*, *Decision ids*) —
+and so does an id fact `p6-vd-high` was set to whose `record` call then never ran, or was refused
+twice: before the write, every `[VD#n]` this run took above such an id moves down to close the gap,
+in the order they were taken, and every `applied_from`, every state line and
 `- **Proposed answer:**` line this write makes and the final report name the moved id. Nothing on file has carried this run's ids
 yet, so no id on file is renumbered (§1).
 
@@ -3634,7 +3705,8 @@ record, whichever round that is:
 - answered — `- **State:** decided — [VD#n]`, and deferred — `- **State:** deferred — <reason>`, as
   ever; and under a deferral that named the held `[C]`s it waits on, or carried an earlier line
   forward, on the next line, those `[C]`s as *Put each `[V]` to the operator* holds them, less each
-  one re-tagged `[V]` (*Deferring is a recorded holding state*) and no line where that leaves none,
+  one held for the customer no longer — answered or closed since, or re-tagged `[V]` (*Deferring is
+  a recorded holding state*) — and no line where that leaves none,
   `- **Blocked-on:** <round>/<position>, …` (`decision-register-format.md` §9), which *Resolve the
   round* reads (*A deferred `[V]` whose wait is over*) and `/product-workflows:brd-package`'s rounds
   gate reads too.
@@ -4037,6 +4109,19 @@ this run resolved in the parent's log, with the finding that settled it — sayi
 one, that the parent's log is shared by every slice under the parent, so a sibling's open pull
 request touching it may conflict with this one. Emit
 its §4.1 outcome line in the final report.
+
+**On a run that resumed past its register write** — Phase 0 step 8c found `p9-write` reading `done`,
+or `started` and completed it — this session composed none of those files, so it takes both sets
+from the run folder, never from memory: `deliverable_paths` is, for each file under
+`<folder>/scratch/p9/`, the file under `<BRD-dir>` it was copied over — `code-defect-log.md` for
+`code-defect-log.md` and `code-defect-log.final.md`, `decisions.md`,
+`interview/customer-questions.md` for `customer-questions.md`, and `interview/round-<N>.md` for
+each `round-<N>.md` — with `decisions.md` too wherever
+`git -C "$SPECS_PATH" status --porcelain -- <its path>` reports it changed, its stamp being part of
+that write, `code-defect-log.md` where that test reports it changed (above), and the parent's
+`brd/brd-defect-log.md` where this phase's first step wrote into it; and `body_facts` is read from
+`<folder>/scratch/p9/report.md`, which holds the final report's items from Phases 0 to 9, the
+account among them.
 
 **Where this phase's first step wrote a resolution and the handoff commits nothing** — the operator
 declined it (the array's second or third option), or §4.1 reports an outcome that committed
@@ -4456,8 +4541,8 @@ and one waiting on an open round with the round it will be asked in; every defec
 appended to its rejected row's held question, naming that question, and every one raised as a
 question of its own because the held entry could not be chosen, naming the candidates;
 the `[VD#n]` decided this run and any question deferred, each with its reason and the held `[C]`s
-its `- **Blocked-on:**` line names, and each deferral whose line lost a question to a re-tag, or
-writes none for that; each deferred `[V]` *Resolve the round* found unblocked, with
+its `- **Blocked-on:**` line names, and each deferral whose line lost a question no longer held for
+the customer — answered, closed or re-tagged — or writes none for that; each deferred `[V]` *Resolve the round* found unblocked, with
 the `[CD#n]`s that unblocked it; **the question registry** (*Tag every question*,
 *The question registry*; *Put each `[V]` to the operator*) — the budget in force; each sitting,
 what it spent and how it ended — its queue empty, or at its budget with the operator going on or
@@ -4473,6 +4558,9 @@ an end-of-sitting list; each merge, drop or applied entry not recorded, with why
 marked carried, and each register or bundle file that could not be read; each proposal recorded
 on a held `[C]` (*Hold every `[C]`*, *A held `[C]` an answer reaches*) — its address, the proposed
 answer and the decision it follows, carried ones marked — and each written nowhere, with why; each
+proposal withdrawn (*Then the answer is applied forward*, *Where the answer is a re-decision*) — its
+address, the decision re-decided, and whether its `- **Proposal withdrawn:**` line was written or a
+later proposal replaced it; each
 held `[C]` re-tagged `[V]`, with its cause and the state it reached, each `retag` verdict not
 recorded as a re-tag — and whether its answer was recorded as a proposal instead — and each re-tag
 written as its record had it and undone in the registry, with why; each narrowing of a held `[C]`

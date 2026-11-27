@@ -7,9 +7,10 @@ asks (§3), the shape of every question (§4), merging (§5), ranking (§6), str
 applying each answer to the whole registry (§8), the tail table (§9), the end-of-sitting list
 (§10), the account (§11) and the registry (§12). A caller reads it whole — it has no entry point —
 and cites its sections by number, keeping only what is its own: which items are candidates, what an
-answer writes, and when a sitting starts. Its citers are what
-`grep -lE 'workflows-core:question-budget|args: "question-budget|references/question-budget\.md' plugins/*/commands/*.md plugins/*/agents/*.md`
-lists.
+answer writes, and when a sitting starts. Its citers — its callers, and the references that cite
+it — are what
+`grep -lE 'workflows-core:question-budget|args: "question-budget|references/question-budget\.md' plugins/*/commands/*.md plugins/*/agents/*.md plugins/*/references/*.md`
+lists, this file aside.
 
 ## 1. Terms
 
@@ -66,9 +67,9 @@ Fewer questions come from merging, applying and planning, never from hiding an u
 from 5 to 50 and stops on anything else with
 `<CMD>_BAD_BUDGET: --budget takes a whole number from 5 to 50`, `<CMD>` being its own stop prefix
 (`BRD_INTAKE`, `BRD_INTERVIEW`). The registry records the budget it was made with (§12); a resumed
-run given `--budget` asks by the value given, passing it to `next` as `--limit`, and one given none
-by the recorded value. *The budget*, anywhere in this file, is the one in force. The customer's
-sittings take the default, which §13 states as a number.
+run given `--budget` asks by the value given, the caller counting each sitting against it, and one
+given none by the recorded value. *The budget*, anywhere in this file, is the one in force. The
+customer's sittings take the default, which §13 states as a number.
 
 **Each asked question is numbered against the budget**, `Q<n>/<budget>`, the form
 `workflows-core:grilling-technique`'s *Depth* gives a capped question: a sitting whose queue empties
@@ -194,10 +195,11 @@ accounts for every strategic question, its answer and every question it closed (
 
 ## 8. Applying forward
 
-**After each answer** — strategic or detailed, asked or confirmed in a table — and before the next
-question, the registry is checked for every question that answer determines, worded the same or
-not, across every open question on file (*Reach*). **The next question shown is never one an answer
-has already closed.**
+**After each answer**, in a caller that applies answers forward — `/brd-interview`; intake's walk
+applies none, putting candidates with a common cause as one question instead (§5) — strategic or
+detailed, asked or confirmed in a table, and before the next question, the registry is checked for
+every question that answer determines, worded the same or not, across every open question on file
+(*Reach*). **The next question shown is never one an answer has already closed.**
 
 1. **Coverage first.** Each question the answered one `covers` is closed as applied from it, its
    reason the coverage, where the answer chose one of the options. A free-text answer that chose
@@ -209,6 +211,11 @@ has already closed.**
 3. **It closes only what it can derive in one line.** A question it cannot derive with confidence
    is narrowed or left untouched, never closed on a guess; it stays for a later sitting, where its
    recommendation may cite the answer.
+
+**A strategic question is never closed or narrowed by another answer** — by the applier, or as an
+answer a decision on file determines, §2's second test closing no strategic question: its own
+answer closes what it covers, so it stays open, to be put, and a held strategic `[C]` takes a
+proposal at most.
 
 **A determined `[V]`** is recorded as a `[VD#n]` marked as applied, naming the decision it follows
 (`applied_from`), its argumentation derived from that decision and the one-line reason. Every
@@ -241,16 +248,20 @@ working behaviour is a change, not a defect* — is recorded as a `[VD#n]`, usua
 strategic question, and applied like any other.
 
 **When the source moves.** Where a decision an applied answer follows is reopened, superseded or
-withdrawn, every answer applied from it is reopened with it, open in the registry again, and every
-answer applied from those in turn (`reopen --follows`, §12). Every reopening applies this —
-`/brd-reconcile`'s propagation sweep among them, following `applied_from` as it follows
-`conditional_on` — so a customer-side applied answer that became a `[CD#n]` is reopened too. A
-decision never stands on a basis that is gone. **Nor does a proposal**, though it is never
-reopened, since it answers nothing: the customer is shown it only while the decision it follows
-stands, and where that decision is the slice's own, an answer that re-decides it under its own id,
-proposing nothing again for the question, withdraws it. A decision of another slice's register is
-re-decided by that slice's run, which writes nothing beside this slice's questions, so a proposal
-following one is shown while that decision stands and is not withdrawn when it is re-decided.
+withdrawn — or, outside the slice, reopened and re-decided in place since the answer was applied,
+which the slice's next interview reads off that decision's `Reopened` date — every answer applied
+from it is reopened with it, open in the registry again, and every answer applied from those in turn
+(`reopen --follows`, §12). Every reopening applies this — `/brd-reconcile`'s propagation sweep among
+them, following `applied_from` as it follows `conditional_on` — so a customer-side applied answer
+that became a `[CD#n]` is reopened too. A decision never stands on a basis that is gone. **A
+proposal is shown to the customer only while the decision it follows stands — and, where that
+decision is outside the slice, only while its register shows it never reopened** — though a
+proposal is never reopened itself, since it answers nothing. Where the decision is the slice's own,
+an answer that re-decides it under its own id, proposing nothing again for the question, withdraws
+the proposal. A decision outside the slice is re-decided by its own slice's run, which writes
+nothing beside this slice's questions, so no withdrawal reaches a proposal following it: the package
+reads that decision's register instead, and leaves out such a proposal wherever that register shows
+the decision with any `Reopened` paragraph, even one proposed again since, naming it in its report.
 
 ## 9. The tail table
 
@@ -281,9 +292,12 @@ run shows what the sitting closed without asking it singly (`sitting-list`, §12
 
 It asks **once**: all correct, or name the ones — or a whole group — to reopen. A reopened question
 is open in the registry again, and so is every answer applied from its decision, in turn; an undone
-merge or drop reopens the question it closed. Because the list comes before the write, a question reopened there was never
-recorded as decided. The list counts nothing against the budget, and a sitting that closed nothing
-this way shows none. A merge or drop made before a sitting's first question is recorded with that
+merge or drop reopens the question it closed. **A question the person names to reopen here, or as
+an exception to a table (§9), is put singly in its turn**: for the rest of the run no later plan
+records it applied or puts it in a table, and no strategic answer closes it through its coverage
+(§8 step 1), so what the person asked to answer is never closed again without being asked.
+Because the list comes before the write, a question reopened there was never recorded as decided.
+The list counts nothing against the budget, and a sitting that closed nothing this way shows none. A merge or drop made before a sitting's first question is recorded with that
 sitting's number, so that its list shows it.
 
 ## 11. The account
@@ -308,8 +322,9 @@ as `workflows-core:finding-triage`'s *Reporting* contract does for findings.
 ## 12. The registry
 
 The registry is one JSON file, `question-registry.json`, under `scratch/` in the caller's run folder
-(`workflows-core:run-folder` §1) — where the run has no folder, a `mktemp` file
-(`workflows-core:run-flags` §7), which a later session cannot resume from. Only
+(`workflows-core:run-folder` §1) — where the run has no folder, a path at which no file stands yet,
+inside a directory `mktemp -d` makes (`workflows-core:run-flags` §7), never a file `mktemp` made,
+which `init` refuses (*Its exits*); a later session cannot resume from it. Only
 `scripts/question-registry.py` writes it. `product-workflows` ships the script, and a command calls
 it by its own plugin's path from its own text, never from this reference; the script's docstring is
 its contract, and this section maps it to the rules above.
@@ -342,9 +357,9 @@ does not close (§11).
 
 **Answers are written as they are given.** Each answer is recorded before the next question is
 shown: as a recorded question of the caller's run folder (`workflows-core:run-folder`'s `run-gate`,
-*Interviews*; a "why" asked after a choice is the second question of a two-part answer there), and
-by `record` in the registry. The caller's own record — a round record, a defect log — is written
-per sitting, after its end-of-sitting list (§10), or at the run's end, as the caller says. So a
+*Interviews*; a "why" asked after a choice is the second question of a two-part answer there, or is
+recorded with the choice, as one answer, where the caller says so), and by `record` in the
+registry. The caller's own record — a round record, a defect log — is written per sitting, after its end-of-sitting list (§10), or at the run's end, as the caller says. So a
 sitting that stops — at its budget, by the operator's choice, at a compaction or a restart — loses
 no answer given. A round written over several sittings adds its account and `Status:` lines once, at
 the run's last write, not on every write.

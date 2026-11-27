@@ -742,7 +742,9 @@ cannot review, and they will not tell you that — they will review it anyway, b
     `ambiguous`, `misnamed` or `misrooted` resolution stops the run with `resolve-address`'s own
     stop, as everywhere; `absent` or `invalid`, a register missing or unreadable, or no record of
     that id leaves the decision unread, which is no stop. Carry, per such proposal, the decision's
-    `status` and `statement`, or why it could not be read, to *Render the customer prompt*'s part 7.
+    `status` and `statement` — and, for a decision of another BRD's register, whether its
+    `argumentation` carries any `Reopened <YYYYMMDD>:` paragraph (§4) — or why it could not be read,
+    to *Render the customer prompt*'s part 7.
 11. **Fix the run's date.** One `<YYYYMMDD>` stamp, taken once, used for every artifact this run
     writes. If `bundle-<YYYYMMDD>/` already exists in the BRD folder, stop:
     `BRD_PACKAGE_BUNDLE_EXISTS: <BRD-dir>/bundle-<YYYYMMDD>/ already exists — a dated bundle is never rewritten. Package on the next date; or, where it was never sent, move the directory out of the specs repository and delete this date's self-review, prompt and delivery note beside it too, since a run reads them as its own once no bundle of this date stands.`
@@ -1460,10 +1462,13 @@ sibling slice's or a `depends-on:` BRD's. The proposal is rendered only where th
 reopens, supersedes or withdraws a decision takes the line off a question, which is why this run
 tests the decision rather than trusting the line; a re-decision, which leaves the decision reading
 `decided` with a different answer under the same id, is the one move that test cannot see. The
-interview's withdrawal line answers it for a decision of this slice's own register; a decision of
-another BRD's register is re-decided by that BRD's interview, which writes no withdrawal here, so a
-proposal following one is shown while that decision reads `decided`
-(`decision-register-format.md` §9). On a question that is not strategic, a proposal left out or
+interview's withdrawal line answers it for a decision of this slice's own register. **A decision of
+another BRD's register is re-decided by that BRD's interview, which writes no withdrawal here**, so a
+proposal following one is rendered only where that decision also carries no `Reopened` paragraph:
+one that was ever reopened may have been re-decided in place since the proposal was made, which
+neither its status nor any line here says, so the proposal is left out — even where this slice
+proposed it again since, the safe side — and the question carries none
+(`workflows-core:question-budget` §8; `decision-register-format.md` §9). On a question that is not strategic, a proposal left out or
 withdrawn leaves it with none — an earlier proposal line never stands in for it — and the question
 goes under 7.3. **A strategic question** stays under 7.1, and there its own planned answer, the
 `- **Proposed answer:**` line with no `follows` its first write carries, stands in, since it
@@ -2611,7 +2616,8 @@ the strategic ones and those put with a proposal, open
 `[AS#n]`, `escalated-to-customer` findings, positions that follow another BRD's decision, and the `[CDF#n]` counts parts 6, 8 and 11 each carry,
 `in-scope`, `conditional` and `out-of-scope` respectively; every proposal part 7 left out or found
 withdrawn, by its question's `<round>/<position>`, with the decision it follows and why — the
-status that decision reads, why it could not be read, or the withdrawal line — and, on a strategic
+status that decision reads, the `Reopened` paragraph another BRD's decision carries, why it could
+not be read, or the withdrawal line — and, on a strategic
 question, that its planned answer stood in — plugin-internal; where Phase 0 step 7a's *Ship anyway*
 was taken, `Flagged code defects shipped: [CDF#n] (<record> › <what was found>), …`, naming every
 flag it shipped — plugin-internal, and in no customer artifact; every `[V]` Phase 0 step 7 admitted

@@ -1666,11 +1666,11 @@ prompt says what was proposed (above), on the second, which recommends nothing, 
 that line gives:
 
 ```
-choices: ["Confirm the answer and every answer applied from it (Recommended)", "Let me name the ones to correct"]
+choices: ["Confirm the answer and every answer applied from it (Recommended)", "Let me name the ones to correct (you'll be prompted)"]
 ```
 
 ```
-choices: ["Confirm the answer and every answer applied from it", "Let me name the ones to correct"]
+choices: ["Confirm the answer and every answer applied from it", "Let me name the ones to correct (you'll be prompted)"]
 ```
 
 Each array is presented as it stands: the marker is never dropped from the first, nor added to the

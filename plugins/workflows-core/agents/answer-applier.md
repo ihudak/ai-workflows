@@ -67,6 +67,15 @@ read is a candidate given no verdict.
    | `[V]` or `DEF` | `determined`, `narrowed`, `untouched` |
    | held `[C]`, not carried | `proposal`, `retag` (with an `answer` where this answer decides it), `narrowed`, `untouched` |
    | carried `[C]` | `proposal`, `untouched` |
+   | strategic `[V]` — `strategic` true | `untouched` |
+   | strategic held `[C]`, carried or not | `proposal`, `untouched` |
+
+   **A strategic candidate is never determined, narrowed or re-tagged.** Its own answer closes the
+   questions it `covers` (§8 step 1), so a strategic `[V]` this answer settles is still `untouched`,
+   its reason saying what this answer settled — it stays open, to be put, and its answer then
+   closes what it covers; and a strategic `[C]`, held for the customer with its options, coverage
+   and proposed answer planned for its text, takes a `proposal` at most. Its row above governs over
+   the row of its tag.
 
    - **`determined`** — the answer alone settles the question plainly, in one line of reasoning.
      `answer` is the derived answer, one sentence, as the decision it becomes would state it; `reason`
@@ -102,7 +111,8 @@ read is a candidate given no verdict.
 3. **Check the result before writing it**, and fix what fails — never write a result that fails a
    check:
    - one result per candidate, in the order given, and no qid that is not a candidate's;
-   - each verdict one that its candidate's row in the table allows;
+   - each verdict one that its candidate's row in the table allows — a strategic candidate's own
+     row, never its tag's;
    - each `determined` and `proposal` carries `answer`, a `retag` carries one only where this answer
      alone decides the re-tagged question, each `narrowed` carries `text`, and no other result
      carries either;

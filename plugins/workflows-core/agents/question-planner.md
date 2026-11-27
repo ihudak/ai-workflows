@@ -72,8 +72,10 @@ word.
 
    **Decisions on file — modes `merge` and `plan`**, first (rulebook §2, §8). Read each open question
    against `decisions`:
-   - **`applied`** — an open `[V]`, not carried, that one decision of `decisions` determines, its
-     answer derived from that decision alone, in one line. The entry: `qid`; `applied_from`, that
+   - **`applied`** — an open `[V]`, not carried and not strategic, that one decision of `decisions`
+     determines, its answer derived from that decision alone, in one line. A strategic question is
+     never applied: its answer closes what it covers (rulebook §8 step 1), so it stays open, to be
+     put. The entry: `qid`; `applied_from`, that
      decision's id as `decisions` gives it; `answer`, the derived answer, one sentence, as the
      decision it becomes would state it; `reason`, the one-line derivation. The caller records it as
      an applied answer, so a reopening of that decision reopens it (§8). Where the derivation needs a
@@ -147,7 +149,12 @@ word.
    - Each entry is in §4's shape: `text`, one plain line saying what is being decided, in the
      reader's terms; `why`, *Why we ask* — what the covered questions share and what their answers
      turn on, concretely; `options`, two to four distinct answers to `text`, labels only, none an
-     "Other" and none a split, which is the person's to ask for (§7); `recommended`, one of
+     "Other" and none a split, which is the person's to ask for (§7) — **each option, chosen,
+     decides every question in `covers` in one line**, as `answer-applier`'s `determined` would,
+     since choosing it closes every one of them with that option as its answer (rulebook §8 step
+     1): an option that leaves any covered question open — *Partly*, *It depends* — is no option,
+     and where no set of options decides them all, the group is not one strategic question;
+     `recommended`, one of
      `options` verbatim, or `""` where none is safe to recommend, `text` then saying so; `reason`,
      the recommendation's why in one line, or `""` beside an empty `recommended`; and `tag`.
    - A `C` entry always carries a `recommended` answer: the customer meets it as the answer the
@@ -177,8 +184,8 @@ word.
    - every qid in it is one of `questions`, and no closed question appears anywhere in it;
    - each merge names two or more open, uncarried questions of one tag, and no question is in two;
    - each drop names an open, uncarried question, with a reason;
-   - each `applied` entry names an open, uncarried `[V]` and one decision of `decisions`, and its qid
-     appears nowhere else in the result but `code_defects`;
+   - each `applied` entry names an open, uncarried `[V]` that is not strategic and one decision of
+     `decisions`, and its qid appears nowhere else in the result but `code_defects`;
    - each `proposals` entry names an open `[C]` and one `[VD#n]` of `decisions`, and no merge's
      `from` and no drop names it;
    - in a mode producing `plan`, every open, uncarried question not in `applied` appears once in
@@ -187,8 +194,8 @@ word.
    - `ask` holds at most the budget, less one where `table` holds a row, a group counting one;
    - each `strategic` entry covers two or more open, uncarried questions of its own tag, none
      strategic, none covered by another entry and none a strategic question of `questions`, in any
-     `state`, already covers, with two to four options and `recommended` one of them or `""`, never
-     `""` on a `C`;
+     `state`, already covers, with two to four options, each of which, chosen, decides every
+     question it covers in one line, and `recommended` one of them or `""`, never `""` on a `C`;
    - each `code_defects` entry's `[CG#n]` is among its own question's `findings` and qualifies — in
      the input's `findings`, with an `outcome` other than `unprovable` and a verdict listed above —
      and the evidence its `intent_basis` is copied from is in `findings`.
