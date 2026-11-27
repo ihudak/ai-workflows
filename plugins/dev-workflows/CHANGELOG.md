@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.71.6] — 2026-11-27
+
+**What changes for you.** When you resume or restart a `/design` run, the files it lists as changed since the unit began now include a file added since then, as `/ready` and `/conformance` already list theirs.
+
+### Fixed
+
+- **`/design`'s changed-files line** hashed each path its saved listing named with `git hash-object -- "$SPECS_PATH/<the path>"`, building a command from a file's name read back from the specs tree. It now compares that listing with the same listing built now, `comm -3` over the two sorted, as `/ready` and `/conformance` do, so no file's name reaches a command.
+
 ## [4.71.5] — 2026-11-27
 
 **What changes for you.** `/design`, `/implement`, `/ready`, `/conformance` and `/vuln` stop with `ADDRESS_FOLDER_NAME` where the folder their address resolves, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. `/implement` no longer lists, tests or picks an Epic folder named outside that class: it names it by its place in the listing, with the remedy, and goes on with the rest — and such an Epic no longer stops a run on its PRD. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).

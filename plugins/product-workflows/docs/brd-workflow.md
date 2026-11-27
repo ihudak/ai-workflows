@@ -421,7 +421,7 @@ specifications/BRD-<BRD-KEY>-<slug>/
     │   ├── baselines.md         # one dated entry per pinned repository, /prd-ground
     │   ├── code-grounding.md    # [CG#n] findings, /prd-ground
     │   └── design-grounding.md  # [DG#n] + ## Frame sets covered, /prd-ground (always written)
-    ├── design/<frame-set>/      # what /prd-ground Phase 5 reads; no index means it is not read
+    ├── design/<frame-set>/      # what /prd-ground Phase 5 reads; no index, or a folder name outside the folder-name class, means it is not read
     ├── decisions.md             # the register: [VD#n] and [AS#n] from /brd-interview, [AS#n] also from /create-prd, [CD#n] from /brd-reconcile
     ├── code-defect-log.md       # [CDF#n] code defects a decision turns on, from /brd-interview
     ├── interview/
@@ -441,8 +441,8 @@ A root may still hold `grounding/`, `decisions.md`, `interview/` and the packagi
 files at its own level, written there by an earlier version of the route that ran those steps at
 the root. No command creates them there — `/prd-ground`, `/brd-interview`, `/brd-package` and `/brd-reconcile` each refuse a
 resolved root — and they are left in place rather than moved. (A slice's `/brd-reconcile` can still
-edit one: its stale cross-reference sweep reads every markdown file under the parent, and may
-update the argumentation of a record in a leftover root `decisions.md`.)
+edit one: its stale cross-reference sweep reads every markdown file under the parent whose path
+is in the folder-name class, and may update the argumentation of a record in a leftover root `decisions.md`.)
 
 Two of those entries are **reserved subdirectory names** rather than this route's own files, and both
 are shared with the idea route: `design/` holds exported frame sets, one immediate subdirectory each,

@@ -668,8 +668,9 @@ behaviour, not the behaviour.
     (`workflows-core:grounding-format` §2.4): for `grounding/code-grounding.md`, the claim list's
     source — on `route: brd` the gated `<BRD-dir>/brd/brd-inventory.md`, on `route: idea` the gated
     `<PRD-dir>/prd.md`; for `grounding/design-grounding.md`, that same file and, unless
-    `--no-design`, each `design/<frame-set>/index.md` on disk under the resolved folder, the indexes
-    Phase 5's design pass reads. **Only this folder's own files are recorded**: never a prerequisite
+    `--no-design`, each `design/<frame-set>/index.md` on disk under the resolved folder of a set
+    *The frame sets on disk* (Phase 5) lists in `workflows-core:addressing` §2's class, the indexes
+    Phase 5's design pass reads — a refused set's is captured by no step. **Only this folder's own files are recorded**: never a prerequisite
     BRD's register or anything else Phase 4 reads under `--depends-on`, never the parent's ledger or
     inventory step 6 tests this slice against, and never this folder's `decisions.md`, which sits
     below the grounding in the chain (`workflows-core:document-lineage` §4). **On `route: idea`,
@@ -834,7 +835,8 @@ behaviour, not the behaviour.
     **Two names, one id form.** Where two different slugs of repositories this run resolved — at
     this step, of the repositories its `pin:` facts name — or two frame sets' directory names
     share an id form, each of them takes, after its id form, `_` and the first six hex digits of
-    the SHA-256 of the name as it stands:
+    the SHA-256 of the name as it stands — a frame set's being a name *The frame sets on disk*
+    (Phase 5) has passed, since no id names a refused set:
     `python3 -c 'import hashlib, sys; print(hashlib.sha256(sys.argv[1].encode()).hexdigest()[:6])' '<the name>'`.
     So the two never share a dispatch id, a result file or a frame set's listing, whichever comes
     first and in every session; a name with no twin keeps its id form as it is. The count above and
@@ -941,7 +943,7 @@ behaviour, not the behaviour.
 
 > This requirement set has N claims. Each repository you name is ground against all N, and every finding is verified on MODEL in two steps, in batches of up to 25: K repositories → K×N claim findings plus K baseline findings, in K×⌈(N+1)/25⌉ batches and K×⌈(N+1)/25⌉×2 verification dispatches, plus ⌈D/25⌉×2 dispatches for each frame set whose design pass returns D findings. A re-run re-verifies every claim finding already on file for a repository that has not moved (up to M today).
 
-Fill in K, and the products it enters, where the repositories are already named; leave it as the symbol where step 1 is still to prompt for them. N and M are always filled in. **D is always printed as the symbol**: a frame set's `[DG#n]` count is known only once Phase 5's design pass returns. Drop the frame-set clause where Phase 5 runs no design pass — under `--no-design`, or where `<BRD-dir>/design/` holds no subdirectory: the clause counts the frame-set batches that pass's findings fill, and a successor Phase 6 appends to an on-file `[DG#n]`, which such a run can still produce, is among the additions the next sentence names. A repository's term is ⌈(N+1)/25⌉ rather than ⌈N/25⌉ because its baseline counts toward its batches (Phase 7, *Batches*). The figures are the verification pass itself; a retry (Phase 7, *Retry once*), a second opinion on a disputed `contradict` (Phase 7), the class-4 sweep's re-dispatches and a successor Phase 6 appends to an on-file `[DG#n]` add to them. **The statement informs and gates nothing**: Phase 5 still sends every claim to every repository named, and nothing here narrows that. It exists because adding a repository multiplies both fan-outs by the full claim count, and the cost was otherwise visible only at Phase 7, after both had been paid for. The Final report prints the same arithmetic again, filled in with what the run actually dispatched, as its verification block — printed there whether or not this line was.
+Fill in K, and the products it enters, where the repositories are already named; leave it as the symbol where step 1 is still to prompt for them. N and M are always filled in. **D is always printed as the symbol**: a frame set's `[DG#n]` count is known only once Phase 5's design pass returns. Drop the frame-set clause where Phase 5 runs no design pass — under `--no-design`, or where `<BRD-dir>/design/` holds no frame set in `workflows-core:addressing` §2's class (*The frame sets on disk*, Phase 5): the clause counts the frame-set batches that pass's findings fill, and a successor Phase 6 appends to an on-file `[DG#n]`, which such a run can still produce, is among the additions the next sentence names. A repository's term is ⌈(N+1)/25⌉ rather than ⌈N/25⌉ because its baseline counts toward its batches (Phase 7, *Batches*). The figures are the verification pass itself; a retry (Phase 7, *Retry once*), a second opinion on a disputed `contradict` (Phase 7), the class-4 sweep's re-dispatches and a successor Phase 6 appends to an on-file `[DG#n]` add to them. **The statement informs and gates nothing**: Phase 5 still sends every claim to every repository named, and nothing here narrows that. It exists because adding a repository multiplies both fan-outs by the full claim count, and the cost was otherwise visible only at Phase 7, after both had been paid for. The Final report prints the same arithmetic again, filled in with what the run actually dispatched, as its verification block — printed there whether or not this line was.
 
 BRDs carry no PR links to auto-derive a repo list from (unlike `/epics`), so this phase is always
 the manual path:
@@ -1559,7 +1561,9 @@ maintenance dispatch are not saved. For each saved dispatch this command names:
   (below), the findings Phase 6 supersedes being the ones its record names (Phase 6). A repository is named by version already, by its
   commit. **A frame set is named by version** with `--attach scratch/frames/<frame set>.txt`, a
   listing of the blob of each file the directory holds, written before this session's first
-  dispatch that names it:
+  dispatch that names it — `<frame_set_dir>` a set *The frame sets on disk* (below) lists in the
+  class, the only kind a dispatch names, and each file's name in it reaching the shell only as the
+  variable `$f`, never as text a command is built from:
   `mkdir -p "<folder>/scratch/frames" && (builtin cd "<frame_set_dir>" && find . -type f -print | LC_ALL=C sort | while IFS= read -r f; do printf '%s %s\n' "$(git hash-object --no-filters -- "$f")" "$f"; done) > "<folder>/scratch/frames/<frame set>.txt"`.
   No prompt names that file: the agent reads the directory itself, and a derive dispatch reads
   nothing in the run folder but its own result. So a frame set that changed between two sessions
@@ -1684,13 +1688,123 @@ matched against the findings on file: it is a parse failure, handled in this sam
 *Every reference resolves* (below) handles one, so no later check can take its number for an
 on-file finding's.
 
-**Then `design-grounder`, unless `--no-design`.** Look for `<BRD-dir>/design/`; each immediate
-subdirectory is a candidate exported frame set. The location and the index requirement are
+**The frame sets on disk.** A frame set's name is read back from the tree, so it is held to
+`workflows-core:addressing` §2's class before any command is built from it, and every step of this
+run that reads `<BRD-dir>/design/`'s frame sets reads them through this program, run where that
+step reads, whatever the flags — Phase 0 step 7a's lineage capture, Phase 1's cost statement, the
+design pass below and each frame set's listing in *Saved dispatches*, Phase 8's frame-set placement
+wherever Phase 6, 7 or 8 applies it, and Phase 8's census and held-image test; so every
+`frame_set_dir` Phase 7 hands a verifier is a set it passed. It lists `design/`'s immediate
+subdirectories and tests each name itself, so no command is built from a name it has not passed:
+
+```bash
+python3 -I - "<BRD-dir>" sets <<'EOF'
+import hashlib, os, stat, sys, unicodedata
+FRAME = (b".png", b".jpg", b".jpeg", b".gif", b".svg", b".webp")  # workflows-core:grounding-format §6.2 step 1's frame extensions
+def ok(name):  # workflows-core:addressing §2's class, on a name's bytes read as UTF-8
+    try:
+        n = name.decode("utf-8")
+    except UnicodeError:
+        return False
+    return n != "" and ".." not in n and (n[0] == "_" or n[0].isalnum()) and all(c.isalnum() or c in "._@+-" or unicodedata.category(c).startswith("M") for c in n)
+def printable(b):  # UTF-8 holding no control character (Cc, U+2028, U+2029), so it can neither end its line nor begin another
+    try:
+        return not any(unicodedata.category(c) == "Cc" or c in "  " for c in b.decode("utf-8"))
+    except UnicodeError:
+        return False
+def out(*parts):  # one line, written as bytes whatever the locale
+    sys.stdout.buffer.write(b" ".join(p if isinstance(p, bytes) else p.encode() for p in parts) + b"\n")
+def regular(top):  # every regular file at or below top, no symbolic link followed, as (its path relative to top, its path)
+    found = []
+    for root, subdirs, names in os.walk(top):
+        subdirs.sort()
+        for name in sorted(names):
+            p = os.path.join(root, name)
+            try:
+                if stat.S_ISREG(os.lstat(p).st_mode):
+                    found.append((os.path.relpath(p, top), p))
+            except OSError:
+                pass
+    return found
+def digest(path):  # the SHA-256 of a regular file, opened without waiting on a FIFO; None where it cannot be read
+    try:
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
+    except OSError:
+        return None
+    with os.fdopen(fd, "rb") as fh:
+        try:
+            if not stat.S_ISREG(os.fstat(fd).st_mode):
+                return None
+            h = hashlib.sha256()
+            for block in iter(lambda: fh.read(1 << 20), b""):
+                h.update(block)
+            return h.hexdigest()
+        except OSError:
+            return None
+folder, mode = os.fsencode(sys.argv[1]).rstrip(b"/"), sys.argv[2]
+design = os.path.join(folder, b"design")
+try:  # design/'s directories, no symbolic link, byte-wise: the order workflows-core:addressing §2's listing of a folder's folders prints them in
+    names = sorted(e.name for e in os.scandir(design) if e.is_dir(follow_symlinks=False)) if stat.S_ISDIR(os.lstat(design).st_mode) else None
+except FileNotFoundError:
+    names = None
+except OSError:
+    names = False
+if mode == "sets":
+    if names is None:
+        out("status: none")
+    elif names is False:
+        out("status: unreadable")
+    else:
+        out("status: listed")
+        for n, name in enumerate(names, 1):
+            if ok(name):
+                out(b"set", name)  # in the class, so printable
+            else:
+                out("refused", str(n))
+elif mode == "held":  # each frame under the parent's brd/source/ and brd/source-external/, held where a file of a set in the class has its SHA-256
+    sets = set()
+    for name in names or []:
+        if ok(name):
+            for rel, p in regular(os.path.join(design, name)):
+                d = digest(p)
+                if d:
+                    sets.add(d)
+    brd = os.path.join(os.path.dirname(folder), b"brd")
+    for top in (b"source", b"source-external"):
+        for rel, p in regular(os.path.join(brd, top)):
+            path = os.path.join(top, rel)
+            if path.lower().endswith(FRAME) and printable(path):
+                d = digest(p)
+                out(b"held" if d and d in sets else b"not-held", path)
+EOF
+```
+
+`<BRD-dir>` is the resolved folder, double-quoted as §2 says a path built from folder names stays,
+and the mode is `sets` or `held`. **`sets`** prints `status: none` where `design/` is not a
+directory — a symbolic link is none — `status: unreadable` where it cannot be listed, and otherwise
+`status: listed`, then one line per subdirectory in the order §2's listing of `design/`'s folders
+prints them: `set <name>` for a name in the class, a frame set this run may read, and `refused <n>`
+for one outside it, `<n>` its place in that listing. **A refused set is read by no step of this
+run** — nothing is dispatched on it, listed, hashed or captured, and no command or file names it by
+its name: Phase 8's census records it `refused: name` by its position, and Phase 10 and the Final
+report name it by its position, `entry <n> of the checkout's listing of <P>'s folders`, `<P>` the
+`design/` folder's path relative to `$SPECS_PATH`, with the remedy §2's *A folder refused by its
+name* gives. A `status: unreadable` is read by every step as a `design/` holding no set, and the
+Final report says that `design/` could not be listed. **`held`** is Phase 8's held-image test: it
+prints, for each regular file carrying a frame extension under the parent's `brd/source/` and
+`brd/source-external/`, `held <path>` where a file some set in the class holds has its SHA-256 and
+`not-held <path>` otherwise or where it cannot be read, `<path>` relative to the parent's `brd/` and
+printed only where it holds no control character and is UTF-8. It reads every file itself, so no
+command is built from a captured file's name or from a name inside a set.
+
+**Then `design-grounder`, unless `--no-design`.** Run *The frame sets on disk* (`sets`); each `set`
+line names a candidate exported frame set. The location and the index requirement are
 `workflows-core:grounding-format` §6.1's, cited here rather than restated —
 `design/` is a reserved subdirectory of any folder under `specifications/`, so the same path resolves
 whether this run stands on a BRD folder, on the PRD folder a slice is, or — on `route: idea` — the
 PRD folder `/create-prd` wrote directly. None found → skip, reporting
-why (`--no-design` given, or no `design/` folder exists yet for this BRD). One or more found → dispatch one instance per frame set, same ≤4
+why (`--no-design` given, no `design/` folder exists yet for this BRD, it could not be listed, or
+every subdirectory it holds is refused). One or more found → dispatch one instance per frame set in the class, same ≤4
 concurrent discipline, **after** the code-grounder batch above has fully returned — this agent's
 fourth reconciliation class cites a `[CG#n]`, so the findings it needs must already exist. Under
 `--no-code` there is no batch to wait for and that precondition is already met: the `[CG#n]` set
@@ -1790,7 +1904,12 @@ The record is `scratch/phase6.json`, named by fact `phase6` as a path relative t
 one JSON object holding `decisions` — for each prerequisite with a frozen decision, by key, every
 file Phase 4 read its frozen set from, which is its `decisions.md` and each file under its
 `interview/` (the round records that tell a torn write, Phase 4 step 3), each by its path relative
-to `$SPECS_PATH` and its blob, `git hash-object --no-filters -- "<its path>"` — and
+to `$SPECS_PATH` and its blob, `git hash-object --no-filters -- "<its path>"` — each file's name
+under `interview/` held first to `workflows-core:addressing` §2's class, checked as text for a `'`,
+then with §2's program, and one outside it recorded by its position alone, `entry <n> of the
+checkout's listing of <P>'s files` (§2, *A file refused by its name*), `<P>` that `interview/`
+folder's path, with no blob, since no command is built from its name and no round record is so
+named — and
 `findings`, one entry per finding judged: its stable number (Phase 5; a `[DG#n]`'s with its frame
 set), its `claim` as it stands, and what was settled, `current` or `will-change` with the
 `prerequisite` written. Before judging, read fact `phase6`. **The record holds** where the fact is
@@ -2457,7 +2576,7 @@ place.
   conflicting writes. On the `--rebaseline` route that is every such finding in a set this run
   reconciled, and that set's new findings are this run's re-derivation against the new pin.
 - **Otherwise it is marked `SUPERSEDED`**, on any route — on every `--no-design` run, for a set
-  recorded `skipped: no index` or `skipped: stale index`, for a finding no frame set places, for a class-4 finding this run
+  recorded `skipped: no index` or `skipped: stale index`, for a finding no frame set places — one only a set recorded `refused: name` names among them — for a class-4 finding this run
   holds, and on the other two routes wherever the frame-set rule does not take it. **That rule takes
   a prior class-4 finding only where Phase 5 re-ground its claim against the repository its cited
   `[CG#n]` is pinned to**, and Phase 5 re-grounds no claim a `[CG#n]` on file answers at that
@@ -2538,7 +2657,8 @@ appending a second one.** It is a census of the tree as this run left it, not a 
 would leave `/brd-split`'s gate reading "the" section with no rule for which, and the older one
 records a state that has since changed.
 
-**Enumerate `<BRD-dir>/design/` here, in this phase, rather than reusing what Phase 5 saw.** Phase 5's
+**Enumerate `<BRD-dir>/design/` here, in this phase, rather than reusing what Phase 5 saw** — with
+*The frame sets on disk* (Phase 5), `sets`, run now. Phase 5's
 listing sits behind `--no-design`, so on a run carrying that flag it never happens — and a section
 built from "what this run saw" would then be empty, no `skipped: --no-design` row could ever be
 written, and `/brd-split` would stop a run whose flag it is supposed to honour. The census must be of
@@ -2552,6 +2672,12 @@ disposition:
 - `skipped: stale index` — Phase 5 got `STALE_INDEX` for that set: its index names no frame still
   in the directory, so it could not be reconciled either, and its repair is restoring the frames,
   never `/frames` alone (Phase 5).
+- `refused: name` — on every run, a `--no-design` one included, for each set the program printed
+  `refused <n>` for: its name is outside `workflows-core:addressing` §2's class, so no step of this
+  run read it. **Its row names it by its position, never by its name** —
+  `entry <n> of the checkout's listing of <P>'s folders`, as *The frame sets on disk* gives it, in
+  place of the name the other rows carry — and `/brd-split`'s design gate reads it as a set no
+  design grounding covers.
 
 **A customer image a row cites and no frame set holds is named, and written nowhere — on `route:
 brd` only.** The census above is of `design/`, so a wireframe the customer's own document carried,
@@ -2560,10 +2686,14 @@ where someone put a copy there. Read every image anchor in this slice's `brd/brd
 `source_anchor` whose text before its first ` › ` begins `source/` or `source-external/` and names a
 file carrying one of the frame extensions `workflows-core:grounding-format` §6.2 step 1 fixes
 (`references/brd-format.md` §2, which resolves a slice's anchor against its parent's `brd/`, one
-hop). Such an image is **held** where a file in some immediate subdirectory of this folder's
-`design/` has the same SHA-256 as the parent's copy, and **not held** otherwise, or where the
-parent's copy cannot be read — a byte test, never a judgement of whether a frame depicts the same
-screen. Name every image not held, with the `[BR#n]` each row citing it carries, in Phase 10 and
+hop). Such an image is **held** where a file in some frame set of this folder's `design/` in
+`workflows-core:addressing` §2's class has the same SHA-256 as the parent's copy, and **not held**
+otherwise, or where the parent's copy cannot be read — a byte test, never a judgement of whether a
+frame depicts the same screen. *The frame sets on disk* (Phase 5) makes the test, run as `held`:
+an anchor's path — its text before its first ` › `, the whole of it where it holds none — is held where a `held` line names it whole,
+compared as text, and not held where none does, so no command is built from an anchor, a captured
+file's name or a set's; a copy only a refused set holds is not held, that set being one this run
+reads nowhere. Name every image not held, with the `[BR#n]` each row citing it carries, in Phase 10 and
 the Final report, together with its route: copy it into a frame set under `<BRD-dir>/design/<set>/`,
 run `/workflows-core:frames <BRD-KEY>` to index the set, then
 `/product-workflows:prd-ground <BRD-KEY> --no-code` to ground it. **This is a report and nothing
@@ -2603,7 +2733,9 @@ is superseded. **A prior finding belongs to the one set whose index names every 
 that any set's index names, there being at least one such path** — the placement
 `/product-workflows:brd-interview`'s successor test makes, since a finding record carries no
 frame-set field and a design finding's `evidence` may cite code paths beside its frames — and one
-that placement does not settle belongs to none here. **Never re-mark a block already reading
+that placement does not settle belongs to none here. **Every set the placement reads is one *The
+frame sets on disk* (Phase 5) lists in the class**, as `/brd-interview`'s placement reads only such
+sets: a refused set's index is read by no step, so it places no finding. **Never re-mark a block already reading
 `SUPERSEDED`**: its verdict is already retired, and a second write would record `SUPERSEDED` as its
 `prior_verdict`, which `workflows-core:grounding-format` §2 forbids. Without this rule a
 second `--no-code` run over a changed frame set appends a whole new finding set beside the stale one,
@@ -2613,9 +2745,11 @@ the answer here: it is a code-pin concept and `--no-code` refuses it outright, s
 that mode needs has to be its own rule rather than a flag.
 
 A run with no `design/` folder, or an empty one, writes the section with an explicit "no frame sets
-on disk" line rather than omitting it. **The section is what makes design coverage checkable at
+on disk" line rather than omitting it, and a run whose `design/` could not be listed (*The frame
+sets on disk*, `status: unreadable`) one line saying that the folder could not be listed, in place
+of any row. **The section is what makes design coverage checkable at
 all**: `/brd-split`'s design-presence gate compares the subdirectories on disk against the names
-recorded here, and a relation with nothing on one side fails rather than passing
+recorded here — stopping on one named outside the class whatever row records it — and a relation with nothing on one side fails rather than passing
 (`workflows-core:grounding-format` §2.1's reading rule). Omitting a set because it was skipped is
 what would make that gate report a clean tree it never read.
 
@@ -2916,8 +3050,8 @@ tests that follow.
 
 **That offer carries two qualifying tests, and this run holds the answer to both.** **The
 frame-set test picks the next step.** `/brd-split`'s
-Phase 0 step 7, test b stops on any `design/` subdirectory this run recorded `skipped: no index` or
-`skipped: stale index`, and on any it could not cover. So where Phase 8's `## Frame sets covered`
+Phase 0 step 7, test b stops on any `design/` subdirectory this run recorded `skipped: no index`,
+`skipped: stale index` or `refused: name`, and on any it could not cover. So where Phase 8's `## Frame sets covered`
 section carries such a row, present one of the **last four** arrays below in place of the first
 two: `/brd-split` would refuse the key just ground, so an array recommending it is not the array to
 show. They offer the repair that stop itself names, and name `/brd-split` nowhere in their options,
@@ -2926,11 +3060,16 @@ the route, which is what the *universal minimum* of `Skill(skill: "workflows-cor
 does not carry. **Which repair turns on the row.** A set recorded `skipped: no index`, or on disk
 and missing from the census, takes the third or fourth array: `/workflows-core:frames <BRD-KEY>`
 writes the missing index, after which a `--no-code` re-run of this command reconciles the set. A set
-recorded `skipped: stale index`, where no such set stands beside it, takes the fifth or sixth:
+recorded `skipped: stale index`, where no such set, nor one recorded `refused: name`, stands beside it, takes the fifth or sixth:
 `/frames` writes nothing over a set whose frames are gone (Phase 5), so the repair is restoring the
-frames and re-running this command with `--no-code`. Where both kinds stand, the third or fourth
-array is presented, and the stale sets are named above it with their own repair, each by its index
-path. **Above whichever array is presented, print every customer image Phase 8 found no frame set
+frames and re-running this command with `--no-code`. Where a stale set stands beside one that
+takes the third or fourth array — one with no index, one missing from the census, or one recorded
+`refused: name` (below) — that array is presented, and the stale sets are named above it with their own repair, each by its index
+path. **A set recorded `refused: name` takes the third or fourth array too**, whatever stands
+beside it: renamed into `workflows-core:addressing` §2's class, it is a set `/workflows-core:frames`
+indexes — `/frames` indexes none outside the class — and this command then grounds. Each such set is named
+above the array by its position, with §2's remedy, as *The frame sets on disk* (Phase 5) says,
+before the array's own repair. **Above whichever array is presented, print every customer image Phase 8 found no frame set
 holds**, each with the `[BR#n]` citing it and its route — a report, which selects no array. **The prerequisite test picks whether the array offers *Decide a prerequisite
 first*.** It does only where Phase 4's set of undecided prerequisites holds at least one — a declared
 prerequisite slice whose report does not read `decisions frozen`. Grounding a prerequisite would not
@@ -2989,22 +3128,22 @@ No frame set left unreconciled, and at least one undecided prerequisite:
 choices: ["Allocate this slice's ledger — /product-workflows:brd-split <BRD-KEY> (Recommended — allocate-only, so no child is created) <merge-clause>", "Decide a prerequisite first — prints the brd-interview command for <PREREQ-KEY>[, <PREREQ-KEY> …] (its frozen decisions are what move this slice's horizons)", "Stop here"]
 ```
 
-At least one frame set recorded `skipped: no index`, or on disk and missing from Phase 8's census — and no undecided prerequisite:
+At least one frame set recorded `skipped: no index` or `refused: name`, or on disk and missing from Phase 8's census — and no undecided prerequisite:
 ```
 choices: ["Write the missing frame-set index — /workflows-core:frames <BRD-KEY> (Recommended — nothing can reconcile a frame set that has no index; re-ground it here with --no-code afterwards)", "Stop here"]
 ```
 
-At least one frame set recorded `skipped: no index`, or on disk and missing from Phase 8's census, and at least one undecided prerequisite:
+At least one frame set recorded `skipped: no index` or `refused: name`, or on disk and missing from Phase 8's census, and at least one undecided prerequisite:
 ```
 choices: ["Write the missing frame-set index — /workflows-core:frames <BRD-KEY> (Recommended — nothing can reconcile a frame set that has no index; re-ground it here with --no-code afterwards)", "Decide a prerequisite first — prints the brd-interview command for <PREREQ-KEY>[, <PREREQ-KEY> …] (its frozen decisions are what move this slice's horizons)", "Stop here"]
 ```
 
-At least one frame set recorded `skipped: stale index`, none recorded `skipped: no index` or missing from Phase 8's census — and no undecided prerequisite:
+At least one frame set recorded `skipped: stale index`, none recorded `skipped: no index` or `refused: name` or missing from Phase 8's census — and no undecided prerequisite:
 ```
 choices: ["Restore the missing frames, then re-ground the set — /product-workflows:prd-ground <BRD-KEY> --no-code (Recommended — its index is intact and its frames are gone, so /workflows-core:frames would write nothing; run it only if the set changed while they were away)", "Stop here"]
 ```
 
-At least one frame set recorded `skipped: stale index`, none recorded `skipped: no index` or missing from Phase 8's census, and at least one undecided prerequisite:
+At least one frame set recorded `skipped: stale index`, none recorded `skipped: no index` or `refused: name` or missing from Phase 8's census, and at least one undecided prerequisite:
 ```
 choices: ["Restore the missing frames, then re-ground the set — /product-workflows:prd-ground <BRD-KEY> --no-code (Recommended — its index is intact and its frames are gone, so /workflows-core:frames would write nothing; run it only if the set changed while they were away)", "Decide a prerequisite first — prints the brd-interview command for <PREREQ-KEY>[, <PREREQ-KEY> …] (its frozen decisions are what move this slice's horizons)", "Stop here"]
 ```
@@ -3176,7 +3315,9 @@ where `[CG#n]` **were** rewritten and no finding in the set cites one of them; e
 that superseded that `[CG#n]` and the command that replaces it — `/product-workflows:prd-ground <KEY> --no-code` where that `[CG#n]` has a successor, a plain `/product-workflows:prd-ground <KEY>` where it has none — which its note describes in words (Phase 8); every sentence Phase 8 rewrote before writing it, by finding id or by file and section, and every hit it left standing — on `route: brd` each one `/product-workflows:brd-package` will stop on, or, a model id, put to the operator to rule on — by finding id and field, or an explicit "none" for each; every reference *Every reference resolves* (Phase 5) found unresolved and kept out of what this run wrote, by the id of the finding that carried it — or, in a dispatch's `notes`, by the repository or frame set that dispatch grounded — and the reference as written, or an explicit "none"; the `docs grounding:` line from Phase 1 step 0 verbatim, any repository a Phase 4.5 lead added,
 and the count of documentation divergences recorded (each named by the `[CG#n]` it diverges from —
 never by an identifier of its own, because it has none); whether the derivation matrix ran and why; any `design-grounder` class-4 gap deferred for want
-of a settling `[CG#n]`; on `route: brd`, every customer image Phase 8 found no frame set holds, with the `[BR#n]` citing it and its route, or an explicit "none"; **on `route: idea`, the claim-exclusion count and prefixes step 8i
+of a settling `[CG#n]`; every frame set *The frame sets on disk* (Phase 5) refused, by its position,
+with `workflows-core:addressing` §2's remedy, and a `design/` it could not list, or an explicit
+"none"; on `route: brd`, every customer image Phase 8 found no frame set holds, with the `[BR#n]` citing it and its route, or an explicit "none"; **on `route: idea`, the claim-exclusion count and prefixes step 8i
 reported** — "11 of 21 requirement rows ground; 10 excluded — 3 `[UC#n]`, 5 `[SM#n]`/`[SMC#n]`, 2
 superseded or withdrawn" or the like, carried here verbatim so a reader of the write-up alone, without the transcript, still
 cannot conclude the PRD was fully ground; the `Run flags: …` line, repeated, whenever Phase 0 printed one during this run (`workflows-core:run-flags` §6); the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line); the `Phase handoff:` outcome line

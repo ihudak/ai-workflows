@@ -21,8 +21,8 @@ above opens the `proposal.md` it is handed and refuses without it. **That own-fo
 umbrella's `proposal.md` is classed `advisory` rather than `unread`** in
 `workflows-core:phase-handoff` §4.0: a later run of the command that wrote it is a reader like any
 other. **One read is not a proposal read at all**: `commands/brd-reconcile.md`'s
-stale-cross-reference sweep scans every markdown file under a parent BRD as prose, a proposal among
-them, and never edits one it hits — the hit goes to *what still needs a human*, because a proposal
+stale-cross-reference sweep scans as prose every markdown file under a parent BRD whose path is in
+`workflows-core:addressing` §2's class, a proposal among them, and never edits one it hits — the hit goes to *what still needs a human*, because a proposal
 has its own revision model: re-running the command that wrote it archives the prior revision and
 classifies each change it records as a correction or a re-estimate (§12).
 **One read is of the record alone**: `commands/prd-proposal.md`'s next-step offer reads a sibling

@@ -343,6 +343,10 @@ listing can show, and a caller that says what it leaves out for an Epic leaves i
 **Whether it may be a slice** — for a caller listing a BRD folder's subdirectories, one holding a
 `brd-link.md` — is read the same way, from the same two listings, `brd-link.md` in place of
 `epic.md`; a folder neither listing shows holding one is no slice, and the caller passes over it.
+**A file refused by its name**, among the files a caller lists in a folder `<P>`, is named the same
+way: `entry <n> of the checkout's listing of <P>'s files`, `<n>` its place, counting from 1, among
+the lines `(cd "$SPECS_PATH" && find "./<P>" -mindepth 1 -maxdepth 1 -type f) 2>/dev/null | LC_ALL=C sort`
+prints.
 
 **What it covers, and what it does not.** Every name `<KIND>-<KEY>-<slug>` whose slug holds only
 letters, digits and combining marks of any script and `-` is inside it — the slug

@@ -42,6 +42,12 @@ cg_findings:                 # optional — existing [CG#n] findings available t
     commit:  <resolved commit the CG#n finding was checked against>
 ```
 
+**`frame_set_dir` is a set whose name your caller has already tested.** A frame set's name is read
+back from the tree, and you have no shell to test one with, so your caller lists `design/`, holds
+each set's name to the class of a folder's name it tests before any command is built from it, and
+dispatches you only on a set inside that class. Read `frame_set_dir` alone, never another set
+beside it under `design/`: a set your caller left out was left out for its name.
+
 **Refuse to run without `frame_set_dir` and at least one entry in `inventory`.** If either is
 missing, return `status: INPUT_MISSING` naming exactly what was absent — never guess at a frame set
 or a requirement to have something to reconcile.

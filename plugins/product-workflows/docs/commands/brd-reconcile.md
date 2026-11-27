@@ -611,7 +611,12 @@ re-running [`/prd-proposal`](prd-proposal.md) or [`/brd-proposal`](brd-proposal.
 the prior and classifies each change as a correction or a re-estimate, is the fix the reconciliation
 record names — and the customer's document and every file captured with it are never touched at all.
 The scope is every markdown file under the parent, which is exactly why the carve-out has to be
-written down. The record writes every hit as one line,
+written down — read through one listing that builds no command from a name, so a folder or a
+markdown file named outside the folder-name class (letters, digits and combining marks of any
+script and `. _ @ + -`, first a letter, a digit or `_`, no `..`), and a folder that cannot be
+listed, is not read: each is named by its position in a listing of the folder holding it, or by its
+path, in the report and in the record's *what still needs a human*, for a person to read — a
+captured file under such a name among them, since the customer's own links resolve its name. The record writes every hit as one line,
 `- **Hit:** <path> › <entry> — <what was found> — <outcome>`, the entry being the `[CDF#n]` a hit in
 a code-defect log landed in and `none` elsewhere; so the next [`/brd-interview`](brd-interview.md)
 run on the slice owning that log — a slice under the parent, or one under another parent that

@@ -277,14 +277,25 @@ four-resolution one.
 
    b. **Design grounding covers every frame set on disk, and is on main.** List every immediate
       subdirectory of `<BRD-dir>/design/` in the worktree — the reserved location
-      (`workflows-core:grounding-format` §6.1). **None, or no `design/` folder → this test is
+      (`workflows-core:grounding-format` §6.1) — as `workflows-core:addressing` §2's listing of a
+      folder's folders does, `<P>` the `design/` folder's path, **each name held to that section's
+      class before any command is built from it**, checked as text for a `'`, then with that
+      section's program. **None, or no `design/` folder → this test is
       satisfied**, and says so in the final report rather than passing silently. **That emptiness is
       the whole of the condition**: a BRD with no exported frame set has no design grounding to
       require, which is what keeps this test inside `workflows-core:phase-handoff` §5 rule 3 (a gate
       may not promote an optional input into a prerequisite) — see §3.4's conditional `/brd-split`
       row, which declares the promotion for the case where frame sets do exist.
 
-      One or more subdirectories → **execute `require-on-main`** (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3)
+      One or more subdirectories, **any of them named outside the class → stop**, before
+      `require-on-main`, with `BRD_SPLIT_DESIGN_NOT_GROUND` below, `<names>` naming each such set by
+      its position — §2's *A folder refused by its name* — never by its name: no run reads a set
+      named outside the class — `/workflows-core:frames` indexes none and
+      `/product-workflows:prd-ground` grounds none, recording it `refused: name` in its census by its
+      position — so no design grounding can cover it, whatever row the census holds, and this test
+      reads it as it reads `skipped: no index`, never matching it against a recorded name.
+
+      One or more subdirectories, every one in the class → **execute `require-on-main`** (`Skill(skill: "workflows-core:reference", args: "phase-handoff require-on-main")`, §3)
       against `<BRD-dir>/grounding/design-grounding.md` before reading it. **Step 6's implication
       does not reach this file and must not be borrowed for it.** Step 6 gates `code-grounding.md`
       and infers its siblings from "every deliverable a `handoff-to-main` run stages lands in one
@@ -322,6 +333,9 @@ four-resolution one.
       - **A subdirectory is absent from the recorded set, or recorded `skipped: no index` or
         `skipped: stale index`** → stop, naming each such set. The second and third are sets
         `/prd-ground` could not reconcile, which are unreconciled by a different route to the same place.
+        A `refused: name` row names its set by its position, never by a name, so it covers no
+        subdirectory here: every one this bullet reads is in the class, the test above having
+        stopped on any outside it.
       - **Recorded `ground`, or `skipped: --no-design`** → passes. The second is an operator decision
         taken per run, not an inability, so it is honoured — but it is carried into the final report
         and into `slices.md` as a recorded limit on what this split was able to check, because it is
@@ -329,7 +343,7 @@ four-resolution one.
         the pre-section pass above can let one through too, but unknown, which is why that pass is
         recorded as unchecked rather than as a limit.
 
-      `BRD_SPLIT_DESIGN_NOT_GROUND: <BRD-KEY> has frame sets on disk that no design grounding on main covers (<names>) — re-run '/product-workflows:prd-ground <BRD-KEY> --no-code' to ground them without re-deriving the code findings already on file, and accept its handoff. Where a set is listed as having no index, run '/workflows-core:frames <BRD-KEY>' first, which writes the index that lets the set be reconciled at all. Where a set is listed as having a stale index, restore its missing frames first — /workflows-core:frames writes nothing over a set whose frames are gone.`
+      `BRD_SPLIT_DESIGN_NOT_GROUND: <BRD-KEY> has frame sets on disk that no design grounding on main covers (<names>) — re-run '/product-workflows:prd-ground <BRD-KEY> --no-code' to ground them without re-deriving the code findings already on file, and accept its handoff. Where a set is listed as having no index, run '/workflows-core:frames <BRD-KEY>' first, which writes the index that lets the set be reconciled at all. Where a set is listed as having a stale index, restore its missing frames first — /workflows-core:frames writes nothing over a set whose frames are gone. Where a set is listed by its position, it is named outside workflows-core:addressing §2's class and nothing reads it: rename it into that class — letters, digits and combining marks of any script and . _ @ + -, first a letter, a digit or _, no .. — or move it out of design/, then run '/workflows-core:frames <BRD-KEY>' before the re-run.`
 
    c. **Every finding carries a verifier outcome.** Every `[CG#n]`/`[DG#n]` finding carries one (of
    the four in `workflows-core:grounding-format` §8 — `agree`, `extend`,

@@ -37,7 +37,7 @@ every other targeted read is an own-folder one — **a later run of this command
 `proposal.md` it left in this same folder as §8's stability anchor (Phase 0's revision note, Phase 6
 step 6), and `proposal-reviewer` inside the run that wrote it (Phase 9).
 `/product-workflows:brd-reconcile`'s stale cross-reference sweep also reads any proposal under the
-parent BRD, as ordinary prose, and never edits one — a stale reference in it goes to *what still
+parent BRD whose path is in `workflows-core:addressing` §2's class, as ordinary prose, and never edits one — a stale reference in it goes to *what still
 needs a human*, fixed by re-running this command. One read is of the `priced-against` record alone:
 a sibling slice's run of this command reads this proposal's record — and nothing else of it — at its
 next-step offer (Phase 11), to decide whether to offer pricing this slice
@@ -229,6 +229,8 @@ token, so `--redo` would arrive as the address and `--baseline <path>` would sup
 
      Then open a pull request from <new-branch> into <default>, merge it, and re-run this command. Ignored, every /prd-proposal run on this folder stops here until it holds a merged prd.md.
    ```
+
+   **Before this form is taken, `<name>` and each component of `<path>` below `specifications/` are held to `workflows-core:addressing` §2's class**, as §4.1's *The rename* holds them — each checked as text for a `'`, then with §2's program — before the `ls-files` test below or any other command names them. Where one is outside it, no command is printed and no name either: the stop reads `PRD_PROPOSAL_NEEDS_PRD: ` followed by §4.1's *Where a name is outside the class* sentence, `<the way on>` `re-run this command`.
 
    `<new-branch>`, `<default-ref>` and `<path>` are named as in the uncommitted `PRD_PROPOSAL_PRD_NOT_HANDED_OFF` form below — `prd/` and the folder's `<KEY>-<slug>`, the lowest free `-<n>` suffix where that name is taken, found before the stop prints — and `<name>` is the pre-rename file's name. Where git does not track that file — `git -C "$SPECS_PATH" ls-files --error-unmatch -- "<path>/<name>" >/dev/null 2>&1` exits non-zero — the `git mv` line gives way to `mv -- "<SPECS_PATH>/<path>/<name>" "<SPECS_PATH>/<path>/prd.md"`, `<path>` relative to `<SPECS_PATH>` there, since `git mv` refuses an untracked file and a bare `mv` reads a path from the shell's own directory; and, since git holds no old name to remove and refuses a path it does not know, the commit names `"<path>/prd.md"` alone and the message drops ` — the old name's removal and prd.md together —`. Where the specs repository has no `origin`, the push line and the pull request give way to `git -C "<SPECS_PATH>" switch <default>` then `git -C "<SPECS_PATH>" merge <new-branch>`. On a read-only specs mount (§3.6) every command names `"<writable path>"` in place of `"<SPECS_PATH>"`, and the stop says the mount is read-only, as §4.4 words it. Print the commands on lines of their own with no `#` comment. This form is reached only on the gate's row F: on `unmanaged` (row H) the mapping above proceeds and makes no pre-rename test.
 

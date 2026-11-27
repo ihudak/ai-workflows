@@ -1205,6 +1205,13 @@ finding on file that passes all four of these tests against it —
    set's index names, there being at least one such path (`workflows-core:grounding-format` §6.2) —
    a finding record carries no frame-set field, and a design finding's `evidence` may cite code
    paths beside its frames, which no index names and which so take no part in the placement.
+   **Every set the placement reads is named in `workflows-core:addressing` §2's class**: list
+   `<BRD-dir>/design/`'s immediate subdirectories as §2's listing of a folder's folders does, `<P>`
+   the `design/` folder's path, and hold each name to that class before any command is built from
+   it — checked as text for a `'`, then with that section's program. A set named outside it is
+   read nowhere, as `/product-workflows:prd-ground`'s own placement reads none, so it places no
+   finding; name it in the Final report by its position, with its remedy, as §2's *A folder refused
+   by its name* gives them, as a set this run did not read.
 
 Where a test cannot be decided — a `claim` opening with no requirement id and not opening
 `none — frame-only`, a frame-only finding carrying no field token (test 3), a `commit` no
@@ -2857,7 +2864,8 @@ edited and uncommitted, with its hand commit (*Handoff*); the `[C]` count held a
 holding them, stated together with the fact that
 `/product-workflows:brd-package` is the command that carries them to the customer and
 `/product-workflows:brd-reconcile` the one that records the answer; every will-change resolution taken and how it was
-recorded; every record *A decision the re-grounding moved* took — each held record this round put
+recorded; every frame set the successor test's placement read nowhere for its name (*A superseded
+finding's successors*, test 4), by its position, with its remedy; every record *A decision the re-grounding moved* took — each held record this round put
 again, with the question that puts it and, for a `[VD#n]` answered here, the record that superseded
 it — or, where another run had left that record `withdrawn` or `superseded`, its status and the new
 `[VD#n]` beside it, both as still needing a human; each plain record reopened, with its successor findings and the question that puts it, and, for one answered here that another run

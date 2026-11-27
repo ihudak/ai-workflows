@@ -2415,7 +2415,7 @@ against three ids and some against six, and afterwards nobody can say which.
 **Every later reader takes this set as this step fixed it, and they are not all in this phase.**
 The citation pass below matches items against it, id by id; the rule fixing **which fields of a
 record that pass reads** tests each field's id class against it; the *stale cross-reference sweep*
-searches every id in it as text, whitespace-tolerantly, across every markdown file under the parent;
+searches every id in it as text, whitespace-tolerantly, across every markdown file under the parent that sweep's listing names;
 and the *reconciliation record* records it as fixed. A class leaving this set narrows what is read
 as surely as it narrows what is matched. That is why each of them reads this paragraph rather than
 restating its contents. **One further site asserts a fact about this set without reading it**, and
@@ -2673,11 +2673,67 @@ too. Any other is put again.
 root bounds everything here except search 1's literal-id pass, which also reads the previous phase's
 already-resolved dependent set (below). The root is the
 source-owning BRD's directory and every slice inside it — so that a *sibling* slice still asserting a
-superseded position is reached. Every markdown file under it is in scope:
+superseded position is reached. Every markdown file under it that *The sweep's listing* (below)
+names is in scope:
 the seeds, `slices.md`, the inventory, the figures file, the ledger, the grounding files, every
 register, the code-defect log, every round record, every dated snapshot, every effort proposal and
 its brief with their archived revisions — a slice's and the umbrella's — and the customer's own
 captured files.
+
+**The sweep's listing.** A folder's or a file's name below the parent is read back from the tree —
+a captured file keeps the name it arrived with — so no command is built from one before it has
+passed `workflows-core:addressing` §2's class, and the scope is listed by this program, which walks
+the root itself and builds no command from any name it meets:
+
+```bash
+python3 -I - "$SPECS_PATH" "<P>" <<'EOF'
+import os, sys, unicodedata
+def ok(name):  # workflows-core:addressing §2's class, on a name's bytes read as UTF-8
+    try:
+        n = name.decode("utf-8")
+    except UnicodeError:
+        return False
+    return n != "" and ".." not in n and (n[0] == "_" or n[0].isalnum()) and all(c.isalnum() or c in "._@+-" or unicodedata.category(c).startswith("M") for c in n)
+def out(*parts):  # one line, written as bytes whatever the locale
+    sys.stdout.buffer.write(b" ".join(p if isinstance(p, bytes) else p.encode() for p in parts) + b"\n")
+specs, top = os.fsencode(sys.argv[1]).rstrip(b"/"), os.fsencode(sys.argv[2]).strip(b"/")
+def walk(rel):  # rel: a folder's path below $SPECS_PATH, every component of it in the class
+    try:
+        entries = list(os.scandir(os.path.join(specs, rel)))
+        folders = sorted(e.name for e in entries if e.is_dir(follow_symlinks=False))
+        files = sorted(e.name for e in entries if e.is_file(follow_symlinks=False))
+    except OSError:
+        out(b"unreadable", rel)
+        return
+    for n, name in enumerate(files, 1):  # byte-wise: the order §2's listing of a folder's files prints them in
+        if name.endswith(b".md"):
+            out(b"file", (rel + b"/" + name)[len(top) + 1:]) if ok(name) else out(b"name", str(n).encode(), rel)
+    for n, name in enumerate(folders, 1):  # byte-wise: the order §2's listing of a folder's folders prints them in
+        if name == b"Doc screenshots":  # §2's one reserved name outside the class: a documentation page's staged images, no markdown file
+            continue
+        walk(rel + b"/" + name) if ok(name) else out(b"folder", str(n).encode(), rel)
+walk(top)
+EOF
+```
+
+`<P>` is the parent's folder's path relative to `$SPECS_PATH` — the resolved slice's path there
+without its last component, every component of it in the class (§3) — double-quoted, as §2 says a
+path built from folder names stays. The program prints one line per entry it reports:
+`file <path>` for each file whose name ends `.md` and is in the class, under folders all in it,
+`<path>` relative to the parent's folder; `name <n> <Q>` for such a file named outside the class,
+`entry <n> of the checkout's listing of <Q>'s files` (§2, *A file refused by its name*);
+`folder <n> <Q>` for a folder named outside the class, which it does not enter,
+`entry <n> of the checkout's listing of <Q>'s folders` (§2, *A folder refused by its name*); and
+`unreadable <Q>` for a folder it could not list — `<Q>` each time a folder's path relative to
+`$SPECS_PATH`, in the class whole. It passes over a symbolic link, and `Doc screenshots/`, the one
+name §2 reserves outside the class, which holds a documentation page's staged images and no markdown
+file. **The scope is the `file` lines and nothing else**: both searches below read only those files,
+each named `"<the parent's folder>/<path>"` or read with the Read tool, and no other line's entry is
+read. **Every other line is passed over and named**, by its position or, for `unreadable`, its path:
+in the Final report's account of this sweep, and in the reconciliation record's *what still needs a human*, as a place
+this sweep did not read, for a person to read for the positions this run changed — a captured file
+under a name outside the class among them, whose name the customer's own links resolve, so it is
+read where it is rather than renamed.
 
 **Two searches, and the second is the one that matters.**
 
@@ -2747,7 +2803,7 @@ the word that carries it, since search 1 above reads wider than that. Reaching a
 the whole point of rooting it there — a superseded position asserted in a sibling's seed is invisible
 from this BRD's own folder — but reaching it and *writing* into it are two different acts, and the
 second is a cross-BRD write like any other. Without the guard this sweep would be the widest
-unguarded write path in the command: it touches every markdown file under the parent, most of which
+unguarded write path in the command: it touches every markdown file under the parent its listing names, most of which
 belong to some other BRD.
 
 **A hit inside a dated snapshot is never edited.** It is bannered by the *Banner the superseded dated
@@ -2756,7 +2812,7 @@ edited nor bannered — it is recorded, for the byte-identical reason that phase
 
 **Nor is a hit ever `updated` inside a structured record, in an effort proposal, or anywhere in the
 customer's own captured files.** The scope above is deliberately every markdown file under the
-parent, which is what reaches a sibling's seed — but much of what it reaches carries content another
+parent its listing names, which is what reaches a sibling's seed — but much of what it reaches carries content another
 rule already fixes, and `updated` on any of it would contradict that rule rather than correct a
 stale sentence.
 
@@ -2923,7 +2979,10 @@ changed, why, which ids, and what still needs a human:
   `/product-workflows:brd-reconcile <BRD-KEY> @<review-file>` on this same review as the fix, once
   that dependent's register is on the default branch; every `needs-a-human` hit, in prose, in a
   structured record or in an effort proposal, the last with the proposal re-run the stale
-  cross-reference sweep names as its fix; every requirement the customer asked for that no `[BR#n]`
+  cross-reference sweep names as its fix; every entry the stale cross-reference sweep's listing
+  passed over — a folder or a markdown file named outside `workflows-core:addressing` §2's class, by
+  its position, and a folder it could not list, by its path — as a place that sweep did not read,
+  for a person to read for the positions this run changed; every requirement the customer asked for that no `[BR#n]`
   covers; and every row the customer dropped that another BRD holds (*Resolve the defects the
   review settled*), with that BRD named; and every `duplicate` settled by keeping the part, with
   the obligations the kept row does not cover named; and every inventory row drawn from an image
@@ -3447,7 +3506,8 @@ bannered; the defect resolutions with the log's path; the ledger rows moved; **t
 sweep** — the changed-id set as fixed, and, per dependent it was carried for, the earlier pass's
 set carried in beside it; per dependent BRD, the `conditional_on` positions first, then the citing items, each with
 its disposition, plus every dependent recorded-not-written with its concrete state; **the
-stale cross-reference sweep** — the hit counts by outcome and every `needs-a-human` hit named;
+stale cross-reference sweep** — the hit counts by outcome and every `needs-a-human` hit named,
+and every entry its listing passed over, by its position or path, or an explicit "none";
 **what still needs a human**, in full; the artifacts written, by path; the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line);
 **both** `Phase handoff:` outcome lines — §4.1 counts one **per handoff offered** and this command
 offers two — **each labelled with the handoff it reports and neither printed bare**, as that
