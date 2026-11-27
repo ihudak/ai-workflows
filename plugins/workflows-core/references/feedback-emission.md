@@ -1,6 +1,6 @@
 # Session Feedback Emission — Shared Reference
 
-Single source of truth for the plugin family's session-feedback emitter. Every capture surface — the automatic maintenance phase of all thirty workflow commands, or, under `--skip-feedback`, its bugs-only replacement, and the `/feedback` and `/prompt*` commands — cites this file and executes its steps inline. The orchestrator owns every prompt; this reference owns the entry format, the persistence ladder, dedup/attribution, the plugin-facing predicate, and the caller contract.
+Single source of truth for the plugin family's session-feedback emitter. Every capture surface — the automatic maintenance phase of all thirty-one workflow commands, or, under `--skip-feedback`, its bugs-only replacement, and the `/feedback` and `/prompt*` commands — cites this file and executes its steps inline. The orchestrator owns every prompt; this reference owns the entry format, the persistence ladder, dedup/attribution, the plugin-facing predicate, and the caller contract.
 
 **Purpose.** Capture friction and improvement signals about the **plugin
 family itself**, and defects in the ai-containers environment the family runs in (§4), and persist them per-PRD into the **specs repo** so the plugin
@@ -126,14 +126,14 @@ capture, §5). Walk the ladder top-down and stop at the first tier that applies:
 2. **`$SPECS_PATH` writable but no PRD dir matched** (no `key`, or no
    matching spec dir) — three destinations, and the documentation and security
    branches are tried first:
-   - **The run is `/docs-init`, `/docs-audit`, `/docs-write`, `/docs-brand` on its standalone path, or `/document` in direct mode**, and it resolved the target it writes into (design D19) → `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/feedback/<date>.md`, where `<docs-repo-slug>` is the one-segment name `specs-repo-git.md` §2.1 defines for that repo — for direct mode, the write target its own Phase 0 step 3 resolved, which every direct-mode run holds from that step on — cited, never re-derived here, because the staging classifier admits exactly one segment there. Filed, not unfiled: the docs repo is that family's unit of attribution exactly as the PRD directory is the pipeline's, so there is nothing to move it under later. **Per docs repo, not one flat bucket**, and the inner `dev-workflows/` names the *family*, not the emitting plugin. `specs-repo-git.md` §2.1's `<specs-root>/documentation/*/dev-workflows/**` shape stages it.
+   - **The run is `/docs-init`, `/docs-audit`, `/docs-write`, `/docs-verify`, `/docs-brand` on its standalone path, or `/document` in direct mode**, and it resolved the target it writes into (design D19) → `$SPECS_PATH/documentation/<docs-repo-slug>/dev-workflows/feedback/<date>.md`, where `<docs-repo-slug>` is the one-segment name `specs-repo-git.md` §2.1 defines for that repo — for direct mode, the write target its own Phase 0 step 3 resolved, which every direct-mode run holds from that step on — cited, never re-derived here, because the staging classifier admits exactly one segment there. Filed, not unfiled: the docs repo is that family's unit of attribution exactly as the PRD directory is the pipeline's, so there is nothing to move it under later. **Per docs repo, not one flat bucket**, and the inner `dev-workflows/` names the *family*, not the emitting plugin. `specs-repo-git.md` §2.1's `<specs-root>/documentation/*/dev-workflows/**` shape stages it.
    - **The run is `/security-workflows:scan` with no key** — one addressed by a repository path, whatever its mode — and it resolved the repository's `<repo-slug>` → `$SPECS_PATH/security/<repo-slug>/dev-workflows/feedback/<date>.md`, where `<repo-slug>` is the one-segment name that repository's register lives under (`security-register-format.md` §1), cited, never re-derived here. Filed, not unfiled, beside the run's cost entry (`cost-emission.md` §8's security branch): a repository scan has no PRD and never will, so the code repository is its unit of attribution. The layout below `<repo-slug>/` is the documentation branch's, its inner `dev-workflows/` naming the *family*; it sits beside the register's `runs/` and `scans/`, the only directories `register.py` reads, and `specs-repo-git.md` §2.1's `<specs-root>/security/*/{runs/**|scans/**|dev-workflows/**|register.json|register.md}` shape stages it, through its `dev-workflows/**` member. A scan that resolved no `<repo-slug>` takes the next branch.
    - **Otherwise** → `$SPECS_PATH/dev-workflows-feedback/<KEY-or-date>.md` at
      the top of `$SPECS_PATH`. Still committed & aggregated; notice:
      `unfiled — move under the PRD dir if it belongs to one.`
 
    **The documentation branch names the runs it serves rather than testing "did the run resolve a
-   docs repo"** — the same five, for the same reasons, as `cost-emission.md` §8
+   docs repo"** — the same six, for the same reasons, as `cost-emission.md` §8
    gives. `/document` direct mode joined it after shipping outside it, when its
    entries landed unfiled at the top of `$SPECS_PATH` with no PRD to be moved under;
    entries it filed there before then stay where they are.
@@ -163,7 +163,7 @@ mount / permission) drops to the next tier with the same notice.
 - **Attribution:** `author` from `git config user.email` run in the specs repo
   (best-effort; `unknown` if unset). The *commit* author gives a second,
   authoritative layer once the engineer commits and pushes the specs.
-  `plugin_version` is **supplied by the caller** — the version of the plugin whose command ran, read at run time from **that plugin's** `.claude-plugin/plugin.json` (`python3 -c "import json;print(json.load(open('<path>'))['version'])"`), which is exactly what every calling command already passes in. It is **not** resolved here: this reference is read through the loader skill, so a `${CLAUDE_PLUGIN_ROOT}` written *in this file* resolves to the plugin that **ships this reference**, and twenty-seven of the thirty-three callers ship from a sibling (`grep -l 'feedback-emission' plugins/*/commands/*.md`, `workflows-core`'s own six aside) — their entries would silently take `workflows-core`'s version number instead of their own, beside a `command:` naming a command `workflows-core` does not ship — named outright, because every reader of this sentence is in a different plugin from the one it is about.
+  `plugin_version` is **supplied by the caller** — the version of the plugin whose command ran, read at run time from **that plugin's** `.claude-plugin/plugin.json` (`python3 -c "import json;print(json.load(open('<path>'))['version'])"`), which is exactly what every calling command already passes in. It is **not** resolved here: this reference is read through the loader skill, so a `${CLAUDE_PLUGIN_ROOT}` written *in this file* resolves to the plugin that **ships this reference**, and thirty of the thirty-six callers ship from a sibling (`grep -l 'feedback-emission' plugins/*/commands/*.md`, `workflows-core`'s own six aside) — their entries would silently take `workflows-core`'s version number instead of their own, beside a `command:` naming a command `workflows-core` does not ship — named outright, because every reader of this sentence is in a different plugin from the one it is about.
 
 ## 4. Plugin-facing predicate — what persists
 
@@ -235,7 +235,7 @@ current working directory, where it is not the specs repository. The artifacts a
 run's terminal `commit-artifacts` step
 (`${CLAUDE_PLUGIN_ROOT}/references/specs-repo-git.md` §4).
 
-### `emit-auto` — automatic callers (the thirty commands' maintenance phases, §1)
+### `emit-auto` — automatic callers (the thirty-one commands' maintenance phases, §1)
 
 Inputs: the `impl-maintenance` **Lessons Learned report**, `command` (the exact
 slash-command name), `key` (or `null`), `source` (`specs | directory | none`).

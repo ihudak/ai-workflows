@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.88.7] — 2026-11-27
+## [3.88.8] — 2026-11-27
 
-**What changes for you.** A frame set whose folder name is outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — is never read by `/prd-ground`: its census records it `refused: name`, naming it by its position in a listing of `design/`'s folders, never by its name, and its next-step offer recommends the rename; `/brd-split`'s design gate stops on it with the advice to rename it. A `design/` folder that cannot be listed is never read as an empty one: `/brd-split` and `/brd-interview` stop on it, and `/prd-ground` says so. `/brd-reconcile`'s stale cross-reference sweep reads your customer's captured files under the names they arrived with, and passes over — naming each by its position in its report and in the record's *what still needs a human* — a file or folder of the route's own named outside the class, a symbolic link and a folder it cannot list. Its list of what the customer's pull request changed no longer builds a command from a file's name. Update with `workflows-core` 1.100.7 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.7 bullet).
+**What changes for you.** A frame set whose folder name is outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — is never read by `/prd-ground`: its census records it `refused: name`, naming it by its position in a listing of `design/`'s folders, never by its name, and its next-step offer recommends the rename; `/brd-split`'s design gate stops on it with the advice to rename it. A `design/` folder that cannot be listed is never read as an empty one: `/brd-split` and `/brd-interview` stop on it, and `/prd-ground` says so. `/brd-reconcile`'s stale cross-reference sweep reads your customer's captured files under the names they arrived with, and passes over — naming each by its position in its report and in the record's *what still needs a human* — a file or folder of the route's own named outside the class, a symbolic link and a folder it cannot list. Its list of what the customer's pull request changed no longer builds a command from a file's name. Update with `workflows-core` 1.101.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.1 bullet).
 
 ### Fixed
 
@@ -23,6 +23,14 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **The pre-rename forms of `/create-ard`'s `CREATE_ARD_NEEDS_PRD`, `/specify`'s `SPECIFY_NEEDS_PRD` and `/prd-proposal`'s `PRD_PROPOSAL_NEEDS_PRD`** hold the old file's name and its folder's path to the class, as `workflows-core:addressing` §4.1's *The rename* requires, before their `ls-files` test or any printed command; one outside it prints §4.1's form in words, with no command and no name.
 - **`references/proposal-format.md`, `/prd-proposal` and `/brd-proposal`** state the sweep's reach over a proposal as every markdown file under the parent that its listing reads.
 - **`docs/commands/prd-ground.md`, `docs/commands/brd-split.md`, `docs/commands/brd-interview.md`, `docs/commands/brd-reconcile.md`, `docs/brd-workflow.md`, `docs/commands/prd-proposal.md`, `docs/commands/brd-proposal.md`, `docs/reference/proposal-format.md`, `docs/roles-and-phases.md` and `docs/reference/environment.md`** describe the refused set, the new offer, the stops, the sweep's reach and the stop on a bidirectional control.
+
+## [3.88.7] — 2026-11-27
+
+DOC-D-G1, sub-project 2, batch 2: two pages name `docs-workflows` 1.45.0's `/docs-workflows:docs-verify`. No command, agent or reference changes. Released with `docs-workflows` 1.45.0 and `workflows-core` 1.101.0; its pages need neither, nor they it. 3.88.7 carries 3.88.6, 3.88.5 and 3.88.4, so the 1.100.6, 1.100.5 and 1.100.4 bullets of `.claude/rules/plugin-updates-coupling.md` apply to it, which `workflows-core` 1.101.0, carrying all three, `dev-workflows` 4.71.6, carrying 4.71.5 and 4.71.4, and `docs-workflows` 1.45.0, carrying 1.44.5, meet, beside `security-workflows` 0.13.3 or later, which 1.100.6's bullet names.
+
+### Changed
+
+- **Pages.** The roles-and-phases page names `/docs-workflows:docs-verify` beside `/docs-workflows:document` and `/docs-workflows:docs-write` in the `documenting` phase; the workflow page's `docs-workflows` paragraph names the pages drafted and verified from the backlog, `/docs-verify` among the commands that emit their own session bookkeeping.
 
 ## [3.88.6] — 2026-11-27
 

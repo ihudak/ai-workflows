@@ -2,11 +2,11 @@
 
 Single source of truth for how a written page is **structured** and what it may **contain**,
 independent of any single docs repo. This reference is repo-agnostic: it governs the shape of prose,
-callouts, and reusable components for whatever docs repo `/document` or `/docs-write` writes into. Consumed by `/document`, `/docs-write` and `/epics`, and by `doc-planner`, `doc-writer`, and `doc-reviewer`. Repo-specific
+callouts, and reusable components for whatever docs repo `/document`, `/docs-write` or `/docs-verify` writes into. Consumed by `/document`, `/docs-write`, `/docs-verify` and `/epics`, and by `doc-planner`, `doc-writer`, and `doc-reviewer`. Repo-specific
 conventions — frontmatter fields, changelog format, terminology lists, component syntax — live under
 the `docs-workflows` plugin's `references/docs-profiles/`, not here.
 
-Consumed by `doc-writer`, `doc-planner`, and `doc-reviewer` — `doc-writer` and `doc-reviewer` for `/docs-write` too.
+Consumed by `doc-writer`, `doc-planner`, and `doc-reviewer` — `doc-writer` and `doc-reviewer` for `/docs-write` and `/docs-verify` too.
 
 ---
 
@@ -16,7 +16,7 @@ Consumed by `doc-writer`, `doc-planner`, and `doc-reviewer` — `doc-writer` and
 comments belong in the commit message and in the run's handoff — never in body prose, never in a
 changelog entry, never as a comment in the markdown.
 
-**Scope: rendered product-docs pages** — the pages `/document` and `/docs-write` write into a docs repo. This section
+**Scope: rendered product-docs pages** — the pages `/document`, `/docs-write` and `/docs-verify` write into a docs repo. This section
 does not govern **specs-tree documents**, such as the `epic.md` files `/epics` writes,
 where a `[[KEY]]` wikilink is the native idiom and the required traceability form. It resolves
 nowhere — the specs tree is a git repository, not a vault — and does not need to: it names a key,

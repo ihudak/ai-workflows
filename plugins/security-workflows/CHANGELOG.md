@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [0.13.4] — 2026-11-27
 
-**What changes for you.** `docs/reference/environment.md` says that a path holding a bidirectional control — a character that reorders how text shows — stops a run at resolution, as a line break or another control character does, which `workflows-core` 1.100.7 now does. Update with `workflows-core` 1.100.7 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.7 bullet).
+**What changes for you.** `docs/reference/environment.md` says that a path holding a bidirectional control — a character that reorders how text shows — stops a run at resolution, as a line break or another control character does, which `workflows-core` 1.101.1 now does. Update with `workflows-core` 1.101.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.1 bullet).
 
 ### Fixed
 
@@ -15,7 +15,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [0.13.3] — 2026-11-27
 
-**What changes for you.** `/scan` stops with `ADDRESS_FOLDER_NAME` where a unit's folder, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. Needs `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
+**What changes for you.** `/scan` stops with `ADDRESS_FOLDER_NAME` where a unit's folder, or a folder above it, is named outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — naming it by its place in a listing of the folder above it, never by its name, and for an `@<path>` before any command names it. Needs `workflows-core` 1.100.6 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.6 bullet).
 
 ### Fixed
 
