@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.45.1] — 2026-11-27
+
+**What changes for you.** `docs/reference/environment.md` says that a path holding a bidirectional control — a character that reorders how text shows — stops a run at resolution, as a line break or another control character does, which `workflows-core` 1.101.1 now does. Update with `workflows-core` 1.101.1 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.1 bullet).
+
+### Fixed
+
+- **`docs/reference/environment.md`** names a bidirectional control beside a line break and another control character among what stops a run on a path `ADDRESS_FOLDER_NAME` prints none of.
+
 ## [1.45.0] — 2026-11-27
 
 DOC-D-G1, sub-project 2, batch 2: `/docs-verify`, for engineering pages. **What changes for you.** `/docs-workflows:docs-verify <unit-id>`, or `--next`, takes a `drafted` engineering unit — one `/docs-write` drafted, its page still opening with the not-yet-verified marker — reads each claim on its page in the code at today's commit of every repository the page's `evidence:` names, and in its ARD at the specs default branch, and shows you, in one question, every claim it read otherwise. It applies the readings you take through `doc-writer`, removes the marker, holds the page to the style check, the builds and an Opus review, and commits the page with the unit's move to `verified` in one commit on a branch; it offers one push, prints a pull-request draft and never opens a pull request. A unit whose claims do not resolve stays `drafted`, tagged `claims-unresolved`, and only that record is committed. A user page is refused in this release: verify it by hand, as the documentation route's step 6 says. `/docs-write` now refuses a unit where `git grep` reports that it could not read something, naming each unreadable path under the content root, where it went on as though no page carried the id. With `$SPECS_PATH` unset, both commands scan a repository only where a code surface of the backlog names it, so neither scans the specs checkout. Update with `workflows-core` 1.101.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.0 bullet); 1.45.0 carries 1.44.5, so the 1.100.6 bullet applies too, which 1.101.0, `dev-workflows` 4.71.6 and `product-workflows` 3.88.7 meet, beside `security-workflows` 0.13.3 or later. Designed in `docs/superpowers/specs/2026-11-17-doc-d-g1-sp2-docs-verify-design.md` and built by `docs/superpowers/plans/2026-11-17-doc-d-g1-docs-verify.md`, batch 2.
