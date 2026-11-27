@@ -31,13 +31,20 @@ refresh:
 
 Refuse to run without `repo_path` and at least one element in **`refs`**.
 
+**Every element is held to its shape before a command names it**, and written single-quoted in each: `branch_from` to
+`workflows-core:specs-repo-git` §3.2's safe class, `branch_to` to that class or a commit's shape followed by one `^`.
+An element outside them is resolved by nothing and comes back under `unresolved_prs` as
+`an element outside the safe class`, its values named nowhere (the agent's *Hold every element to its shape before
+any command names it*). The callers hold an `implementation.md` block's `commit`, `branch` and `base` before they
+build an element from it, so the agent's test is a second line.
+
 **No `model_routing:` block is passed.** The caller pins this agent's tier with `model:` on the dispatch, and nothing in the agent reads a field of that block.
 
 **`refs` is the shape the callers have, and the only one.** `workflows-core:implementation-format` §1
 records an entry's refs as `repo` / `branch` / `base` / `commit` / `pushed` — its other fields, an
 `at:` instant and any `accepted:` lineage links, are no refs — and records no URL, no host, no PR id,
 so there is no host to route on and no forge to ask. The diff is taken directly
-(`git -c safe.bareRepository=explicit -C "<repo_path>" diff <branch_to>...<branch_from>`, `branch_from` accepted as a commit sha, the
+(`git -c safe.bareRepository=explicit -C "<repo_path>" diff '<branch_to>...<branch_from>'`, `branch_from` accepted as a commit sha, the
 form both callers hand, `branch_to` read as `origin/<branch_to>` wherever the local branch is absent
 or an ancestor of it) — except where `branch_from` has already landed on `branch_to`, which empties that range:
 the agent then reads the merge that landed it (`<landing>^1...<branch_from>`), or, where a

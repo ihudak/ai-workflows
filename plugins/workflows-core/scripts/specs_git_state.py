@@ -186,7 +186,7 @@ def load(session, command, at=None):
 
 def _read(target):
     try:
-        with open(target, encoding="utf-8") as fh:
+        with open(target, encoding="utf-8", errors="surrogateescape") as fh:  # a path that is not UTF-8, as written
             rec = json.load(fh)
     except (OSError, ValueError):
         return None
@@ -225,7 +225,7 @@ def _write(target, rec):
     os.makedirs(directory, mode=0o700, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=directory, prefix=".tmp-", suffix=".json")
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        with os.fdopen(fd, "w", encoding="utf-8", errors="surrogateescape") as fh:  # a non-UTF-8 path's own bytes
             json.dump(rec, fh, indent=2, ensure_ascii=False)
             fh.write("\n")
         os.replace(tmp, target)
