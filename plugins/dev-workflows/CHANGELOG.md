@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.71.4] — 2026-11-26
+## [4.71.4] — 2026-11-27
 
 DOC-D-G1, sub-project 2, batch 2: five pages name `docs-workflows` 1.45.0's `/docs-workflows:docs-verify`, and one count that was already short is corrected. No command, agent or reference changes, and nothing a run does or prints. Released with `docs-workflows` 1.45.0 and `workflows-core` 1.101.0; its pages need neither, nor they it. 4.71.4 carries 4.71.3, so the 1.100.3 bullet of `.claude/rules/plugin-updates-coupling.md` applies to it, which `workflows-core` 1.101.0, carrying 1.100.3, and `product-workflows` 3.88.5, carrying 3.88.3, meet.
 

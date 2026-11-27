@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.5 — 2026-11-26
+## 0.8.5 — 2026-11-27
 
 ### Changed
 - **`prose-style-checker`'s *When to invoke* names `docs-workflows` 1.45.0's `/docs-verify` Phase 7** among the style checks `docs-workflows`' `docs-style-checker` runs, beside `/document` keyed mode Phase 6.4 and direct mode Phase 3.5 and `/docs-write` Phase 6, in each of the same three roles (DOC-D-G1, sub-project 2, batch 2). Guidance only: the checker's inputs and output are unchanged, and it needs no other plugin's release.

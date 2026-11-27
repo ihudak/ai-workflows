@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.101.0] — 2026-11-26
+## [1.101.0] — 2026-11-27
 
 DOC-D-G1, sub-project 2, batch 2: the shared references register `/docs-workflows:docs-verify`, which `docs-workflows` 1.45.0 ships. **What changes for you.** A `/docs-verify` run files its cost entry, at the `documenting` stage, and its feedback under its documentation repository, as a `/docs-write` run does; a branch it cuts takes the `docs/` prefix where nothing else names one; and its stash, its scans' escalations, its review's fixes and its routing follow the family's rules, which now name it. The model routing names `claim-reader`'s reading on the Opus chain. Update with `docs-workflows` 1.45.0 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.0 bullet).
 
