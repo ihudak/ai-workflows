@@ -1591,10 +1591,11 @@ included, so the decision a question put again carries is never asked about twic
 **A decision reopened elsewhere is put again.** A `[VD#n]` or `[CD#n]` can read `reopened` with no
 question putting it. Three runs write `reopened`, and each can leave one:
 - `/product-workflows:brd-reconcile`'s *Freeze the customer decisions* step 3, where a customer's
-  answer contradicts or constrains a `decided` record of this BRD without replacing it;
+  answer contradicts or constrains a `decided` record of this BRD without replacing it, or moves
+  the record a `decided` one is applied from;
 - the propagation sweep of another BRD's `/product-workflows:brd-reconcile`, which reopens a record
-  of this BRD's register when a decision of that BRD it rests on moves
-  (`decision-register-format.md` §5);
+  of this BRD's register when a decision of that BRD it rests on moves — by its `conditional_on`,
+  or by its `applied_from`, a sibling slice's sweep included (`decision-register-format.md` §4, §5);
 - a run of this command that wrote a reopen in its register write and stopped before writing the
   round record that held the question putting it (*A decision the re-grounding moved*, above). The
   reopen stands (`decision-register-format.md` §8), and the question, which no counted record ever
@@ -2136,7 +2137,11 @@ made again. Otherwise, in order:
      its `covers` is named in the `covers` of any strategic question of the registry, whatever its
      state — open, answered, split, deferred or reopened, of this run or of a run before it — or
      of an entry kept before it. What a strategic question's answer did not close, and what it
-     covers where it was split or deferred, is asked in detail, never grouped again;
+     covers where it was split or deferred, is asked in detail, never grouped again. **A strategic
+     `[C]` the customer answered is no longer in the registry, and needs no test of its own**: it
+     was answered from a package, which carries the question set whole (`commands/brd-package.md`),
+     so every question it covers that is still a `[C]` was carried with it, and a carried question
+     is in no entry's `covers` and no count of `<c>`;
    - at most the budget in force `V` entries are kept, the first in the list's order: one sitting's
      worth.
 3. **Number them**, in the order kept: each takes the next position after the highest the round

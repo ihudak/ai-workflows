@@ -87,7 +87,10 @@ them is.
    after it may add to that set. A candidate that never reached the operator is not a decision that
    was skipped; it is a run that stopped, and the *Confirm every candidate* phase's gate says so.
 4. **Every candidate is put one at a time, with its verbatim quotation, and there is no bulk
-   confirmation.** The picker carries no "confirm the rest" entry, and that omission is required
+   confirmation** — save one group the review itself draws: an answer, and the answers the
+   reviewer's agent applied from it, which the customer was shown together and the operator sees
+   together, each with its own quotation (*Confirm every candidate*, *An answer and the answers
+   applied from it*). The picker carries no "confirm the rest" entry, and that omission is required
    rather than merely permitted: batching is what turns a confirmation into a formality, and the
    quotation is the entire mechanism — it is what lets a human check the agent's reading in one
    glance against the customer's own sentence.
@@ -115,7 +118,7 @@ record, and the parent's defect log waits (below).** They are:
 |---|---|
 | *Apply the required corrections* | an `applied` correction to an image's transcription in the **parent's** `brd/brd-figures.md`, when this run stands on a slice |
 | *Resolve the defects the review settled* | `customer-amended <SLICE-KEY> <date>`, `withdrawn` and `resolved-by: <SLICE-KEY>/[CD#n]` rows into the **parent's** `brd/brd-defect-log.md`, when this run stands on a slice |
-| *The propagation sweep* | sweep dispositions into a **dependent BRD's** `decisions.md` |
+| *The propagation sweep* | sweep dispositions into a **dependent BRD's** `decisions.md` — a sibling slice's among them, where a record there is applied from one of this run's |
 | *The stale cross-reference sweep* | `updated` corrections into any artifact under the parent, including a **sibling slice's** |
 
 **The rule, once, for the three that record.** Where that artifact's BRD lies under a root folder other than this run's — a dependent BRD's — first execute `branch-check` (`Skill(skill: "workflows-core:reference", args: "phase-handoff branch-check")`, §6) on that BRD's folder, once for each such root, with no `prefix`; a stop it makes is a stopping row here (§6.3), recorded by its finding. Before writing into an artifact that belongs to a BRD other than
@@ -668,7 +671,17 @@ EOF
    never a gate; `interview/customer-questions.md` and every `interview/round-<N>.md`, where on
    file — a slice never interviewed holds neither (step 2) — so each `[C]` is addressed by the
    round and position that identify it
-   (`interview-tagging.md` §5 — a question mints no identifier of its own); every
+   (`interview-tagging.md` §5 — a question mints no identifier of its own); for each held `[C]`
+   whose proposal — the last of its `- **Proposed answer:**` and `- **Proposal withdrawn:**` lines
+   at its address in its round record (`decision-register-format.md` §9) — is a proposal ending
+   `— follows <decision-id>`, the decision it follows, read as `/product-workflows:brd-package`
+   Phase 0 step 10 reads it: a bare id in this slice's `decisions.md`; `<BRD-KEY> [VD#n]` in that
+   BRD's, its folder resolved with `resolve-address` (`workflows-core:addressing` §3) and read as
+   it stands there — an
+   `ambiguous`, `misnamed` or `misrooted` resolution stopping the run with `resolve-address`'s own
+   stop, and `absent`, `invalid`, a register missing or unreadable, or no record of that id leaving
+   the decision unread, which is no stop — so the *Confirm every candidate* phase can say where it
+   has moved since the package was built; every
    `self-review-<YYYYMMDD>.md` on file — the one of the package this review answers is resolved in
    the *Ingest the review* phase, before the reader is dispatched — for the `[SR#n]` ids an
    `escalated-to-customer` disposition put in
@@ -1071,12 +1084,19 @@ legitimately decide something nobody asked, and forcing it onto the nearest ques
 answer and the question — and it is never frozen, only recorded for a human or rejected (*Confirm
 every candidate*).
 
+**A row of the first kind may carry one thing more: `applied from <round>/<position>`**, the marker
+the reviewer's agent writes on an answer it applied from another rather than asked
+(`customer-review-schema.md` §5, *the applied-answer rule*). The reader returns it as the
+decision's `applied_from`, and the *Confirm every candidate* phase confirms such a row with the
+answer it names (*An answer and the answers applied from it*).
+
 ---
 
 ## Phase 4 — Confirm every candidate (D14)
 
 **No `[CD#n]` is written while any decision the digest returned is unconfirmed.** Present each one to
-the operator, **one at a time, never batched**, with:
+the operator, **one at a time, never batched** — save a group of answers applied from one answer,
+put as *An answer and the answers applied from it* (below) sets out — with:
 
 - the statement as it would be registered, and the answer;
 - the **verbatim quotation** from the review it rests on — always, in both modes;
@@ -1086,6 +1106,14 @@ the operator, **one at a time, never batched**, with:
   outside-the-options form — so that confirming the row confirms that mapping;
 - where its target has a live record (below), that record — its id, status, `chosen` and quoted
   reason — and whether the row as shown would re-affirm it;
+- where its target is a held `[C]` whose proposal follows a decision (*Resolve inputs and gate the
+  sent package*, step 8), the proposed answer and that decision's status now; and where it reads
+  anything but `decided`, or could not be read, a plain line saying so: the package proposed this
+  answer on a basis that has since been reopened, superseded or withdrawn — or that cannot be read
+  — so a customer who confirmed the proposal confirmed a position whose stated basis has moved, and
+  whether this answer is that proposal is the operator's reading of the two, which no option below
+  recommends. A question whose last such line is a withdrawal carries no proposal, and its answer is
+  the customer's own; a strategic question's planned answer follows no decision, and nothing tests it;
 - the reason the customer gave, or `not stated` as the plain fact it is;
 - in free-text mode, the agent's own `confidence`, and every `conflict` flag naming the other
   candidate this one pulls against.
@@ -1169,8 +1197,9 @@ choose *Ask the customer*.
 `workflows-core:escalation-rules` §0 makes the free-text option unconditional —
 no array can decline it — so a picker about customer authority is protected by what the run does with
 the answer, not by the array's shape. `workflows-core:escalation-rules`' *Closed-vocabulary pickers
-must normalise the free-text answer* section therefore names this picker, the missing-reason picker and the conflicting-answer
-picker below, and the propagation sweep's, and gives that reason. Until that section was rewritten the file said the opposite of what
+must normalise the free-text answer* section therefore names this picker — its two-option form and
+its group form (*An answer and the answers applied from it*, below) among it — the missing-reason
+picker and the conflicting-answer picker below, and the propagation sweep's, and gives that reason. Until that section was rewritten the file said the opposite of what
 this command needs: it called adding a trailing free-text entry "the one permitted adjustment", which
 would have **authorised** an agent to open the exact hole D14 closes, on the authority of the file
 this command is bound by. A rule contradicted by its own authority is not a rule, so it is stated in
@@ -1460,7 +1489,12 @@ does the first test hold where it cannot be told which words are the customer's:
 to the new answer. A re-affirmation is reported as *already reconciled, re-affirmed by* `<review
 file>`, naming the canonicalised review, suffix included, and is listed so in the reconciliation
 record; it mints no `[CD#n]`, appends no *answered by the customer*, and adds nothing to the
-propagation sweep's changed-id set, because nothing changed.
+propagation sweep's changed-id set, because nothing changed. **A group's member re-affirms a live
+record taken `applied` only on the same basis**: where its question's live record is taken
+`applied`, the tests above hold only where that record's `applied_from` also names the record the
+member's source leaves (*An answer and the answers applied from it*, below); otherwise its basis has
+moved, and it is a new answer, which replaces the live record (*Freeze the customer decisions*,
+step 3).
 
 **Anything short of a re-affirmation is a new answer to the live record's question**, and the
 *Freeze the customer decisions* phase acts on the live record with it by that record's status: a
@@ -1564,12 +1598,72 @@ kept. Where none was — the pair took *Ask the customer*, or the one kept went 
 its reason — a later candidate onto that target takes *Ask the customer* too, with no picker: the
 operator has already sent that question back, and a candidate walked later does not close it.
 
+**An answer and the answers applied from it.** A decision the reader returns with an
+`applied_from` naming a question, not `none`, was not asked of the customer: their reviewer's agent derived it from the answer to
+the question that marker names, and showed it to them with that answer, grouped by it, at the end
+of a sitting (`workflows-core:question-budget` §13, items 4 and 5). Its **source** is the one
+decision of the digest whose target is that question. **A group** is a decision returned with
+`applied_from: none` that is another's source — its **root** — every decision whose source it is, and
+every decision whose source is one of those, in turn. Its **members** are those of them this walk
+would put on the four-option array: one the same-review rule skips, or whose target takes the
+two-option array, is no member, and is skipped or put on that array alone, as above. A group with a
+member is put once, at its first member's turn. Every member is shown with the facts above, its
+quotation among them, and, in free-text mode, the statement that its row is an inference; the root
+comes first, shown as skipped or as the array it takes where it is no member, and each other
+decision under the answer it follows. Then ask once:
+
+```
+choices: ["Confirm the answer and every answer applied from it (Recommended)", "Let me name the ones to correct"]
+```
+
+The first option is recommended because the customer saw this group together and kept it, and each
+row's quotation is beside it for the operator to check. It takes *Confirm* on every member. *Let me
+name the ones to correct* asks in plain text which members, by the `<round>/<position>` each
+answers, resolved against the group's members and nothing else; each one named is put on the
+four-option array on its own, as any candidate is, and every other member takes *Confirm*. Whatever
+a member takes, each test above that follows a *Confirm* or a *Correct it* — the conflicting-answer
+picker, the re-affirmation test, the missing-reason picker — is put to it alone, one at a time, a
+source's before those of the members that follow it. A
+free-text answer to the group is normalised into its two options — a typed list of members is the
+second — or the group is put again; it is never written through.
+
+**A member is frozen as applied only from its source's answer as the review gives it.** The record
+its source **leaves** is the `[CD#n]` the source's answer is frozen as, completes or re-decides, or
+the live record it re-affirms — and, for a source skipped as already reconciled, the record that
+pass froze for it. A member is frozen taken `applied` from that record (*Freeze the customer
+decisions*) where the source took *Confirm*, not *Correct it*, and leaves a record not `open` for
+want of its reason — or, skipped, where an adopted pass's `- **Frozen:**` list names this member
+applied from that record. Otherwise — its source corrected, rejected, recorded for a human, sent
+back to the customer, set aside as a conflicting answer, sent back for its reason or frozen `open`
+for want of it, or skipped with no such entry — the member is **held**: where *Confirm* or
+*Correct it* was taken on it, it takes *Ask the customer* instead, nothing is frozen from it and its
+question is left as it stands — a held `[C]` stays held, and the next package puts it again — and
+the walk says so as soon as its source's fate is settled. A member whose own source is held is held
+in turn. Held rather than put singly: the
+customer never gave this answer, and freezing it on its own would record their agent's derivation as
+their word while the answer it was derived from is not on the record as they gave it — *Correct it*
+included, since a row the reader misread leaves in doubt what the reviewer's agent applied from it.
+
+**A row whose sources, followed, never reach a root is in no group** — one applied from a question
+no single decision of the digest answers, none or more than one, one applied from such a row, and
+one in a loop: shown with its marker, it takes the two-option array an answer matching no question
+takes, since a derived answer with no answer of the customer's to derive it from is no answer they
+gave.
+
+**A strategic `[C]`'s answer is frozen like any other, and closes its own question alone.** A
+question its `- **Covers:**` line names is answered only by a row of the review — its own, or one
+applied from that answer, which comes in that answer's group — and one the review neither answered
+nor applied stays *held for the customer*, for the next package to put. It was carried with the
+strategic question, so no later strategic question covers it again (`/product-workflows:brd-interview`,
+*Plan the sittings*).
+
 **The gate.** Any decision in the digest still unconfirmed when this phase would end → stop. A
 candidate skipped as already reconciled by the same-review rule is disposed and does not count; one
-the operator confirmed and the re-affirmation test then recorded is confirmed, and one whose live
+the operator confirmed and the re-affirmation test then recorded is confirmed, a group member held
+takes ask-the-customer, and one whose live
 record reads `withdrawn`, or that answers a held entry whose requirement defects were all withdrawn
-earlier and that has no record of its own, takes record-for-a-human | reject like an answer matching no question:
-`BRD_RECONCILE_UNCONFIRMED: N decisions from the returned review are still unconfirmed — every one takes confirm | correct | reject | ask-the-customer, or, answering no question the package put or one that has stopped applying, record-for-a-human | reject, before a [CD#n] is written.`
+earlier and that has no record of its own, or that is a row in no group, takes record-for-a-human | reject like an answer matching no question:
+`BRD_RECONCILE_UNCONFIRMED: N decisions from the returned review are still unconfirmed — every one takes confirm | correct | reject | ask-the-customer, or, answering no question the package put or one that has stopped applying, or applied from no single answer the customer gave, record-for-a-human | reject, before a [CD#n] is written.`
 
 ---
 
@@ -1586,8 +1680,9 @@ id this run reuses is never read as the adopted pass's. Then `- **Status:** free
 *Apply the required corrections* needs to match a row by its position; and `- **Frozen:**`, listing
 every record this phase is about to
 freeze, complete from `open` or re-decide in place, each with what it answers — a `[C]` by round and
-position, an `[AS#n]`, or an `[SR#n]` with the self-review file named — new ids assigned now by the
-`id` row below, or `none`. Then `- **Effects:**`, listing every write steps 2 and 3 below are about to
+position, an `[AS#n]`, or an `[SR#n]` with the self-review file named — and, for one frozen taken
+`applied`, `applied from` and the record it follows; new ids assigned now by the `id` row below, or
+`none`. Then `- **Effects:**`, listing every write steps 2 and 3 below are about to
 make on a record already in the register, each with the status the record holds once the catch-up
 below, where there is one, is applied, and every `[CD#n]` that causes it — `[AS#3] open → superseded by [CD#7]`,
 `[CD#2] decided → superseded by [CD#5]`, `[VD#4] decided → reopened by [CD#5], [CD#6]` — and every
@@ -1602,7 +1697,8 @@ after these opening lines and before anything else this phase writes. **The regi
 stood before this phase wrote anything* — **is the register with the catch-up applied**, so this
 run's own answers act on a record the catch-up has just moved by its new status, and never reopen it
 a second time. **Write every `[CD#n]` this phase mints, completes or re-decides before any step-2 or
-step-3 paragraph naming it**, so no such paragraph ever lands without its cause. **This is the commit
+step-3 paragraph naming it**, so no such paragraph ever lands without its cause, **and after the
+record its `applied_from` names**, so no record lands following one that is not there. **This is the commit
 point a re-run reads**: it lands before the register,
 the round records and every later phase's writes, so a run that stops anywhere after it leaves its
 freezes findable by the same-review rule and its pass adoptable (*Confirm every candidate*, *A pass
@@ -1658,16 +1754,16 @@ every field `decision-register-format.md` §1 defines:
 | `options_considered` | what the package actually put in front of the customer, taken from the `[C]` question, the `[AS#n]`, or the escalated `[SR#n]` — never reconstructed from the answer, and never widened to take in an answer outside it. A `[C]` question put as yes or no, listing no options, records `["yes", "no"]`; an `[AS#n]`, which puts no options, records `["as assumed", "not as assumed"]`; and an escalated `[SR#n]` records `["as the package states", "as the finding argues"]` (`decision-register-format.md` §1) |
 | `chosen` | the customer's answer as the confirmed row maps it — an escalated `[SR#n]`'s by *Confirm every candidate*'s mapping rule: one member of `options_considered`, or, where the customer answered outside them (*Confirm every candidate*), their answer quoted after the fixed marker `decision-register-format.md` §1 gives that case, in the quoting form it fixes for an answer spanning lines or carrying a `"` or a `\` |
 | `argumentation` | **the customer's own reason, quoted**, never paraphrased and never supplied |
-| `evidence` | the `[CG#n]`/`[DG#n]` the question was put against, as the question set recorded them — for a `[C]` candidate, the ids on the answered question's `- **Findings:**` line in `interview/customer-questions.md` and nothing else in the entry, whose context may name other findings (`/product-workflows:brd-interview`, *Hold every `[C]`*); an entry written before 3.7.0 carries no such line, and its findings are read from its prose where it names them; for an `[AS#n]` candidate, none, since an assumption's `evidence` holds no finding id (`decision-register-format.md` §7) — an id its why-no-evidence prose mentions is never copied. `evidence: []` where what is read recorded none, never omitted (`decision-register-format.md` §1), and never `[]` because a line that was there could not be parsed |
+| `evidence` | the `[CG#n]`/`[DG#n]` the question was put against, as the question set recorded them — for a `[C]` candidate, the ids on the answered question's `- **Findings:**` line in `interview/customer-questions.md` and nothing else in the entry, whose context may name other findings (`/product-workflows:brd-interview`, *Hold every `[C]`*); an entry written before 3.7.0 carries no such line, and its findings are read from its prose where it names them; for an `[AS#n]` candidate, none, since an assumption's `evidence` holds no finding id (`decision-register-format.md` §7) — an id its why-no-evidence prose mentions is never copied. `evidence: []` where what is read recorded none, never omitted (`decision-register-format.md` §1), and never `[]` because a line that was there could not be parsed. **On a record taken `applied`, `[]`**: it rests on the decision its `applied_from` names and on no finding of its own (§1), so the will-change rule below never fires on it |
 | `defects` | the `[CDF#n]` the answered position turns on, as the `[C]` question, the `[AS#n]` or the escalated `[SR#n]` recorded them; omitted when none. Never in `evidence` (§1), and **never minted here** — `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` makes `/product-workflows:brd-interview` the log's only writer, so this phase carries an existing id forward and writes no entry |
 | `settles` | the `[DEF#n]` on the answered `[C]` question's `- **Requirement defect:**` line in `interview/customer-questions.md`, copied from that line and from nothing else in the entry, whose context may name other `[DEF#n]`s (`references/decision-register-format.md` §1); omitted where the entry has no such line. **Never inferred from the review**: which question an answer answers is already fixed by the round and position it cites, and the entry is the record of what that question was raised by or carries |
 | `altitude` | copied, never judged, wherever there is one to copy: the answered `[C]` question's `- **Altitude:**` line in `interview/customer-questions.md`, an `[AS#n]`'s own `altitude`, or, for an escalated `[SR#n]`, which carries none, the altitude of the record or question its `target` names. Where there is none — a `[C]` entry written before 3.7.0, or an `[SR#n]` whose target is a document passage — decide it by the test `decision-register-format.md` §1 gives the field, the downstream artifact the answer must reach, and name it in the reconciliation record as decided here rather than copied. An answer matching no question is never frozen (*Confirm every candidate*), so it needs no altitude |
-| `conditional_on` | **copied, never judged, wherever `chosen` is `as assumed`**, from the record the answer resolves to, wherever that record carries one, as `defects` and `altitude` are: the `[AS#n]` it confirms; the live record an assumption an earlier review already settled resolves to (*Confirm every candidate*); or, on a record re-decided in place, that record as it stands, whose re-put question puts the same two options. Confirming an assumption settles that the customer holds it, not that it no longer rests on the prerequisite's decision, and this field is what the propagation sweep reaches the live record by mechanically, whether or not anything on it cites a changed id (§5). Otherwise written only where the customer's answer is itself correct only while a named prerequisite decision holds — an answer contradicting an assumption that carries one, or one outside the options, included, since each states a position of its own — or where the will-change rule below writes it, and named as `<BRD-KEY>/<decision-id>` (§5) — for instance `conditional_on: EPIC-014/[CD#2]`. The will-change rule rarely meets a copied value — an `[AS#n]` names no finding, so the `[CD#n]` confirming it carries `evidence: []` (the `evidence` row above), on which that rule does not fire — but a re-decision whose re-put question names findings is tested like any record written `decided`; where the rule fires there and names a decision other than the copied one, the record rests on two, and that rule's *more than one* resolution holds it `open`, without the copied value, which the reconciliation record then names |
+| `conditional_on` | **copied, never judged, wherever `chosen` is `as assumed`**, from the record the answer resolves to, wherever that record carries one, as `defects` and `altitude` are: the `[AS#n]` it confirms; the live record an assumption an earlier review already settled resolves to (*Confirm every candidate*); or, on a record re-decided in place, that record as it stands, whose re-put question puts the same two options. Confirming an assumption settles that the customer holds it, not that it no longer rests on the prerequisite's decision, and this field is what the propagation sweep reaches the live record by mechanically, whether or not anything on it cites a changed id (§5). Never on a record taken `applied`, whose `applied_from` is the whole of its basis (§1). Otherwise written only where the customer's answer is itself correct only while a named prerequisite decision holds — an answer contradicting an assumption that carries one, or one outside the options, included, since each states a position of its own — or where the will-change rule below writes it, and named as `<BRD-KEY>/<decision-id>` (§5) — for instance `conditional_on: EPIC-014/[CD#2]`. The will-change rule rarely meets a copied value — an `[AS#n]` names no finding, so the `[CD#n]` confirming it carries `evidence: []` (the `evidence` row above), on which that rule does not fire — but a re-decision whose re-put question names findings is tested like any record written `decided`; where the rule fires there and names a decision other than the copied one, the record rests on two, and that rule's *more than one* resolution holds it `open`, without the copied value, which the reconciliation record then names |
 | `status` | `decided`, or `open` where the reason is absent and the *Confirm every candidate* phase took that resolution, or where the will-change rule below holds the record open |
 | `consumed_by` | `none` |
 | `round` | the round that raised the question this answers — **omitted where that is an `[AS#n]` carrying no round**, which is what `/product-workflows:create-prd` writes for a customer-authority gap surfaced at PRD authoring (`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §7). Such an answer came from no round, and inventing one here would put a value into the field `/product-workflows:brd-package` derives its round set from |
-| `taken` | omitted: the customer answered what the package put to them, and an omitted `taken` reads `asked` (`decision-register-format.md` §1) |
-| `applied_from` | omitted: the field applies only to a record taken `applied` (`decision-register-format.md` §1) |
+| `taken` | `applied` on a group's member frozen from the record its source leaves (*Confirm every candidate*, *An answer and the answers applied from it*): the customer was not asked it, and kept what their reviewer's agent applied from their answer. Otherwise omitted: the customer answered what the package put to them, and an omitted `taken` reads `asked` (`decision-register-format.md` §1) |
+| `applied_from` | on a record taken `applied`, the record its source leaves, by its bare id — always a `[CD#n]` of this register; omitted otherwise (`decision-register-format.md` §1) |
 
 **The will-change rule binds a `[CD#n]` exactly as it binds a `[VD#n]` (D19).** Before any record
 this phase writes is written `decided` — a new `[CD#n]`, and an `open` one this run completes alike —
@@ -1919,8 +2015,8 @@ Then, in the same phase and from the same confirmed set:
      one a propagation sweep reopened since the question was put → **re-decided in place**, minting
      no id:
      `statement`, `options_considered`, `chosen`, `evidence` (the answered entry's
-     `- **Findings:**` line, as the table above takes it), `defects`, `conditional_on` and `status`
-     are written afresh as the table above takes each, the will-change rule tested on it like any
+     `- **Findings:**` line, as the table above takes it), `defects`, `conditional_on`, `status`,
+     `taken` and `applied_from` are written afresh as the table above takes each, the will-change rule tested on it like any
      record written `decided`; the customer's reason, quoted, is appended to `argumentation`
      beneath the `Reopened` paragraph and never over it; `round` becomes the round of the question
      it answers; `consumed_by` returns to `none`; `id`, `altitude` and `settles` stand
@@ -1976,6 +2072,24 @@ Then, in the same phase and from the same confirmed set:
    line, do not reach this step as two**: such an answer answers the record's own question, and
    *Confirm every candidate* lets only one candidate per question leave it to be frozen — the other
    is set aside there as a conflicting answer.
+
+   **Every record applied from one these writes move is reopened with it**
+   (`decision-register-format.md` §4: a cause reaches every decision applied from the one it
+   moves). Each `[VD#n]` or `[CD#n]` of this register taken `applied` whose `applied_from` names, by
+   its bare id, a record step 2 or 3 supersedes or reopens — or one this paragraph reopens, in turn
+   — takes `status: reopened` in the same write, its closing `Reopened <YYYYMMDD>:` paragraph naming
+   the record its `applied_from` names, how that record moved and the `[CD#n]` that moved it; its
+   question is put again by `/product-workflows:brd-interview` (*A decision reopened elsewhere*).
+   Only a `decided` one moves: one already `reopened`, or terminal, does not move again, and one
+   held `open` cannot take `reopened` (§3), so it stays at its status and is named under *what still
+   needs a human* with the record it follows. A record this run freezes, or one of its answers
+   replaces, completes or re-decides, takes that, and nothing here, since a run does not reopen its
+   own freeze (*What "frozen" means, exactly*): one it freezes applied from a record this step
+   reopens is named under *what still needs a human* with that record. Its `- **Effects:**` entry names as its
+   causes the `[CD#n]`s that moved the record it follows, and after them that record, marked
+   `applied from`, which is no cause — `[VD#6] decided → reopened by [CD#5] applied from [CD#2]` —
+   so a re-run adopting the pass reads its causes as it reads any entry's. A record of another register applied from one of these is the propagation sweep's (its
+   applied-from pass).
 
    A `[VD#n]` put again is not this command's: its question is a `[V]`, and
    `/product-workflows:brd-interview` supersedes or re-decides it.
@@ -2506,7 +2620,7 @@ because a census is what an editor checks against and is the half of this paragr
 wrong — a sentence saying *twice* while three phases read the set would have sent that editor away
 satisfied, with a dropped class left unsearched.
 
-**The swept set has two sources, and only one of them is a scan.**
+**The swept set has three sources, and only the first is a scan.**
 
 1. **Declared dependents — a scan.** Any BRD whose `brd-link.md` declares `depends-on:` carrying
    this run's `<BRD-KEY>`. Only a slice declares it — `/product-workflows:prd-ground` and
@@ -2525,13 +2639,29 @@ satisfied, with a dropped class left unsearched.
    it matches is tested whole, as that section's *A caller that holds a path as text* tests one, so
    the `<P>` its stop names is in the class whole. A folder outside the class may be a dependent this sweep would leave
    holding a position this run superseded, so the run stops there, before the sweep writes anything:
-   `BRD_RECONCILE_DEPENDENT_NAME: a folder the declared-dependents scan matched — entry <n> of the checkout's listing of <P>'s folders — is named outside workflows-core:addressing §2's class, so this run cannot sweep it, and stopped before the propagation sweep wrote anything. Rename it into the class, or move it out of <P>, then re-run '/product-workflows:brd-reconcile <BRD-KEY>', which adopts this pass.`,
+   `BRD_RECONCILE_DEPENDENT_NAME: a folder the <declared-dependents scan | sibling read> matched — entry <n> of the checkout's listing of <P>'s folders — is named outside workflows-core:addressing §2's class, so this run cannot sweep it, and stopped before the propagation sweep wrote anything. Rename it into the class, or move it out of <P>, then re-run '/product-workflows:brd-reconcile <BRD-KEY>', which adopts this pass.`,
    `<P>` and `<n>` as that section's `ADDRESS_FOLDER_NAME` gives them.
 2. **BRDs this ledger delegates to — a lookup, not a scan.** Every distinct `<OTHER-KEY>` named by a
    `covered-by` row of `<BRD-dir>/coverage-ledger.md`, resolved with `resolve-address`. No scan is needed
    because this relation *is* listed in this BRD's own folder — which is exactly why it was missed:
    the paragraph above defines a dependent as something that declares itself, and a child is
    carved with `parent:` and `claims:` and no `depends-on:` naming the BRD it was carved from.
+3. **Sibling slices applied from this one — a read of the parent's known slices.** Every slice
+   under this slice's parent — those the positive `brd-link.md` parent test finds against that
+   `parent:` (`commands/brd-split.md` Phase 0), this slice left out, each subdirectory's name held
+   to `workflows-core:addressing` §2's class before its `brd-link.md` is read, as
+   `${CLAUDE_PLUGIN_ROOT}/references/code-defect-log-format.md` §7 holds a source slice's: one
+   outside the class that §7 tells may be a slice stops the run with `BRD_RECONCILE_DEPENDENT_NAME`
+   above, `<P>` the parent's folder, and one that may not is passed over — whose `decisions.md`,
+   read through `decision-register-format.md` §8, holds a record taken `applied` whose
+   `applied_from` is `<BRD-KEY>/<id>`, this run's own `<BRD-KEY>` and an id of the applied-from
+   pass's trigger set (below) — the whole value, never a prefix of it. **A sibling need not name
+   this slice in `depends-on:`**: `/product-workflows:brd-interview` applies an answer from any
+   register `workflows-core:question-budget` §8 counts as on file, a sibling's among them, and
+   records the link in `applied_from` alone, so the scan never reaches it. The key is matched
+   against this run's own, which the run already holds; nothing is read out of a folder's name. A
+   sibling found so is a dependent BRD from here on, in this phase and wherever a later phase names
+   one, and one the scan also found is swept once.
 
 **The second source is what makes the *Update the coverage ledger* phase's promise true.** That
 phase writes a `[CD#n]`-driven `deferred-to`, `rejected` or `superseded-by` onto rows of **this**
@@ -2543,8 +2673,8 @@ interviewing it and still packaging it, with nothing anywhere saying the obligat
 this run moved a `covered-by` row's disposition, that row's owning BRD is in the set **on that
 account alone**, whether or not anything in it cites a changed id.
 
-The cross-BRD write guard applies to both sources identically, and nothing about the second widens
-what may be written: a delegated row's fate in the owning BRD is still that BRD's to record, so what
+The cross-BRD write guard applies to all three sources identically, and nothing about the second or
+the third widens what may be written: a delegated row's fate in the owning BRD is still that BRD's to record, so what
 this sweep produces there is a disposition against its **register**, never a write into its ledger.
 
 **`conditional_on` positions are swept first, and they are swept whether or not they cite a changed
@@ -2560,6 +2690,28 @@ follows is the **incomplete** one: it finds positions that happen to name a chan
 sweep that ran the incomplete pass first and then "also checked" `conditional_on` has made the
 mechanical, complete pass an afterthought to the textual one, and the first time the two disagree the
 afterthought is what gets skipped.
+
+**Then the applied-from pass, the second complete one, by a field too**
+(`decision-register-format.md` §4: a cause reaches every decision applied from the one it moves;
+`workflows-core:question-budget` §8, *When the source moves*). Its **trigger set** is every
+`[VD#n]` and `[CD#n]` of this slice's register that the changed-id set holds as reopened or
+superseded this run — *Freeze the customer decisions* step 3's applied-from reopenings included —
+or as re-decided in place, since a record re-decided was reopened first, by whichever run, and a
+record applied from it elsewhere may never have been reached; this run withdraws no record of its
+own register. For a dependent an earlier pass recorded not written, the ids of those kinds in the
+set carried in for it count as well. **Every record of a dependent's register taken `applied` whose
+`applied_from` is `<BRD-KEY>/<id>` for an id of that set** — the whole value — and every record of
+that register applied from one of those, by its bare id, in turn, is an item of this pass, and
+**§4 disposes it, so it is not presented**: a `decided` one is written `reopened`, its closing
+`Reopened <YYYYMMDD>:` paragraph naming the decision its `applied_from` names — this run's in the
+qualified prose form below, one of its own register by its bare id — and how that decision moved,
+with this run's `[CD#n]` that moved it, so its BRD's next `/product-workflows:brd-interview` puts its question
+again (*A decision reopened elsewhere*); one already `reopened`, `superseded` or `withdrawn` does
+not move again, and takes `inherited-unchanged` with that as its reason; and one held `open`,
+which cannot take `reopened` (§3), takes `inherited-unchanged` and is named in *what still needs a
+human* with the decision it follows and how that moved. The citation pass does not present an item
+this pass reopened again: it is to be decided again whole. A record whose `applied_from` names a
+decision this run did not move is no item of this pass.
 
 **Then the citation pass:** every decision and every `[AS#n]` in every dependent BRD naming an id
 in the changed set, plus every finding those decisions rest on. **Which fields are read is derived
@@ -2605,8 +2757,9 @@ one without the other would find an id in the answer and miss the same id in the
 rather than editing a sentence inside one. Correcting a stale sentence is the *other* sweep's act,
 and its `decisions.md` row refuses it there.
 
-**Every item the sweep reaches is forced to exactly one disposition.** Present each one at a time,
-with the item and **what reached it**, which is not the same fact on both passes. An item the
+**Every item the sweep reaches is forced to exactly one disposition.** Present each one at a time —
+save an item of the applied-from pass, which §4 disposes (above) — with the item and **what reached
+it**, which is not the same fact on the two passes that present one. An item the
 citation pass found is presented with the changed id it names and what changed about that id. A
 `conditional_on` position was reached **by the field**, which is what that pass is for, so it is
 presented with the prerequisite decision the field names and whether this run moved it — **which
@@ -2682,6 +2835,14 @@ value no reader downstream can act on or left out of the sweep's own account.
 | `reopened` | `status: reopened` on that record, its cause — this run's `[CD#n]`, qualified (below) — named in the closing `Reopened <YYYYMMDD>:` paragraph `decision-register-format.md` §4 appends to its `argumentation`: an incoming customer decision is exactly one of the two causes §4 admits |
 | `withdrawn` | `status: withdrawn`, its reason — naming the changed id, qualified (below) — in a closing `Withdrawn <YYYYMMDD>:` paragraph appended to its `argumentation` (`decision-register-format.md` §4): the question stopped applying rather than being answered differently. It is **not** a tidier spelling of `superseded` (§3), and it is what stops a request from reappearing in the next customer package after the customer has already dealt with it |
 
+**A `reopened` or `withdrawn` write reaches what is applied from it** (§4). Where a disposition of
+either pass that presents one moves a dependent's record to `reopened` or `withdrawn`, every
+record of that register taken `applied` whose `applied_from` names it by its bare id, and every
+record applied from those in turn, is an item of the applied-from pass, disposed as that pass
+disposes one, in the same write. **A record of another register applied from any record this sweep
+moves is not this run's to reach**: that register's next `/product-workflows:brd-interview` reads
+the basis as it then stands and puts the record again (*A decision reopened elsewhere*).
+
 **Every id a sweep write names carries the key of the BRD whose numbering it is**, because the write
 lands in a dependent's register, which numbers its own records: a bare `[CD#3]` there resolves
 against the dependent's own register — to the wrong record where that register holds a `[CD#3]`,
@@ -2723,7 +2884,8 @@ supersession with nothing on the other side of it.
 `inherited-unchanged`, which writes nothing, and for an item of a dependent recorded-not-written —
 append to the pass *Freeze the customer decisions* opened `- **Swept:** <DEPENDENT-KEY> <record id> —
 <disposition> — <changed id> — <reason> — written` or `— recorded-not-written`, each id in the
-qualified prose form this phase fixes. Each line is written once and never edited.
+qualified prose form this phase fixes — `<changed id>`, for an item of the applied-from pass, being
+the decision its `applied_from` names. Each line is written once and never edited.
 
 **A re-run re-sweeps what was recorded and not written, and only that.** An item an earlier pass
 over this same review **disposed and wrote** is skipped and reported as already swept. A dependent
@@ -3026,12 +3188,13 @@ changed, why, which ids, and what still needs a human:
   branch now — or that it was empty or could not be made, with the limits that step names.
 - **What changed** — every `[CD#n]` frozen, with its quotation, its status, what it answers — a
   `[C]` by round and position, an `[AS#n]`, or an `[SR#n]` with the self-review file named above —
-  and how it was confirmed, and, where its `altitude` had nothing to copy, that this run decided
+  and how it was confirmed — for one taken `applied`, the record it follows and that it was
+  confirmed in that answer's group — and, where its `altitude` had nothing to copy, that this run decided
   the `altitude`; where the `[CD#n]` copied `conditional_on` (the field table above), the value
   and the record it was copied from, with whether the assumption's row in the review's section 8
   marks the acceptance contingent — a mark that changes nothing written; and where a `[CD#n]`
   answers an assumption carrying `conditional_on`, or re-decides a record carrying one, without
-  copying it, that value beside the `[CD#n]`'s own or beside its absence; every candidate rejected or sent back to the customer, with its reason; every candidate
+  copying it, that value beside the `[CD#n]`'s own or beside its absence; every candidate rejected or sent back to the customer, with its reason — a group member held because its source was not frozen as the review gives it among them, with that source (*Confirm every candidate*, *An answer and the answers applied from it*); every candidate
   skipped as
   *already reconciled* by the same-review rule, with the record in its chain that pass wrote and,
   where it is no longer the live record, the successor or withdrawal since; every candidate recorded
@@ -3054,8 +3217,8 @@ changed, why, which ids, and what still needs a human:
   every banner added; every defect
   resolution, with the log's path; every ledger row moved.
 - **The sweeps** — the changed-id set as fixed, and, per dependent it was carried for, the earlier
-  pass's set carried in beside it; per dependent BRD, every `conditional_on` position
-  and every citing item with its disposition and reason — the `- **Swept:**` lines already under this
+  pass's set carried in beside it; per dependent BRD, every `conditional_on` position, every
+  applied-from item and every citing item with its disposition and reason — the `- **Swept:**` lines already under this
   pass are that list, and it is not written again — each id in the qualified prose form the
   propagation sweep fixes, and every dependent recorded-not-written
   with its state; and every stale-reference hit, one line each, in exactly this shape:
@@ -3106,7 +3269,10 @@ changed, why, which ids, and what still needs a human:
   sequence that rule names as what closes it — and, where it was held open because a finding's
   `prerequisite` does not carry its BRD key, that unqualified value quoted as it stands, with the
   finding carrying it; every record *Freeze the customer decisions* step 3 left at its status
-  because it was not `decided`, with the `[CD#n]` that contradicts or constrains it; every
+  because it was not `decided`, with the `[CD#n]` that contradicts or constrains it; every record
+  applied from a decision that moved and left at its status because it was held `open` — in this
+  register by step 3, or in a dependent's by the propagation sweep's applied-from pass — with the
+  decision it follows and how that moved; every
   candidate whose target's live record reads `withdrawn`, with the customer's words and that record,
   nothing frozen from it, and the held entry closed for it where there was one (*Confirm every
   candidate*); every held entry closed because its requirement defects were all withdrawn (the
@@ -3651,7 +3817,7 @@ every `[VD#n]` or `[CD#n]` reopened or superseded here, an adopted pass's counte
 stated in full; every dated artifact bannered, and every overturned bundle document named rather than
 bannered; the defect resolutions with the log's path; the ledger rows moved; **the propagation
 sweep** — the changed-id set as fixed, and, per dependent it was carried for, the earlier pass's
-set carried in beside it; per dependent BRD, the `conditional_on` positions first, then the citing items, each with
+set carried in beside it; per dependent BRD, the `conditional_on` positions first, then the applied-from items, then the citing items, each with
 its disposition, plus every dependent recorded-not-written with its concrete state; **the
 stale cross-reference sweep** — the hit counts by outcome and every `needs-a-human` hit named,
 and every entry its listing passed over, by its position or path, or an explicit "none", and

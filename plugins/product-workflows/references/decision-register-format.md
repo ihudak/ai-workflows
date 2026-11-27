@@ -28,8 +28,8 @@ for a customer-authority gap that only PRD authoring could surface (§7); by `ag
 every live position and open assumption resting on a prerequisite by its `conditional_on` field
 (§5, §7), and every live position following another BRD's decision by its `applied_from` (§1); and by
 `commands/brd-reconcile.md`, which mints the `[CD#n]` records — the only command that does — and
-enforces §6 on them as it freezes them, supersedes the `[AS#n]` each one settles, reopens what an incoming customer decision overturns under
-§4, re-decides in place a `[CD#n]` whose reopened question the customer has answered, and runs the propagation sweep §5 exists to serve. **It has more readers than those**: the three
+enforces §6 on them as it freezes them, freezes an answer the reviewer's agent applied from another as one taken `applied` (§1), supersedes the `[AS#n]` each one settles, reopens what an incoming customer decision overturns under
+§4, and what is applied from a record it moves, re-decides in place a `[CD#n]` whose reopened question the customer has answered, and runs the propagation sweep §5 exists to serve, which follows `applied_from` into a sibling's or a dependent's register too (§4). **It has more readers than those**: the three
 commands §1's `altitude` row names each read the register filtered on their own value and stamp
 `consumed_by` on what they drew on, and `commands/prd-ground.md`, `commands/brd-split.md`'s re-cut
 report, `commands/prd-proposal.md`'s tier grading, `agents/proposal-reviewer.md` and
@@ -94,7 +94,7 @@ applied_from: <decision-id>             # only where taken: applied
 | `status` | one of the five in §3 |
 | `consumed_by` | the same field, values, starting-at-`none` rule and add-never-replace rule as `workflows-core:grounding-format` §2, applied to a decision instead of a finding — save §4's return to `none` where a decision's position is replaced |
 | `round` | the interview round that produced the decision, per `references/interview-tagging.md` §5 — on a record taken `applied`, the round of the question it closed, whose record names it (§8). **Omitted where the decision came from no round** — a `[CD#n]` answering an `[AS#n]` that itself carries none (§7) is the case that occurs, and inventing a value there would put it into the set `/brd-package` derives the rounds from. That is the only route to a round-less `[VD#n]`/`[CD#n]`: one taken in a round always carries it |
-| `taken` | how the decision was taken (`workflows-core:question-budget` §8): `asked` — its question was put and answered; `applied` — no one was asked, because the decision `applied_from` names determines it; `table` — confirmed as a row of a table (`workflows-core:question-budget` §9). **Omitted, it reads `asked`**, so every record written before the field existed stays valid; `commands/brd-interview.md` writes it on every `[VD#n]` it records first |
+| `taken` | how the decision was taken (`workflows-core:question-budget` §8): `asked` — its question was put and answered; `applied` — no one was asked, because the decision `applied_from` names determines it; `table` — confirmed as a row of a table (`workflows-core:question-budget` §9). **Omitted, it reads `asked`**, so every record written before the field existed stays valid; `commands/brd-interview.md` writes it on every `[VD#n]` it records first, and `commands/brd-reconcile.md` writes `applied` on a `[CD#n]` frozen from a review's row the reviewer's agent applied from another answer, `applied_from` naming the `[CD#n]` of that answer (its *Confirm every candidate*) |
 | `applied_from` | the one decision a record taken `applied` follows, the whole of its basis — a decision of this register by its bare id, or one of another BRD's register — a sibling slice's under the same parent, or a `depends-on:` BRD's — in the cross-BRD form §5 uses, `<BRD-KEY>/[VD#n]` or `<BRD-KEY>/[CD#n]`, which `references/bundle-packaging.md` §6.2 reads as qualified. **Only where `taken: applied`**, and omitted otherwise. That decision reopened, superseded or withdrawn reopens this record (§4). An applied record writes `evidence: []`: it rests on no finding of its own, so §6 never fires on it. Prose naming another BRD's decision — the record's `argumentation`, a `Reopened` paragraph — writes it `<BRD-KEY> [VD#n]`, the qualified prose spelling §4 gives a cause from another BRD, never the slash form |
 
 **Which prefix a decision gets is fixed by the tag of the question it answers, not by who typed it.**
@@ -236,6 +236,10 @@ behind it. A decision never stands on a basis that is gone.
 `commands/brd-interview.md` applies the rule in the register write that moves a record of its own
 register, to the records of that register applied from it, and, in the next round it opens, to a
 record of its register whose basis another run moved (its *A decision reopened elsewhere*).
+`commands/brd-reconcile.md` applies it in the freeze that moves a record of its own register (its
+*Freeze the customer decisions* step 3), and, through its propagation sweep, to the records of a
+sibling slice's or a dependent's register applied from one it moved, and from one a sweep write
+reopens or withdraws there (its *The propagation sweep*).
 
 **The reopening records its cause**, naming the finding or the customer decision that triggered it.
 A `reopened` record whose cause is unnamed is indistinguishable from someone simply changing their

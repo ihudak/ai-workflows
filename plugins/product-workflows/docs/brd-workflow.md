@@ -274,8 +274,10 @@ a superseded `[CD#n]`'s live successor and freezes nothing beside a withdrawn on
 question whichever way the operator takes the answer.
 
 **A decision reopened elsewhere is put again too.** `/brd-reconcile` reopens a decided `[VD#n]` or
-`[CD#n]` when a customer answer contradicts or constrains it without replacing it, and its
-propagation sweep reopens one in a dependent BRD when the prerequisite decision it rests on moves.
+`[CD#n]` when a customer answer contradicts or constrains it without replacing it, or moves the
+decision it was applied from, and its propagation sweep reopens one in a dependent BRD when the
+prerequisite decision it rests on moves — in a sibling slice too, where the decision there was
+applied from this slice's.
 The next `/brd-interview` round opened on that BRD puts the decision's question again, under its own
 tag and against the current findings, with each `Reopened` paragraph quoted as context, unless a
 question already putting it is still unanswered; the answer re-decides it in place, keeping its id.

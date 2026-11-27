@@ -85,6 +85,18 @@ The customer's reviewer wrote against the rendered body, so the twelve sections 
 order the schema fixes and section 7 — the decision log — carries the rows its section rules
 require. Parse it. Carry every row through with the identifier the review cites, exactly as written.
 
+**A section-7 row the reviewer's agent applied from another answer carries a marker, and you return
+it.** `customer-review-schema.md` §5's *applied-answer rule* fixes its form: after the row's
+reason, once, the two words `applied from`, one space, and `<round>/<position>` — `<round>` a whole
+number, `<position>` a whole number that may carry one split letter, as in `4a` — naming the
+question whose answer the row follows. Return that `<round>/<position>` as the decision's
+`applied_from`, exactly as written. Anything else offered as a marker is none — the marker twice
+on one row, or the two words followed by an assumption's or a finding's identifier, or by a
+question cited in any other form: return `applied_from: none` and report the row under
+`anomalies`, since a marker the schema does not allow is a departure to report, never a reading to
+repair. The two words inside the reason's own prose, followed by none of those, are prose, and the
+row carries no marker.
+
 Parsing is not inference, and the digest says so: these rows come back marked `parsed`. That is a
 statement about provenance, not a promotion — `/brd-reconcile` still runs its own step before
 anything becomes a `[CD#n]`, and this agent still mints no identifier in that namespace (below).
@@ -123,6 +135,10 @@ Prose says less than a register row wants, and the gaps are not yours to fill:
 - **Silence is not an answer.** A `[C]` question the prose does not touch is reported as
   unanswered — not inferred from an adjacent approval, and not inferred from the review's overall
   tone.
+- **An `applied from` marker is returned only where it is written.** A candidate carries
+  `applied_from` only where the passage its `quote` holds carries the marker in the schema-mode
+  form above, word for word — never because the prose says one answer follows from another.
+  Otherwise `applied_from: none`.
 
 **Section 1 is usually the casualty of free text.** A prose review rarely opens by stating what the
 reviewer actually had — which documents, which repositories, whether the pin-verification procedure
@@ -161,6 +177,8 @@ finding.
    happen to see. An unmatched decision is reported as `unmatched` — a customer may legitimately
    decide something
    nobody asked, and forcing it onto the nearest question loses both the answer and the question.
+   Return each decision's `applied_from` as the two modes above say; which decision it follows is
+   the caller's to resolve, never yours.
 
 5. **Extract the rest of the review as it stands**: corrections to requirement readings, code and
    design challenges, accepted and corrected assumptions, ownership, blockers, the readiness
@@ -199,6 +217,8 @@ decisions:
     statement:  <the decision as it would be registered>
     answer:     <what the customer decided>
     reason:     <the customer's own reason, or `not stated`>
+    applied_from: <the `<round>/<position>` the row's `applied from` marker names, as written, or
+                   `none` — see the two modes>
     quote: |
       <verbatim from the review — required for every candidate>
     confidence: high | medium | low     # candidates only
