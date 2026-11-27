@@ -91,16 +91,16 @@ them is.
 2. **The phase that answers `[G]` questions raises no prompt of any kind.** It reads findings and
    holds answers for the round record. It has no `AskUserQuestion` call, no free-text prompt, and no "just to confirm"
    path, and it runs to completion before any operator prompt is opened.
-3. **The operator queue is whatever the tagging phase has fixed, and nothing else ever reaches it.**
-   The *Put each `[V]` to the operator* phase takes the `[V]` set that phase produced — including
-   anything the `[G]` phase re-tagged into `[V]`, which re-enters at tagging and is re-tested there
-   before it joins the set (property 4). What the queue is never appended to is a question that
-   **has not been through the tagging phase**, save one kind: no phase adds to it directly, and once
-   this phase opens, nothing is added to it at all, save a question of the set returning to it
-   (below), a held `[C]` of the round that an answer shows was the delivery team's to decide all
-   along, re-tagged `[V]` by §2's own test with its cause recorded (`interview-tagging.md` §3; *Hold
-   every `[C]`*) — a question the tagging phase tagged, whose tag that test corrects, never one that
-   has not been through it — and a strategic `[V]` (*Plan the sittings*), which has not: it is
+3. **Everything that reaches the operator queue is a `[V]` the tagging phase tagged, or a strategic
+   question planned over such `[V]`s, so no `[G]` is behind any of it.** The *Put each `[V]` to the
+   operator* phase takes the `[V]` set the tagging phase produced — including anything the `[G]`
+   phase re-tagged into `[V]`, which re-enters at tagging and is re-tested there before it joins the
+   set (property 4). No phase adds to the queue directly, and once that phase opens, nothing is
+   added to it at all, save a question of the set returning to it (below), a held `[C]` of the
+   round that an answer shows was the delivery team's to decide all along, re-tagged `[V]` by §2's
+   own test with its cause recorded (`interview-tagging.md` §3; *Hold every `[C]`*) — a question the
+   tagging phase tagged, whose tag that test corrects — and a strategic `[V]` (*Plan the sittings*),
+   the one question that reaches the queue without going through the tagging phase itself: it is
    planned over `[V]`s the tagging phase tagged, covers nothing else and so takes their tag
    (`workflows-core:question-budget` §7), and the registry it is planned from holds no `[G]`, so no
    `[G]` is ever behind one. Stating it as "the `[V]` list alone, never appended to from
@@ -1783,13 +1783,16 @@ tag, and the disposition it arrived with stands.
 
 **The invariant this phase exists to establish**, and which every later phase depends on: when this
 phase ends, every question in the round carries exactly one tag, and the three sets — `[G]`, `[V]`,
-`[C]` — are fixed for this round, save the one correction below. A question that could not be resolved into one of the three is
+`[C]` — are fixed for this round, save the one correction below and the strategic questions *Plan
+the sittings* adds over them, each taking the tag of the questions it covers
+(`workflows-core:question-budget` §7). A question that could not be resolved into one of the three is
 left in the round in the *untagged* holding state, with what is wrong with it recorded, and the
 round stays open. It is never asked in that state, of anybody.
 
 A question re-tagged later (the *Answer every `[G]` from the findings* phase) re-enters **here**, is
 re-tested against §2, and joins whichever set it now belongs to. It never enters an asking phase by
-any other route. **The one correction made after this phase ends moves a question this phase
+any other route — a strategic question planned over the questions this phase tagged is no re-tag,
+and enters no set they are not in. **The one correction made after this phase ends moves a question this phase
 tagged, never one it did not**: a held `[C]` an answer shows was the delivery team's to decide all
 along is re-tagged `[V]` by §2's own test, its cause recorded (`interview-tagging.md` §3), and is
 then decided or applied as a `[V]` (*Hold every `[C]`*, *A held `[C]` an answer reaches*).
@@ -1850,8 +1853,8 @@ registry as the cause.
   the question as it is written, one line; `rows`, each `[BR#n]` it names, a qualified one by its
   bare id; `findings`, each `[CG#n]` and `[DG#n]` it carries; where its record carries a
   `- **Covers:**` line — a strategic question an earlier run planned (*Plan the sittings*) —
-  `"strategic": true` and `covers`, the addresses that line names, so that no plan covers them
-  again while it is open; `rank`, its place in the order the
+  `"strategic": true` and `covers`, the addresses that line names, whatever its state, so that no
+  plan covers them again (*Plan the sittings*); `rank`, its place in the order the
   objects are written, from 0, so that `next` returns the open ones in round and position order;
   and, where its last state is a
   terminal disposition, that state as `init` takes one (§12), with `"sitting": 0` so that no
@@ -2048,7 +2051,10 @@ registry holds no question, or was lost (its exit 2), it plans nothing: set fact
 **First, measure — once.** From the registry file, once *Then merge* has recorded its merges,
 drops and applied answers: `<v>`, the open, uncarried `[V]`s of the round this run works outside
 the skip set — the questions the sittings put to the operator — and `<c>`, the open, uncarried
-`[C]`s of every round, held for the customer (`workflows-core:question-budget` §8, *Reach*). The
+`[C]`s of every round, held for the customer (`workflows-core:question-budget` §8, *Reach*), that
+are not themselves strategic and that no strategic question of the registry names in its `covers`,
+whatever its state — those a strategic question already groups are left out, so a slice whose held
+`[C]`s are all grouped plans no strategic `[C]` again. The
 trigger is measured per person (§7, *Trigger*): the **`[V]` trigger** fires where `<v>` is above
 the budget in force, and the **`[C]` trigger** where `<c>` is. Record which fired as fact
 `p55-trigger` — `V`, `C`, `V C` or `none` — which every strategic plan of the run reads; a resumed
@@ -2061,20 +2067,20 @@ run that finds it set takes the triggers from it, and counts again only for the 
   `p55-scale` to `printed`; a resumed run that finds it set prints nothing, so the line is printed
   once in a run.
 - **The `[C]` trigger alone** — set `p6-walk` to `detailed`, and print, once, under the same fact:
-  `Questions held for the customer after merging: <c>, more than one sitting's budget of <budget>. Strategic questions for the customer are planned and written with this round; your questions are asked in detail.`
+  `Questions held for the customer after merging that no strategic question groups: <c>, more than one sitting's budget of <budget>. Strategic questions for the customer are planned for this round; your questions are asked in detail.`
 - **Neither** — set `p6-walk` to `detailed`. No strategic question is planned, and every sitting
   is one of the detailed walk.
 
 **Where either fired, make sitting 1's strategic plan now** (below). Where the `[V]` trigger fired
 and the plan kept no `V` entry, the strategic mode ends before it starts: print
 `No strategic question groups your questions; going on to the detailed questions.` on a line of its
-own, and set `p6-walk` to `detailed`. **Strategic `[C]`s are planned only here and at the re-plans
-of a strategic walk**: a run whose `[C]` trigger fires alone makes this one plan, and no sitting of
-it is strategic. **However the triggers came out, the phase then ends**: set `p55-done` to `done`.
+own, and set `p6-walk` to `detailed`. **Strategic `[C]`s are planned only here and in the plan of
+each later strategic sitting**: a run whose `[C]` trigger fires alone makes this one plan, and no
+sitting of it is strategic. **However the triggers came out, the phase then ends**: set `p55-done` to `done`.
 
-**A strategic plan** is the plan of strategic sitting `<n>`: made here for sitting 1, and after
-each strategic sitting for the next, as its re-plan (*Put each `[V]` to the operator*, *After a
-strategic sitting*). Where fact `p6-strategic-done-<n>` reads `done`, an earlier session made and
+**A strategic plan** is the plan of strategic sitting `<n>`: made here for sitting 1, and for each
+later one as it opens, once the operator has chosen another strategic sitting (*Put each `[V]` to
+the operator*, *Strategic sittings*, *After a strategic sitting*). Where fact `p6-strategic-done-<n>` reads `done`, an earlier session made and
 recorded it: its entries are read from `scratch/p6/strategic-entries-<n>.json`, and nothing below is
 made again. Otherwise, in order:
 
@@ -2088,13 +2094,18 @@ made again. Otherwise, in order:
    `--attach scratch/p6/strategic-<n>.json`, all else as there. It replies
    `RESULT <result_path> mode=strategic …` and writes one JSON object there: read that file. A
    `REFUSED` reply, or a file missing or not that object, is the dispatch failing: it is made once
-   more, and where that fails too, the plan keeps no entry, and the final report names the failure,
+   more, and where that fails too, the plan keeps no entry but those an earlier session kept (step
+   2), and the final report names the failure,
    with the planner's last reply line or why its file could not be read, as a defect of the run. A
    result read is recorded `done <folder> p6-strategic-<n>`.
-2. **Keep the entries** of the result's `strategic` list, in its order, that pass this test —
-   `question-planner`'s own checks made again, since an entry that fails one would close questions
-   on a plan the registry cannot hold — and leave out every other, naming it in the final report
-   with the test it failed:
+2. **Keep the entries** — save where `scratch/p6/strategic-entries-<n>.json` already stands: an
+   earlier session kept and numbered them, so read that file, skip this step and the next, and go
+   on to step 4, which takes up whatever that session went on to record. The file is generated
+   content and is never made again: kept again over a registry that already holds this plan's
+   entries, each would fail the test below against its own copy. Otherwise keep the entries of the
+   result's `strategic` list, in its order, that pass this test — `question-planner`'s own checks
+   made again, since an entry that fails one would close questions on a plan the registry cannot
+   hold — and leave out every other, naming it in the final report with the test it failed:
    - its `tag` is `V` where the `[V]` trigger fired, or `C` where the `[C]` trigger fired;
    - its `text` and `why` are not empty; its `options` hold two to four distinct labels; its
      `recommended` is one of them, beside a `reason` that is not empty, or `""` on a `V` entry;
@@ -2102,31 +2113,33 @@ made again. Otherwise, in order:
      set, one putting a record again (its `- **Re-puts:**` line, or this run's tie picker's
      answer, naming one), and a `[V]` whose `[V]` tag is on file with no such line and no such
      answer (*Tag every question*, *The question registry*) — still names two or more questions,
-     each open in the registry, not carried, not strategic, and of the entry's tag;
+     each open in the registry, not carried, not strategic, and of the entry's tag. That trimmed
+     list is the entry's `covers` from here on: the entries file, `add`, the count its prompt shows
+     and its `- **Covers:**` line all take it;
    - **no question is covered twice** (`workflows-core:question-budget` §7, *Planning*): none of
-     its `covers` is named in the `covers` of an open strategic question of the registry, or of
-     an entry kept before it;
+     its `covers` is named in the `covers` of any strategic question of the registry, whatever its
+     state — open, answered, split, deferred or reopened, of this run or of a run before it — or
+     of an entry kept before it. What a strategic question's answer did not close, and what it
+     covers where it was split or deferred, is asked in detail, never grouped again;
    - at most the budget in force `V` entries are kept, the first in the list's order: one sitting's
      worth.
-3. **Number them**, the `C` entries first and then the `V` entries, each in the order kept: each
-   takes the next position after the highest the round this run works holds — on its record on
-   file, in the held round, or among the entries an earlier strategic plan of this run numbered — a
-   split part counting as its question's number (`interview-tagging.md` §5). Its qid is
-   `<round>/<position>`. Numbered so, a `V` entry never added (*After a strategic sitting*) leaves
-   no gap among the questions written. Write the kept entries, each with its `qid`, as one JSON
-   list, with `put <folder> 'scratch/p6/strategic-entries-<n>.json' --from -`, or held by the run
+3. **Number them**, in the order kept: each takes the next position after the highest the round
+   this run works holds — on its record on file, in the held round, or among the entries an earlier
+   strategic plan of this run numbered — a split part counting as its question's number
+   (`interview-tagging.md` §5). Its qid is `<round>/<position>`. Write the kept entries, each with
+   its `qid`, as one JSON list, with `put <folder> 'scratch/p6/strategic-entries-<n>.json' --from -`, or held by the run
    where the run folder is unavailable.
-4. **Record the plan.** Its `C` entries, where it kept any, are added — one `add`, its stdin
+4. **Record the plan.** Its entries, where it kept any, are added — one `add`, its stdin
    `{"questions": [...]}`, each entry as
    `{"qid", "tag", "text", "rows", "findings", "strategic": true, "covers", "rank", "recommendation"}`:
    `tag` and `text` the entry's; `rows` and `findings` every `[BR#n]` and every `[CG#n]` or
    `[DG#n]` its covered questions carry in the registry, each once, in the registry file's order;
    `rank` its place among the kept entries, from 0; `recommendation` its `recommended`, `null`
    where that is `""`. `add` adds all or none, so where the registry already holds the first
-   entry's qid — an earlier session's add — the call is not made. Its `V` entries are added the
-   same way, only when their sitting opens (*Put each `[V]` to the operator*, *Strategic
-   sittings*). Then the ranks: `rank`, its stdin the result's `ranks` less every qid no longer open
-   or now carried, as a sitting's plan records its own, so that the detailed walk meets what is
+   entry's qid — an earlier session's add — the call is not made. Its `V` entries are the
+   strategic `[V]`s of the sitting the plan is made for, which puts them (*Put each `[V]` to the
+   operator*, *Strategic sittings*). Then the ranks, where step 1 read a result: `rank`, its stdin
+   the result's `ranks` less every qid no longer open or now carried, as a sitting's plan records its own, so that the detailed walk meets what is
    left in the plan's order. Then set fact `p6-strategic-done-<n>` to `done`.
 
 **What a strategic question is in this run.** A strategic `[V]` is put to the operator in a
@@ -2150,7 +2163,8 @@ from the findings* re-tagged into it and which passed back through tagging. Noth
 phase begins, save a question of that set an end-of-sitting list reopens (below), a held `[C]`
 of the round this run works that an answer re-tags `[V]` (*Hold every `[C]`*, *A held `[C]` an
 answer reaches*), put in its turn like any `[V]` of the round, and the strategic `[V]`s a strategic
-plan adds as its sitting opens (*Plan the sittings*; *Strategic sittings*, below). **A `[V]` already
+plan adds — sitting 1's in *Plan the sittings*, each later strategic sitting's as it opens
+(*Strategic sittings*, below). **A `[V]` already
 disposed is in that set and not in the queue**: the standing re-decision *A later round is
 generated from what changed* records carries its terminal disposition from generation, or, in a
 round this run resumes, from the resume, and a question that already has one is never asked —
@@ -2805,8 +2819,9 @@ questions it might have closed stay open, to be asked.
      `[VD#n]`, `applied_from` the answer's `[VD#n]`, `answer` and `reason` the result's;
    - **`narrowed`** — `record --sitting <the sitting>`, event `narrowed`, `text` the result's: the
      question stays open and is put as that text — a held `[C]` only where this run builds its
-     entry, and never a carried or a strategic one (*Hold every `[C]`*, *A held `[C]` an answer
-     reaches*), on which it is not recorded;
+     entry. It is not recorded on a carried question, nor on a strategic one of either tag, whose
+     options, coverage and recommendation were planned for its text and are shown and applied
+     whole (*Hold every `[C]`*, *A held `[C]` an answer reaches*; *Strategic sittings*);
    - **`proposal`** and **`retag`** — on a held `[C]`: recorded as *Hold every `[C]`* records them
      (*A held `[C]` an answer reaches*), with `--sitting <the sitting>`;
    - **`untouched`** — nothing.
@@ -2931,18 +2946,22 @@ choices: ["All correct (Recommended)", "Let me name the ones to reopen (you'll b
   is asked about once more.
 
 **Strategic sittings** (*Plan the sittings*; `workflows-core:question-budget` §7). A sitting is
-strategic where its number is at most fact `p6-strategic-count` (`0` where unset), or where it opens while fact
-`p6-walk` reads `strategic`: the strategic sittings are the walk's first, since the walk turns
-detailed once and never back. It is a sitting of this phase like any other — its number
+strategic where its number is at most fact `p6-strategic-count` (`0` where unset), or where it
+opens while fact `p6-walk` reads `strategic` and its strategic plan keeps a `V` entry: the strategic
+sittings are the walk's first, since the walk turns detailed once and never back. It is a sitting
+of this phase like any other — its number
 `p6-sitting`, its spend `p6-spent-<sitting>`, each question numbered `Q<n>/<budget>` and recorded
 under its own gate, each answer recorded as it is given and applied forward, and its end-of-sitting
 list — and differs only where the paragraphs below say:
 
-- **It opens with its strategic plan**, the one made for its number as *Plan the sittings* makes
-  one, never with a sitting's plan (*Each sitting opens with its plan*). As it opens, set fact
-  `p6-strategic-count` to its number; then add the plan's `V` entries — one `add`, each as that
-  phase adds a `C` entry, the call not made where the registry already holds the first one's qid —
-  and write `[]` with `put <folder> 'scratch/p6/table-<sitting>.json' --from -` and with
+- **It opens with its strategic plan**, never with a sitting's plan (*Each sitting opens with its
+  plan*): sitting 1's, which *Plan the sittings* made, or a later sitting's, made now, as it opens,
+  as *Plan the sittings* makes one — its entries numbered and added and its ranks recorded there.
+  Where that plan kept no `V` entry, the strategic mode ends: print
+  `No strategic question is left to group your questions; going on to the detailed questions.` on a
+  line of its own, set `p6-walk` to `detailed`, and the sitting is one of the detailed walk,
+  opening with its plan. Otherwise set fact `p6-strategic-count` to its number, and write `[]` with
+  `put <folder> 'scratch/p6/table-<sitting>.json' --from -` and with
   `put <folder> 'scratch/p6/code-defects-<sitting>.json' --from -`: a strategic sitting puts no
   tail table and raises no code-defect question, its plan naming neither.
 - **It puts its own strategic `[V]`s alone** — the `V` entries of
@@ -2951,8 +2970,8 @@ list — and differs only where the paragraphs below say:
   them is open outside the skip set; it puts at most the budget, its plan having kept no more, so
   *At the budget* never ends it.
 - **Each is put on its own**, in `workflows-core:question-budget` §4's shape, its shown text built
-  from its entry, the registry and the files alone: what is being decided, the entry's `text` as
-  the registry holds it, which an earlier answer may have narrowed; what I saw, the entry's `why`,
+  from its entry, the registry and the files alone: what is being decided, the entry's `text`,
+  which no answer narrows (*Then the answer is applied forward*); what I saw, the entry's `why`,
   then its coverage in plain words and as a count — `Its answer decides <m> questions:`, `<m>` the
   covered questions still open, and each of them by its address and the first line of its text;
   and the options, the
@@ -2977,8 +2996,9 @@ list — and differs only where the paragraphs below say:
   (*A typed answer is read as the option it expresses*, above), the fourth option among those the
   prose lists — and words asking to split the question are the split, below, never written through.
 - **A split** (`workflows-core:question-budget` §7, *Split*) — the operator asking, in words, to
-  split the question: `drop --qid <its qid> --reason '<the reason>' --sitting <the sitting>`, the
-  reason `split at the operator's request`, then the words given, written between single quotes as
+  split a strategic question, wherever it is put, in a strategic sitting or in the detailed walk:
+  `drop --qid <its qid> --reason '<the reason>' --sitting <the sitting>`, the reason
+  `split at the operator's request`, then the words given, written between single quotes as
   *Then merge* writes a reason. The questions it covers stay open, to be asked in detail; no "why"
   is asked. The end-of-sitting list shows it among the drops, where it can be undone. A deferral of
   a strategic `[V]` is recorded as any deferral is, and closes nothing it covers either.
@@ -2986,23 +3006,23 @@ list — and differs only where the paragraphs below say:
   earlier run deferred — is put in the detailed walk in its turn, `next` printing it first, singly
   and never as a table row: one a plan of this run made, with its entry's options as above; any
   other with its options weighed as any `[V]`'s are, its `- **Why we ask:**` and `- **Covers:**`
-  lines shown from its round record. Coverage first applies to its answer either way (*Then the
-  answer is applied forward*).
+  lines shown from its round record. Words asking to split it are the split, as above, and
+  coverage first applies to its answer either way (*Then the answer is applied forward*).
+- **A question a strategic answer closed and an end-of-sitting list reopens** is asked in detail in
+  its turn, never grouped again: the strategic question's `covers` keeps naming it whatever that
+  question's state, and no later plan covers a question one names (*Plan the sittings*, the keep
+  test). So too each question a split or deferred strategic `[V]` covers.
 
 **After a strategic sitting** — once its end-of-sitting list is answered, any reopen it asks for
-made and fact `p6-cdf-done-<n>` set, `<n>` the sitting that ended:
+made and fact `p6-cdf-done-<n>` set, `<n>` the sitting that ended. Nothing is planned here: the
+stop rule is measured over what the sitting's answers, their applier sweep and its list left, and
+only the sitting chosen after it plans what is left — another strategic sitting its own strategic
+plan as it opens, the detailed walk's first sitting its plan, which ranks what is left.
 
 1. **Where no `[V]` of the round this run works is open outside the skip set**, nothing is left to
-   plan: set `p6-walk` to `detailed` and fact `p6-stop-done-<n>` to `done`, and the walk ends, the
+   ask: set `p6-walk` to `detailed` and fact `p6-stop-done-<n>` to `done`, and the walk ends, the
    run going on to *Hold every `[C]`*.
-2. **The re-plan** — the strategic plan of sitting `<n>` + 1, made as *Plan the sittings* makes
-   one: its `C` entries are added and its ranks recorded there, and its `V` entries are kept for
-   that sitting. Where it kept no `V` entry, the strategic mode ends: print
-   `No strategic question is left to group your questions; going on to the detailed questions.` on
-   a line of its own; set `p6-walk` to `detailed`, then `p6-sitting` to `<n>` + 1 where it reads
-   less, then `p6-stop-done-<n>` to `done`; and the next sitting is a detailed one, opening with its
-   plan. No choice is put.
-3. **The stop rule** (`workflows-core:question-budget` §7, *After each strategic sitting*),
+2. **The stop rule** (`workflows-core:question-budget` §7, *After each strategic sitting*),
    otherwise. Count `<k>`, the open, uncarried `[V]`s of the round this run works outside the skip
    set, from the registry file as it now stands, and print, on a line of its own kept out of the
    shown text, `Questions still open for you: <k>. The detailed walk is recommended at <2 × budget> or fewer, or after 3 strategic sittings.`
@@ -3021,16 +3041,16 @@ made and fact `p6-cdf-done-<n>` set, `<n>` the sitting that ended:
    choices: ["Go to the detailed questions (Recommended)", "Another strategic sitting"]
    ```
 
-   **Each option carries this description**, `<s>` the number of `V` entries the re-plan kept and
-   `<budget>` the budget in force:
-   - *Another strategic sitting* — "Asks the <s> strategic questions planned next, each answer closing the questions it covers; then this choice again."
+   **Each option carries this description**, `<budget>` the budget in force:
+   - *Another strategic sitting* — "Plans strategic questions over what is still open and asks up to <budget> of them, each answer closing the questions it covers; then this choice again. Where nothing more groups, the detailed questions follow."
    - *Go to the detailed questions* — "Asks the questions still open one at a time, up to <budget> a sitting, in the order they are ranked; no further strategic question is asked."
 
    - ***Another strategic sitting*** — set `p6-sitting` to `<n>` + 1 where it reads less, then
-     `p6-stop-done-<n>` to `done`; sitting `<n>` + 1 opens strategic, with the plan just made.
+     `p6-stop-done-<n>` to `done`; sitting `<n>` + 1 opens, making its strategic plan as it opens
+     (*Strategic sittings*, above).
    - ***Go to the detailed questions*** — set `p6-walk` to `detailed`, then `p6-sitting` to `<n>` + 1
-     where it reads less, then `p6-stop-done-<n>` to `done`. The re-plan's `V` entries are never
-     added, and the next sitting is a detailed one, opening with its plan.
+     where it reads less, then `p6-stop-done-<n>` to `done`. No strategic plan is made, and the
+     next sitting is a detailed one, opening with its plan.
    - **A typed answer is read as the option it expresses** (§4) and normalised into one of the two,
      never written through; one clarifying question, in plain text, is asked only where it maps to
      neither, and the same dialog is never put twice. Words to stop are an abort, as at the `[V]`
@@ -3040,11 +3060,11 @@ made and fact `p6-cdf-done-<n>` set, `<n>` the sitting that ended:
 question — once it has completed any interrupted reopen and asked what an earlier sitting left
 unasked (*The end-of-sitting list*, *The code-defect question*, above) — for each sitting `<n>`
 below the one `p6-sitting` names, and at most `p6-strategic-count`, whose fact `p6-stop-done-<n>`
-is unset, it takes up *After a strategic sitting* for it: the re-plan read where
-`p6-strategic-done-<n+1>` reads `done` and made otherwise, its dispatch reused where its
-fingerprint still matches, and the choice's recorded answer acted on without asking — the choice
-put where none was recorded. A sitting whose end-of-sitting reopen moved `p6-sitting` on before its
-choice was acted on is reached this way; one still current is reached as the walk ends it again.
+is unset, it takes up *After a strategic sitting* for it: `<k>` counted again over a registry no
+event has touched since that count — the next sitting opens only once the fact is set — and the
+choice's recorded answer acted on without asking, the choice put where none was recorded. A
+sitting whose end-of-sitting reopen moved `p6-sitting` on before its choice was acted on is reached
+this way; one still current is reached as the walk ends it again.
 
 ---
 
@@ -3583,8 +3603,7 @@ a `[C]`, `- **Proposed answer:** <its recommended> — <its reason>`, as its ent
 `interview/customer-questions.md` carries it (*Hold every `[C]`*); on a `[V]`, `- **Re-puts:**
 none`; then its state, where it reached one — as *Every question the registry closed* gives it on a
 `[V]`, and *held for the customer* on a `[C]`, beneath which any proposal recorded on it goes, as
-*Every held `[C]` an answer reached* gives it. A `V` entry never added — the operator went to the
-detailed questions first — is no question of the round, and is written nowhere. Each question a
+*Every held `[C]` an answer reached* gives it. Each question a
 strategic `[V]`'s answer closed through its coverage takes its applied state at its own address, in
 its own round's record, like any applied answer.
 

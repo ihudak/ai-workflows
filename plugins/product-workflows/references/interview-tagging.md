@@ -246,9 +246,8 @@ plans strategic questions over the round's questions and every other open one on
 to the delivery team in a strategic sitting, and a strategic `[C]`, held for the customer. Each is a
 question of the round that run works, tagged like what it covers and addressed by that round and a
 position like any other: it takes the next position after the highest the round holds — on its
-record, or among the questions the run holds for it — each plan's `[C]`s first and then its `[V]`s,
-in the order the plan gives them, so a later strategic sitting's questions continue after the
-last. A strategic `[V]` planned for a sitting the operator chose not to hold is never added to the
-round, and takes no position in its record. The round record carries each strategic question's
-*Why we ask* and what it covers, and its state like any question's; each question its answer
-closes is recorded applied from that answer's decision, in whichever round holds it.
+record, or among the questions the run holds for it — in the order the plan gives them, so a later
+strategic sitting's questions continue after the last. The round record carries each strategic
+question's *Why we ask* and what it covers, and its state like any question's; each question its
+answer closes is recorded applied from that answer's decision, in whichever round holds it, and a
+question it covers that its answer did not close is asked in detail, never grouped again.

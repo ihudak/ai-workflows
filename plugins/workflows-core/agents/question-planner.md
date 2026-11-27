@@ -137,9 +137,11 @@ word.
    **`strategic`** — before a strategic sitting of the interview (rulebook §7).
    - Group the open, uncarried questions under strategic questions, each one whose answer would
      determine two or more of them, which it lists as its `covers`. A question is covered by at most
-     one (rulebook §7): never by two entries, and never where an open strategic question of
-     `questions` — `strategic` true — already names it in its `covers`, an earlier plan's, of this
-     run or a run before it. A strategic question of `questions` is itself never covered.
+     one (rulebook §7): never by two entries, and never where a strategic question of `questions`
+     — `strategic` true, whatever its `state`: open, answered, deferred or dropped — already names
+     it in its `covers`, an earlier plan's, of this run or a run before it; what that question's
+     answer did not close is asked in detail. A strategic question of `questions` is itself never
+     covered.
      Covering `[V]`s, the strategic question is tag `V`; covering held `[C]`s, tag `C`, its
      `covers` naming no carried one; where a group would hold both, write it as two, one per tag.
    - Each entry is in §4's shape: `text`, one plain line saying what is being decided, in the
@@ -184,9 +186,9 @@ word.
      candidates after its first, which appear in neither; no carried question appears in either;
    - `ask` holds at most the budget, less one where `table` holds a row, a group counting one;
    - each `strategic` entry covers two or more open, uncarried questions of its own tag, none
-     strategic, none covered by another entry and none an open strategic question of `questions`
-     already covers, with two to four options and `recommended` one of them or `""`, never `""` on
-     a `C`;
+     strategic, none covered by another entry and none a strategic question of `questions`, in any
+     `state`, already covers, with two to four options and `recommended` one of them or `""`, never
+     `""` on a `C`;
    - each `code_defects` entry's `[CG#n]` is among its own question's `findings` and qualifies — in
      the input's `findings`, with an `outcome` other than `unprovable` and a verdict listed above —
      and the evidence its `intent_basis` is copied from is in `findings`.

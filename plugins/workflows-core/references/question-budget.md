@@ -159,10 +159,12 @@ open for a person exceed one budget, the run says so before its first question �
 tag; the plan, strategic sittings first; the dispatches it expects — and plans strategic questions.
 
 **Planning.** The planner groups open questions into strategic questions, each in §4's shape with
-*Why we ask* and its `covers`, ranked by §6. **No question is covered twice**: a question an open
-strategic question on file already covers — planned earlier in the run or by a run before it — is
-never covered again, and a strategic question is never covered at all; the planner holds to it and
-the caller leaves out any strategic question that does not. A strategic question takes the tag of what it covers:
+*Why we ask* and its `covers`, ranked by §6. **No question is covered twice**: a question any
+strategic question on file names in its `covers` — whatever that question's state, open, answered,
+split or deferred, and whether it was planned earlier in the run or by a run before it — is never
+covered again, and a strategic question is never covered at all. What a strategic question's answer
+did not close, and what a split or deferred one covers, is asked in detail. The planner holds to
+it, and the caller leaves out any strategic question that does not. A strategic question takes the tag of what it covers:
 
 - covering `[V]`s, it is a `[V]`, asked of the delivery team in a strategic sitting;
 - covering held `[C]`s, it is a `[C]`, written for the customer — an entry of the current round,
@@ -171,15 +173,17 @@ the caller leaves out any strategic question that does not. A strategic question
   carried one;
 - covering both, it is split in two.
 
-**After each strategic sitting** its answers are applied forward (§8), what is left is planned again
-and its new ranks written with `rank` (§6), and the run offers another strategic sitting or the
-detailed walk, recommending one by the **stop rule**, measured over the questions still open for the
-person the sittings ask:
+**After each strategic sitting** its answers are applied forward (§8), and the run offers another
+strategic sitting or the detailed walk, recommending one by the **stop rule**, measured then —
+before anything is planned again — over the questions still open for the person the sittings ask:
 
 - at most 2 × budget open: the detailed walk is recommended;
 - more than that, with fewer than 3 strategic sittings run: another strategic sitting is
   recommended;
 - after 3 strategic sittings: both are offered, the detailed walk recommended.
+
+Once the choice is made, what is left is planned again — by another strategic sitting's own plan,
+or by the detailed walk's first sitting's — and its new ranks are written with `rank` (§6).
 
 **Split.** An operator who answers a strategic question by asking to split it, chosen or typed, has
 it dropped with that reason; the questions it covers stay open, to be asked in detail.
