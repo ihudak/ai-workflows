@@ -8,7 +8,7 @@ The gate `/document`, `/docs-write` and `/docs-verify` run after writing, plus t
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `doc-reviewer` | opus | Read, Glob, Grep, Skill | Reviews docs `/document` wrote, a unit's page `/docs-write` drafted, or the readings `/docs-verify` applied to one, for correctness, completeness and fitness; Epic drafts go to `epic-reviewer`. | `/document`, `/docs-write`, `/docs-verify` |
+| `doc-reviewer` | opus | Read, Glob, Grep, Skill | Reviews docs `/document` wrote, a unit's page `/docs-write` drafted, or the answers `/docs-verify` applied to one, for correctness, completeness and fitness; Epic drafts go to `epic-reviewer`. | `/document`, `/docs-write`, `/docs-verify` |
 | `docs-scaffold-reviewer` | opus | Read, Glob, Grep, Bash | Reviews the docs-repo scaffold — mkdocs configs, generated nav, `.vale.ini`, CI workflow, theme CSS — against a fixed seven-item checklist; never reads page content. Returns findings only, no fixer. | `/docs-init`, `/docs-brand` |
 | `doc-planner` | per routing | Read, Glob, Grep, Skill | Synthesises PRD content, per-repo diff summaries, and confirmed write targets into the documentation checklist the writer follows and the reviewer checks against; writes no content itself. | `/document` |
 | `docs-style-checker` | per routing | Read, Glob, Grep, Bash, Task, Skill | Runs the docs repo's configured prose linter and a complementary `prose-style-checker` pass; merges both finding sets for `doc-reviewer`/`doc-fixer`. | `/document`, `/docs-write`, `/docs-verify` |
@@ -30,7 +30,7 @@ Produce content from a structured handoff. Neither runs git.
 
 | Agent | Model | Tools | What it does | Used by |
 |---|---|---|---|---|
-| `doc-writer` | per routing | Read, Glob, Grep, Write, Edit, Bash, Skill | Writes docs from a handoff — for `/document` the `doc-planner` checklist, write strategies and screenshots; for `/docs-write` a unit's evidence, markers and placement; for `/docs-verify` the readings. | `/document`, `/docs-write`, `/docs-verify` |
+| `doc-writer` | per routing | Read, Glob, Grep, Write, Edit, Bash, Skill | Writes docs from a handoff — for `/document` the `doc-planner` checklist, write strategies and screenshots; for `/docs-write` a unit's evidence, markers and placement; for `/docs-verify` the answers. | `/document`, `/docs-write`, `/docs-verify` |
 | `release-notes-writer` | per routing | Read, Glob, Grep, Skill | Renders a release-notes draft — exactly one Summary, shaped by its resolved destination; emits no work-item ID, PR link, or internal-note wrapper. Does not write files. | `/release-notes` |
 
 ## The documentation audit

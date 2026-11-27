@@ -2,7 +2,7 @@
 
 A portal is not finished when it builds. [`/docs-init`](commands/docs-init.md) gives you a site that builds, lints and serves with a stub in every section, and [`/docs-audit`](commands/docs-audit.md) gives you a prioritised list of every page that site is missing — and then you are holding a backlog with no stated order to work through it. This page is that order: from an empty repository to a portal whose coverage grid says the work is done, step by step, with the parts no command runs written out as the procedure a person actually follows.
 
-**Five of the eight steps below run a command, and step 6 runs one for an engineering page. The rest you do by hand — step 6 too, for a user page — and this page says how.** Read *by hand* as **no command of this plugin does that step for you** — not as *no command helps*: [`/document`](commands/document.md) in direct mode will apply an edit you describe to a page and style-check it, though it reads no backlog and moves no unit. Where a command is planned to automate a step, it is named at the end of that step, as what may change later and never as something to type. **Nothing on this page asks you to run a command that is not installed.**
+**Six of the eight steps below run a command, though step 6 leaves you a page its command cannot verify. The rest you do by hand — step 6 too, for such a page — and this page says how.** Read *by hand* as **no command of this plugin does that step for you** — not as *no command helps*: [`/document`](commands/document.md) in direct mode will apply an edit you describe to a page and style-check it, though it reads no backlog and moves no unit. Where a command is planned to automate a step, it is named at the end of that step, as what may change later and never as something to type. **Nothing on this page asks you to run a command that is not installed.**
 
 ## The route
 
@@ -18,7 +18,7 @@ flowchart TD
     subgraph LOOP["Repeatedly — until the coverage threshold is met"]
         WRITE["/docs-write — write the next unit"]
         CAPTURE["capture what the page shows — by hand"]
-        VERIFY["verify the marked claims — /docs-verify for an engineering page, by hand for a user page"]
+        VERIFY["verify the marked claims — /docs-verify, by hand where it cannot"]
         WRITE -->|"a how-to or a tutorial"| CAPTURE
         WRITE -->|"anything else"| VERIFY
         CAPTURE --> VERIFY
@@ -38,7 +38,7 @@ flowchart TD
     class INIT entry
 ```
 
-Every *by hand* in a node is a step nothing in this plugin runs for you; the verify node carries one for a user page alone. The loop in the middle opens with [`/docs-write`](commands/docs-write.md), which drafts a unit's page from the product's code and specifications, and goes on to a check on purpose: a page drafted from the code has not been checked against the product, and reading its claims — in the code for an engineering page, which [`/docs-verify`](commands/docs-verify.md) does for you, on the screen for a user page, which you walk by hand — is what checks it. [Workflow overview](workflow.md) draws all nine of this plugin's commands and where each sits; this page draws only the ones on this route, plus the work between them.
+Every *by hand* in a node is a step nothing in this plugin runs for you; the verify node carries one for a page its command cannot verify, such as an explanation page. The loop in the middle opens with [`/docs-write`](commands/docs-write.md), which drafts a unit's page from the product's code and specifications, and goes on to a check on purpose: a page drafted from the code has not been checked against the product, and checking its claims is what [`/docs-verify`](commands/docs-verify.md) does with you — on the screen for a user page, which it walks with you step by step, and in the code for an engineering page, which it reads. [Workflow overview](workflow.md) draws all nine of this plugin's commands and where each sits; this page draws only the ones on this route, plus the work between them.
 
 ---
 
@@ -84,7 +84,7 @@ The run enumerates the surfaces the product has, crosses each with the page type
 
 ## Then, repeatedly, until the coverage threshold is met
 
-These three steps are the loop: [`/docs-write`](commands/docs-write.md) drafts a unit's page, the capture after it is yours, and the verification is `/docs-verify`'s for an engineering page and yours for a user page.
+These three steps are the loop: [`/docs-write`](commands/docs-write.md) drafts a unit's page, the capture after it is yours, and the verification is `/docs-verify`'s — a walk you answer for a user page, a reading for an engineering page — save for a page it cannot verify, which is yours.
 
 ### 4. Write the next unit — `/docs-write`
 
@@ -109,7 +109,7 @@ These three steps are the loop: [`/docs-write`](commands/docs-write.md) drafts a
 - **`review_by`** — a date: the day of the run plus 90 days for a surface of `high` volatility, 180 for `medium`, 365 for `low`, and 180 for a unit with no surface. Step 8 sorts your pages by it.
 - **The markers.** Every claim the evidence does not ground is marked `[NEEDS CLARIFICATION: why]` inline, where a reader meets it, and the page's first body line is one more marker, for the page as a whole, saying it was drafted from the product's code and specifications and has not been checked against the product itself. On an internal page that line comes second, after the internal marker below. Step 6 is where they come off.
 - **The internal marker, where the page is internal** — `<!-- docs-visibility: internal -->`, the first line after the frontmatter, for the reason the procedure below gives.
-- **Image slots.** Where the unit names a walkthrough, each capture it lists becomes a `<!-- docs-image-slot: <slot> -->` comment where the page describes what that capture shows, for step 5 to fill.
+- **Image slots.** Where the unit names a walkthrough, each capture it lists becomes a `<!-- docs-image-slot: <slot> -->` comment where the page describes what that capture shows: step 5 captures the image, and step 6's walk asks you for it, where the profile records its `images` settings, and puts it in place.
 
 **The navigation.** Where the profile records its builds and every build config carries the generated `nav:` block a `/docs-init` scaffold writes, the run regenerates that block — each section's pages sorted on their frontmatter `order`, then `title`, a page with no `order` after every page that has one — so you place nothing. Otherwise it adds the page's entry beside its siblings in each navigation config holding a `nav:` block and in each page its placement search names as linking to the new one, each listed in the question above — an internal page's entry going only on internal pages and into the internal build's config. Where there is neither, the repository's own navigation decides.
 
@@ -138,7 +138,7 @@ Mark every claim you could not ground with `[NEEDS CLARIFICATION: why]`, in the 
 
 A `how-to` or a `tutorial` needs the sequence of screens it describes, and **that sequence is not derivable from routes** — which is why this step exists whether or not a command ever runs it.
 
-**Walk the flow in a real environment** and screenshot each step the page describes. Where the unit names a `walkthrough`, follow it; no command composes one, so a unit has one only because somebody wrote it. Where there is none, walk the flow yourself and consider writing the file as you go — the format is frozen now so that a browser driver can execute the very same file later, without anybody rewriting it.
+**Walk the flow in a real environment** and screenshot each step the page describes. Where the unit names a `walkthrough`, follow it; before step 6 a unit has one only where somebody wrote it, or an earlier `/docs-verify` run composed it and committed it. Where there is none, walk the flow yourself and consider writing the file as you go — `/docs-verify` composes one at step 6 where the unit has none, but proposes no captures, so a slot comes only from a file somebody wrote. The format is frozen now so that a browser driver can execute the very same file later, without anybody rewriting it.
 
 A walkthrough lives at **`<top>/.dev-workflows/walkthroughs/<id>.yml`**, where `<top>` is the git top level of the documentation repository — the same home as the backlog and the profile, and not the content root, which matters where the site sits in a `site/` or `website/` directory below it. The unit records the **id** and never the path. This is the whole shape:
 
@@ -176,19 +176,24 @@ Under `in-repo`, `images.max_bytes` (default 300 KB) is the CI budget checked pe
 
 *Later: `/docs-capture` is planned to drive the capture and fill the slots a walkthrough names. No such command exists yet.*
 
-### 6. Verify the marked claims — by command for an engineering page, by hand for a user page
+### 6. Verify the marked claims — `/docs-verify`, or by hand where it cannot
 
-**For an engineering page**, run [`/docs-verify`](commands/docs-verify.md):
+Run [`/docs-verify`](commands/docs-verify.md):
 
 ```
 /docs-workflows:docs-verify --next
 ```
 
-It takes the next `drafted` engineering unit whose `blocked_by` is empty — or name one, `/docs-verify <unit-id>` — and reads each claim on its page in the code, at today's commit of every repository the page's `evidence:` names, and in its architecture decision record at the specs repository's default branch; where an entry records an older commit, the report shows that reading too. A unit the default branch moved on after the branch or commit you stand on left it is never verified from there: `--next` passes it over, and a unit you name stops the run before the question that shows its page, so nothing is written. It asks once before it scans or exports any repository, showing the page, each repository and decision record it will read and every build and lint command it will run; it asks about each claim the decision record and the code state differently; and it shows you the readings and asks again before it changes anything. Then it rewrites each claim that reads otherwise in its code or decision record to say what was read, removes the page-level marker, holds the page to the style check, the builds and an Opus review, and commits the page with the unit's move to `verified` in one commit on a branch. It offers one push, prints a pull-request draft and opens no pull request.
+It takes the next `drafted` unit whose `blocked_by` is empty and whose page still opens with the page-level marker — or name one, `/docs-verify <unit-id>` — and verifies the page by its audience's method. A unit the default branch moved on after the branch or commit you stand on left it is never verified from there: `--next` passes it over, and a unit you name stops the run before the question that shows its page, so nothing is written. It asks once before it scans a repository, composes a walkthrough or writes anything, showing the page, what it will read and every build and lint command it will run. Then:
 
-**Where a claim does not resolve** — its code or decision record does not settle it, an evidence path is gone, or the decision record and the code disagree and you leave it undecided — nothing on the page changes: the unit stays `drafted` with `blocked_by: [claims-unresolved]`, that record is committed, and the report lists each claim and why. Edit the page or its source for each claim, correct or remove each evidence entry that is gone, commit, clear the token and run it again — or verify the page by hand, as below, and move the unit by hand. **Where it could not read a repository** the page rests on, it writes no token and commits nothing: make that repository readable and run it again.
+- **A user page is walked with you.** Its unit's entry needs a `walkthrough:` line — `null` where it has none yet. An Opus agent reads the page, never the code, and composes a walkthrough whose steps observe every claim on it, or adds the steps an existing one misses, and you see every step before anything is written; for a new walkthrough you name, once, the environment you walk it in. Then the run asks you each step in turn — `confirmed`, `differs` with what you saw, or `blocked` with why — and writes each answer into the walkthrough as you give it. Where the page carries image slots and the profile records its `images` settings, it asks for each image after the step its slot follows, and, once you have given any, whether they show nothing that must not be published.
+- **An engineering page is read**, in the code at today's commit of every repository the page's `evidence:` names, and in its architecture decision record at the specs repository's default branch; where an entry records an older commit, the report shows that reading too. It asks about each claim the decision record and the code state differently, and shows you the readings and asks again before it changes anything.
 
-**For a user page**, walk the steps in a real environment and answer each one:
+Then it rewrites each claim that reads otherwise to say what you saw or what was read, removes the page-level marker, holds the page to the style check, the builds and an Opus review, and commits the page — with a user page's walkthrough and images — and the unit's move to `verified` in one commit on a branch. It offers one push, prints a pull-request draft and opens no pull request.
+
+**Where a claim does not resolve** — on an engineering page, its code or decision record does not settle it, an evidence path is gone, or the decision record and the code disagree and you leave it undecided; on a user page, no step can observe it, a sentence of rationale among them — nothing on the page changes: the unit stays `drafted` with `blocked_by: [claims-unresolved]`, that record is committed, and the report lists each claim and why. Edit the page or its source for each claim, correct or remove each evidence entry that is gone, commit, clear the token and run it again — or verify the page by hand, as below, and move the unit by hand. **An explanation page** states the product's rationale, which no walk observes, so this is where it usually ends: verify it by hand. **Where a walk does not finish** — you stop, a step stays `blocked` or unanswered, a later gate fails, or you cancel once the walk has begun — the run commits the walkthrough with every answer given, and no token, unless the walkthrough changed under it or could not be written, which the report names; `/docs-verify <unit-id>` then offers to take those answers and walks the steps left. **Where it could not read a repository** the page rests on, it writes no token and commits nothing: make that repository readable and run it again.
+
+**By hand, for a page `/docs-verify` cannot verify.** For a user page, walk the steps in a real environment and answer each one:
 
 | Answer | Means | You also write down |
 |---|---|---|
@@ -198,7 +203,7 @@ It takes the next `drafted` engineering unit whose `blocked_by` is empty — or 
 
 **Writing the observed text down on a `differs` is what pays for the exercise.** "Step 4 failed" sends somebody back to the environment to find out what it says instead; "step 4 shows *Create order*, not *New order*" **is** the page edit, already written by the person who was looking at the screen. A `differs` with nothing written down is an incomplete answer — do not record it until you have the text in front of you.
 
-Answers go back into the walkthrough file, on the step they belong to, and **each of the two extra fields belongs to exactly one outcome**: `observed` carries the text you saw and is written on a `differs` and on nothing else; `note` carries the reason and is written on a `blocked` and on nothing else. A note on a `confirmed` step is a comment nothing has a rule for.
+Answers go back into the walkthrough file, on the step they belong to, and **each of the two extra fields belongs to exactly one outcome**: `observed` carries the text you saw and is written on a `differs` and on nothing else; `note` carries the reason and is written on a `blocked` and on nothing else. A note on a `confirmed` step is a comment nothing has a rule for. **Answers you write by hand carry no stamp**, so a later `/docs-verify` run counts none of them: it takes only answers recorded behind a stamp naming the page as it stands, which its own walk writes, and clears the rest when it walks.
 
 ```yaml
   - n: 2
@@ -217,13 +222,11 @@ Answers go back into the walkthrough file, on the step they belong to, and **eac
 
 **Then dispose of each marker.** A claim that survives becomes prose and its `[NEEDS CLARIFICATION]` marker comes off, because the claim has been settled. One that does not **stays marked** and ships marked — there is no third disposition, and "the page is being published now, so let us tidy that up" is not one of them.
 
-**A drafted page's own marker comes off once every claim is walked.** A page `/docs-write` drafted carries a marker for the page as a whole, saying it has not been checked against the product: its first body line, or, on an internal page, the line after `<!-- docs-visibility: internal -->`, which stays where it is. `/docs-verify` removes it in the commit that verifies an engineering page; by hand, remove it once you have walked every claim on the page. Until it is gone, a `--refresh` that meets the page lands its unit on `drafted`, never `published`.
+**A drafted page's own marker comes off once every claim is settled.** A page `/docs-write` drafted carries a marker for the page as a whole, saying it has not been checked against the product: its first body line, or, on an internal page, the line after `<!-- docs-visibility: internal -->`, which stays where it is. `/docs-verify` removes it in the commit that verifies the page; by hand, remove it once you have walked or read every claim on the page. Until it is gone, a `--refresh` that meets the page lands its unit on `drafted`, never `published`.
 
-**Then set the status, and the two cases end differently.** A page you resolved every marker on goes `status: verified` — for an engineering page `/docs-verify` verified, its commit has already made that move — and then `published` when the page actually ships. **A page still carrying a marker takes `drafted` and stops there** — it may be merged and deployed with the marker showing, which is what *ships marked* means, but its unit may not reach `published` by any route: not the ordinary one, which runs through `verified`, and not the `--refresh` reconciliation, which reads the page, finds the marker and lands the unit on `drafted` itself. Resolve the marker and the unit moves on; until then the grid says, correctly, that this one is not finished.
+**Then set the status, and the two cases end differently.** A page you resolved every marker on goes `status: verified` — for a page `/docs-verify` verified, its commit has already made that move — and then `published` when the page actually ships. **A page still carrying a marker takes `drafted` and stops there** — it may be merged and deployed with the marker showing, which is what *ships marked* means, but its unit may not reach `published` by any route: not the ordinary one, which runs through `verified`, and not the `--refresh` reconciliation, which reads the page, finds the marker and lands the unit on `drafted` itself. Resolve the marker and the unit moves on; until then the grid says, correctly, that this one is not finished.
 
 **`verified → published` has no command behind it, now or later** — that transition is a branch merged and a site deployed, which happens in your repository. It is worth knowing which arrow that is, because `published` is the state the coverage fraction counts, and there is deliberately no arrow from `drafted` straight to it: if there were, the grid could go green over pages the family knows it never walked.
-
-*Later: `/docs-verify` is planned to walk a user page too — to render its checklist, take your answers and write them back. Until it does, a user page is walked by hand, as above.*
 
 ---
 
@@ -239,10 +242,10 @@ Run it after a new integration, a new role or a new release, so the denominator 
 
 ### 8. Re-read what `review_by` has aged — by hand
 
-`review_by` in a page's frontmatter is the calendar backstop for the rot no diff can see: a product renamed, a process changed, a policy that moved, none of which touches a line of the code a page's evidence points at. Sort your pages by that date and re-read what has aged past it. A page that is still right takes a new date. **One that is not you rewrite by hand, in place** — `/docs-write` drafts only a unit still `missing`, and `/docs-verify` takes only a `drafted` engineering unit, so nothing on this route rewrites an aged page for you. The rewrite is the same whatever the unit's status: edit the page where it stands, keeping its path and its `unit:` line; mark each claim you can no longer ground rather than leave it standing; set each `code` and `artifact` evidence entry's `ref` to the commit you read it at, so that step 6 reads against what you read; and give the page a new `review_by`. What becomes of the unit turns on its `status`, because the backlog's lifecycle allows only the moves [its diagram](reference/docs-backlog.md#the-states-a-page-moves-through) draws:
+`review_by` in a page's frontmatter is the calendar backstop for the rot no diff can see: a product renamed, a process changed, a policy that moved, none of which touches a line of the code a page's evidence points at. Sort your pages by that date and re-read what has aged past it. A page that is still right takes a new date. **One that is not you rewrite by hand, in place** — `/docs-write` drafts only a unit still `missing`, and `/docs-verify` takes only a `drafted` unit, so nothing on this route rewrites an aged page for you. The rewrite is the same whatever the unit's status: edit the page where it stands, keeping its path and its `unit:` line; mark each claim you can no longer ground rather than leave it standing; set each `code` and `artifact` evidence entry's `ref` to the commit you read it at, so that step 6 reads against what you read; and give the page a new `review_by`. What becomes of the unit turns on its `status`, because the backlog's lifecycle allows only the moves [its diagram](reference/docs-backlog.md#the-states-a-page-moves-through) draws:
 
 - **`drafted`** — the page has not been verified yet. Rewrite it; the unit stays `drafted`, and step 6 covers the rewrite.
-- **`published`** — the lifecycle leads back to `drafted` only through `stale`. Mark the unit `stale` in the backlog when you find the page out of date, move it on to `drafted` in the commit that rewrites the page, then verify the page as step 6 says — for `/docs-verify` to take an engineering page, put the page-level marker back, character for character — `[NEEDS CLARIFICATION: this page was drafted from the product's code and specifications and has not been checked against the product itself.]` — where a drafted page carries it (the first line of its body, after the internal marker on an internal page) in that commit, since that command takes no page that does not open with that exact line.
+- **`published`** — the lifecycle leads back to `drafted` only through `stale`. Mark the unit `stale` in the backlog when you find the page out of date, move it on to `drafted` in the commit that rewrites the page, then verify the page as step 6 says — for `/docs-verify` to take the page, put the page-level marker back, character for character — `[NEEDS CLARIFICATION: this page was drafted from the product's code and specifications and has not been checked against the product itself.]` — where a drafted page carries it (the first line of its body, after the internal marker on an internal page) in that commit, since that command takes no page that does not open with that exact line.
 - **`verified`** — its one move is to `published`, which you make by hand when the page ships. Publish it as it stands, before you rewrite it — a page carrying a marker may never be marked `published` — then take the `published` route above.
 
 *Later: `/docs-drift` is planned to watch the evidence side of this — diffing a surface's evidence paths between the ref the backlog recorded and today, and re-queueing the units that fan out from it. The calendar side stays a human judgement either way, so this step does not disappear when that command ships.*
@@ -269,7 +272,7 @@ So the realistic order front-loads reference and explanation — which is also w
 - [`/docs-serve`](commands/docs-serve.md) — step 2: starting, stopping and checking the dev server.
 - [`/docs-audit`](commands/docs-audit.md) — steps 3 and 7: the flags, the phases, the gates and every failure mode.
 - [`/docs-write`](commands/docs-write.md) — step 4: the selectors, the consent, the gates, the commit and every failure mode.
-- [`/docs-verify`](commands/docs-verify.md) — step 6 for an engineering page: the selectors, the consent, the readings, the gates, the commit and every failure mode.
+- [`/docs-verify`](commands/docs-verify.md) — step 6: the selectors, the consent, the walk and the readings, the gates, the commit and every failure mode.
 - [`/document`](commands/document.md) — the two modes, and what direct mode does with the prose of a page you write yourself.
 - [The documentation backlog](reference/docs-backlog.md) — the file this route is worked through: each block, the status lifecycle, what the coverage fraction counts.
 - [The coverage model](reference/docs-coverage-model.md) — surfaces, the page types a surface earns, and what decides the order.

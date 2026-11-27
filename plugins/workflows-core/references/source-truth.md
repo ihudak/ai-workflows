@@ -96,7 +96,7 @@ are ignored. The
 
 For every documentation page, snippet, or release-notes entry produced by a
 command of a plugin that depends on this one — `/document`,
-`/release-notes` and `/docs-verify` today — verify the following classes of user-visible claim
+`/release-notes` and, on an engineering page, `/docs-verify` today — verify the following classes of user-visible claim
 against the source code:
 
 | Claim type | Where to verify in code |
