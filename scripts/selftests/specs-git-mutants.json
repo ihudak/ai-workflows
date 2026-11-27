@@ -128,6 +128,38 @@
     "fails": "l_literal_bracket:"
   },
   {
+    "id": "lines_l_shown_backslash",
+    "group": "lines",
+    "file": "plugins/workflows-core/scripts/specs_git_lines.py",
+    "old": "            out.append(\"\\\\\\\\\")",
+    "new": "            out.append(\"\\\\\")",
+    "fails": "l_shown_backslash:"
+  },
+  {
+    "id": "lines_l_fix_pathspecs",
+    "group": "lines",
+    "file": "plugins/workflows-core/scripts/specs_git_lines.py",
+    "old": "shell_path(\":(literal)\" + p)",
+    "new": "shell_path(p)",
+    "fails": "l_fix_pathspecs:"
+  },
+  {
+    "id": "lines_l_fix_pathspecs_shell_words",
+    "group": "lines",
+    "file": "plugins/workflows-core/scripts/specs_git_lines.py",
+    "old": "    if isinstance(value, ShellWords):",
+    "new": "    if False:",
+    "fails": "l_fix_pathspecs:"
+  },
+  {
+    "id": "lines_l_checked_out_remedy",
+    "group": "lines",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "                v[\"<path>\"] = lines.shell_path(refused[\"path\"])",
+    "new": "                v[\"<path>\"] = refused[\"path\"]",
+    "fails": "l_checked_out_remedy:"
+  },
+  {
     "id": "gate_g_file",
     "group": "gate",
     "file": "plugins/workflows-core/scripts/specs-git.py",

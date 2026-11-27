@@ -52,10 +52,42 @@ In this order, stopping at the first that applies:
    segments collapsed, symlinks never resolved. An absolute path resolves as itself. Where it names a
    readable regular file reached through no symbolic link, that is the target: **neither the file nor
    any folder on its path below the deepest folder that path shares with the starting document's
-   own directory may be a link**, each tested without following it (`lstat`, never `stat`). A path
-   that is a link, or passes through one there, names no file the walk takes — the walk follows no
-   link, and `${CLAUDE_PLUGIN_ROOT}/references/idea-format.md`'s programs read none (*The source
-   root*) — so a customer's `appendix.md` that is a link to a key file elsewhere is never reached.
+   own directory may be a link**, each tested without following it (`lstat`, never `stat`). **This
+   program makes the test, and no command is built from the path**: hand it the resolved path and
+   the starting document's own directory, each as one single-quoted argument, each `'` they hold
+   written `'\''`:
+
+   ```
+   python3 -I -c 'import os, stat, sys
+   path, top = (os.path.abspath(os.fsencode(a)) for a in sys.argv[1:3])
+   here = os.path.commonpath([path, top])
+   parts = [p for p in os.path.relpath(path, here).split(b"/") if p != b"."]
+   if not parts:
+       sys.exit(4)
+   try:
+       fd = os.open(here, os.O_RDONLY | os.O_DIRECTORY)
+       for i, p in enumerate(parts):
+           if stat.S_ISLNK(os.stat(p, dir_fd=fd, follow_symlinks=False).st_mode):
+               sys.exit(3)
+           last = i == len(parts) - 1
+           nxt = os.open(p, os.O_RDONLY | os.O_NOFOLLOW | (getattr(os, "O_NONBLOCK", 0) if last else os.O_DIRECTORY), dir_fd=fd)
+           os.close(fd)
+           fd = nxt
+   except OSError:
+       sys.exit(4)
+   sys.exit(0 if stat.S_ISREG(os.fstat(fd).st_mode) else 4)' '<resolved path>' '<starting document directory>'
+   ```
+
+   It opens the folder the two share, then each name below it in turn, inside the folder opened
+   before it: it tests the name without following it (`lstat`), then opens it with `O_NOFOLLOW`,
+   which refuses a link put there between the test and the open. Exit 0: a readable regular file
+   reached through no link — the target. Exit 3: the file, or a folder on its path below the shared
+   one, is a symbolic link. Exit 4: nothing is there, it is not a regular file, or it cannot be
+   opened — a link put there after the test among them. Only exit 0 names a target; any other
+   exit names none. A path that is a link, or passes through one there, names no file the walk
+   takes — the walk follows no link, and `${CLAUDE_PLUGIN_ROOT}/references/idea-format.md`'s
+   programs read none (*The source root*) — so a customer's `appendix.md` that is a link to a key
+   file elsewhere is never reached.
    **A wikilink whose name does not already end in
    `.md`, `.markdown` or an image extension of §4's kind table is then tried with `.md` added, in the
    same place**, as Obsidian does — so `[[appendix]]` beside `appendix.md` resolves with no vault at
@@ -66,7 +98,9 @@ In this order, stopping at the first that applies:
    **vault** is the nearest ancestor of the **starting document** — the one the walk began from, not
    the file this link sits in — that holds a `.obsidian/` directory. A name carrying a `/` resolves
    against the vault root; a bare name is matched by filename anywhere under it — either way
-   entering no folder that is a symbolic link and matching no file that is one, as step 2 tests them.
+   entering no folder that is a symbolic link and matching no file that is one, as step 2 tests them:
+   a candidate on which step 2's program, handed it and the starting document's own directory,
+   exits 3 is no match.
    - **Exactly one match** — that is the target.
    - **More than one** — the target is `ambiguous`. Record every candidate and **choose none**: two
      notes sharing a name are two different files, and a walk that picked one would report a file the

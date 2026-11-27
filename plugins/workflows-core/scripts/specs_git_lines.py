@@ -10,7 +10,6 @@ standard library only; loaded by specs-git.py only for the subcommands that need
 A template that is a piece of another line says, in the comment above it, how a renderer puts it in.
 """
 
-import json
 import unicodedata
 import posixpath
 import re
@@ -40,7 +39,7 @@ Not done: the preflight did not switch branches, and did not commit or push
           the end of the run — commit-artifacts stages only the §2.1 artifact
           paths.
 Fix:      git -C "<SPECS_PATH>" status
-          git -C "<SPECS_PATH>" add <path list> && git -C "<SPECS_PATH>" commit
+          git -C "<SPECS_PATH>" add -- <path list> && git -C "<SPECS_PATH>" commit -- <path list>
 If ignored: nothing is lost — your files stay uncommitted, and this run's
           artifacts are committed alongside them. But the preflight ends here
           on EVERY later run too, so the leftover flush and the branch
@@ -77,11 +76,11 @@ T = {
     "g0.unsafe.if_ignored": "the artifacts stay in your working tree, uncommitted and intact; the next run's preflight picks them up once HEAD is on a branch named inside that class — the one Fix creates, or an existing one you rejoin instead with git -C \"<SPECS_PATH>\" switch <branch>",
     # §5's G1 on a branch the run would have left (§4 step 1's landing), and under a run typed mid-run: each replaces
     # the text after its label ("Not done: ", "Fix:      ", "If ignored: ") in G1, rendered on its one line, unwrapped;
-    # <path list> on the Fix line is the plain block's second, shell-quoted one. The landing form's Not done by the
-    # stay's kind (STAY_KINDS, specs-git.py); g1.merged.fix and g1.merged.if_ignored where the stay's merged flag is
-    # set, else the plain Fix and g1.landing.if_ignored. Under a run typed mid-run, whatever the kind: the landing
-    # form's Not done, its third alternative, where the run stayed, else the plain one; an empty Fix;
-    # g1.midrun.if_ignored.
+    # <path list> on the Fix line, at both its places, is the plain block's list of pathspecs (pathspecs()). The
+    # landing form's Not done by the stay's kind (STAY_KINDS, specs-git.py); g1.merged.fix and g1.merged.if_ignored
+    # where the stay's merged flag is set, else the plain Fix and g1.landing.if_ignored. Under a run typed mid-run,
+    # whatever the kind: the landing form's Not done, its third alternative, where the run stayed, else the plain one;
+    # an empty Fix; g1.midrun.if_ignored.
     "g1.landing.not_done": "the preflight did not switch branches, and did not commit or push these files. Those files are yours, and switching branches would carry them along. This run's own artifacts WILL be committed at the end of the run on <default>, not on <branch>, <which no key of this run names | which is merged into <default> | where <command>'s run in this session was open when this run started>, and your checkout is not moved.",
     "g1.landing.if_ignored": "nothing is lost — your files stay uncommitted, and nothing of this run's is committed with them. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped until these paths are committed or removed. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
     # At the run's end, after a landing that did not land the run's whole change (held -- an index.lock at the
@@ -100,7 +99,7 @@ T = {
     "g1.not_done.uncommitted": "the preflight did not switch branches, and did not commit or push these files. Those files are yours, and switching branches would carry them along. This run's own artifacts were to be committed at the end of the run — commit-artifacts stages only the §2.1 artifact paths; the Specs repo: line above this notice says what came of them.",
     "g1.if_ignored.uncommitted": "nothing is lost — your files stay uncommitted, and the Specs repo: line above this notice says what came of this run's artifacts. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped until these paths are committed or removed. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
     "g1.midrun.if_ignored": "nothing is lost — these may be <command>'s files in progress, and nothing is to be run here while that run is open: let it finish, or end it, first; if you stopped that run, /clear, typing <command> again[ with <keys>], or HEAD leaving the branch ends it. Nothing of this run's is committed with them. Until these paths are committed or removed, the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped.",
-    "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" add <path list> && git -C \"<SPECS_PATH>\" commit",
+    "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" add -- <path list> && git -C \"<SPECS_PATH>\" commit -- <path list>",
     # §5 part 3: where refs/heads/<default> names no commit and <default-ref> names one, a Fix line that opens with the
     # switch to <default> -- G2's plain and session-branch-itself forms, g1.merged.fix -- has that switch replaced by
     # this, the rest of the line as it stands; judged each time the block is printed.
@@ -285,11 +284,12 @@ T = {
     "reason.land.unfinished": "<branch> moved on without the commit this run was making on it when it was cut off, so that commit was dropped unfinished",
 
     # The push-rejected remedies, each replacing remedy.rejected in row.rejected (and its Specs preflight: form):
-    # not-standing on a branch the run is not standing on, checked-out for that reason, session-wrap around
-    # whichever applies in session-branch mode. checkout-moved names none: the line ends at its reason clause.
+    # not-standing on a branch the run is not standing on, checked-out for that reason, its <path> the worktree's as
+    # shell_path writes it, session-wrap around whichever applies in session-branch mode. checkout-moved names none:
+    # the line ends at its reason clause.
     "remedy.rejected": "run git -C \"<SPECS_PATH>\" pull --rebase --no-autostash origin <branch>, then git -C \"<SPECS_PATH>\" push origin <branch>",
     "remedy.not-standing": "run git -C \"<SPECS_PATH>\" switch <branch>, git -C \"<SPECS_PATH>\" pull --rebase --no-autostash origin <branch> and git -C \"<SPECS_PATH>\" push origin <branch>, then switch back to <the branch the run stands on>",
-    "remedy.checked-out": "run git -C \"<path>\" pull --rebase --no-autostash origin <branch>, then git -C \"<path>\" push origin <branch>",
+    "remedy.checked-out": "run git -C <path> pull --rebase --no-autostash origin <branch>, then git -C <path> push origin <branch>",
     "remedy.session-wrap": "run python3 \"<the script's path>\" --specs \"<SPECS_PATH>\" lift --branch session/<identity>, then <the remedy as it reads without this wrapping, from its first git on>, then python3 \"<the script's path>\" --specs \"<SPECS_PATH>\" put-back --branch session/<identity> --default-ref origin/<default>",
 
     # The preflight's own lines (§1 rule 5, §3.1, §3.4, §3.5, §4 step 6, §8).
@@ -396,46 +396,77 @@ def count_files(n):
 _UNPRINTABLE_EXTRA = set("\u2028\u2029\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")
 
 
+def _unprintable(c):
+    """Whether <c> keeps a path from being workflows-core:addressing §3's printable value: a control character (Cc),
+    U+2028 or U+2029, a bidirectional control, or a byte that is not UTF-8 (a surrogate)."""
+    return unicodedata.category(c) in ("Cc", "Cs") or c in _UNPRINTABLE_EXTRA
+
+
 def shown_path(path):
-    """A path as a line may hold it: each character that keeps it from being workflows-core:addressing §3's printable
-    value -- a control character (Cc), U+2028 or U+2029, a bidirectional control, or a byte that is not UTF-8 (a
-    surrogate) -- written as its JSON escape, so the path can neither break the line nor show as another
-    (phase-handoff §2.3)."""
+    """A path as a line may hold it (phase-handoff §2.3): each backslash written as \\\\, and each character that keeps
+    it from being a printable value written as an escape -- a line feed as \\n, any other as \\u and its four hex
+    digits, a byte that is not UTF-8 as its \\udcXX -- so the path can neither break the line nor show as another: a
+    name holding a backslash and an n shows as \\\\n, never as the \\n of a name holding a line feed."""
     out = []
     for c in path:
-        bad = unicodedata.category(c) in ("Cc", "Cs") or c in _UNPRINTABLE_EXTRA
-        out.append(json.dumps(c)[1:-1] if bad else c)
+        if c == "\\":
+            out.append("\\\\")
+        elif c == "\n":
+            out.append("\\n")
+        elif _unprintable(c):  # every such character is in the BMP, so four hex digits name it
+            out.append("\\u%04x" % ord(c))
+        else:
+            out.append(c)
     return "".join(out)
 
 
+class ShellWords(str):
+    """Text that is already shell words, each path in it written by shell_path, so every character it holds is
+    printable: fill() writes it as it stands, where shown_path would double its backslashes and name other files."""
+
+
 def shell_path(path):
-    """A path as a Fix line pastes it (specs-repo-git §5): shell-quoted where it is a printable value; otherwise in
-    the $'…' quoting bash and zsh read, each character that keeps it from being one written as \\xHH for each byte
-    of its UTF-8 -- or for the byte it stands for, where it stands for a byte that is not UTF-8 -- so the line can
-    neither break nor show as another, and the shell reads back the path itself."""
-    if shown_path(path) == path:
-        return shlex.quote(path)
+    """A path as a line pastes it into a command (specs-repo-git §5): shell-quoted where it is a printable value;
+    otherwise in the $'…' quoting bash and zsh read, each character that keeps it from being one written as \\xHH for
+    each byte of its UTF-8 -- or for the byte it stands for, where it stands for a byte that is not UTF-8 -- so the
+    line can neither break nor show as another, and the shell reads back the path itself. A ShellWords."""
+    if not any(_unprintable(c) for c in path):
+        return ShellWords(shlex.quote(path))
     out = []
     for c in path:
         if 0xDC80 <= ord(c) <= 0xDCFF:  # os.fsdecode's stand-in for a byte that is not UTF-8
             out.append("\\x%02x" % (ord(c) - 0xDC00))
-        elif unicodedata.category(c) in ("Cc", "Cs") or c in _UNPRINTABLE_EXTRA:
+        elif _unprintable(c):
             out.append("".join("\\x%02x" % b for b in c.encode("utf-8", "surrogatepass")))
         elif c in "\\'":
             out.append("\\" + c)
         else:
             out.append(c)
-    return "$'" + "".join(out) + "'"
+    return ShellWords("$'" + "".join(out) + "'")
 
 
-# The placeholders that name a path: fill() writes each value given for one as shown_path writes it.
+def pathspecs(paths):
+    """G1's <path list> on its Fix line (specs-repo-git §5): each path as the literal pathspec :(literal)<path>, written
+    by shell_path, space-separated -- so git takes a name holding * or [ as itself, a name opening with - is never read
+    as an option, and the commit the line pairs with its add commits those paths alone. A ShellWords."""
+    return ShellWords(" ".join(shell_path(":(literal)" + p) for p in paths))
+
+
+# The placeholders that name a path: fill() writes each value given for one as shown_path writes it, save a ShellWords.
 _PATH_SPANS = ("<path>", "<path list>", "<file>")
+
+
+def _shown(span, value):
+    """<value> as fill() writes it for <span>: a ShellWords as it stands, else a path placeholder's by shown_path."""
+    if isinstance(value, ShellWords):
+        return str(value)
+    return shown_path(str(value)) if span in _PATH_SPANS else str(value)
 
 
 def artifacts(paths):
     """phase-handoff §4.1's <artifacts>: the paths comma-separated where three or fewer, else '<n> files under
-    <dir>', <dir> the nearest directory holding every path, repo-relative ('.' where that is the top level); a path
-    that is not a printable value written by shown_path."""
+    <dir>', <dir> the nearest directory holding every path, repo-relative ('.' where that is the top level); each path
+    written by shown_path."""
     paths = [shown_path(p) for p in paths]
     if len(paths) <= 3:
         return ", ".join(paths)
@@ -549,16 +580,15 @@ def _value(span, values, used, joined, root):
         if named in root:  # an alternative that names a placeholder of the same template is that placeholder
             return _value(named, values, used, False, root)
         return _render(alternatives[value], values, used, root)
-    shown = shown_path if span in _PATH_SPANS else str  # a path that is not a printable value, escaped
     if isinstance(value, (list, tuple)):
         if joined:
-            return ", ".join(shown(str(v)) for v in value)
+            return ", ".join(_shown(span, v) for v in value)
         k = used.get(span, 0)
         if k >= len(value):
             raise ValueError("fill: no value for occurrence %d of %s" % (k + 1, span))
         used[span] = k + 1
-        return shown(str(value[k]))
-    return shown(str(value))
+        return _shown(span, value[k])
+    return _shown(span, value)
 
 
 def _render(t, values, used, root):
@@ -596,7 +626,9 @@ def fill(template_or_id, values):
     dropped whole otherwise; then every placeholder replaced by its value — a list value, with no list marker after
     it, one item per occurrence in order; an alternation (one holding " | " at its own level) by the alternative an
     int picks, itself filled from the same values — an alternative that names a placeholder of the same template
-    (root.one-line's "the value the walk found") taking that placeholder's value. A placeholder left with no value,
+    (root.one-line's "the value the walk found") taking that placeholder's value. A value of a path placeholder --
+    <path>, <path list>, <file> -- is written as shown_path writes it, save a ShellWords, written as it stands: the
+    shell words a command line pastes, which shell_path and pathspecs give. A placeholder left with no value,
     and an alternation given anything but an int naming one of its alternatives, raises ValueError naming it, so no
     placeholder reaches a user. A template holding a repeated clause ("; …") is never filled whole: left_behind()
     renders addressing §3's."""

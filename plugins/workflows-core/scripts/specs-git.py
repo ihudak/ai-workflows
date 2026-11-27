@@ -1713,8 +1713,9 @@ def end(specs, command, commit_key=None, register_rebuild=None, no_preflight=Fal
     run = {"state": state, "lines": lines, "specs": specs, "session": session, "command": command, "record": None,
            "wrote": False, "pre": [], "commit": None, "started": started,
            "record_path": _record_at(state, session, command, started)}
-    for f, why in declined_unread:  # a --declined-from file that cannot be read is named, and the end goes on
-        run["pre"].append(lines.fill("end.declined-unreadable", {"<file>": lines.shown_path(f), "<reason>": why}))
+    # a --declined-from file that cannot be read is named, fill escaping its path, and the end goes on
+    for f, why in declined_unread:
+        run["pre"].append(lines.fill("end.declined-unreadable", {"<file>": f, "<reason>": why}))
     if superseded:  # §4 step 1: the tree is another session's now -- nothing written in it, the record removed
         run["record"] = "missing" if state.load(session, command, at=run["record_path"]) is None else "found"
         line = lines.T["row.superseded"]
@@ -2480,9 +2481,9 @@ def _replay_line(lines, cls, result, f):
             t = t[:t.index("; " + remedy)]
         else:
             new = remedy
-            if cls["reason"] == "checked-out":  # run in that worktree, no switch
+            if cls["reason"] == "checked-out":  # run in that worktree, no switch; its path pasted as shell words
                 new = T["remedy.checked-out"]
-                v["<path>"] = refused["path"]
+                v["<path>"] = lines.shell_path(refused["path"])
             elif f.get("standing") != f["branch"]:
                 new = T["remedy.not-standing"]
                 v["<the branch the run stands on>"] = f.get("standing")
@@ -2718,11 +2719,12 @@ def _advance(run, stage):
 
 
 def _g1_block(lines, specs, paths):
-    """specs-repo-git §5's G1 block for the OTHER <paths>: <path list> comma-separated on the Found line, a path that
-    is not a printable value written with its JSON escapes (fill), and shell-quoted and space-separated on the Fix
-    line, where it is pasted into a command, such a path in $'…' quoting (shell_path)."""
-    return lines.fill("g1", {"<SPECS_PATH>": specs, "<N>": len(paths),
-                             "<path list>": [", ".join(paths), " ".join(lines.shell_path(p) for p in paths)]})
+    """specs-repo-git §5's G1 block for the OTHER <paths>: <path list> comma-separated on the Found line, each path
+    escaped as shown_path writes it (fill), and on the Fix line, where its add and its commit paste it, each path as a
+    :(literal) pathspec, shell-quoted and space-separated, one that is not a printable value in $'…' quoting
+    (pathspecs)."""
+    fix = lines.pathspecs(paths)
+    return lines.fill("g1", {"<SPECS_PATH>": specs, "<N>": len(paths), "<path list>": [", ".join(paths), fix, fix]})
 
 
 def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, committed=None):
@@ -2742,8 +2744,7 @@ def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, commi
     not-committed form), and otherwise the Fix and If ignored are as they are; where True with a stay, the Not done is
     g1.landing.not_done.landed, which says the artifacts were committed and leaves the commit to the outcome line."""
     kind = lines.placeholder("g1.landing.not_done", "<which no key")
-    v = {"<branch>": branch, "<default>": default, "<SPECS_PATH>": specs,
-         "<path list>": " ".join(lines.shell_path(p) for p in paths)}
+    v = {"<branch>": branch, "<default>": default, "<SPECS_PATH>": specs, "<path list>": lines.pathspecs(paths)}
     landing = {False: "g1.landing.not_done.unlanded", True: "g1.landing.not_done.landed"}.get(committed,
                                                                                           "g1.landing.not_done")
     if midrun:
