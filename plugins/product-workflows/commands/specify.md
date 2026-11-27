@@ -78,7 +78,7 @@ second positional token is refused (Phase 0 step 1, `SPECIFY_ONE_ADDRESS`).
    **The remedy is the same two branches `/product-workflows:create-prd`'s own container refusal takes,
    and it is a directory listing rather than a ledger read** — this remedy opens no coverage ledger
    and does not start now. Enumerate slices by `/brd-split` Phase 0 step 9's **positive test**: an
-   immediate subdirectory carrying a `brd-link.md` whose `parent:` names this BRD.
+   immediate subdirectory carrying a `brd-link.md` whose `parent:` names this BRD — each subdirectory's name held to `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it that may be a slice named by its position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1).
    - **One or more slices** — the ordinary shape, since a split always confirms at least one. Name
      every slice and offer `/product-workflows:specify <SLICE-KEY>` once per slice, and print
      beside the offers, since this remedy reads no slice's ledger: `On a BRD-route slice that run applies the slice's ledger tests and stops where they fail, naming the run its stop names — '/product-workflows:brd-split' in the form that applies, or '/product-workflows:prd-ground' — or no command (coverage-ledger-format.md §5).` —
@@ -148,7 +148,7 @@ second positional token is refused (Phase 0 step 1, `SPECIFY_ONE_ADDRESS`).
    line and neither was ever parsed.
 
    Parse the **single positional address** from what remains — a `<KEY>`,
-   or an `@<path>` naming a folder or a file inside one. **Take step 2's `$SPECS_PATH` check first** — the address is resolved only after `$SPECS_PATH` is settled (below) — then read a key token with `read-key` (`workflows-core:addressing` §1) and resolve the address with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), passing it the key `read-key` read. A token `read-key` finds `invalid` — or a `status: invalid` from `resolve-address` — stops with `SPECIFY_NEEDS_KEY: '<token>' is not a key (workflows-core:addressing §1) — /specify needs a PRD or Epic address, a key or an @<path> to its folder; re-run '/product-workflows:specify <ADDRESS>'.`. Carry forward:
+   or an `@<path>` naming a folder or a file inside one. **Take step 2's `$SPECS_PATH` check first** — the address is resolved only after `$SPECS_PATH` is settled (below) — then read a key token with `read-key` (`workflows-core:addressing` §1) and resolve the address with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), passing it the key `read-key` read. A token `read-key` finds `misnamed` takes `workflows-core:addressing` §3's `ADDRESS_FOLDER_NAME` stop, as its §1 says, never the stop below. A token `read-key` finds `invalid` — or a `status: invalid` from `resolve-address` — stops with `SPECIFY_NEEDS_KEY: '<token>' is not a key (workflows-core:addressing §1) — /specify needs a PRD or Epic address, a key or an @<path> to its folder; re-run '/product-workflows:specify <ADDRESS>'.`. Carry forward:
    - `<PRD>` — the resolved **PRD folder's** `key`: the folder itself when the address named a
      `PRD-` folder, its parent when it named an `EPIC-` folder.
    - `<EPIC>` — the `EPIC-` folder's `key`, or `null` when the address named a `PRD-` folder. The
@@ -660,7 +660,12 @@ plus a listing of its `EPIC-` subfolders — to determine the item's type and en
 
 **Read the PRD folder directly.** Read its `prd.md` — its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and list the `EPIC-` subfolders under it —
 that listing is the Epic set this phase branches on, and each folder's `key` and title come from its
-own frontmatter (`workflows-core:addressing` §4).
+own frontmatter (`workflows-core:addressing` §4). **Each name the listing prints is held to
+`workflows-core:addressing` §2's class before its frontmatter is read or any command is built from
+it**, checked as text for a `'`, then with that section's program; a folder outside it that may be an
+Epic folder is no Epic of this run's set — never picked, specified or counted below — and is named by
+its position, with its remedy, in one line before the branch, as §2's *A folder refused by its name*
+says, `<P>` the PRD folder's path (`workflows-core:epic-picker` step 1).
 
 **A missing folder and a folder holding no `prd.md` are two different states, and only the first is a
 stop here.** If the folder is missing, surface the `key dir not found` rule in

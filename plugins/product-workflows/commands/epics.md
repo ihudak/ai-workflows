@@ -39,7 +39,7 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
    resolves on the other (`workflows-core:addressing` §3, `resolve-key` step 1). The kind gate is step 1b's, and
    it is taken on what the resolved folder **holds**.
    `status: found` → carry its `path`, `kind` and `key` forward; `ambiguous` → stop,
-   naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message. **`absent` is a graceful stop, not a folder
+   naming every match and `@<path>` as the way through; `misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message; `misnamed` → stop with §3's `ADDRESS_FOLDER_NAME` message. **`absent` is a graceful stop, not a folder
    to create** — `/epics` partitions a PRD folder that exists and creates no PRD folder of its own:
    ```
    EPICS_NOT_FOUND: no folder found for <ADDRESS> under $SPECS_PATH/specifications/ (every level addressing.md §3 bounds, plus §5's legacy fallback) — check the address. /epics partitions an existing PRD folder and creates none. On the idea route the folder this command needs is the one /product-workflows:create-prd <KEY> writes a PRD into (after /product-workflows:idea <KEY>, where an idea comes first), and this command runs once that PRD is on the default branch — or, on a specs tree that is no git repository, in the folder: where a /product-workflows:create-prd <KEY> run created the folder and that run's pull request is still open, or is merged and this checkout does not stand on a default branch pulled since, the folder is not in this checkout, so merge that pull request — or, where it is merged already, bring this checkout's default branch up to date (pull it, with this checkout standing on it) — rather than run /product-workflows:create-prd again; a PRD folder is created by /product-workflows:brd-split on its parent BRD on the BRD route, and is partitioned here once a PRD is written in it and, wherever the specs tree is a git repository, merged; an EPIC- folder is created by this command and by no other, so an Epic address that resolves to nothing was never drafted here, or its Epic is on an epics/ branch that is not yet merged, or is merged and this checkout does not stand on a default branch pulled since.
@@ -132,7 +132,7 @@ Usage: `/epics <ADDRESS> [--no-docs] [--docs <path>] [--skip-costs] [--skip-feed
 
    **The remedy is a directory listing rather than a ledger read** — this remedy opens no coverage
    ledger and does not start now. Enumerate slices by `/brd-split` Phase 0 step 9's **positive
-   test**: an immediate subdirectory carrying a `brd-link.md` whose `parent:` names this BRD.
+   test**: an immediate subdirectory carrying a `brd-link.md` whose `parent:` names this BRD — each subdirectory's name held to `workflows-core:addressing` §2's class before its `brd-link.md` is read, and one outside it that may be a slice named by its position, with its remedy, in place of a slice (`workflows-core:addressing` §4.1).
    - **One or more slices** — the ordinary shape, since a split always confirms at least one. Name
      every slice and offer `/product-workflows:epics <SLICE-KEY>` once per slice. That run resolves a
      `PRD-` folder and passes this refusal; whether it then passes *Gate the PRD* and step 1b depends
@@ -539,7 +539,7 @@ On `prd_outside` (Phase 0, *Gate the PRD*) skip this phase, setting `vi_spec_pre
 
 1. **Resolve the PRD dir:** call `resolve-address <PRD>` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`, §3), which searches every level §3 bounds and carries §5's legacy fallback. `status: found` →
    use its `path`; `status: absent` → none exists; `status: ambiguous` → stop, naming every match
-   and `@<path>` as the way through; `status: misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message, never a skip. No matching rule is written here: a second copy of the one §5
+   and `@<path>` as the way through; `status: misrooted` → stop with §3's `SPECS_PATH_INSIDE_TREE` message, never a skip; `status: misnamed` → stop with §3's `ADDRESS_FOLDER_NAME` message, never a skip. No matching rule is written here: a second copy of the one §5
    states is the drift §1 warns about. If `$SPECS_PATH` is
    unresolvable, or no PRD dir matches at either level → **skip** (set
    `vi_spec_present: false`) — the same skip a PRD with no PRD-level specification
@@ -589,7 +589,13 @@ choices: ["Stop — <the earliest gap's remedy, §6> first (Recommended)", "Spli
 **Read the PRD folder directly.** Read its `prd.md` for the product content — its live requirements only, since one marked `Superseded by` or `Withdrawn` is history, not product content (`workflows-core:prd-format` § Changing a requirement) — and list the `EPIC-`
 subfolders under it for the Epics that already exist — that listing *is* the linked-item hierarchy
 the retired reader used to return. Each Epic folder's `key` and title come from its own frontmatter
-(`workflows-core:addressing` §4), never from its directory name.
+(`workflows-core:addressing` §4), never from its directory name. **Each name the listing prints is
+held to `workflows-core:addressing` §2's class before its `epic.md` is read or any command is built
+from it**, checked as text for a `'`, then with that section's program; a folder outside it that may
+be an Epic folder is no existing Epic of this run — Phase 6's non-duplication check, Phase 4's
+repository derivation and every later read leave it out — and is named by its position, with its
+remedy, in one line, as §2's *A folder refused by its name* says, `<P>` the PRD folder's path, which
+adds that a draft of this run may duplicate its scope unseen.
 
 **Build `requirements[]` here, from the PRD you just read.** It is the coverage ground truth Phases 6–7
 run on — `epic-writer` receives it, `epic-reviewer` checks Epic coverage against it, and `_coverage.md`
@@ -623,7 +629,7 @@ unchanged into the Phase 6 handoff and the Phase 7 reviewer brief. When
 
 **Write the merged `requirements[]` to a temp file** (`command mktemp -t dw-epics-reqs-XXXXXX` — never a repo, never the specs tree), with its `requirements_source`, record its absolute path as `requirements_file`, and add it to `temp_files`, the list of every temp file this run makes, which Phase 7.4 removes. Phase 7's reviewer brief passes this path rather than the list itself, so a PRD with a hundred requirements costs the orchestrator one line there rather than a hundred.
 
-Identify the Epics that already exist — the `EPIC-` folders directly under the resolved PRD folder, each read for its `epic.md` — the new Epic drafts MUST NOT duplicate their scope (enforced later by `epic-reviewer`).
+Identify the Epics that already exist — the `EPIC-` folders directly under the resolved PRD folder whose names Phase 3's listing found in `workflows-core:addressing` §2's class, each read for its `epic.md` — the new Epic drafts MUST NOT duplicate their scope (enforced later by `epic-reviewer`).
 
 **What refine means now, because it changed.** Refine used to fill in *empty Epics somebody else had created in a tracker* — shells that existed so that linking one to a PRD would surface the PRD on that team's dashboard. That was an artefact of one organisation's tooling and has no analogue here: nothing creates an empty Epic. **Refine now means iterating on an Epic that exists** — re-grounding it, sharpening it after the specification moved, or splitting it. Do not read the phases below as though they were still filling in a shell.
 
@@ -679,7 +685,7 @@ If code scan is OFF, skip to Phase 5.5.
 If code scan is ON:
 
 1. Derive the repo list:
-   - **Auto-derived** (Phase 1 default) — walk the `EPIC-` folders under the PRD folder; for each `epic.md` (already read during Phase 3), collect repo names from the `implementation.md` beside it, where one exists. **Where Phase 2.5 supplied a known set**, add its components' repositories, so every component the ARD names is scanned, and carry each component's `paths` to that repository's Phase 5 brief. Dedupe. If the list is still empty, fall back to asking the user (step 3).
+   - **Auto-derived** (Phase 1 default) — walk the `EPIC-` folders under the PRD folder that Phase 3's listing found in `workflows-core:addressing` §2's class; for each `epic.md` (already read during Phase 3), collect repo names from the `implementation.md` beside it, where one exists. **Where Phase 2.5 supplied a known set**, add its components' repositories, so every component the ARD names is scanned, and carry each component's `paths` to that repository's Phase 5 brief. Dedupe. If the list is still empty, fall back to asking the user (step 3).
    - **Manual list** — the repo short names Phase 1 took in plain text when *Let me list the repos manually* was chosen, or through its repository picker, as Phase 2's plan was approved with them; nothing is asked again here. Resolve each against the `$REPOS_PATH` slug→clone map built in step 2 below.
 
 2. Build a slug→clone map. For each top-level directory under each entry of `$REPOS_PATH`, and for the session's own repository, found as Phase 1's repository picker finds it, whichever question Phase 1 asked — its top level, where that is not already one of them — where `test -e '<dir>/.git'` succeeds, tested before any git call names the directory, and `<dir>` single-quoted in both commands, each `'` it holds written `'\''` (`workflows-core:read-only-repos` §0), run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bounded.py" 5 git -c safe.bareRepository=explicit -C '<dir>' remote get-url origin 2>/dev/null` (`workflows-core:bounded-run`), strip any trailing `/` and then a trailing `.git`, and take the URL's last path segment — what follows its last `/` or `:` — as that clone's slug. Skip directories with no `.git` or whose `git remote` call fails/times out. Resolve each in-scope repo slug against the map: one match → use it; multiple matches → prefer the session's own top level where it is one of them — the clone Phase 1's picker names for that slug, and the checkout the user works in — else auto-prefer basename ending `-repo`, then `_repo`/`_fast`, then alphabetically last, and record the slug's other clones as its `alternates` (asked about below, once every slug is resolved); zero matches → escalate per the `Repo unresolved (zero matches) — /epics` rule in `workflows-core:escalation-rules`:

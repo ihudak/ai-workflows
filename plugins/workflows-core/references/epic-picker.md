@@ -27,7 +27,12 @@ not only by the three above.
 Given a resolved `PRD-` folder (`references/addressing.md` §3) and no Epic in the address:
 
 1. **Enumerate the `EPIC-` folders directly under it.** A directory listing — the tree *is* the
-   hierarchy, so there is nothing to read and nothing to import. A command lists only the Epics it
+   hierarchy, so there is nothing to read and nothing to import. **Each name the listing prints is
+   held to `references/addressing.md` §2's class before any command is built from it** — checked as
+   text for a `'`, then with that section's program — and a folder outside it that may be an Epic
+   folder is named by its position, with its remedy, and left out of the picker, as §2's *A folder
+   refused by its name* says, `<P>` the PRD folder's path; the count below is of the folders in the
+   class. A command lists only the Epics it
    can act on where its own rule says so: `/design` those whose `specification.md` is on the default
    branch (in its folder, on a specs tree that is no git repository), counting the rest (`/design`
    Phase 0 step 4), and `/implement` those whose `specification.md` and `design.md` both are (in its
