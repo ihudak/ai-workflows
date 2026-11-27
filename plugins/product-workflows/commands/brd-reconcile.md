@@ -439,7 +439,10 @@ write would re-ask a question already answered.
      names the branch** (`workflows-core:read-only-repos` §3, *Branch names*): a branch whose name is
      outside it is left out — nothing is listed, read or resolved on it, and it is never printed —
      since git allows `$`, `(`, `)`, a backtick and a quote in a branch name, and anyone who can push
-     to `origin` can make one. **Pass over a branch hit holding the very file `<default-ref>`'s history already
+     to `origin` can make one. **`<branch>` below is the ref as listed, `refs/remotes/origin/<name>`, in
+     every command** — the listing, `rev-parse "<branch>:<path>"` — never the bare `<name>`, which
+     names no ref on a clone with no local copy of the branch; in the stop's text it is
+     `origin/<name>`. **Pass over a branch hit holding the very file `<default-ref>`'s history already
      removed** — where `git -C "$SPECS_PATH" log --no-renames --diff-filter=D --format=%H <default-ref> -- "<path>"`
      names commits, and for any one of them, `<D>`, `git -C "$SPECS_PATH" rev-parse "<branch>:<path>"`
      prints the same object as `git -C "$SPECS_PATH" rev-parse "<D>^:<path>"` — every removal, not

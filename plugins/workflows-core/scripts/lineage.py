@@ -227,6 +227,24 @@ def _blob_at(specs, ref, path):
 _BLOB = re.compile(r"[0-9a-f]{40}(?:[0-9a-f]{24})?\Z")  # a blob id: SHA-1's 40 lowercase hex, or SHA-256's 64
 
 
+def _path_in_class(path):
+    """document-lineage §1: a recorded path is in its class where each component, split at `/`, is in addressing §2's
+    class of a folder's name -- not empty, no `..`, first `_` or a letter or digit of any script, then letters, digits,
+    combining marks or `. _ @ + -` -- its bytes read as UTF-8. A path outside it is never read."""
+    import unicodedata
+    if not isinstance(path, str):
+        return False
+    try:
+        text = os.fsencode(path).decode("utf-8")
+    except UnicodeError:
+        return False
+
+    def ok(n):
+        return (n != "" and ".." not in n and (n[0] == "_" or n[0].isalnum())
+                and all(c.isalnum() or c in "._@+-" or unicodedata.category(c).startswith("M") for c in n))
+    return all(ok(c) for c in text.split("/"))
+
+
 def _cat_blob(specs, blob):
     """The blob's text, or None where the clone lacks it -- or where blob is not a blob id (_BLOB): a record's blob is
     committed data, so a value that is not one -- an option, a revision expression such as `main:<path>` -- is never
@@ -463,8 +481,8 @@ def stamp(specs, ref, doc, captured):
     """Write upstreams: from a capture; carry forward each accepted entry still current at ref."""
     found, _ = read_record(_read(doc))
     carried, dropped = [], []
-    for e in found["accepted"]:
-        (carried if _blob_at(specs, ref, e["path"]) == e["blob"] else dropped).append(e)
+    for e in found["accepted"]:  # a path outside its class is dropped unread (document-lineage §1)
+        (carried if _path_in_class(e["path"]) and _blob_at(specs, ref, e["path"]) == e["blob"] else dropped).append(e)
     _write_record(doc, upstreams=[{"path": c["path"], "blob": c["blob"], "version": c.get("version")} for c in captured],
                   accepted=carried)
     return {"stamped": doc, "carried": carried, "dropped": dropped}
@@ -516,8 +534,14 @@ def check(specs, ref, docs, output=None, accepted_from=()):
                 res["missing"].append({"doc": doc, "blob": blob})
                 note_highest(depth, doc, "missing")
             return
-        for e in found["upstreams"]:
+        for n, e in enumerate(found["upstreams"], 1):
             up = e["path"]
+            if not _path_in_class(up):  # never read, walked or printed: not checkable, by its place (§6 step 3)
+                res["stale"].append({"downstream": doc, "upstream": None, "entry": n, "unchecked": "path",
+                                     "recorded": {"blob": e.get("blob"), "version": e.get("version")}, "current": None,
+                                     "added": [], "changed": [], "withdrawn": [], "unavailable": True})
+                note_highest(depth, doc)
+                continue
             cur = _blob_at(specs, ref, up)
             if cur is None:
                 res["absent"].append({"downstream": doc, "upstream": up})
@@ -628,7 +652,7 @@ def _accept_into_block(doc, checked):
     text = _read(doc)
     if not _IMPL_BLOCK.search(text):
         raise LineageError(f"{doc} holds no /implement block to record the acceptance in")
-    new = [(s["upstream"], s["current"]["blob"]) for s in checked.get("stale", [])]
+    new = [(s["upstream"], s["current"]["blob"]) for s in checked.get("stale", []) if s.get("upstream") is not None]
     new += [(m["doc"], m["blob"]) for m in checked.get("missing", [])]
     added, seen = [], set()
     for path, blob in new:
@@ -652,7 +676,8 @@ def accept(doc, checked):
     found, _ = read_record(_read(doc))
     entries = list(found["accepted"])
     keys = {(e["path"], e["blob"]) for e in entries}
-    new = [(s["upstream"], s["current"]["blob"]) for s in checked.get("stale", [])]
+    # a link not checkable names no path, and is never accepted (document-lineage §5 step 2)
+    new = [(s["upstream"], s["current"]["blob"]) for s in checked.get("stale", []) if s.get("upstream") is not None]
     new += [(m["doc"], m["blob"]) for m in checked.get("missing", [])]
     # links an earlier run accepted, which the check suppressed: kept across a rewrite of the document
     new += [(a.get("upstream") or a.get("missing"), a["blob"]) for a in checked.get("accepted", [])]
@@ -1169,6 +1194,33 @@ def test_blob_outside_class_never_read():
             res = check(r.root, "main", [r.spec])
             _check(f"blob {bogus!r} unavailable",
                    len(res["stale"]) == 1 and res["stale"][0]["unavailable"] is True, json.dumps(res))
+    _with_repo(body)
+
+
+def test_path_outside_class_not_checkable():
+    """document-lineage §1 and §6 step 3: a recorded path holding a component outside addressing §2's class is never
+    read, walked or written back: check reports the link stale, not checkable, by its place in the record and with
+    no path; accept writes nothing for it; and stamp drops, unread, an accepted entry whose path is outside it."""
+    def body(r):
+        r.chain()
+        bad = f"{r.dir}/$(touch PWN).md"
+        r.write(bad, PRD)  # a file the ref holds at that name: still never read
+        text = r.read(r.spec)
+        r.write(r.spec, re.sub(r"path: \S+", f"path: {bad}", text, count=1))
+        r.commit()
+        res = check(r.root, "main", [r.spec])
+        s = res["stale"]
+        _check("one unchecked link", len(s) == 1 and s[0].get("unchecked") == "path" and s[0]["upstream"] is None
+               and s[0]["entry"] == 1 and s[0]["downstream"] == r.spec, json.dumps(res))
+        _check("never walked", bad not in res["walked"] and not res["absent"], json.dumps(res))
+        _check("highest is the document holding it", res["highest"]["downstream"] == r.spec, json.dumps(res))
+        out = accept(os.path.join(r.root, r.design), res)
+        _check("accept writes nothing for it", out["added"] == [], json.dumps(out))
+        d = r.read(r.design)
+        r.write(r.design, d.replace("---\n# Design", f"accepted:\n  - path: {bad}\n    blob: {'0' * 40}\n---\n# Design", 1))
+        st = stamp(r.root, "main", os.path.join(r.root, r.design), capture(r.root, "main", [r.spec], []))
+        _check("stamp drops it unread", st["carried"] == [] and len(st["dropped"]) == 1, json.dumps(st))
+        _check("no PWN", not os.path.exists(os.path.join(r.root, "PWN")))
     _with_repo(body)
 
 

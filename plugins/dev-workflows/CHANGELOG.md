@@ -14,6 +14,8 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`/conformance` Phase 1 (b), *Walk-only mitigations*, and Phase 5's rule 1.** Rule 1 read an `Accepted — ` Disposition faulted for its review date alone as readable, `review due`, while *Walk-only mitigations* took it for a Disposition in none of format §4's three forms, making each `[AD#n]` Rule of its folder walk-only. Both now read it as the third form, citing `workflows-core:threat-model-format` §4's *A faulted review date*.
 - **`/design` Phase 2.5 step 7.** Such a threat is classed `accepted`, as format §4 reads it, rather than marked `malformed`.
 - **`docs/commands/conformance.md`** says such an acceptance is a Disposition the run can read.
+- **`/conformance` Phase 0 step 5.4** lists the `conformance/` branches with `%(refname)` and names each by its full ref in its commands and by its name in its stops, so a branch sharing its name with a tag is neither dropped by the prefix filter nor read at the tag.
+- **`docs/commands/design.md`** says an acceptance whose review date alone is faulted stays an accepted threat.
 
 ## [4.71.5] — 2026-11-27
 

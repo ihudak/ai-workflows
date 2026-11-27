@@ -332,7 +332,8 @@ comparison called different. The same test makes rule 2's integer free. **Bytes 
 — the same length and the same bytes, the test `cmp -s` makes — and only with a regular file: a
 directory, a symbolic link or a FIFO in the destination is never identical to a source, and is never
 opened. Nor is a file whose name holds a control character or is not UTF-8 reused, since its name
-cannot stand in a link.
+cannot stand in a link; and a source whose basename holds one, or is empty, `.` or `..`, or holds a
+`/`, is copied nowhere, the program refusing it with exit 4 before it reads anything.
 
 **One program makes all three tests**, listing the destination directory itself and reading each
 file, so no command is ever built from a name a listing printed — a `cmp` run per listed name would
@@ -342,17 +343,19 @@ basename, each as one single-quoted argument, each `'` they hold written `'\''`:
 ```
 python3 -I -c 'import os, stat, sys, unicodedata as u
 src, dest, base = (os.fsencode(a) for a in sys.argv[1:4])
-fd = os.open(src, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
-with os.fdopen(fd, "rb") as f:
-    if not stat.S_ISREG(os.fstat(fd).st_mode):
-        sys.exit(3)
-    data = f.read()
 def shown(n):
     try:
         t = n.decode("utf-8")
     except UnicodeError:
         return None
     return None if any(u.category(c) == "Cc" for c in t) else t
+if shown(base) is None or base in (b"", b".", b"..") or b"/" in base:
+    sys.exit(4)
+fd = os.open(src, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
+if not stat.S_ISREG(os.fstat(fd).st_mode):
+    sys.exit(3)
+with os.fdopen(fd, "rb") as f:
+    data = f.read()
 try:
     names = sorted(e.name for e in os.scandir(dest) if e.is_file(follow_symlinks=False))
 except FileNotFoundError:

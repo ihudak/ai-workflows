@@ -474,7 +474,9 @@ Always runs when stage 1 matched nothing **and the run does not carry `specs_git
 
 **Then, either way, settle every other local plugin branch.** List them with
 `git -C "$SPECS_PATH" for-each-ref --format='%(refname:lstrip=2)' refs/heads/`
-and keep those §2.2's pattern matches, less the current branch and any branch
+and keep those §2.2 counts plugin-owned — its pattern matches and the name is in §3.2's safe class,
+tested as §3.2 tests one before any command names it, so a name outside it never reaches
+`branch-merged` or `branch -d` — less the current branch and any branch
 the merged-branch leave above already reported this run.
 The default branch is never on that list: where HEAD is not on it, §3.2's held stage pushes it, before the guards.
 Ask each

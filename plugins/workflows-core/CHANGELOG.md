@@ -7,7 +7,7 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.100.7] — 2026-11-27
 
-A branch name a listing prints, a path or a blob a lineage record holds, and an acceptance whose review date is faulted are each read one stated way. **What changes for you.** Wherever a command lists branches, a branch whose name holds a character outside letters, digits and `. _ / @ + -` is passed over and never printed; an upstream whose recorded path or blob is malformed is reported as not checkable rather than read; and a threat model's acceptance whose review date alone is missing or malformed reads as an acceptance, never as a Disposition in none of the three forms.
+A branch name a listing prints, a path or a blob a lineage record holds, and an acceptance whose review date is faulted are each read one stated way. **What changes for you.** Wherever a command lists branches, a branch whose name holds a character other than ASCII letters, digits and `. _ / @ + -`, or begins with one other than a letter, a digit or `_`, is passed over and never printed; an upstream whose recorded path or blob is malformed is reported as not checkable rather than read; and a threat model's acceptance whose review date alone is missing or malformed reads as an acceptance, never as a Disposition in none of the three forms. Needs `product-workflows` 3.88.7 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.7 bullet).
 
 ### Fixed
 
@@ -18,6 +18,11 @@ A branch name a listing prints, a path or a blob a lineage record holds, and an 
 - **`references/threat-intake.md` §1** cites *A faulted review date* for the acceptance it never reads as unreadable, as `/dev-workflows:conformance`'s rule 1 does.
 - **`references/pre-lint.md`, *Threat model*.** The review-date check reads the text after the last `; review by ` whole, as a calendar date, as format §4 defines a faulted date; its unanchored pattern passed `2027-02-30` and `2027-02-12x`. It also says that a reader still takes an acceptance faulted for its date alone as the third form.
 - **`docs/reference/references.md`** describes the branch-name class and the lineage record's classes.
+- **`references/read-only-repos.md` §3, *Branch names* — the listing's form.** A listing prints each ref whole, `%(refname)`, or with `lstrip`, never `%(refname:short)`, which prints `heads/<name>` where a tag shares the name, nor `git branch`'s decorated default output.
+- **`references/phase-handoff.md` §3's plugin-branch scan** (and `reference-parts/phase-handoff/require-on-main.md`, regenerated) lists full refs and names each by its full ref in `cat-file -e`, so a branch sharing its name with a tag is neither dropped by the prefix filter nor read at the tag; **`references/specs-repo-git.md` §3.4's settle loop** keeps only the plugin-owned branches §2.2 now defines, so a name outside the safe class never reaches `branch-merged` or `branch -d`.
+- **`scripts/specs-git.py`, G0's branch to rejoin** is listed with `lstrip=2`, never `:short`, so a tag sharing a local branch's name no longer turns it into `heads/<name>` in the notice; its selftest gains the case, seen failing first.
+- **`references/document-lineage.md` §2, §5 step 2 and §6 step 3, and `scripts/lineage.py`.** A recorded path outside §1's class is never read, walked or accepted: `check` reports its link stale and not checkable, by its place in the record, with no path, and `stamp` drops, unread, an accepted entry whose path is outside it. §6 words that line and prints no path outside the class anywhere, a stale or absent line included; its selftest gains the case, seen failing first. §1's schema comment says a blob id is 64 hex in a SHA-256 repository.
+- **`references/threat-model-format.md` §4 and §6, and `references/pre-lint.md`.** `ard-reviewer` is named as the gate that blocks a faulted review date, and the pre-lint as the advisory pass that flags it first; §6 says a refine lists a faulted acceptance for renewal or re-disposition.
 
 ## [1.100.6] — 2026-11-27
 

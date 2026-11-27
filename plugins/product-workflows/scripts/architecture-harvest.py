@@ -666,11 +666,16 @@ def pending_kb(root, ref):
     sha = resolve(root, ref)
     landed = {tree(root, c) for c in git(root, "log", "--format=%H", sha, "--", KB).split()}
     pending = []
-    for b in git(root, "for-each-ref", "--format=%(refname:short)", "refs/heads/kb", "refs/remotes/origin/kb").split():
-        if subprocess.run(["git", "-C", root, "merge-base", "--is-ancestor", b, sha],
+    # The full ref, read and named as such: a short name is heads/kb/... where a tag shares it, and as a revision a
+    # bare name resolves to that tag. Each is printed as its branch -- kb/..., or origin/kb/... for a remote one.
+    for full in git(root, "for-each-ref", "--format=%(refname)", "refs/heads/kb", "refs/remotes/origin/kb").split("\n"):
+        if not full:
+            continue
+        b = full[len("refs/heads/"):] if full.startswith("refs/heads/") else "origin/" + full[len("refs/remotes/origin/"):]
+        if subprocess.run(["git", "-C", root, "merge-base", "--is-ancestor", full, sha],
                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
             continue
-        t = tree(root, b)
+        t = tree(root, full)
         if t is None or t not in landed:
             pending.append(b)
     return pending
@@ -948,6 +953,9 @@ def selftest():
         r = cli("--specs", tmp, "--ref", "main", "--pending-kb")
         check(r.returncode == 0 and json.loads(r.stdout.decode("utf-8") or "{}").get("pending") == ["kb/harvest-a"],
               "--pending-kb prints the pending branches")
+        git(tmp, "tag", "kb/harvest-a", "main")  # a tag sharing the branch's name: short names turn heads/kb/...
+        check(pending_kb(tmp, "main") == ["kb/harvest-a"],
+              "a tag sharing a kb/ branch's name neither renames it nor stands in for it: %s" % pending_kb(tmp, "main"))
 
     # ---- the prd layout -----------------------------------------------------------------
     with tempfile.TemporaryDirectory() as tmp:
