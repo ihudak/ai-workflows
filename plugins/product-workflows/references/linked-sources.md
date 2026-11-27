@@ -99,12 +99,17 @@ In this order, stopping at the first that applies:
    the file this link sits in — that holds a `.obsidian/` directory. A name carrying a `/` resolves
    against the vault root; a bare name is matched by filename anywhere under it — either way
    entering no folder that is a symbolic link and matching no file that is one, as step 2 tests them:
-   a candidate on which step 2's program, handed it and the starting document's own directory,
-   exits 3 is no match.
-   - **Exactly one match** — that is the target.
-   - **More than one** — the target is `ambiguous`. Record every candidate and **choose none**: two
-     notes sharing a name are two different files, and a walk that picked one would report a file the
-     author may never have meant as though they had linked it.
+   each candidate is handed to step 2's program with the starting document's own directory, and one
+   it exits 3 on, a link or reached through one, is no match. Every other candidate is a match, and,
+   as in step 2, only one the program exits 0 on can be the target:
+   - **Exactly one match** — that is the target where the program exited 0 on it; any other exit —
+     4, a FIFO of that name, a file it cannot open, a link put there after its test — leaves the
+     target `unreadable`.
+   - **More than one** — the target is `ambiguous`, whatever the program's exits on them, a match it
+     exits 4 on counted too: it is a second entry of that name, which the author may have meant, and a
+     walk that left it out would take the other as though nothing else bore the name. Record every
+     candidate and **choose none**: two notes sharing a name are two different files, and a walk that
+     picked one would report a file the author may never have meant as though they had linked it.
    - **None** — the target is `unreadable`.
 
    Where no ancestor holds `.obsidian/`, there is no vault and this step is skipped: the target is

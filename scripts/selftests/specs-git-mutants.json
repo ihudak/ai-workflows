@@ -147,7 +147,7 @@
     "id": "lines_l_fix_pathspecs_shell_words",
     "group": "lines",
     "file": "plugins/workflows-core/scripts/specs_git_lines.py",
-    "old": "    if isinstance(value, ShellWords):",
+    "old": "    if isinstance(value, AsIs):",
     "new": "    if False:",
     "fails": "l_fix_pathspecs:"
   },
@@ -166,6 +166,38 @@
     "old": "word: lines.shell_path(",
     "new": "word: str(",
     "fails": "l_unsettled_show:"
+  },
+  {
+    "id": "lines_l_shown_comma",
+    "group": "lines",
+    "file": "plugins/workflows-core/scripts/specs_git_lines.py",
+    "old": "        elif c == \",\" and path[k + 1:k + 2] == \" \":",
+    "new": "        elif False:",
+    "fails": "l_shown_comma:"
+  },
+  {
+    "id": "lines_l_fix_pathspecs_rename",
+    "group": "lines",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "            if record[0] == \"R\" and original and not sb.classify(original):",
+    "new": "            if False:",
+    "fails": "l_fix_pathspecs:"
+  },
+  {
+    "id": "start_t_g1_in_progress",
+    "group": "start",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "            rec[\"guard_in_progress\"] = _g1_in_progress(specs)",
+    "new": "            rec[\"guard_in_progress\"] = None",
+    "fails": "t_g1_in_progress:"
+  },
+  {
+    "id": "end_e_declined_escaped",
+    "group": "end",
+    "file": "plugins/workflows-core/scripts/specs_git_lines.py",
+    "old": "        return Shown(\", \".join(paths))",
+    "new": "        return \", \".join(paths)",
+    "fails": "e_declined_escaped:"
   },
   {
     "id": "gate_g_file",

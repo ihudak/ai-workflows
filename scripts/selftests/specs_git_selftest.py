@@ -97,11 +97,12 @@ def selftest(groups=None):
         return r
 
     def g1_fill(lines, specs, paths):
-        """specs-repo-git §5's plain G1 block for <paths>, rendered from the pins and never by the code it checks: the
-        paths comma-separated on its Found line, and on its Fix line, at both its places, each a :(literal) pathspec,
-        shell-quoted as a printable path is."""
-        fix = " ".join(shlex.quote(":(literal)" + p) for p in paths)
-        return lines.fill("g1", {"<SPECS_PATH>": specs, "<N>": len(paths), "<path list>": [", ".join(paths), fix, fix]})
+        """specs-repo-git §5's plain G1 block for <paths> -- names needing no escape -- rendered from the pins and never
+        by the code it checks: the paths comma-separated on its Found line (handed to fill as already shown), and on its
+        Fix line each shell-quoted as it stands for update-index and as a :(literal) pathspec for commit."""
+        return lines.fill("g1", {"<SPECS_PATH>": specs, "<N>": len(paths), "<path list>": [
+            lines.Shown(", ".join(paths)), " ".join(shlex.quote(p) for p in paths),
+            " ".join(shlex.quote(":(literal)" + p) for p in paths)]})
 
     def cli(*args, env=None, stdin=None, cwd=None, script=None):
         return parsed(subprocess.run([sys.executable, script or me, *args], stdout=subprocess.PIPE,
@@ -2541,12 +2542,11 @@ def selftest(groups=None):
             fh.write("#!/bin/sh\nfor a in \"$@\"; do printf '%s|' \"$a\"; done >> \"$GIT_CALLS\"\necho >> \"$GIT_CALLS\"\n")
         os.chmod(os.path.join(shim, "git"), 0o755)
         S, paths = os.path.join(tmp, "a specs repo"), ["my notes.md", "n.md"]
-        specs_fix = " ".join(shlex.quote(":(literal)" + p) for p in paths)  # each path a literal pathspec (§5)
-        plain = lines.fill("g1", {"<SPECS_PATH>": S, "<N>": 2, "<path list>": [", ".join(paths), specs_fix, specs_fix]})
-        added = "--|:(literal)my notes.md|:(literal)n.md|"
+        plain = g1_fill(lines, S, paths)
+        added, committed_specs = "--add|--remove|--|my notes.md|n.md|", "--|:(literal)my notes.md|:(literal)n.md|"
         blocks = [("g0", lines.fill("g0", {"<SPECS_PATH>": S, "<sha7>": "abc1234", "<YYYY-MM-DD>": "2026-11-10",
                                            "<branch>": "main"}), ["switch|-c|rescue/2026-11-10|"]),
-                  ("g1", plain, ["status|", "add|" + added, "commit|" + added]),
+                  ("g1", plain, ["status|", "update-index|" + added, "commit|" + committed_specs]),
                   ("g2", _g2_block(lines, S, "feature/x", "main"), ["switch|main|"]),
                   ("g2.implement", _g2_block(lines, S, "feature/x", "main", "implement"), []),
                   ("g2.session", _g2_block(lines, S, "feature/x", "main", "session", {"<identity>": "ab"}), []),
@@ -2558,9 +2558,9 @@ def selftest(groups=None):
             unkeyed = {"branch": "prd/B-2-y", "kind": "unkeyed", "reason": "g1", "merged": False, "command": None}
             merged = {"branch": "prd/A-1-x", "kind": "merged", "reason": "g1", "merged": True, "command": None}
             blocks += [("g1.landing", landing(lines, plain, "prd/B-2-y", "main", S, paths, unkeyed, None),
-                        ["status|", "add|" + added, "commit|" + added]),
+                        ["status|", "update-index|" + added, "commit|" + committed_specs]),
                        ("g1.landing.merged", landing(lines, plain, "prd/A-1-x", "main", S, paths, merged, None),
-                        ["switch|main|", "add|" + added, "commit|" + added])]
+                        ["switch|main|", "update-index|" + added, "commit|" + committed_specs])]
         for name, block, want in blocks:
             rows = block.split("\n")
             i = next((k for k, row in enumerate(rows) if row.startswith("Fix:")), None)
@@ -2613,7 +2613,9 @@ def selftest(groups=None):
                     break
                 part.append(row[len("Fix:"):].strip() if not part else row.strip())
             listed = b"--|" + b"|".join(b":(literal)" + os.fsencode(p) for p in odd) + b"|\n"
-            expect = {"status": b"-C|" + os.fsencode(S) + b"|status|\n", "add": b"-C|" + os.fsencode(S) + b"|add|" + listed,
+            raw = b"--add|--remove|--|" + b"|".join(os.fsencode(p) for p in odd) + b"|\n"
+            expect = {"status": b"-C|" + os.fsencode(S) + b"|status|\n",
+                      "add": b"-C|" + os.fsencode(S) + b"|update-index|" + raw,
                       "switch": b"-C|" + os.fsencode(S) + b"|switch|main|\n"}
             for shell in [["bash", "-c"]] + ([["zsh", "-c"]] if shutil.which("zsh") else []):
                 if os.path.exists(log):
@@ -2637,27 +2639,42 @@ def selftest(groups=None):
                   "l_unprintable_paths: %s writes a path that is not a printable value with its JSON escapes (%r)"
                   % (tid, got))
 
-        # l_fix_pathspecs: G1's Fix part names each path as a :(literal) pathspec and commits those paths alone, so a
-        # user's file named * stages and commits only itself, and one named -x.md is never read as an option: pasted
-        # into bash (and zsh, where it is on PATH) against a real git, in the plain block and in the merged landing
-        # form, the commit carries exactly the listed paths -- a backslash and a line feed among their names -- and
-        # every other change, an untracked file, a modified one and one the user had staged, is left as it was
+        # l_fix_pathspecs: G1's Fix part resolves every OTHER path status() lists, and no other: update-index takes
+        # each path as it stands, after --, reading no pattern and taking a path neither the index nor the working
+        # tree holds as nothing to do, and the commit takes each as a :(literal) pathspec and commits those paths alone.
+        # Pasted into bash (and zsh, where it is on PATH) against a real git, in the plain block and in the merged
+        # landing form, over files named *, -x.md, a\b.md and one holding a line feed, a modified file, a staged one,
+        # a staged rename and a staged deletion, the commit carries exactly what G1 listed -- the rename's original
+        # among it -- status() then lists no OTHER path, so the next run's G1 does not fire, and the plugin's own
+        # staged and untracked files are left as they were; so is a tree whose one OTHER change is a staged deletion
         editor = os.path.join(tmp, "l-fix-editor")
         with open(editor, "w", encoding="utf-8") as fh:
             fh.write("#!/bin/sh\nprintf 'mine\\n' > \"$1\"\n")
         os.chmod(editor, 0o755)
-        listed = ["*", "-x.md", "a\\b.md", "c\nd.md"]
         g1 = globals().get("_g1_block")
-        for form in ("plain", "merged"):
+        mine_a, mine_b = "dev-workflows-feedback/a.md", "dev-workflows-feedback/b.md"
+        for form, dirt in (("plain", "all"), ("merged", "all"), ("plain", "deletion")):
             for shell in [["bash", "-c"]] + ([["zsh", "-c"]] if shutil.which("zsh") else []):
-                r = new_repo(tmp, "l-fix-%s-%s" % (form, shell[0]))
+                r = new_repo(tmp, "l-fix-%s-%s-%s" % (form, dirt, shell[0]))
+                for p in ("old.md", "gone.md", "staged.md", mine_a):  # each its own content, so no rename is guessed
+                    r.write(p, "the base of %s\n" % p)
+                r.commit_all("NOISSUE base")
                 if form == "merged":
                     r.git("switch", "-q", "-c", "prd/A-1-x")
-                for p in listed + ["other.md"]:
-                    r.write(p, "x\n")
-                r.write("README.md", "changed\n")
-                r.write("staged.md", "s\n")
-                r.git("add", "--", "staged.md")
+                want = ["gone.md"]
+                if dirt == "all":
+                    for p in ("*", "-x.md", "a\\b.md", "c\nd.md"):
+                        r.write(p, "x\n")
+                    r.write("README.md", "changed\n")
+                    r.write("staged.md", "s\n")
+                    r.git("add", "--", "staged.md")
+                    r.git("mv", "old.md", "new.md")
+                    want += ["*", "-x.md", "a\\b.md", "c\nd.md", "README.md", "staged.md", "new.md", "old.md"]
+                r.git("rm", "-q", "gone.md")
+                r.write(mine_a, "mine\n")
+                r.git("add", "--", mine_a)
+                r.write(mine_b, "new\n")
+                listed = status(r.path)["other"]
                 block = g1(lines, r.path, listed) if g1 else ""
                 if form == "merged" and landing and block:
                     block = landing(lines, block, "prd/A-1-x", "main", r.path, listed, merged, None)
@@ -2670,18 +2687,20 @@ def selftest(groups=None):
                     part.append(row[len("Fix:"):].strip() if not part else row.strip())
                 ran = subprocess.run(shell + ["\n".join(part)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                      cwd=tmp, env=dict(os.environ, GIT_EDITOR=editor))
-                show = subprocess.run(["git", "-C", r.path, "show", "-z", "--name-only", "--format=", "HEAD"],
-                                      stdout=subprocess.PIPE).stdout
+                show = subprocess.run(["git", "-C", r.path, "show", "-z", "--name-only", "--no-renames", "--format=",
+                                       "HEAD"], stdout=subprocess.PIPE).stdout
                 committed = sorted(os.fsdecode(n) for n in show.split(b"\0") if n)
-                status = subprocess.run(["git", "-C", r.path, "status", "--porcelain", "-z", "--untracked-files=all"],
-                                        stdout=subprocess.PIPE).stdout
-                left = sorted(os.fsdecode(e) for e in status.split(b"\0") if e)
-                check(i is not None and ran.returncode == 0 and committed == sorted(listed)
-                      and left == sorted([" M README.md", "A  staged.md", "?? other.md"])
+                porcelain = subprocess.run(["git", "-C", r.path, "status", "--porcelain", "-z", "--untracked-files=all"],
+                                           stdout=subprocess.PIPE).stdout
+                left = sorted(os.fsdecode(e) for e in porcelain.split(b"\0") if e)
+                check(sorted(listed) == sorted(want) and i is not None and ran.returncode == 0
+                      and committed == sorted(want) and status(r.path)["other"] == []
+                      and left == sorted(["M  " + mine_a, "?? " + mine_b])
                       and r.git("symbolic-ref", "--short", "HEAD") == "main",
-                      "l_fix_pathspecs: %s G1's Fix part, run through %s -c on a real git, commits exactly the listed "
-                      "paths on main and leaves every other change as it was (rc %s, %r, committed %r, left %r)"
-                      % (form, shell[0], ran.returncode, ran.stderr.decode("utf-8", "replace")[:300], committed, left))
+                      "l_fix_pathspecs: %s G1's Fix part over %s, run through %s -c on a real git, commits exactly what "
+                      "G1 listed on main, and the next G1 lists nothing (listed %r, rc %s, %r, committed %r, left %r)"
+                      % (form, dirt, shell[0], listed, ran.returncode, ran.stderr.decode("utf-8", "replace")[:300],
+                         committed, left))
 
         # l_checked_out_remedy: the push-rejected row's checked-out remedy names the worktree's path shell-quoted as
         # G1's Fix line writes a path (shell_path), never in double quotes: a path holding $( or a backtick pastes as
@@ -2731,6 +2750,28 @@ def selftest(groups=None):
         check(lines.artifacts([lit]) == "a\\\\nb.md" and lines.artifacts([lf]) == "a\\nb.md",
               "l_shown_backslash: <artifacts> shows the two names apart (%r, %r)"
               % (lines.artifacts([lit]), lines.artifacts([lf])))
+
+        # l_shown_comma: two different sets never show alike: shown_path writes a comma followed by a space as \, so a
+        # list joined by ", " reads one way -- G1's Found line, <artifacts> and a [, …] clause -- and a value that is
+        # already escaped (artifacts', G1's Found list) is escaped once, the declined append's included
+        one, two = ["a, b.md"], ["a", "b.md"]
+        check(lines.shown_path("a, b.md") == "a\\, b.md" and lines.shown_path("a,b.md") == "a,b.md",
+              "l_shown_comma: shown_path writes a comma followed by a space as \\, (%r)" % lines.shown_path("a, b.md"))
+        found = [next((row for row in (g1(lines, S, ps) if g1 else "").split("\n") if "artifact area:" in row), "")
+                 for ps in (one, two)]
+        check(found[0] != found[1] and found[0].endswith("artifact area: a\\, b.md")
+              and found[1].endswith("artifact area: a, b.md"),
+              "l_shown_comma: G1's Found line shows the two sets apart (%r)" % found)
+        check(lines.artifacts(one) != lines.artifacts(two) and lines.artifacts(two) == "a, b.md",
+              "l_shown_comma: <artifacts> shows the two sets apart (%r, %r)" % (lines.artifacts(one), lines.artifacts(two)))
+        a, b = (lines.fill("app.hook-line", {"<path>": ps, "<sha7>": "abc1234"}) for ps in (one, two))
+        check(a != b and a.startswith("Specs repo: a\\, b.md is now") and b.startswith("Specs repo: a, b.md is now"),
+              "l_shown_comma: a [, …] clause shows the two sets apart (%r, %r)" % (a, b))
+        for ps, want in ((["d/a\nb.md"], "d/a\\nb.md"), (["d/a\\b.md"], "d/a\\\\b.md"), (["d/a\\nb.md"], "d/a\\\\nb.md"),
+                         (["w\\d/1.md", "w\\d/2.md", "w\\d/3.md", "w\\d/4.md"], "4 files under w\\\\d")):
+            got = lines.fill("app.declined", {"<path>": lines.artifacts(ps)})
+            check(got == "; the deliverable at %s remains uncommitted, as you asked" % want,
+                  "l_shown_comma: the declined append escapes %r once (%r)" % (ps, got))
 
         # l_unsettled_show: the unsettled append's git show names the session branch's revision and path as one shell
         # word, written by shell_path: pasted into bash against a real git, it shows that branch's blob of a session file
@@ -3743,6 +3784,26 @@ def selftest(groups=None):
         got = run_end(env, "/create-prd")
         check((got.get("line") or "").endswith(appended("4 files under specifications/PRD-ACME-1-x")),
               "e_declined: four paths in one folder (%r)" % got)
+        # e_declined_escaped: names holding a line feed, a backslash and a comma before a space, escaped once each, as
+        # phase-handoff §2.3 says; and the folder of four such files, in the beyond-three form, escaped once
+        odd = ["specifications/PRD-ACME-1-x/a\nb.md", "specifications/PRD-ACME-1-x/a\\nb.md",
+               "specifications/PRD-ACME-1-x/c, d.md"]
+        for p in odd:
+            r.write(p, "x\n")
+        seed(env, "/create-prd", declined=odd)
+        r.write(RESUME, "r4\n")
+        got = run_end(env, "/create-prd")
+        shown_odd = ", ".join(p.replace("\\", "\\\\").replace("\n", "\\n").replace(", ", "\\, ") for p in odd)
+        check((got.get("line") or "").endswith(appended(shown_odd)) and "\n" not in (got.get("line") or "\n"),
+              "e_declined_escaped: three names escaped once each (%r)" % got.get("line"))
+        deep = ["specifications/PRD-ACME-1-x/w\\d/%d.md" % k for k in range(4)]
+        for p in deep:
+            r.write(p, "x\n")
+        seed(env, "/create-prd", declined=deep)
+        r.write(RESUME, "r5\n")
+        got = run_end(env, "/create-prd")
+        check((got.get("line") or "").endswith(appended("4 files under specifications/PRD-ACME-1-x/w\\\\d")),
+              "e_declined_escaped: the beyond-three folder escaped once (%r)" % got.get("line"))
         r, env = world(tmp, "e-declined-flag")
         r.git("rm", "-q", PRD)
         r.git("commit", "-q", "-m", "drop the PRD")
@@ -4601,7 +4662,7 @@ def selftest(groups=None):
             merged_form = g1_form(r, lines.fill("g1.landing.not_done.landed", v),
                                   lines.fill("g1.merged.if_ignored", v)).split("\n")
             fix = lines.fill("g1.merged.fix", {"<SPECS_PATH>": r.path, "<default>": "main",
-                                               "<path list>": "':(literal)notes.md'"})
+                                               "<path list>": ["notes.md", "':(literal)notes.md'"]})
             k = next(i for i, row in enumerate(merged_form) if row.startswith("Fix:"))
             j = next(i for i, row in enumerate(merged_form) if row.startswith("If ignored:"))
             merged_form = "\n".join(merged_form[:k] + ["Fix:      " + fix] + merged_form[j:])
@@ -8854,9 +8915,7 @@ def selftest(groups=None):
                     + lines.fill("app.landed", {"<branch>": branch, "<default>": "main", LANDED: STAY_KINDS.index(kind)}))
 
         def g1_plain(r, paths):
-            fix = " ".join(shlex.quote(":(literal)" + p) for p in paths)
-            return lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": len(paths),
-                                     "<path list>": [", ".join(paths), fix, fix]})
+            return g1_fill(lines, r.path, paths)
 
         def g1_form(r, paths, not_done, fix, if_ignored):
             """G1's block for <paths> in one of §5's forms, rendered from the pins and never by the code it checks: the
@@ -8869,8 +8928,8 @@ def selftest(groups=None):
             return "\n".join(rows[:at["Not done:"]] + ["Not done: " + not_done] + fixed + ["If ignored: " + if_ignored])
 
         def merged_fix(r, paths):
-            return lines.fill("g1.merged.fix", {"<SPECS_PATH>": r.path, "<default>": "main",
-                                                "<path list>": " ".join(shlex.quote(":(literal)" + p) for p in paths)})
+            return lines.fill("g1.merged.fix", {"<SPECS_PATH>": r.path, "<default>": "main", "<path list>": [
+                " ".join(shlex.quote(p) for p in paths), " ".join(shlex.quote(":(literal)" + p) for p in paths)]})
 
         def g1_landing(r, paths, branch, kind):
             """G1's landing form (§5) at the start, for a stay of <kind> (STAY_KINDS) on <branch>: merged's Fix and If
@@ -9053,7 +9112,7 @@ def selftest(groups=None):
         h = head(r)
         got = run_start(env, "/feedback")
         block = lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": 2,
-                                  "<path list>": ["my notes.md, notes.md", "':(literal)my notes.md' ':(literal)notes.md'",
+                                  "<path list>": [lines.Shown("my notes.md, notes.md"), "'my notes.md' notes.md",
                                                   "':(literal)my notes.md' ':(literal)notes.md'"]})
         shown = (got.get("print") or ["", ""])[-1]
         check(got.get("print") == [env_line(r.path),
@@ -9061,13 +9120,55 @@ def selftest(groups=None):
               and block == g1_plain(r, ["my notes.md", "notes.md"]) and got.get("guard") == "G1"
               and got.get("specs_git") is None and got.get("branch") == "prd/ACME-9-q" and head(r) == h
               and "?? " + RESUME in r.git("status", "--porcelain", "--untracked-files=all")
-              and "artifact area: my notes.md, notes.md\n" in shown and "add -- ':(literal)my notes.md' ':(literal)notes.md' &&" in shown
+              and "artifact area: my notes.md, notes.md\n" in shown and "update-index --add --remove -- 'my notes.md' notes.md &&" in shown
               and "commit -- ':(literal)my notes.md' ':(literal)notes.md'\n" in shown,
               "t_g1: the block lists the paths, comma-separated, then shell-quoted; no flush, no switch (%r)" % got)
         rec = record(env, "/feedback") or {}
         check(rec.get("guard_paths") == ["my notes.md", "notes.md"] and rec.get("guard_block") == block
               and rec.get("stay") == stayed("prd/ACME-9-q", "g1"),
               "t_g1: the paths saved as guard_paths, the plain block saved, the stay recorded (%r)" % rec)
+
+        # t_g1_in_progress: a merge with nothing left to settle, then a cherry-pick stopped on a conflict, each with a
+        # file of the user's untracked beside it: git commits no paths of the user's choosing during either, so G1's
+        # Found line says what is in progress and its Fix line is git status alone; pasted, it changes nothing -- the
+        # untracked file stays untracked, the marker stands and HEAD is where it was
+        for kind in ("merge", "cherry-pick"):
+            r, env = world(tmp, "t-g1-" + kind)
+            r.write("f.md", "base\n")
+            r.commit_all("NOISSUE f")
+            r.git("switch", "-q", "-c", "side")
+            r.write("f.md", "side\n")
+            r.commit_all("NOISSUE side")
+            r.git("switch", "-q", "main")
+            if kind == "merge":
+                r.write("g.md", "main\n")
+                r.commit_all("NOISSUE g")
+                r.git("merge", "-q", "--no-commit", "--no-ff", "side")
+                marker = ".git/MERGE_HEAD"
+            else:
+                r.write("f.md", "main\n")
+                r.commit_all("NOISSUE main's f")
+                r.git("cherry-pick", "side", check=False)
+                marker = ".git/CHERRY_PICK_HEAD"
+            r.write("notes.md", "n\n")
+            h = head(r)
+            got = run_start(env, "/feedback")
+            rows = ((got.get("print") or [""])[-1]).split("\n")
+            found = next((row for row in rows if row.startswith("Found:")), "")
+            k = next((i for i, row in enumerate(rows) if row.startswith("Fix:")), None)
+            fix = rows[k] if k is not None else ""
+            want_found = lines.fill(T.get("g1.in-progress.found", "<missing>"), {
+                "<SPECS_PATH>": r.path, "<N>": 2, "<path list>": lines.Shown("f.md, notes.md"), "<path>": marker}) \
+                if "g1.in-progress.found" in T else None
+            ran = subprocess.run(["bash", "-c", fix[len("Fix:"):].strip()], stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE) if fix else None
+            check(got.get("guard") == "G1" and want_found is not None and found == "Found:    " + want_found
+                  and fix == 'Fix:      git -C "%s" status' % r.path and rows[k + 1].startswith("If ignored:")
+                  and ran is not None and ran.returncode == 0 and head(r) == h
+                  and os.path.exists(os.path.join(r.path, marker))
+                  and "?? notes.md" in r.git("status", "--porcelain", "--untracked-files=all"),
+                  "t_g1_in_progress: a %s in progress: G1 says so, its Fix line is git status alone, and it changes "
+                  "nothing (%r)" % (kind, rows))
 
         # t_g2, t_g2_implement
         r, env = world(tmp, "t-g2")
@@ -11086,9 +11187,7 @@ def selftest(groups=None):
             return "\n".join(rows)
 
         def g1_of(r, paths):
-            fix = " ".join(shlex.quote(":(literal)" + p) for p in paths)
-            return lines.fill("g1", {"<SPECS_PATH>": r.path, "<N>": len(paths),
-                                     "<path list>": [", ".join(paths), fix, fix]})
+            return g1_fill(lines, r.path, paths)
 
         def g1_midrun(r, paths, not_done=None, command="/specify", keys=None):
             """G1's mid-run form (§5): <not_done> in place of the plain Not done where given, an empty Fix, and

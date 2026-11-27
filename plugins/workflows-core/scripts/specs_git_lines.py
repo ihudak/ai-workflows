@@ -39,7 +39,7 @@ Not done: the preflight did not switch branches, and did not commit or push
           the end of the run — commit-artifacts stages only the §2.1 artifact
           paths.
 Fix:      git -C "<SPECS_PATH>" status
-          git -C "<SPECS_PATH>" add -- <path list> && git -C "<SPECS_PATH>" commit -- <path list>
+          git -C "<SPECS_PATH>" update-index --add --remove -- <path list> && git -C "<SPECS_PATH>" commit -- <path list>
 If ignored: nothing is lost — your files stay uncommitted, and this run's
           artifacts are committed alongside them. But the preflight ends here
           on EVERY later run too, so the leftover flush and the branch
@@ -76,7 +76,7 @@ T = {
     "g0.unsafe.if_ignored": "the artifacts stay in your working tree, uncommitted and intact; the next run's preflight picks them up once HEAD is on a branch named inside that class — the one Fix creates, or an existing one you rejoin instead with git -C \"<SPECS_PATH>\" switch <branch>",
     # §5's G1 on a branch the run would have left (§4 step 1's landing), and under a run typed mid-run: each replaces
     # the text after its label ("Not done: ", "Fix:      ", "If ignored: ") in G1, rendered on its one line, unwrapped;
-    # <path list> on the Fix line, at both its places, is the plain block's list of pathspecs (pathspecs()). The
+    # <path list> on the Fix line is the plain block's: shell_paths() for update-index, pathspecs() for commit. The
     # landing form's Not done by the stay's kind (STAY_KINDS, specs-git.py); g1.merged.fix and g1.merged.if_ignored
     # where the stay's merged flag is set, else the plain Fix and g1.landing.if_ignored. Under a run typed mid-run,
     # whatever the kind: the landing form's Not done, its third alternative, where the run stayed, else the plain one;
@@ -99,7 +99,13 @@ T = {
     "g1.not_done.uncommitted": "the preflight did not switch branches, and did not commit or push these files. Those files are yours, and switching branches would carry them along. This run's own artifacts were to be committed at the end of the run — commit-artifacts stages only the §2.1 artifact paths; the Specs repo: line above this notice says what came of them.",
     "g1.if_ignored.uncommitted": "nothing is lost — your files stay uncommitted, and the Specs repo: line above this notice says what came of this run's artifacts. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped until these paths are committed or removed. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
     "g1.midrun.if_ignored": "nothing is lost — these may be <command>'s files in progress, and nothing is to be run here while that run is open: let it finish, or end it, first; if you stopped that run, /clear, typing <command> again[ with <keys>], or HEAD leaving the branch ends it. Nothing of this run's is committed with them. Until these paths are committed or removed, the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped.",
-    "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" add -- <path list> && git -C \"<SPECS_PATH>\" commit -- <path list>",
+    "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" update-index --add --remove -- <path list> && git -C \"<SPECS_PATH>\" commit -- <path list>",
+    # §5: where a rebase, merge, cherry-pick or revert, or an unresolved conflict, is in progress in the checkout
+    # (session-branch.py's _in_progress, its path <path>): each replaces the text after its label ("Found:    ",
+    # "Fix:      ") in G1, whatever form G1 takes, save that the mid-run form's empty Fix stands; <path list> is the Found
+    # line's, as shown_list writes it.
+    "g1.in-progress.found": "<SPECS_PATH> has <N> uncommitted change(s) outside the plugin's artifact area: <path list>; a rebase, merge, cherry-pick or revert, or an unresolved conflict, is in progress there (<path>), so this notice gives no commit until it is finished: finish it, or abort it, as git status says, and the next run's notice gives the commands for what is left",
+    "g1.in-progress.fix": "git -C \"<SPECS_PATH>\" status",
     # §5 part 3: where refs/heads/<default> names no commit and <default-ref> names one, a Fix line that opens with the
     # switch to <default> -- G2's plain and session-branch-itself forms, g1.merged.fix -- has that switch replaced by
     # this, the rest of the line as it stands; judged each time the block is printed.
@@ -404,14 +410,17 @@ def _unprintable(c):
 
 
 def shown_path(path):
-    """A path as a line may hold it (phase-handoff §2.3): each backslash written as \\\\, and each character that keeps
-    it from being a printable value written as an escape -- a line feed as \\n, any other as \\u and its four hex
-    digits, a byte that is not UTF-8 as its \\udcXX -- so the path can neither break the line nor show as another: a
-    name holding a backslash and an n shows as \\\\n, never as the \\n of a name holding a line feed."""
+    """A path as a line may hold it (phase-handoff §2.3): each backslash written as \\\\, a comma followed by a space as
+    \\, (the comma alone escaped), and each character that keeps it from being a printable value written as an escape
+    -- a line feed as \\n, any other as \\u and its four hex digits, a byte that is not UTF-8 as its \\udcXX -- so the
+    path can neither break the line nor show as another: a name holding a backslash and an n shows as \\\\n, never as
+    the \\n of a name holding a line feed, and a list of paths joined by ", " reads one way."""
     out = []
-    for c in path:
+    for k, c in enumerate(path):
         if c == "\\":
             out.append("\\\\")
+        elif c == "," and path[k + 1:k + 2] == " ":
+            out.append("\\,")
         elif c == "\n":
             out.append("\\n")
         elif _unprintable(c):  # every such character is in the BMP, so four hex digits name it
@@ -421,9 +430,23 @@ def shown_path(path):
     return "".join(out)
 
 
-class ShellWords(str):
+class AsIs(str):
+    """Text fill() writes as it stands, never through shown_path: a path value already shown, or shell words."""
+
+
+class Shown(AsIs):
+    """Paths already written as shown_path writes them, joined where a list: artifacts() and shown_list() give one, so
+    fill() never escapes their escapes again."""
+
+
+class ShellWords(AsIs):
     """Text that is already shell words, each path in it written by shell_path, so every character it holds is
     printable: fill() writes it as it stands, where shown_path would double its backslashes and name other files."""
+
+
+def shown_list(paths):
+    """<paths> as a line lists them: each written by shown_path, joined by ", ". A Shown."""
+    return Shown(", ".join(shown_path(p) for p in paths))
 
 
 def shell_path(path):
@@ -446,20 +469,27 @@ def shell_path(path):
     return ShellWords("$'" + "".join(out) + "'")
 
 
+def shell_paths(paths):
+    """G1's <path list> for its Fix line's update-index (specs-repo-git §5): each path as it stands, written by
+    shell_path, space-separated, after the line's --, so git reads no name opening with - as an option and, update-index
+    reading no pattern, takes a name holding * or [ as itself. A ShellWords."""
+    return ShellWords(" ".join(shell_path(p) for p in paths))
+
+
 def pathspecs(paths):
-    """G1's <path list> on its Fix line (specs-repo-git §5): each path as the literal pathspec :(literal)<path>, written
-    by shell_path, space-separated -- so git takes a name holding * or [ as itself, a name opening with - is never read
-    as an option, and the commit the line pairs with its add commits those paths alone. A ShellWords."""
+    """G1's <path list> for its Fix line's commit (specs-repo-git §5): each path as the literal pathspec
+    :(literal)<path>, written by shell_path, space-separated -- so git takes a name holding * or [ as itself, every
+    argument opens with : and none is read as an option, and the commit commits those paths alone. A ShellWords."""
     return ShellWords(" ".join(shell_path(":(literal)" + p) for p in paths))
 
 
-# The placeholders that name a path: fill() writes each value given for one as shown_path writes it, save a ShellWords.
+# The placeholders that name a path: fill() writes each value given for one as shown_path writes it, save an AsIs.
 _PATH_SPANS = ("<path>", "<path list>", "<file>")
 
 
 def _shown(span, value):
-    """<value> as fill() writes it for <span>: a ShellWords as it stands, else a path placeholder's by shown_path."""
-    if isinstance(value, ShellWords):
+    """<value> as fill() writes it for <span>: an AsIs as it stands, else a path placeholder's by shown_path."""
+    if isinstance(value, AsIs):
         return str(value)
     return shown_path(str(value)) if span in _PATH_SPANS else str(value)
 
@@ -467,12 +497,12 @@ def _shown(span, value):
 def artifacts(paths):
     """phase-handoff §4.1's <artifacts>: the paths comma-separated where three or fewer, else '<n> files under
     <dir>', <dir> the nearest directory holding every path, repo-relative ('.' where that is the top level); each path
-    written by shown_path."""
+    written by shown_path. A Shown, which fill() writes as it stands."""
     paths = [shown_path(p) for p in paths]
     if len(paths) <= 3:
-        return ", ".join(paths)
+        return Shown(", ".join(paths))
     common = posixpath.commonpath([posixpath.dirname(p) for p in paths])
-    return "%d files under %s" % (len(paths), common or ".")
+    return Shown("%d files under %s" % (len(paths), common or "."))
 
 
 _COMMITTED = re.compile(r"Specs repo: committed \S+ \((?:1 file|\d+ files)\) on (\S+)")
@@ -628,8 +658,9 @@ def fill(template_or_id, values):
     it, one item per occurrence in order; an alternation (one holding " | " at its own level) by the alternative an
     int picks, itself filled from the same values — an alternative that names a placeholder of the same template
     (root.one-line's "the value the walk found") taking that placeholder's value. A value of a path placeholder --
-    <path>, <path list>, <file> -- is written as shown_path writes it, save a ShellWords, written as it stands: the
-    shell words a command line pastes, which shell_path and pathspecs give. A placeholder left with no value,
+    <path>, <path list>, <file> -- is written as shown_path writes it, save an AsIs, written as it stands: a Shown,
+    already escaped (artifacts, shown_list), or ShellWords, the shell words a command line pastes (shell_path,
+    shell_paths, pathspecs). A placeholder left with no value,
     and an alternation given anything but an int naming one of its alternatives, raises ValueError naming it, so no
     placeholder reaches a user. A template holding a repeated clause ("; …") is never filled whole: left_behind()
     renders addressing §3's."""

@@ -145,7 +145,9 @@ def _flow():
 def status(root):
     """specs-repo-git §2.1 staging steps 1-2: every path git status reports, sorted into the ARTIFACT
     paths the terminal commit may stage and every OTHER path. Read with -z, whose records are never
-    quoted; a rename or copy record carries its original path as a second field, consumed with it."""
+    quoted; a rename or copy record carries its original path as a second field, consumed with it --
+    and, where the index holds the rename (R in its first column) and that original is OTHER, listed in
+    OTHER too, so G1 names, and its Fix line commits, both halves of the user's rename."""
     fields = sb.git(root, "status", "--porcelain", "-z", "--untracked-files=all").stdout.decode(
         "utf-8", "surrogateescape").split("\0")
     artifact, other = set(), set()
@@ -157,7 +159,10 @@ def status(root):
             continue
         path = record[3:]
         if "R" in record[:2] or "C" in record[:2]:
+            original = fields[i] if i < len(fields) else ""
             i += 1  # the original path, which is no record of its own
+            if record[0] == "R" and original and not sb.classify(original):
+                other.add(original)  # its removal is staged, a change of the user's as much as the new path
         (artifact if sb.classify(path) else other).add(path)
     return {"artifact": sorted(artifact), "other": sorted(other)}
 
@@ -1573,7 +1578,7 @@ def _end_view(lines, rec, view, default, specs, stay, committed):
         return view
     return dict(view, guard_block=_make_default_fix(lines, top, default, rec.get("default_ref"), _g1_landing(
         lines, view["guard_block"], (stay or {}).get("branch"), default, top, view["guard_paths"], stay,
-        rec.get("midrun"), committed)))
+        rec.get("midrun"), committed, rec.get("guard_in_progress"))))
 
 
 def _land_clause(lines, refused, default, onto=None):
@@ -2720,16 +2725,35 @@ def _advance(run, stage):
     _save(run)
 
 
-def _g1_block(lines, specs, paths):
-    """specs-repo-git §5's G1 block for the OTHER <paths>: <path list> comma-separated on the Found line, each path
-    escaped as shown_path writes it (fill), and on the Fix line, where its add and its commit paste it, each path as a
-    :(literal) pathspec, shell-quoted and space-separated, one that is not a printable value in $'…' quoting
-    (pathspecs)."""
-    fix = lines.pathspecs(paths)
-    return lines.fill("g1", {"<SPECS_PATH>": specs, "<N>": len(paths), "<path list>": [", ".join(paths), fix, fix]})
+def _g1_block(lines, specs, paths, in_progress=None):
+    """specs-repo-git §5's G1 block for the OTHER <paths>: <path list> on the Found line each path escaped as shown_path
+    writes it, comma-separated (shown_list); on the Fix line's update-index each path as it stands, shell-quoted
+    (shell_paths), and on its commit each a :(literal) pathspec (pathspecs), a path that is not a printable value in
+    $'…' quoting. Where <in_progress> names a merge's, cherry-pick's or revert's marker, or an unmerged path
+    (session-branch.py's _in_progress), its Found and Fix are g1.in-progress.found and g1.in-progress.fix, each on its
+    one line: git commits no paths of the user's choosing during one, so the block gives no commit."""
+    shown = lines.shown_list(paths)
+    block = lines.fill("g1", {"<SPECS_PATH>": specs, "<N>": len(paths),
+                              "<path list>": [shown, lines.shell_paths(paths), lines.pathspecs(paths)]})
+    if in_progress:
+        block = _block_part(block, "Found:", lines.fill("g1.in-progress.found", {
+            "<SPECS_PATH>": specs, "<N>": len(paths), "<path list>": shown, "<path>": in_progress}))
+        block = _block_part(block, "Fix:", lines.fill("g1.in-progress.fix", {"<SPECS_PATH>": specs}))
+    return block
 
 
-def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, committed=None):
+def _g1_in_progress(specs):
+    """The path session-branch.py's _in_progress names where a merge, cherry-pick or revert, a rebase, or an unmerged
+    index stands in the checkout at <specs> (specs-repo-git §5's in-progress form of G1); None where none does, where
+    only an index.lock stands, or where the test cannot run."""
+    try:
+        got = sb._in_progress(specs)
+    except Exception:  # a test that cannot run leaves G1 in its form with a commit, as before the test existed
+        return None
+    return got["path"] if got and got.get("reason") == "in-progress" else None
+
+
+def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, committed=None, in_progress=None):
     """specs-repo-git §5's form of G1's plain <block> -- as rendered for <specs> and the OTHER <paths> -- on a branch
     the run would have left, or under a run typed mid-run, each part replaced unwrapped on its one line, its Found line
     its own. Where <midrun> (the record's: the open run) is set, the mid-run form, whatever the stay's kind and flag
@@ -2744,9 +2768,12 @@ def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, commi
     Not done is g1.landing.not_done.unlanded with a stay and g1.not_done.uncommitted without one, the mid-run form's
     included; with neither a stay nor a run typed mid-run, the If ignored is g1.if_ignored.uncommitted too (the
     not-committed form), and otherwise the Fix and If ignored are as they are; where True with a stay, the Not done is
-    g1.landing.not_done.landed, which says the artifacts were committed and leaves the commit to the outcome line."""
+    g1.landing.not_done.landed, which says the artifacts were committed and leaves the commit to the outcome line.
+    <in_progress>, the record's guard_in_progress: the plain block holds G1's in-progress Found and Fix, and the merged
+    form keeps that Fix, which gives no switch and no commit."""
     kind = lines.placeholder("g1.landing.not_done", "<which no key")
-    v = {"<branch>": branch, "<default>": default, "<SPECS_PATH>": specs, "<path list>": lines.pathspecs(paths)}
+    v = {"<branch>": branch, "<default>": default, "<SPECS_PATH>": specs,
+         "<path list>": [lines.shell_paths(paths), lines.pathspecs(paths)]}
     landing = {False: "g1.landing.not_done.unlanded", True: "g1.landing.not_done.landed"}.get(committed,
                                                                                           "g1.landing.not_done")
     if midrun:
@@ -2765,7 +2792,8 @@ def _g1_landing(lines, block, branch, default, specs, paths, stay, midrun, commi
     v["<command>"] = stay.get("command")
     block = _block_part(block, "Not done:", lines.fill(landing, dict(v, **{kind: STAY_KINDS.index(stay["kind"])})))
     if stay.get("merged"):
-        block = _block_part(block, "Fix:", lines.fill("g1.merged.fix", v))
+        if not in_progress:
+            block = _block_part(block, "Fix:", lines.fill("g1.merged.fix", v))
         return _block_part(block, "If ignored:", lines.fill("g1.merged.if_ignored", v))
     return _block_part(block, "If ignored:", lines.T["g1.landing.if_ignored"])
 
@@ -3484,7 +3512,8 @@ def _guards(run):
         listed = _status(run)
         other = listed["other"] if listed else []
         if other:
-            found = ("G1", _g1_block(lines, specs, other), other)
+            rec["guard_in_progress"] = _g1_in_progress(specs)
+            found = ("G1", _g1_block(lines, specs, other, rec["guard_in_progress"]), other)
         elif head != rec["default"] and not branch_key(head, [])["plugin_branch"]:
             values = None
             if rec["mode"] == "on" and rec["session_branch"]:
@@ -3502,7 +3531,8 @@ def _guards(run):
     if found[0] == "G1":  # after the block is in the record, so the stay's save holds both
         _ask_stay(run, head, "g1")
         shown = _g1_landing(lines, found[1], head, rec["default"], specs, found[2],
-                            rec["stay"] if _stayed_on(rec, head) else None, rec.get("midrun"))
+                            rec["stay"] if _stayed_on(rec, head) else None, rec.get("midrun"),
+                            in_progress=rec.get("guard_in_progress"))
     elif found[0] == "G2" and rec.get("midrun"):
         shown = _g2_midrun(lines, found[1], rec["midrun"])
     _emit(run, _make_default_fix(lines, specs, rec["default"], rec.get("default_ref"), shown or found[1]))
@@ -3744,7 +3774,7 @@ def _carry(rec, old):
             rec["misrooted_notice"] = old.get("misrooted_notice")
         else:
             rec.update(guard=old.get("guard"), guard_block=old.get("guard_block"),
-                       guard_paths=list(old.get("guard_paths") or []))
+                       guard_paths=list(old.get("guard_paths") or []), guard_in_progress=old.get("guard_in_progress"))
     snap = old.get("start_dirty")
     rec.update(advised_D=list(old.get("advised_D") or []), reported=list(old.get("reported") or []),
                b2_left=old.get("b2_left"), b4_left=old.get("b4_left"), declined=list(old.get("declined") or []),
