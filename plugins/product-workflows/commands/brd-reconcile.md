@@ -2443,7 +2443,8 @@ satisfied, with a dropped class left unsearched.
    lists who depends on it. **Each folder the scan finds is held to `workflows-core:addressing` §3's
    *The path's class*, as text, before any command names it or anything of it is read** — the scan
    prints paths, `grep -rl` over the three levels or a listing, and the path of each `brd-link.md`
-   it matches is tested whole. A folder outside the class may be a dependent this sweep would leave
+   it matches is tested whole, as that section's *A caller that holds a path as text* tests one, so
+   the `<P>` its stop names is in the class whole. A folder outside the class may be a dependent this sweep would leave
    holding a position this run superseded, so the run stops there, before the sweep writes anything:
    `BRD_RECONCILE_DEPENDENT_NAME: a folder the declared-dependents scan matched — entry <n> of the checkout's listing of <P>'s folders — is named outside workflows-core:addressing §2's class, so this run cannot sweep it, and stopped before the propagation sweep wrote anything. Rename it into the class, or move it out of <P>, then re-run '/product-workflows:brd-reconcile <BRD-KEY>', which adopts this pass.`,
    `<P>` and `<n>` as that section's `ADDRESS_FOLDER_NAME` gives them.

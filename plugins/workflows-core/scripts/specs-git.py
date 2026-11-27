@@ -87,6 +87,7 @@ import signal
 import subprocess
 import sys
 import time
+import unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SELFTEST_FILE = os.path.join(HERE, "..", "..", "..", "scripts", "selftests", "specs_git_selftest.py")
@@ -366,6 +367,17 @@ RESERVED = re.compile(r"\A(?:brd|grounding|interview|dev-workflows|design|attach
                       r"|bundle-[0-9]{8}|customer-sent-[0-9]{8}|Doc screenshots)\Z")
 FOLDER_KINDS = {"brd": "BRD", "prd": "PRD", "epic": "EPIC"}
 _FIELD = re.compile(r"^(key|kind):\s*(.+?)\s*$")
+_KEY = re.compile(r"[A-Z][A-Z0-9_]*(-[0-9]+)+")  # addressing §1's grammar
+
+
+def _in_class(name):
+    """addressing §2's class of a folder's name, on <name>'s bytes read as UTF-8."""
+    try:
+        n = os.fsencode(name).decode("utf-8")
+    except UnicodeError:
+        return False
+    return n != "" and ".." not in n and (n[0] == "_" or n[0].isalnum()) and all(
+        c.isalnum() or c in "._@+-" or unicodedata.category(c).startswith("M") for c in n)
 
 
 def _frontmatter(path):
@@ -400,12 +412,14 @@ def _names(directory):
 
 
 def _carrier(folder):
-    """addressing §4's carrier of <folder>: (kind, key) off the first of its top-level files, in byte-wise order,
-    whose frontmatter holds key: and a kind: of brd, prd or epic, else off brd/brd-inventory.md; None where none."""
-    candidates = [os.path.join(folder, n) for n in _names(folder) if os.path.isfile(os.path.join(folder, n))]
+    """addressing §4's carrier of <folder>: (kind, key) off the first of its top-level files named in §2's class, in
+    byte-wise order, whose frontmatter holds a key: §1's grammar holds and a kind: of brd, prd or epic, else off
+    brd/brd-inventory.md; None where none."""
+    candidates = [os.path.join(folder, n) for n in _names(folder)
+                  if _in_class(n) and os.path.isfile(os.path.join(folder, n))]
     for path in candidates + [os.path.join(folder, "brd", "brd-inventory.md")]:
         fm = _frontmatter(path)
-        if fm.get("key") and fm.get("kind") in FOLDER_KINDS:
+        if _KEY.fullmatch(fm.get("key", "")) and fm.get("kind") in FOLDER_KINDS:
             return fm["kind"], fm["key"]
     return None
 
