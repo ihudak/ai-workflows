@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [4.71.9] — 2026-11-27
+
+Fix batch B51 (RECORDED-BRANCH-CLASS). **What changes for you.** `/conformance` and `/implement` test the branch an `implementation.md` block records before they fetch it, and read one outside the safe class as naming no branch, so a hand-edited branch name holding `$(` or a backtick runs nothing. Needs `workflows-core` 1.101.3 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.3 bullet).
+
+### Fixed
+
+- **`/conformance` Phase 1 (c)**, its Epic run and its PRD run, and **`/implement` Phase 1.4 step 2's unit branch** hold the block's `branch` (and, on the PRD run, its `commit`) to `workflows-core:implementation-format` §5's *A recorded branch name* before the fetch by refspec names it; a line that would name an out-of-class branch names it as `a branch whose name is outside the safe class`.
+- **`docs/commands/conformance.md`** and **`docs/commands/implement.md`** say so.
+
+### Fixed — the review pass
+
+- **`/conformance`** prints no command naming an out-of-class recorded branch, and holds each recorded commit it reads for a tracer's `hints` to a commit's shape before a command names it.
+
 ## [4.71.8] — 2026-11-27
 
 **What changes for you.** `/conformance` reads a threat model's acceptance whose review date alone is missing or malformed as `review due`, and no longer withholds *Accept as shipped* from every architecture Rule of that model's folder on its account. `/design` classes such a threat `accepted`, never as a malformed threat put to you as deferred.

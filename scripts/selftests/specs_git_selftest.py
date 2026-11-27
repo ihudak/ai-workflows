@@ -450,6 +450,157 @@ def selftest(groups=None):
         got = cli("owner-repo", "--repo", plain)
         check(one_not_run_line(got), "owner-repo: a path that is no repository exits 2 (%r)" % got)
 
+    def scenarios_handoff(tmp):
+        # phase-handoff §2.2-§2.4's path work, and §4.3's declined record, on declared paths handed over as data:
+        # --path arguments and --paths-from files of NUL-terminated paths, never a shell word (FOLDER-NAME-CLASS (3)).
+        r = new_repo(tmp, "handoff")
+        pwn = os.path.join(tmp, "PWN")
+        d = "specifications/BRD-A-1 x/bundle-20261127/"
+        odd = [d + "A-1-Kunde BRD v2.md", d + "A-1-$(touch PWN).md", d + "A-1-`touch PWN`.md",
+               d + 'A-1-"q".md', d + "A-1-it's.md", d + "-lead.md", d + "A-1-line\nfeed.md", d + "A-1-[x].md",
+               d + ":(glob)A-1-*.md"]
+        r.write(d + "A-1-x.md", "committed\n")
+        r.write("specifications/BRD-A-1 x/decisions.md", "v1\n")
+        r.write("specifications/BRD-A-1 x/kept.md", "kept\n")
+        r.commit_all("base")
+        for p in odd:
+            r.write(p, "new\n")
+        r.write(d + "A-1-x.md", "changed by somebody else\n")  # OTHER: [x] and :(glob) would match it as patterns
+        r.write("specifications/BRD-A-1 x/decisions.md", "v2\n")
+        r.write("other.md", "the user's own\n")
+        r.git("add", "--", "other.md")
+        lst = os.path.join(tmp, "handoff-paths")
+        with open(lst, "wb") as fh:
+            fh.write(b"".join(p.encode("utf-8") + b"\0" for p in odd + [d + "A-1-missing.md", d.rstrip("/")]))
+        files = os.path.join(tmp, "handoff-files")
+        with open(files, "wb") as fh:
+            fh.write(b"\0".join(p.encode("utf-8") for p in odd))  # the last entry unterminated
+        got = cli("--specs", r.path, "handoff-stage", "--paths-from", lst, "--path", "specifications/BRD-A-1 x/decisions.md",
+                  "--path", "specifications/BRD-A-1 x/kept.md")
+        staged = set(r.git("diff", "--cached", "--name-only", "-z").split("\0")) - {""}
+        check(got.get("_rc") == 0 and sorted(got.get("staged") or []) == sorted(odd + ["specifications/BRD-A-1 x/decisions.md"])
+              and staged == set(odd) | {"specifications/BRD-A-1 x/decisions.md", "other.md"},
+              "handoff-stage: every declared path git reports is staged, a name holding a space, $(, a backtick, a quote, "
+              "a leading - and a line feed among them, and nothing else (%r, %r)" % (got, sorted(staged)))
+        check(not os.path.exists(pwn) and not os.path.exists(os.path.join(r.path, "PWN"))
+              and not os.path.exists(os.path.join(os.getcwd(), "PWN")),
+              "handoff-stage: no name is run as a command")
+        check(d + "A-1-x.md" not in staged,
+              "handoff-stage: a declared [x] or :(glob) name is a literal path, never a pattern matching another (%r)"
+              % sorted(staged))
+        check(sorted(got.get("unaccounted") or []) == sorted([d + "A-1-missing.md", d.rstrip("/")])
+              and got.get("unreadable") == [] and got.get("error") is None,
+              "handoff-stage: a declared path nothing wrote, and a directory, are unaccounted; one committed unchanged is "
+              "not (%r)" % got)
+        msg = os.path.join(tmp, "handoff-msg")
+        with open(msg, "w", encoding="utf-8") as fh:
+            fh.write("A-1 package $(touch %s)\n\nCo-Authored-By: t <noreply@anthropic.com>\n" % pwn)
+        got = cli("--specs", r.path, "handoff-commit", "--message-file", msg, "--paths-from", lst,
+                  "--path", "specifications/BRD-A-1 x/decisions.md", "--path", "specifications/BRD-A-1 x/kept.md")
+        carried = set(r.git("diff-tree", "--no-commit-id", "--name-only", "-r", "-z", "HEAD").split("\0")) - {""}
+        check(got.get("_rc") == 0 and got.get("status") == "committed"
+              and carried == set(odd) | {"specifications/BRD-A-1 x/decisions.md"}
+              and r.git("log", "-1", "--format=%s") == "A-1 package $(touch %s)" % pwn,
+              "handoff-commit: the commit carries the declared paths staged, by literal pathspec, its message read "
+              "from the file (%r, %r)" % (got, sorted(carried)))
+        check(r.git("diff", "--cached", "--name-only") == "other.md" and not os.path.exists(pwn),
+              "handoff-commit: a change the user had staged is left staged and out of the commit (%r)"
+              % r.git("diff", "--cached", "--name-only"))
+        got = cli("--specs", r.path, "handoff-commit", "--message-file", msg, "--paths-from", lst)
+        check(got.get("_rc") == 0 and got.get("status") == "nothing",
+              "handoff-commit: nothing staged among the declared paths commits nothing (%r)" % got)
+        base = r.git("rev-parse", "HEAD~1")
+        got = cli("--specs", r.path, "handoff-diff", "--base", base, "--paths-from", files)
+        check(got.get("_rc") == 0 and got.get("differ") is True and sorted(got.get("paths") or []) == sorted(odd),
+              "handoff-diff: the declared paths differ from a ref that lacks them, each named in paths (%r)" % got)
+        got = cli("--specs", r.path, "handoff-diff", "--base", "HEAD", "--paths-from", files)
+        check(got.get("_rc") == 0 and got.get("differ") is False and got.get("paths") == [],
+              "handoff-diff: the declared paths equal HEAD's in the working tree (%r)" % got)
+        got = cli("--specs", r.path, "handoff-diff", "--base", base, "--fork", "--path", d + "A-1-x.md")
+        check(got.get("_rc") == 0 and got.get("differ") is False,
+              "handoff-diff: --fork compares HEAD with the fork point, a path HEAD's commits left alone not differing "
+              "(%r)" % got)
+        got = cli("--specs", r.path, "handoff-diff", "--base", base)
+        check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: "),
+              "handoff-diff: no declared path is a usage error, never a diff of the whole tree (%r)" % got)
+        got = cli("--specs", r.path, "handoff-stage", "--paths-from", os.path.join(tmp, "no-such-list"))
+        check(one_not_run_line(got), "handoff-stage: a --paths-from file that cannot be read exits 2 (%r)" % got)
+        check(not os.path.exists(pwn), "handoff: no name or message is run as a command")
+        # §4.3's declined record takes the same list
+        state = _load_module("specs_git_state")
+        home = os.path.join(tmp, "handoff-home")
+        os.makedirs(home)
+        e = dict(os.environ, HOME=home, CLAUDE_CODE_SESSION_ID="h1")
+        got = cli("declined", "--command", "/brd-package", "--paths-from", lst, "--path", "a.md", env=e)
+        keep = {k: os.environ.get(k) for k in ("HOME", "CLAUDE_CODE_SESSION_ID")}
+        os.environ.update(HOME=home, CLAUDE_CODE_SESSION_ID="h1")
+        try:
+            rec = state.load("h1", "/brd-package")
+        finally:
+            for k, v in keep.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+        want = ["a.md"] + odd + [d + "A-1-missing.md", d.rstrip("/")]
+        check(got.get("_rc") == 0 and rec and rec["declined"] == want,
+              "declined: --paths-from records each NUL-terminated path after the --path ones (%r)" % got)
+        got = cli("declined", "--command", "/brd-package", env=e)
+        check(one_not_run_line(got) and got["_err"].startswith("specs-git: not run (usage: "),
+              "declined: neither --path nor --paths-from is a usage error (%r)" % got)
+        # a path that is not UTF-8 is stored and read back as the bytes it is (surrogateescape)
+        raw = os.path.join(tmp, "handoff-raw")
+        with open(raw, "wb") as fh:
+            fh.write(b"specifications/x/\xff-bin.md\0")
+        got = cli("declined", "--command", "/idea", "--paths-from", raw, env=e)
+        os.environ.update(HOME=home, CLAUDE_CODE_SESSION_ID="h1")
+        try:
+            rec = state.load("h1", "/idea")
+        finally:
+            for k, v in keep.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+        check(got.get("_rc") == 0 and rec and rec["declined"] == [os.fsdecode(b"specifications/x/\xff-bin.md")],
+              "declined: a path that is not UTF-8 is recorded and read back as its own bytes (%r)" % got)
+        # a path opening with - reaches --path as --path=<path>
+        r.write("-top.md", "top\n")
+        got = cli("--specs", r.path, "handoff-stage", "--path=-top.md")
+        check(got.get("_rc") == 0 and got.get("staged") == ["-top.md"],
+              "handoff-stage: a path opening with - is taken in the --path=<path> form (%r)" % got)
+        r.git("restore", "--staged", "--", ":(literal)-top.md")
+        # handoff-commit commits exactly the declared files git lists as staged: a declared directory never matches a
+        # path under it by prefix, and a path outside the repository fails nothing (phase-handoff §2.3 step 4)
+        r.write("specifications/D-1 y/user.md", "the user's own\n")
+        r.git("add", "--", ":(literal)specifications/D-1 y/user.md")
+        r.write("specifications/D-1 y/deliverable.md", "ours\n")
+        decl = ["--path=specifications/D-1 y", "--path=specifications/D-1 y/deliverable.md", "--path=/abs/outside.md",
+                "--path=../outside.md"]
+        got = cli("--specs", r.path, "handoff-stage", *decl)
+        check(got.get("_rc") == 0 and got.get("staged") == ["specifications/D-1 y/deliverable.md"]
+              and sorted(got.get("unaccounted") or []) == sorted(["specifications/D-1 y", "/abs/outside.md",
+                                                                 "../outside.md"]),
+              "handoff-stage: a declared directory and a path outside the repository are unaccounted (%r)" % got)
+        got = cli("--specs", r.path, "handoff-commit", "--message-file", msg, *decl)
+        carried = set(r.git("diff-tree", "--no-commit-id", "--name-only", "-r", "-z", "HEAD").split("\0")) - {""}
+        check(got.get("_rc") == 0 and got.get("status") == "committed"
+              and carried == {"specifications/D-1 y/deliverable.md"}
+              and "specifications/D-1 y/user.md" in r.git("diff", "--cached", "--name-only"),
+              "handoff-commit: only the declared files git lists as staged are committed, never a staged file under a "
+              "declared directory, and an outside path fails nothing (%r, %r)" % (got, sorted(carried)))
+        r.git("restore", "--staged", "--", ":(literal)specifications/D-1 y/user.md")
+        got = cli("--specs", r.path, "handoff-diff", "--base", "HEAD~1", *decl)
+        check(got.get("_rc") == 0 and got.get("differ") is True
+              and sorted(got.get("ignored") or []) == ["../outside.md", "/abs/outside.md"],
+              "handoff-diff: a path outside the repository is ignored and named, never a fatal diff (%r)" % got)
+        # specs-repo-git §6's declined append writes a path that is not a printable value with its JSON escapes
+        lines = _load_module("specs_git_lines")
+        check(lines.artifacts(["a\nb.md", "x\u202ey.md"]) == "a\\nb.md, x\\u202ey.md"
+              and lines.artifacts(["Kunde BRD.md"]) == "Kunde BRD.md",
+              "artifacts: a path that is not a printable value is written with its JSON escapes (%r)"
+              % lines.artifacts(["a\nb.md", "x\u202ey.md"]))
+
     def scenarios_mode(tmp):
         r = new_repo(tmp, "mode")
         got = cli("--specs", r.path, "mode", "--default", "main")
@@ -2428,6 +2579,54 @@ def selftest(groups=None):
                       "l_fix_lines: %s's Fix part runs whole through %s -c, making its git calls (rc %s, %r, %r)"
                       % (name, shell[0], ran.returncode, calls, ran.stderr.decode("utf-8", "replace")[:200]))
 
+        # l_unprintable_paths: a path that is not a printable value (addressing §3) -- a line feed, U+202E, a byte that
+        # is not UTF-8 -- neither breaks a line nor shows as another: every path placeholder a template takes writes it
+        # with its JSON escapes (phase-handoff §2.3), G1's Found line among them, and G1's Fix part writes it in $'…'
+        # quoting, which bash and zsh read back as the path itself, so the git calls it makes name the user's own files
+        odd = ["a\nb.md", "x‮y.md", "c\udcffd.md", "my notes.md"]
+        shown = "a\\nb.md, x\\u202ey.md, c\\udcffd.md, my notes.md"
+        g1 = globals().get("_g1_block")
+        odd_blocks = [("g1", g1(lines, S, odd) if g1 else "", plain, ["status", "add"]),
+                      ("g1.landing.merged", landing(lines, g1(lines, S, odd), "prd/A-1-x", "main", S, odd, merged, None)
+                       if g1 and landing else "", landing(lines, plain, "prd/A-1-x", "main", S, paths, merged, None)
+                       if landing else "", ["switch", "add"])]
+        for name, block, printable_form, want in odd_blocks:
+            rows = block.split("\n")
+            check(block != "" and shown in block and not any(c in block for c in ("‮", "\udcff"))
+                  and len(rows) == len(printable_form.split("\n")),
+                  "l_unprintable_paths: %s writes each path that is not a printable value with its JSON escapes on its "
+                  "Found line, and no line breaks or reverses (%r)" % (name, rows[:4]))
+            i = next((k for k, row in enumerate(rows) if row.startswith("Fix:")), None)
+            part = []
+            for row in rows[i:] if i is not None else []:
+                if part and not row.startswith(" "):
+                    break
+                part.append(row[len("Fix:"):].strip() if not part else row.strip())
+            add = b"-C|" + os.fsencode(S) + b"|add|" + b"|".join(os.fsencode(p) for p in odd) + b"|\n"
+            expect = {"status": b"-C|" + os.fsencode(S) + b"|status|\n", "add": add,
+                      "switch": b"-C|" + os.fsencode(S) + b"|switch|main|\n"}
+            for shell in [["bash", "-c"]] + ([["zsh", "-c"]] if shutil.which("zsh") else []):
+                if os.path.exists(log):
+                    os.remove(log)
+                ran = subprocess.run(shell + ["\n".join(part)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                     env=dict(os.environ, PATH=shim + os.pathsep + os.environ.get("PATH", ""),
+                                              GIT_CALLS=log))
+                got = open(log, "rb").read() if os.path.exists(log) else b""
+                check(i is not None and ran.returncode == 0
+                      and got == b"".join(expect[w] for w in want) + b"-C|" + os.fsencode(S) + b"|commit|\n",
+                      "l_unprintable_paths: %s's Fix part, run through %s -c, adds the user's files under their own "
+                      "names (rc %s, %r)" % (name, shell[0], ran.returncode, got[:300]))
+        for tid, values in (("app.hook-line", {"<path>": odd[:2], "<sha7>": "abc1234"}),
+                            ("pre.held.changed", {"<path>": odd[0], "<default>": "main"}),
+                            ("reason.conflict", {"<path>": odd[1]}),
+                            ("app.start-dirty-kept", {"<path>": odd[1:3], "<branch>": "main"}),
+                            ("end.declined-unreadable", {"<file>": odd[0], "<reason>": "e"})):
+            got = lines.fill(tid, values)
+            check("\n" not in got and not any(c in got for c in ("‮", "\udcff"))
+                  and any(s in got for s in ("a\\nb.md", "x\\u202ey.md")),
+                  "l_unprintable_paths: %s writes a path that is not a printable value with its JSON escapes (%r)"
+                  % (tid, got))
+
     def scenarios_gate(tmp):
         with open(SESSION_HYGIENE, encoding="utf-8") as fh:
             hygiene = fh.read()
@@ -3254,6 +3453,19 @@ def selftest(groups=None):
         check(got.get("record") == "missing" and got.get("row") == "blocked"
               and got.get("print") in [[BLOCKED + appended(ard), b] for b in g0_on(r, h, days)] and head(r) == h,
               "e_declined_blocked: on a detached HEAD with no preflight, the --declined path, then G0's block (%r)" % got)
+        listed = os.path.join(tmp, "e-declined-blocked-list")
+        with open(listed, "wb") as fh:
+            fh.write(ard.encode("utf-8") + b"\0")
+        got, days, _ = dated(lambda: run_end(env, "/specify", "--no-preflight", "--declined-from", listed))
+        check(got.get("record") == "missing" and got.get("row") == "blocked"
+              and got.get("print") in [[BLOCKED + appended(ard), b] for b in g0_on(r, h, days)] and head(r) == h,
+              "e_declined_blocked: a --declined-from file's NUL-terminated path counts as a --declined one (%r)" % got)
+        gone = os.path.join(tmp, "e-declined-blocked-gone")
+        got, days, _ = dated(lambda: run_end(env, "/specify", "--no-preflight", "--declined-from", gone))
+        check(got.get("_rc") == 0 and got.get("row") == "blocked" and (got.get("print") or [""])[0].startswith(
+                  "Specs repo: the declined paths in %s could not be read" % gone) and head(r) == h,
+              "e_declined_blocked: a --declined-from file that cannot be read is named before the line, and the end "
+              "goes on (%r)" % got)
         # ... and only where --specs still names the repository the start checked (§6): the review's two reproductions,
         # --specs "" from a cwd that is no repository and from another repository holding the path dirty, and --specs
         # naming that other repository -- each the blocked line and G0's block, exit 0, no append
@@ -12855,7 +13067,7 @@ def selftest(groups=None):
         bites = ((skill + "\n`--no-such-option`\n", "--no-such-option is no option"),
                  (skill.replace("- `--no-preflight` (end)", "- `--no-preflight` (start)"), "--no-preflight, named for start"),
                  (skill.replace(other, "started `--inline-x`"), "--inline"),
-                 (skill.replace(" --path '<path>'`", " --paths '<path>'`"), "--paths, in the declined call"),
+                 (skill.replace(" --path='<path>'`", " --paths='<path>'`"), "--paths, in the declined call"),
                  (skill.replace("- `--started <stamp>` (end, and start with", "- `--started <stamp>` (start and end, and start with"),
                   "--started is named for 'start and end, and start"),
                  (skill.replace("- `--started <stamp>` (end, and start with `--rerun` or `--resume`)",
@@ -13166,8 +13378,8 @@ def selftest(groups=None):
             # the names asked for -- a break in the selection below, say: fail at once and start nothing.
             check(False, "s_nested: a nested run was asked for every group, or for group selftest")
             return
-        ALL = ("status, branch_merged, branch_key, push_scope, owner_repo, mode, state, lines, gate, end, land, replay, "
-               "start, midrun, skill, selftest")
+        ALL = ("status, branch_merged, branch_key, push_scope, owner_repo, handoff, mode, state, lines, gate, end, land, "
+               "replay, start, midrun, skill, selftest")
         # Every run started here is marked nested, so a break in group selection fails rather than recursing, and
         # every run but s_group_refused_in_ci's has GITHUB_ACTIONS empty, outside CI's refusal of --group, so this
         # group passes in CI too.
@@ -13243,7 +13455,8 @@ def selftest(groups=None):
     # The groups, in run order: --selftest --group <name> runs only the named ones, still in this order.
     GROUPS = (("status", scenarios_status), ("branch_merged", scenarios_branch_merged),
               ("branch_key", scenarios_branch_key), ("push_scope", scenarios_push_scope),
-              ("owner_repo", scenarios_owner_repo), ("mode", scenarios_mode), ("state", scenarios_state),
+              ("owner_repo", scenarios_owner_repo), ("handoff", scenarios_handoff), ("mode", scenarios_mode),
+              ("state", scenarios_state),
               ("lines", scenarios_lines), ("gate", scenarios_gate), ("end", scenarios_end), ("land", scenarios_land),
               ("replay", scenarios_replay), ("start", scenarios_start), ("midrun", scenarios_midrun),
               ("skill", scenarios_skill), ("selftest", scenarios_selftest))

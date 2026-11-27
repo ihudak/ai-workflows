@@ -121,7 +121,12 @@ fetches nothing and writes nothing, each settling only the kind of item named be
 that waits on more than one of these — a push and then its pull request's merge, say — is settled
 only once each of its checks shows it settled, and one naming a pull request waits on that pull
 request's merge; an item that names several branches, commands, questions or paths is settled only
-once its check shows every one of them settled:
+once its check shows every one of them settled. **A branch an item names is text the pointer holds**,
+and the merge and push checks below write it into commands — `branch-merged`'s ref, an ancestry test,
+`origin/<branch>` — so before any of them names it, test it as `specs-repo-git.md` §3.2 tests a
+branch name, with a program handed the name as one single-quoted argument, each `'` it holds written
+`'\''`: an item naming a branch outside that safe class is settled by no check that would name it,
+and is carried:
 - **an item that waits on a merge** — of a branch, or of the pull request it names — by the merged
   check alone, never by a push. In the specs repository, `specs-repo-git.md` §3.5's
   `branch-merged` answers merged for the ref `phase-handoff.md` §2.2 rule 3 resolves —

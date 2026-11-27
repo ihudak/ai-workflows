@@ -67,6 +67,10 @@ When the source is a markdown file, the run does not stop at that one file.
 The specs repo is the system of record, so a brief whose links point at the folder the source happened
 to live in is a record only its author can follow. After `idea.md` is written, the run **copies the
 sources it actually read into the same PRD folder and rewrites `idea.md`'s links onto the copies**.
+Each copy is made, at mode `0644`, by a small program that reads the names itself, so a file whose
+name holds a space, `$(`, a backtick, a quote or a leading `-` is copied and committed as it stands
+and runs nothing. It follows no symbolic link: a linked file that is one, or that the link reaches
+through a folder that is one, is copied nowhere and reported.
 
 - **Markdown → `attachments/`.** The source file itself, and every page the walk took.
   `attachments/` is the folder's reserved name for vendored text; what reaches it today is markdown,

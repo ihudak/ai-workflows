@@ -101,7 +101,9 @@ ON when `$DOCS_PATH` resolves, advisory, never a gate) and `workflows-core:impl-
   immutable the moment it is intaken, and every `[BR#n]` this run writes anchors into it, so an
   unchecked machine conversion must never silently become the record of what the customer asked
   for. Converting is the operator's own step, done where the result can be checked against the
-  original.
+  original. A source that is a symbolic link, or no regular file, stops the run with
+  `BRD_INTAKE_SOURCE_NOT_A_FILE`: the document is captured only as the file it is, never through a
+  link.
 - **`$SPECS_PATH`** (required) — if unset, the run stops naming `SPECS_PATH`.
 - **On a re-run, a specs checkout not behind for the BRD.** Where the key names a BRD folder that
   already exists, the run checks the branch the specs checkout stands on once the specs-repo
@@ -135,7 +137,13 @@ name the run creates:
   is its content, not its file mode: every copy under `brd/source/` and `brd/source-external/` is
   written at mode `0644`, so a source on a mount that marks its files executable is not committed
   executable, and a re-run resets to `0644` any file already there at another mode — taken this run
-  or not — and hands the mode change off with the rest. A re-run
+  or not — and hands the mode change off with the rest, beside any file an earlier run reset and
+  never handed off. Every copy, every reset and every hash is made by a small program that reads
+  the names itself, so a customer's file name holding a space, `$(`, a backtick, a quote or a
+  leading `-` is copied and committed as it stands and runs nothing; and it follows no symbolic
+  link, so a linked file that is one — pointing at a key file outside the folder, say — or that the
+  link reaches through a folder that is one, is captured nowhere, and the link log names it
+  unreadable. A re-run
   over a revised source replaces the copy of each file whose bytes changed, git keeping the earlier
   one, and leaves an unchanged file untouched; a document revised under a new filename is copied at
   that name beside the earlier copy, which stays, and is read as a revision of it rather than as a

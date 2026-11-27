@@ -29,7 +29,7 @@ Where your run took `$SPECS_PATH` from the *Set SPECS_PATH* answer, open the cal
 - `--misrooted-stdin` (end) — where your run carries `specs_git: misrooted` from anything but this skill's start — `specs-root-check`'s `SPECS_PATH_INSIDE_TREE:` stop, `env-check`'s `Environment changed:` line, or `session-hygiene` §6's `RESUME_ENVIRONMENT_CHANGED:` line — with that notice, verbatim, on stdin: `<<'EOF'`, the notice, `EOF`.
 - `--superseded` (end) — only where your command's text says to pass it: `/dev-workflows:implement`'s stop on its run-state file's exit `9`, on a direct run from inside the specs repository, whose tree another session now holds. The end writes nothing there, commits nothing and prints one `Specs repo: NOT COMMITTED` line.
 - `--session-branch-created <sha7>` (end) — where a session-branch `commit` or `lift` that your command, or its handoff, ran printed `created: true` (`/implement` keeps it as run-state `session_branch_created`): the `<base short sha>` taken then.
-- `--declined '<path>'` (end), once for each path — only where a `declined` call below could not run.
+- `--declined='<path>'` (end), once for each path, each `'` it holds written `'\''` — the `=` form, so a path opening with `-` is never read as an option — and `--declined-from='<file>'` for a handoff's `deliverable_paths_file` — only where a `declined` call below could not run. A `--declined-from` file the end cannot read is named in a line before its `Specs repo:` line, and the end goes on without its paths.
 
 ## Start
 
@@ -45,7 +45,7 @@ Print that call's `print` first. Then run `next.run` exactly as given, as a Bash
 
 ## Declined
 
-Where a handoff's consent choice is answered with its second or third option, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/specs-git.py" declined --command /<name> --started <stamp> --path '<path>'`, `--started` as *The call* gives it, and one `--path` for each path of that handoff's `deliverable_paths`. It prints nothing for you to show. Where it exits 2 on a line that does not begin `specs-git: not run (usage:`, keep the paths and pass them to your end as `--declined`.
+Where a handoff's consent choice is answered with its second or third option, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/specs-git.py" declined --command /<name> --started <stamp> --path='<path>'`, `--started` as *The call* gives it, one `--path=` for each path of that handoff's `deliverable_paths`, each `'` it holds written `'\''`, and `--paths-from='<file>'` for its `deliverable_paths_file`, where it has one — a file of NUL-terminated paths a program wrote, whose names are never typed into a command, and which its command keeps until this end has run. It prints nothing for you to show. Where it exits 2 on a line that does not begin `specs-git: not run (usage:`, keep the paths and the file and pass them to your end as `--declined` and `--declined-from`.
 
 ## Where the script cannot start
 

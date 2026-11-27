@@ -1146,6 +1146,31 @@ sections do. **Each part opens with a level-2 heading, `## <N>. <title>`**, `<N>
 table below: *Assemble the bundle* rule 9 places every list by those headings, and stops on a prompt
 whose eleven are not there once each and in order.
 
+**Name the bundle's documents first, with the scanner.** Part 3 names each document by the bundled
+filename *Assemble the bundle* rule 1 gives it, and a customer's captured file keeps the name the
+customer gave it, which may hold a space, `$(`, a backtick, a quote or a leading `-`; so no name is
+composed by hand, and none is typed into a command. Before writing the prompt, write the plan
+*Assemble the bundle*'s `place` call reads — its directory and `plan.json` made and written as that
+paragraph says, here rather than there, so the two calls read one plan — and make that call with
+`--dry-run`, which copies nothing, with `-` in place of the working directory, which it never opens,
+and `--record` naming a file of its own, from `command mktemp -t brd-package-names-XXXXXX`:
+
+```
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" place - --key <BRD-KEY> --source-dir "<the folder holding brd/source/>" --brd-dir "<BRD-dir>" --plan "<plan file>" [--prereq <PREREQ-KEY>="<its bundle-YYYYMMDD/>"]… --reserve '<bundled name>' … --dry-run --record "<that file>"
+```
+
+its other arguments as that call gives them, each prerequisite whose package Phase 2 found among its
+`--prereq`. Its `copied` holds every document the bundle carries byte for byte — the customer's and
+each prerequisite's — under the name that call then gives it, since both calls decide from the same
+tree and the same plan, and nothing this run does writes under `brd/source/`, `brd/source-external/`,
+`design/` or a prerequisite's bundle in between; part 3, and every other place this phase or *Render
+the delivery note* names one, takes the name from there, written with the Write tool. A `refused`
+entry stops the run with that call's `BRD_PACKAGE_NAME_REFUSED`, and any other exit than 0 stops it
+naming its stderr. The record is also the one this phase's scan reads (*The plugin-free scan*). It
+is removed, with `command rm -f -- "<that file>"`, where the run ends, and the plan's directory with
+`command rm -rf -- "<the path mktemp printed>"` once Phase 8 has moved the bundle into place or the
+run has ended.
+
 | # | Part | Filled from |
 |---|---|---|
 | 1 | Setup | the tier; the fixed capability line, locating instruction and OS note below |
@@ -1464,18 +1489,22 @@ wrote their own scan could scan one bundle differently, and a hand-written one h
 a commit and broken on a wrapped line.
 
 ```
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" tokens <file-or-directory>… [--prereq-key <KEY>]… [--captured <bundled name>]… [--captured-path <path relative to brd/>]…
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" tokens <file-or-directory>… [--prereq-key <KEY>]… --record <the place record>
 ```
 
 Over the prompt, give it the prompt file this phase wrote; over the delivery note, the note's file;
 over the bundle (*Assemble the bundle* rule 7), the directory being assembled. Give every run
-`--captured-path` for each captured file's path relative to `brd/` — `source/<basename>` and every
-path under `brd/source/` and `brd/source-external/` the capture holds, a name with spaces as it
-stands, and on the bundle's run every path each copied prerequisite's manifest map names too (rule 6
-carries them) — since a locator is recognised by what it names, never by its shape (`bundle-packaging.md`
-§6.3); and give the bundle's run `--prereq-key` for each prerequisite whose package rule 5 copied in
-and `--captured` for the bundled filename of each file copied byte for byte, a prerequisite's
-captured files among them. It prints one line of JSON: `groups`, one entry per file, token, span,
+`--record`: over the prompt and the note, the record the `--dry-run` call above wrote; over the
+bundle, the record *Assemble the bundle*'s `place` call wrote. The scanner reads from it each captured file's path relative
+to `brd/` — `source/<basename>` and every path under `brd/source/` and `brd/source-external/` the
+capture holds, a name with spaces as it stands, and on the bundle's record every path each copied
+prerequisite's manifest map names too (the `place` call's plan carries them) — since a locator is recognised
+by what it names, never by its shape (`bundle-packaging.md` §6.3); and, from the bundle's record,
+the bundled filename of each file copied byte for byte, a prerequisite's captured files among them.
+**No captured name is typed into the command**: the record holds them as data, and the
+`--captured-path` and `--captured` arguments the scanner still takes are for names a run holds that
+no record carries, of which this command has none. Give the bundle's run `--prereq-key` for each
+prerequisite whose package rule 5 copied in. It prints one line of JSON: `groups`, one entry per file, token, span,
 `prerequisite` and `image_row`, with its class, its count and its lines — the grouping §6.3 rule 4
 asks of every report — and `omitted_locator_sections`. Read the whole line; where the tool shows only
 a preview, read the file it saved the output to. **It finds and never rules**: any exit other than 0
@@ -1670,9 +1699,9 @@ bundle is `<BRD-dir>/bundle-<YYYYMMDD>/` only once rule 9 has passed (*Then move
 after rule 9). A dated bundle is never rewritten (Phase 0 step 11), so a build that stopped
 part-way inside the BRD folder would leave a directory a re-run on the same date refuses, for a
 bundle nobody sent. **Every stop from here to that move** — a rule's stop, *Hold the package* at
-the operator's ruling, an exit 2 of the scanner, a failed copy — removes the working directory,
-`command rm -rf -- "<the path mktemp printed>"` and no other path, before it reports, so a stopped
-build leaves nothing in the BRD folder.
+the operator's ruling, an exit 2 of the scanner, a failed copy — removes the working directory, and
+the `place` call's plan directory and record with it, `command rm -rf -- "<each path mktemp printed>"` and no
+other path, before it reports, so a stopped build leaves nothing in the BRD folder.
 
 **What goes in is `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §1.1's allow-list, applied
 verbatim** — the rendered prompt; the customer's own source document, every other markdown file
@@ -1710,6 +1739,69 @@ the team rejected some of them, which can be written without one. The model id i
 the one thing in it the scan is sure to stop on, and a self-review stays out of the bundle whether
 or not that line is there.
 
+**The copies are made first, and by the scanner — never by `cp`, `mv` or a path typed into a
+command.** A customer's captured file, a frame and a prerequisite's file keep the names their
+authors gave them, which may hold a space, `$(`, a backtick, a quote, a leading `-` or a line feed,
+and a shell command that named one would run what it holds. So before any document is rendered into
+the working directory, write the plan and make one call, which reads the tree itself, names every
+copy by rule 1 and copies each byte for byte:
+
+```
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" place "<the path mktemp printed>" --key <BRD-KEY> --source-dir "<the folder holding brd/source/>" --brd-dir "<BRD-dir>" --plan "<plan file>" --record "<record file>" [--prereq <PREREQ-KEY>="<its bundle-YYYYMMDD/>"]… --reserve '<bundled name>' …
+```
+
+`--source-dir` is the folder whose `brd/` holds the capture — **the parent's on a slice**, one hop,
+as §1.1 admits its files — and `--brd-dir` this slice's folder: both are folders resolution held to
+`workflows-core:addressing` §2's class, which is why they may stand in double quotes. `--prereq`
+names each prerequisite rule 5 copies in, with the `bundle-<YYYYMMDD>/` Phase 2 step 3 found.
+`--reserve` is the bundled name of each document this run renders into the bundle — the rendered
+prompt, the manifest and each working document §1.1 admits, `<BRD-KEY>-` and its working basename —
+so that no copy takes one: a copy that would is the one that takes rule 1's `-2`. **The plan** is a
+JSON object, written with the Write tool to `plan.json` in a directory of its own, `command mktemp
+-d -t brd-package-plan-XXXXXX` — written at *Render the customer prompt*, whose `--dry-run` call reads
+it first — each name in it a JSON string and never a shell word:
+`captured_images`, each image under `brd/source/` or `brd/source-external/` that §1.1 admits, by its
+path relative to `brd/` — the form a figures section's heading, an image `source_anchor`, the link
+log's *Copy* column and a held question's *Defect image* line give it; `frames`, each other image a
+document this package renders references, by its path relative to `<BRD-dir>` — a frame under
+`design/<frame-set>/` most often; `prereq_aux`, for each prerequisite `--prereq` names, its rendered
+prompt and its manifest, by their names in its bundle, as rule 5 identifies them; and
+`prereq_captured`, for each, `{"path", "name"}` for every captured file that prerequisite's manifest
+maps, its path relative to `brd/` and its bundled name. The record file is `command mktemp -t
+brd-package-record-XXXXXX`.
+
+It lists `brd/source/` and `brd/source-external/` itself and takes every markdown file there,
+decides everything before it copies anything, refuses to overwrite a file, and refuses a working
+directory that already holds one, so it is the first thing written there. It prints one line of
+JSON, which it writes to the record as well — read the whole line, or the record where the tool
+shows only a preview: `copied`, each copy's bundled `name`, its `kind` (`captured`, `frame` or
+`prerequisite`), its `path` and whether rule 6 maps it (`map`); `captured_not_bundled`, each
+captured file that is neither markdown nor an image, which rule 6's manifest names as *captured and
+not bundled*; `captured_unselected`, each captured image the plan did not take; `prereq_other`, each
+file under another key in a prerequisite's bundle, which rule 5 resolves; and `refused`. **Every
+later rule takes a copy's name from `copied`** — rule 2's image references, rule 6's manifest, rules
+7 and 8 through `--record` — and the names part 3 already carries are those Phase 6's `--dry-run`
+call printed, which are the same.
+
+**Where `refused` holds an entry, nothing was copied; stop.** Each entry gives its `folder` — its path
+relative to `brd/` for the capture, or a prerequisite's key for that prerequisite's bundle — its
+`kind`, its `position` and its `reason`. A `file` is `entry <n> of the checkout's listing of
+<folder>'s files`, and a `folder` `entry <n> of the checkout's listing of <folder>'s folders`, `<n>`
+its position, as `workflows-core:addressing` §2's *A file refused by its name* counts them; a `link`
+is `entry <n> of <folder>'s symbolic links`, and an `other` `entry <n> of <folder>'s other entries`,
+counted the same way among the entries `find -type l`, or `! -type f ! -type d ! -type l`, lists. An
+entry with no position is the folder itself: a `link` there is `brd/source-external/` that is itself
+a symbolic link, which no bundle follows and `/product-workflows:brd-intake` never makes; any other is
+a folder that could not be listed or entered, which is never read as an empty one (§2, *A folder that
+cannot be listed is never an empty one*). `reason` is `name` — a
+name that is not a printable value (`workflows-core:addressing` §3, *A printable value*) — `link`,
+`kind` — neither a file nor a folder: a FIFO, a socket, a device — or `unreadable`:
+`BRD_PACKAGE_NAME_REFUSED: <BRD-KEY>'s bundle cannot carry <each entry, as above, and its reason> — a bundle names every captured file in its manifest, where a name that is not a printable value would break its line or show as another, a link points outside the capture, and an entry neither a file nor a folder holds nothing to copy. <remedy> No bundle was built.`
+`<remedy>`, for an entry of the capture: `No command removes anything under brd/source/ or brd/source-external/ — /product-workflows:brd-intake's re-runs replace a changed copy and add new ones, and remove none — so a refused entry stays until you remove it by hand: it is the line the first command beneath this message prints; remove it with your file manager or shell from that folder, commit the removal with the other two commands, and land that commit on the specs repository's default branch.` followed, for a `name`, by ` Then have the customer send the file under a name that is a printable value, and capture it with '/product-workflows:brd-intake <the key of the BRD that owns the capture> @<their document>', which takes it under that name; then re-run.`; for a `link` with a position, by ` Where the capture needs the file it pointed to, have it sent and capture it the same way; then re-run.`; and for a `kind`, by ` Then re-run.` For an `unreadable` file: `Make it readable by hand — it is the line the first command beneath this message prints — then re-run.`; for an `unreadable` folder with no position: `Make <folder> readable and enterable by hand, then re-run.`; and, in place of all of these, for a `link` with no position: `<folder> is itself a symbolic link, which no bundle follows, and /product-workflows:brd-intake never makes one: replace it by hand with a folder holding the files it pointed to, or remove it where the capture needs none of them, commit that with the two commands beneath this message, land that commit on the specs repository's default branch, then re-run.` For an entry of a prerequisite's bundle: `<PREREQ-KEY>'s bundle is never rewritten (bundle-packaging.md §5): package <PREREQ-KEY> again with '/product-workflows:brd-package <PREREQ-KEY>', so its latest bundle holds no such entry, then re-run. Where this BRD does not depend on <PREREQ-KEY> after all, remove it from the depends-on: list of <BRD-dir>/brd-link.md by hand, then re-run: re-running without --depends-on <PREREQ-KEY> is not enough, since this run has already merged it into that list, which no command shortens.`
+For an entry of the capture with a position, print beneath the message, on lines of their own with no `#` comment, `cd '<the folder>' && find . -mindepth 1 -maxdepth 1 <-type f | -type d | -type l | ! -type f ! -type d ! -type l> -print0 | LC_ALL=C sort -z | tr '\n\0' '?\n' | sed -n '<n>p'`; then, for it and for a `link` with no position, `git -C '<SPECS_PATH>' add -A -- ':(literal)<the folder, relative to SPECS_PATH>'` and `git -C '<SPECS_PATH>' commit -m '<BRD-KEY> remove a captured entry no bundle can carry' -- ':(literal)<the folder, relative to SPECS_PATH>'` — `<the folder>` its absolute path, each path single-quoted with each `'` it holds written `'\''`, since a captured folder's name is the customer's own, and each pathspec git takes `:(literal)`, so git matches the folder as the path it is and never as a pattern: a captured folder named `*` would otherwise stage and commit everything under `brd/source/`. The listing shows a line feed inside a name as `?`.
+Any other exit than 0 stops the run, naming its stderr — a plan naming what the tree does not hold,
+or a copy that failed, among its causes.
+
 1. **Name every bundle document distinctively.** Documents are located by **filename search, never
    by path**, because a path is correct exactly once — in the directory layout this machine had —
    and the bundle will be extracted, renamed, re-zipped and mailed on. So each document's bundle
@@ -1731,11 +1823,15 @@ or not that line is there.
    **Then test the name against every other name the bundle carries** — documents and images alike,
    and not merely against the images that shared a basename, because a disambiguated
    `<BRD-KEY>-login-01.png` collides with the plain name of an image whose own basename is
-   `login-01.png`, which no comparison among the sharers ever looks at. Where two names still
+   `login-01.png`, which no comparison among the sharers ever looks at. Two names coincide where
+   they are equal once case and Unicode normalisation are folded, since the bundle is unpacked on
+   filesystems — macOS's and Windows', by default — that open them as one file. Where two names still
    coincide, the one whose path sorts later, byte-wise, takes `-2` before its extension, and the
    test runs again — `-2` can collide in its turn — until every name in the bundle is unique. A
    prerequisite package's filenames are among the names tested and are never renamed (below), so a
-   collision with one is resolved on this package's file; one **between two prerequisite packages**,
+   collision with one is resolved on this package's file — and so is a collision with a document this
+   run renders, whose name part 3 and rules 8 and 9 read as rendered, so a copied file meeting one
+   takes the `-2`, whichever path sorts later; one **between two prerequisite packages**,
    which neither may rename, cannot arise, since rule 5 copies from each only the documents carrying
    its own key. Every bundled name opens with its own package's key, so
    two names from different packages could only collide where one key is the other's prefix **at a
@@ -1749,7 +1845,9 @@ or not that line is there.
    allowed to move. The name is decided by
    the paths, never by the order images were copied in. An
    embedded image in a rendered document points at that name (rule 2), and the manifest maps it
-   (rule 6). **The `<BRD-KEY>` is the key of the package the document belongs to, not this run's
+   (rule 6). The scanner's `place` applies this rule to every copy, taking the paths it decides
+   by as their paths in the specs tree, byte-wise, and its `copied` is the name each took (above).
+   **The `<BRD-KEY>` is the key of the package the document belongs to, not this run's
    key applied uniformly:** a prerequisite package copied in under rule 5 arrives already named from
    the packaging run that built it, and those keyed filenames are kept on the way in — nothing
    renames them. That is what keeps one bundle's two `[CG#7]`s apart, because it is the same key
@@ -1801,7 +1899,9 @@ or not that line is there.
 5. **Copy each prerequisite's own files in, marked *not for re-review*.** From the prerequisite's
    `bundle-<YYYYMMDD>/` (Phase 2 step 3) copy, byte for byte and under the names they carry, **every
    file — document or image — whose bundled name begins `<PREREQ-KEY>-`**, that prerequisite's own,
-   **save its rendered prompt and its manifest**: the prompt is the one document there carrying a
+   **save its rendered prompt and its manifest** — the copy is the `place` call's (above), its
+   `--prereq` naming the bundle and its plan's `prereq_aux` the two files left out, and each file
+   under another key comes back in its `prereq_other`: the prompt is the one document there carrying a
    `Package reviewed:` line — in a bundle built before prompts carried one, the bundled copy of its
    `customer-review-prompt-<YYYYMMDD>.md` under `<PREREQ-KEY>-` — and the manifest is the document
    that prompt's part 3 names first; where either cannot be told, ask the operator which file it is,
@@ -1832,7 +1932,9 @@ or not that line is there.
    image from `brd/source/` and `brd/source-external/` — from its path relative to `brd/` to its
    bundled filename, naming beside it any target as written that the link log maps to it
    (`bundle-packaging.md` §1.1, §2.1) — **and map every other image whose bundled name took a folder
-   or a `-2` under rule 1**, a frame among them, from its path in the BRD folder to that name, since
+   or a `-2` under rule 1**, a frame among them, from its path in the BRD folder to that name — each
+   map line is a `copied` entry of the `place` call's whose `map` is true, its `path` to its `name`,
+   written with the Write tool — since
    its basename alone no longer tells a reviewer which picture it is. **A `-2` earns the map on its
    own**: rule 1's uniqueness test can put one on an image that took no folder at all, and a name
    that is neither the basename nor the basename under a folder is exactly the one a reviewer cannot
@@ -1885,7 +1987,7 @@ or not that line is there.
 
    **Run it with the scanner, as rule 7 runs its scan**, never with code of your own:
    ```
-   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" citations <the working directory> --key <BRD-KEY> [--prereq-key <KEY>]… [--copied-key <KEY>]… [--known-key <KEY>]… --date <YYYYMMDD> [--captured <bundled name>]… [--captured-path <path relative to brd/>]… [--source-basename <name>]… --manifest <the manifest's bundled name> [--prereq-aux <bundled name>]… [--prereq-source <KEY>=<its bundle-YYYYMMDD/>]…
+   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" citations <the working directory> --key <BRD-KEY> [--prereq-key <KEY>]… [--copied-key <KEY>]… [--known-key <KEY>]… --date <YYYYMMDD> --record <the place record> --manifest <the manifest's bundled name> [--prereq-source <KEY>="<its bundle-YYYYMMDD/>"]…
    ```
    Every argument is something this run already holds, and none is derived from a filename:
    `--prereq-key` for every prerequisite Phase 2 carried and `--copied-key` for each whose package
@@ -1894,12 +1996,13 @@ or not that line is there.
    `## Slices`, or, in a legacy file without `kind: slices` frontmatter, each slice key its slice
    blocks name (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §7) — and, for each copied prerequisite, its
    own `parent:`, that parent's `slices.md` slices, read the same way, and its `depends-on:` keys (rule 5 reads its
-   `brd-link.md`) — the other BRDs a qualified reference or a structured field may name; `--date` the run's stamp; `--captured` and
-   `--captured-path` as rule 7 passes them; `--source-basename` for each captured markdown file's
-   basename, which relation 3's placeholders resolve against; `--manifest` the manifest rule 6
-   wrote, whose quotation of a target as written relation 3 stays off; `--prereq-aux` for each
-   copied prerequisite's rendered prompt and manifest, which rule 5 identified and did not copy;
-   and `--prereq-source` for each copied prerequisite, naming the `bundle-<YYYYMMDD>/` rule 5 copied
+   `brd-link.md`) — the other BRDs a qualified reference or a structured field may name; `--date` the run's stamp; `--record`
+   the record the `place` call wrote, as rule 7 passes it, from which the scanner reads the
+   captured names and paths rule 7's scan reads, each captured markdown file's basename, which
+   relation 3's placeholders resolve against, and each copied prerequisite's rendered prompt and
+   manifest, which rule 5 identified and did not copy — so no customer's name is typed into the
+   command; `--manifest` the manifest rule 6 wrote, whose quotation of a target as written relation 3
+   stays off; and `--prereq-source` for each copied prerequisite, naming the `bundle-<YYYYMMDD>/` rule 5 copied
    it from (Phase 2 step 3), so the scanner holds the copy whole first — every file of that
    prerequisite's there, save its prompt and manifest, present in the bundle byte for byte, one
    missing or changed being `dead`: a copy defect, which copying again repairs. It
@@ -2079,7 +2182,9 @@ fails, remove the working directory and stop — with step 11's first `BRD_PACKA
 the path now exists, and otherwise naming `mkdir`'s error.
 Otherwise move every entry of the working directory into the target — `command mv -- "<the path
 mktemp printed>"/* "<BRD-dir>/bundle-<YYYYMMDD>"/`, every bundled name starting with its key, so the
-glob misses none — and remove the now-empty working directory. Where the move fails, remove
+glob misses none, and the glob handing `mv` each name as an argument, never as text the shell reads
+again, so a name holding `$(` is moved as it stands — and remove the now-empty working directory,
+and the `place` call's plan directory and record. Where the move fails, remove
 `<BRD-dir>/bundle-<YYYYMMDD>`, which this run's own `mkdir` created, so nothing of another run's is
 in it, and the working directory, and stop, naming the error: a move between file systems copies
 before it deletes, and a copy cut off part-way is the partial bundle this order exists to prevent.
@@ -2118,19 +2223,29 @@ push-target probe set. This phase does not ask again, and does not probe again.
 On the first choice, execute `handoff-to-main` (`Skill(skill: "workflows-core:reference", args: "phase-handoff handoff-to-main")`, §2) with `prefix: brd` (§2.9's
 table, where `brd` is the prefix every `/brd-*` command shares), `feature_folder` as resolved in the
 *Resolve inputs and gate the decided BRD* phase, `deliverable_paths` = every file this run wrote
-under `<BRD-dir>` (`self-review-<YYYYMMDD>.md`, `customer-review-prompt-<YYYYMMDD>.md`,
-`customer-delivery-note-<YYYYMMDD>.md`, every file under `bundle-<YYYYMMDD>/`, and `brd-link.md`
-when this run added a prerequisite to it), `title: <BRD-KEY> Package for customer review
+under `<BRD-dir>` but the bundle's (`self-review-<YYYYMMDD>.md`, `customer-review-prompt-<YYYYMMDD>.md`,
+`customer-delivery-note-<YYYYMMDD>.md`, and `brd-link.md` when this run added a prerequisite to it),
+`deliverable_paths_file` = every file under `bundle-<YYYYMMDD>/`, listed by the scanner — `python3
+"${CLAUDE_PLUGIN_ROOT}/scripts/bundle-scan.py" declare "<BRD-dir>/bundle-<YYYYMMDD>" --specs
+"$SPECS_PATH" --out "<file>"`, `<file>` from `command mktemp -t brd-package-declared-XXXXXX` —
+since a bundled name carries a customer's or a designer's own and is never typed into a command
+(`workflows-core:phase-handoff` §2.9), `title: <BRD-KEY> Package for customer review
 <YYYYMMDD>`, `inputs_read` = the files the *Resolve inputs and gate the decided BRD* phase's
 *Record what the run reads* noted, and `body_facts` = the degradation tier; the `[SR#n]` counts by disposition; the count
 of `[C]` questions and open `[AS#n]` the prompt carries; every prerequisite named under *what could
 still move*; and the repo→SHA table. Hand it the `remote` value Phase 7's probe set, which §2.1
 has the entry point carry rather than probe a second time. Emit its §4.1 outcome line in the final
-report.
+report. The declared-paths file is made before either answer is acted on, serves the decline's
+record too (§4.3), and is kept until this run's `commit-artifacts` has run — the end's fallback can
+take it as `--declined-from` (`workflows-core:specs-git`) — then removed, with `command rm -f --
+"<file>"`. Where `declare` exits other than 0, `handoff-to-main` does not run, since it would
+hand off the package without its bundle: report the first line of its stderr, and the phase as not
+handed off, as §2.8 there says; a decline's record then takes the other paths alone.
 
 **On the second or third choice `handoff-to-main` does not run, and the final report still carries
 an outcome line**: §4.1's *Declined by the user* row, its `<artifacts>` the `deliverable_paths` set
-above as that row counts it, and its `<next-phase-clause>` the **gated — stopping** one, which is
+above and the bundle's files its `deliverable_paths_file` holds, as that row counts them, and its
+`<next-phase-clause>` the **gated — stopping** one, which is
 what the array's parenthetical promised (`workflows-core:phase-handoff` §4.1, §4.3). Both options
 decline the handoff and nothing else (§4.3, *What each option means*): nothing is branched,
 committed or pushed, every file this run wrote stays in `<BRD-dir>` exactly as written, and none of

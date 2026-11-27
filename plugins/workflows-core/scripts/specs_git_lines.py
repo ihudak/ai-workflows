@@ -10,8 +10,11 @@ standard library only; loaded by specs-git.py only for the subcommands that need
 A template that is a piece of another line says, in the comment above it, how a renderer puts it in.
 """
 
+import json
+import unicodedata
 import posixpath
 import re
+import shlex
 
 # specs-repo-git §5's notice blocks, compared line for line with its three fenced blocks.
 G0 = """⚠ SPECS REPO — THIS RUN'S ARTIFACTS WILL NOT BE COMMITTED
@@ -224,6 +227,8 @@ T = {
     "app.mode-on.no-identity": "a session branch of your own, once GIT_USER_INITIALS names it",
     # D2: on either decline; <path> is artifacts() of the declared paths git status still lists.
     "app.declined": "; the deliverable at <path> remains uncommitted, as you asked",
+    # Before the line, once for each --declined-from file end could not read; the end goes on without its paths.
+    "end.declined-unreadable": "Specs repo: the declined paths in <file> could not be read (<reason>), so the line below does not name them",
     # §6, after a landing: in this order after the row its commit on <default> takes -- app.landed, app.landed.unlisted
     # where the run's start could not list the uncommitted paths, app.start-dirty-kept where the guard left paths out,
     # the register clause, app.held.stuck where a path was held alone -- then app.declined.
@@ -388,10 +393,50 @@ def count_files(n):
     return "(1 file)" if n == 1 else "(%d files)" % n
 
 
+_UNPRINTABLE_EXTRA = set("\u2028\u2029\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")
+
+
+def shown_path(path):
+    """A path as a line may hold it: each character that keeps it from being workflows-core:addressing §3's printable
+    value -- a control character (Cc), U+2028 or U+2029, a bidirectional control, or a byte that is not UTF-8 (a
+    surrogate) -- written as its JSON escape, so the path can neither break the line nor show as another
+    (phase-handoff §2.3)."""
+    out = []
+    for c in path:
+        bad = unicodedata.category(c) in ("Cc", "Cs") or c in _UNPRINTABLE_EXTRA
+        out.append(json.dumps(c)[1:-1] if bad else c)
+    return "".join(out)
+
+
+def shell_path(path):
+    """A path as a Fix line pastes it (specs-repo-git §5): shell-quoted where it is a printable value; otherwise in
+    the $'…' quoting bash and zsh read, each character that keeps it from being one written as \\xHH for each byte
+    of its UTF-8 -- or for the byte it stands for, where it stands for a byte that is not UTF-8 -- so the line can
+    neither break nor show as another, and the shell reads back the path itself."""
+    if shown_path(path) == path:
+        return shlex.quote(path)
+    out = []
+    for c in path:
+        if 0xDC80 <= ord(c) <= 0xDCFF:  # os.fsdecode's stand-in for a byte that is not UTF-8
+            out.append("\\x%02x" % (ord(c) - 0xDC00))
+        elif unicodedata.category(c) in ("Cc", "Cs") or c in _UNPRINTABLE_EXTRA:
+            out.append("".join("\\x%02x" % b for b in c.encode("utf-8", "surrogatepass")))
+        elif c in "\\'":
+            out.append("\\" + c)
+        else:
+            out.append(c)
+    return "$'" + "".join(out) + "'"
+
+
+# The placeholders that name a path: fill() writes each value given for one as shown_path writes it.
+_PATH_SPANS = ("<path>", "<path list>", "<file>")
+
+
 def artifacts(paths):
     """phase-handoff §4.1's <artifacts>: the paths comma-separated where three or fewer, else '<n> files under
-    <dir>', <dir> the nearest directory holding every path, repo-relative ('.' where that is the top level)."""
-    paths = list(paths)
+    <dir>', <dir> the nearest directory holding every path, repo-relative ('.' where that is the top level); a path
+    that is not a printable value written by shown_path."""
+    paths = [shown_path(p) for p in paths]
     if len(paths) <= 3:
         return ", ".join(paths)
     common = posixpath.commonpath([posixpath.dirname(p) for p in paths])
@@ -504,15 +549,16 @@ def _value(span, values, used, joined, root):
         if named in root:  # an alternative that names a placeholder of the same template is that placeholder
             return _value(named, values, used, False, root)
         return _render(alternatives[value], values, used, root)
+    shown = shown_path if span in _PATH_SPANS else str  # a path that is not a printable value, escaped
     if isinstance(value, (list, tuple)):
         if joined:
-            return ", ".join(str(v) for v in value)
+            return ", ".join(shown(str(v)) for v in value)
         k = used.get(span, 0)
         if k >= len(value):
             raise ValueError("fill: no value for occurrence %d of %s" % (k + 1, span))
         used[span] = k + 1
-        return str(value[k])
-    return str(value)
+        return shown(str(value[k]))
+    return shown(str(value))
 
 
 def _render(t, values, used, root):
