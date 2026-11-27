@@ -96,7 +96,7 @@ captures:
 
 `captures[].slot` names a placeholder the writer leaves in the page, which the verification pass fills with the image it produced. **Where that image then lives is a profile field, not a law** — `images.policy` in `references/docs-profiles/docs-profile-schema.md` — and nothing about the slot changes with it.
 
-**A stamp ties the results below it to one version of one page.** A walkthrough may carry one more top-level mapping, `stamp:`, directly after the `walkthrough:` block:
+**A stamp names the page a walk's results are recorded for, as it stood when the walk began.** A walkthrough may carry one more top-level mapping, `stamp:`. `${CLAUDE_PLUGIN_ROOT}/scripts/backlog-lines.py`'s `walk-stamp` writes it directly after the `walkthrough:` block, clearing every step's `result:` as it does; the reader takes one top-level `stamp:` wherever it stands:
 
 ```yaml
 stamp:
@@ -105,7 +105,7 @@ stamp:
   at: "2026-11-17T14:03:09Z"
 ```
 
-`page` is the unit's `page_path`, `blob` the page's git object id when the stamp was written, and `at` the UTC time it was written, which nothing tests. It is three lines, in that order, at a two-space indent — `page` and `blob` plain, `at` double-quoted — and nothing else; one in any other form is read as out of its form, the results below it then tied to no page, and never puts the file out of shape. It is written by `${CLAUDE_PLUGIN_ROOT}/scripts/backlog-lines.py`'s `walk-stamp`, which clears every step's `result:` as it writes it, so the results below a stamp were recorded against the page it names. **A driver reading `steps[]` ignores it**: it changes nothing about how a step is run.
+`page` is the unit's `page_path`, `blob` the page's git object id when the stamp was written, and `at` the UTC time it was written, which nothing tests. Its form is three lines, in that order, at a two-space indent — `page` a plain scalar of at most 4,096 bytes, `blob` plain, `at` double-quoted — and nothing else; one in any other form is read as out of its form, naming no page, and never puts the file out of shape. **A stamp proves no walk.** It names the page, and the version of it, that the results were recorded for, and never who recorded them, that anybody walked, or that a result was not edited by hand after it: any committer can write a matching stamp. **A driver reading `steps[]` ignores it**: it changes nothing about how a step is run.
 
 **A walkthrough is a file, and it has a home.** It lives at **`<top>/.dev-workflows/walkthroughs/<id>.yml`** — `W-001` at `<top>/.dev-workflows/walkthroughs/W-001.yml` — where `<top>` is the same git work-tree top level of the resolved docs repository that `backlog-format.md` §6 pins for the backlog, tracked and reviewed for the same reasons. A unit records the **id** and never the path (`walkthrough: W-001`), so the path is derived from the id in one place and moving the directory is a one-line change rather than an edit to every unit. Without this, §5 tells a person to work "from the file" and leaves them nothing to open.
 

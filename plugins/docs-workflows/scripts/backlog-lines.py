@@ -151,22 +151,21 @@ file never waited on and read to 1 MiB and one byte, so that a larger one reads 
 
 walk-check tests the walkthrough's shape. It prints {"shape": "ok", "id": <id>|null, "unit": <id>|null, "steps":
 [<n>...], "outcomes": {"confirmed": [<n>...], "differs": [<n>...], "blocked": [<n>...], "none": [<n>...]},
-"differs_no_observed": [<n>...], "blocked_no_note": [<n>...], "stamp": {"state": "none"|"ok"|"out", "page":
-<path>|null, "blob": <oid>|null, "reason": "<word>"|null}, "slots": [{"slot": <slot>, "after_step": <n>|null}...],
+"differs_no_observed": [<n>...], "blocked_no_note": [<n>...], "stamp": {"state": "none"|"ok"|"out", "page": <path>|null,
+"blob": <oid>|null, "reason": "<word>"|null}, "slots": [{"slot": <slot>, "after_step": <n>|null}...],
 "slots_outside_class": <n>}: id and unit the walkthrough: block's two, each where it is in the unit-id class and
 otherwise null; steps each step's n, in file order; outcomes each step by its result's outcome, none a step with no
-result:; differs_no_observed each differs step whose observed is absent or reads as no text -- empty, null, Null,
-NULL, ~, '' or "" -- and blocked_no_note each blocked step whose note is; stamp none where there is no stamp:, ok
-where it is in its one form -- page and blob then printed -- and otherwise out, page and blob null and reason one of
-form (stamp: with anything on its line, nothing under it, or a line under it that is not two spaces, a key, ": " and
-a value with nothing after it, a blank line and a comment among them), keys (the keys under it not page, blob and at,
-each once, in that order), page (page no plain scalar in the page-path class), blob (blob no plain scalar in the
-object-id class) and at (at no double-quoted value in the stamp-time class,
-^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$);
-slots each captures entry whose slot is in the unit-id class, in file order, its after_step where that is a step
-number and otherwise null; slots_outside_class the number of the others, an entry with no slot among them. Or it
-prints {"shape": "out", "line": <n>, "reason": "<word>"}, as check does, line 0 for too-large and for a file with no
-walkthrough: key. A step number is ^[1-9][0-9]{0,8}$.
+result:; differs_no_observed each differs step whose observed is absent or reads as no text -- empty, null, Null, NULL,
+~, or a quoted value of whitespace alone, '' and "" among them -- and blocked_no_note each blocked step whose note is;
+stamp none where there is no stamp:, ok where it is in its one form -- page and blob then printed -- and otherwise out,
+page and blob null and reason one of form (stamp: with anything on its line, nothing under it, or a line under it that
+is not two spaces, a key, ": " and a value with nothing after it, a blank line and a comment among them), keys (the keys
+under it not page, blob and at, each once, in that order), page (page no plain scalar in the page-path class, or one
+above 4,096 bytes), blob (blob no plain scalar in the object-id class) and at (at no double-quoted value in the
+stamp-time class, ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$); slots each captures entry whose slot is in
+the unit-id class, in file order, its after_step where that is a step number and otherwise null; slots_outside_class the
+number of the others, an entry with no slot among them. Or it prints {"shape": "out", "line": <n>, "reason": "<word>"},
+as check does, line 0 for too-large and for a file with no walkthrough: key. A step number is ^[1-9][0-9]{0,8}$.
 
 walk-stamp stamps the walkthrough for a walk. It removes the stamp: block, where there is one, and every step's
 result: with the lines under it, and writes the stamp directly after the walkthrough: block's last line that is
@@ -175,27 +174,27 @@ neither blank nor a comment: stamp:, then `  page: <--page>`, `  blob: <--blob>`
 
 walk-record writes one step's answer. --answer names a JSON object the caller wrote, at most 64 KiB: outcome one of
 confirmed, differs and blocked; observed given with differs and note with blocked, each required there and refused
-anywhere else, a string not empty, at most 2,000 characters, holding no \n, \r, U+0085, U+2028 or U+2029; no other
-key. It writes `result: { outcome: <o> }`, with `, observed: "<e>"` or `, note: "<e>"` before its }, at the step's key
-indent, in place of the step's result: and the lines under it, or else after the step's last line that is neither
-blank nor a comment. <e> is the text on one line, \ and " escaped with \, and every other C0 control, DEL, C1 control
-and bidirectional control (U+061C, U+200E, U+200F, U+202A to U+202E, U+2066 to U+2069) written \uXXXX, U+FFFE and
-U+FFFF too, so the line stays in shape and reads as it shows. It prints {"n": <n>, "line": <n>}, the step and the
+anywhere else, a string holding more than whitespace, at most 2,000 characters, holding no \n, \r, U+0085, U+2028 or
+U+2029; no other key. It writes `result: { outcome: <o> }`, with `, observed: "<e>"` or `, note: "<e>"` before its }, at
+the step's key indent, in place of the step's result: and the lines under it, or else after the step's last line that is
+neither blank nor a comment. <e> is the text on one line, \ and " escaped with \, and every other C0 control, DEL, C1
+control and bidirectional control (U+061C, U+200E, U+200F, U+202A to U+202E, U+2066 to U+2069) written \uXXXX, U+FFFE
+and U+FFFF too, so the line stays in shape and reads as it shows. It prints {"n": <n>, "line": <n>}, the step and the
 line it wrote; its read-back decodes the value it wrote and requires the answer's text.
 
-walk-new creates the walkthrough from --from, a JSON object the caller wrote, at most 1 MiB, holding unit, in the
-unit-id class, role and environment, preconditions, a list, and steps, 1 to 200 objects, each holding action -- one of
-navigate, click, type, select and wait --, target -- a string or an object -- and expect -- an object holding kind --,
-and no other key. A target's or an expect's keys are in ^[a-z_][a-z0-9_]{0,31}$, less the words YAML reads as no string
-(null, true, false, yes, no, on, off, y, n), and every other string -- a value, or a list's item -- is at most 500
-characters and holds no \n, \r, U+0085, U+2028 or U+2029. The file is walkthrough: with id (--id) and unit plain
-and role and environment double-quoted at a two-space indent; preconditions:, each item double-quoted at a two-space
-indent, or [] where there is none; steps:, each `  - n: <k>` from 1, then action plain, target double-quoted or a
-one-line flow mapping of double-quoted values, and expect a flow mapping of double-quoted values, at a four-space
-indent; no captures:; each string written as walk-record writes one, and each line ending in \n. It makes
-walkthroughs where it is absent, mode 0777 less the umask, and creates the file exclusively: a new file beside it,
-mode 0666 less the umask, written and synced, then linked to the walkthrough's name -- which fails where any entry has
-that name -- and removed. It prints {"created": true, "steps": [<n>...]}.
+walk-new creates the walkthrough from --from, a JSON object the caller wrote, at most 1 MiB, holding unit, in
+--walkthrough's class since it is written plain, role and environment, preconditions, a list, and steps, 1 to 200
+objects, each holding action -- one of navigate, click, type, select and wait --, target -- a string or an object -- and
+expect -- an object holding kind --, and no other key. A target's or an expect's keys are in ^[a-z_][a-z0-9_]{0,31}$,
+less the words YAML reads as no string (null, true, false, yes, no, on, off, y, n), and every other string -- a value,
+or a list's item -- is at most 500 characters and holds no \n, \r, U+0085, U+2028 or U+2029. The file is walkthrough:
+with id (--id) and unit plain and role and environment double-quoted at a two-space indent; preconditions:, each item
+double-quoted at a two-space indent, or [] where there is none; steps:, each `  - n: <k>` from 1, then action plain,
+target double-quoted or a one-line flow mapping of double-quoted values, and expect a flow mapping of double-quoted
+values, at a four-space indent; no captures:; each string written as walk-record writes one, and each line ending in \n.
+It makes walkthroughs where it is absent, mode 0777 less the umask, and creates the file exclusively: a new file beside
+it, mode 0666 less the umask, written and synced, then linked to the walkthrough's name -- which fails where any entry
+has that name -- and removed. It prints {"created": true, "steps": [<n>...]}.
 
 walk-append appends the steps of --from, a JSON object holding steps alone, each held as walk-new holds one. It writes
 them after the steps: block's last line that is neither blank nor a comment, numbered from the last step's n + 1, each
@@ -215,7 +214,7 @@ appended), too-large (the file it would write above 1 MiB), changed-while-readin
 the walkthrough's name).
 
 id-class tests --id, reading and running nothing, and prints {"unit_id": <bool>, "walkthrough": <bool>}: whether it is
-in the unit-id class, and in --walkthrough's class below, which edit takes and walk-new holds its --id to.
+in the unit-id class, and in --walkthrough's class below, which edit takes and walk-new holds its --id and its unit to.
 
 The arguments are tested before anything is read or run: --id against the unit-id class; --walkthrough against the same
 class, less every value YAML reads, written plain as edit writes it, as something other than a string -- a null,
@@ -230,15 +229,15 @@ control -- and to being a clone's top level, as its paragraph says; --commit aga
 --out and --manifest against the absolute-path class, each absent by lstat, in a parent that is a real directory by
 lstat, and not naming one entry -- one base name in one directory, however spelled; each --path against the
 relative-path class -- not empty, opening with neither / nor -, holding no .. segment and none of those characters --
-valid UTF-8 and at most 4,096 bytes. A walk verb's --id is in the unit-id class, walk-new's in --walkthrough's, since
-it writes the id plain; --page in the page-path class, as --page-path; --blob in the object-id class, as --commit; --at
-in the stamp-time class; --n a step number; --answer and --from in the absolute-path class, the file each names a
-regular file by lstat, opened without following a link and never waited on, its content held as its verb's paragraph
-says. id-class answers for its --id rather than refusing it. --own-moves and --whole take no value; export takes
---whole, a --path, or both; a walk verb takes every flag its usage line names. A flag given twice (--id to moved and
---path to export aside), or as --flag=value, refuses the run. <top>/.dev-workflows must be a real directory and the
-backlog a regular file, both by lstat: a symbolic link to either is refused, never followed, and the backlog is opened
-without following a link and never waited on.
+valid UTF-8 and at most 4,096 bytes. A walk verb's --id is in the unit-id class, walk-new's in --walkthrough's, since it
+writes the id plain; --page in the page-path class, as --page-path, and at most 4,096 bytes; --blob in the object-id
+class, as --commit; --at in the stamp-time class; --n a step number; --answer and --from in the absolute-path class, the
+file each names a regular file by lstat, opened without following a link and never waited on, its content held as its
+verb's paragraph says. id-class answers for its --id rather than refusing it. --own-moves and --whole take no value;
+export takes --whole, a --path, or both; a walk verb takes every flag its usage line names. A flag given twice (--id to
+moved and --path to export aside), or as --flag=value, refuses the run. <top>/.dev-workflows must be a real directory
+and the backlog a regular file, both by lstat: a symbolic link to either is refused, never followed, and the backlog is
+opened without following a link and never waited on.
 
 What it prints of the backlog, a walkthrough, a ref or an argument is line numbers, counts, fixed words, and values
 that passed a class test: a unit id, a walkthrough's id and unit and a slot in the unit-id class, a branch name in the
@@ -324,6 +323,7 @@ STEPS_FILE_CAP = 1024 * 1024  # bytes: walk-new's and walk-append's --from file 
 ANSWER_TEXT_CAP = 2000  # characters: an observed text or a note
 STEP_TEXT_CAP = 500  # characters: each string walk-new or walk-append writes
 STEPS_CAP = 200  # steps a walkthrough holds once walk-new or walk-append has written
+STAMP_PAGE_CAP = 4096  # bytes: a stamp's page, and walk-stamp's --page, at most -- EXPORT_NAME_CAP's figure
 
 # Every pattern that tests a whole value is used with fullmatch and is ASCII; digits are [0-9].
 UNIT_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", re.ASCII)
@@ -419,7 +419,7 @@ WHY_EXPORT_WRITE = "the export could not be written"
 WHY_WALK_ID = ("--id is outside the unit-id class, or is a spelling YAML reads as no string, or one near such a "
                "spelling")
 WHY_PAGE = "--page is outside the page-path class"
-WHY_BLOB = "--blob is outside the object-id class"
+WHY_BLOB_ARG = "--blob is outside the object-id class"
 WHY_AT = "--at is outside the stamp-time class"
 WHY_N = "--n is outside the step-number class"
 WHY_ANSWER_PATH = "--answer is outside the absolute-path class"
@@ -1904,6 +1904,109 @@ def _flow_pairs(text):
             return None
 
 
+# A double-quoted scalar's escapes, as YAML defines them: one character each, and \x, \u and \U with their hex digits.
+YAML_ESCAPES = {"0": "\x00", "a": "\x07", "b": "\x08", "t": "\x09", "\x09": "\x09", "n": "\x0a", "v": "\x0b",
+                "f": "\x0c", "r": "\x0d", "e": "\x1b", " ": " ", "\"": "\"", "/": "/", "\\": "\\", "N": "\x85",
+                "_": "\xa0", "L": "\u2028", "P": "\u2029"}
+YAML_HEX_ESCAPES = {"x": 2, "u": 4, "U": 8}
+NULL_KEY = ("null",)  # a mapping key YAML reads as null: none, null, Null, NULL or ~
+
+
+def _yaml_text(kind, token):
+    """The text YAML reads a scalar token on one line as: a plain one's own, a single-quoted one's with '' read as ',
+    a double-quoted one's with its escapes read; None where a double-quoted one holds an escape YAML does not
+    define."""
+    if kind == "plain":
+        return token
+    body = token[1:-1]
+    if kind == "squote":
+        return body.replace("''", "'")
+    out, i = [], 0
+    while i < len(body):
+        c = body[i]
+        if c != "\\":
+            out.append(c)
+            i += 1
+            continue
+        e = body[i + 1:i + 2]
+        if e in YAML_ESCAPES:
+            out.append(YAML_ESCAPES[e])
+            i += 2
+        elif e in YAML_HEX_ESCAPES:
+            k = YAML_HEX_ESCAPES[e]
+            digits = body[i + 2:i + 2 + k]
+            if len(digits) != k or not all(ch in "0123456789abcdefABCDEF" for ch in digits) \
+                    or int(digits, 16) > 0x10FFFF:
+                return None
+            out.append(chr(int(digits, 16)))
+            i += 2 + k
+        else:
+            return None
+    return "".join(out)
+
+
+def _flow_twice(text):
+    """Whether the flow collection `text`, as `_flow` admitted it on one line, holds a key twice in one of its
+    mappings, at any depth -- a mapping entry's key being the scalar before its `: `, or the whole entry where it has
+    none, compared as YAML reads it, a key YAML reads as null equal to every other such key, and a key that is itself
+    a collection equal to no other. Each frame is [bracket, keys seen, the entry's key so far, past its `: `]."""
+    stack, i, n = [], 0, len(text)
+
+    def seen(frame, key):
+        if key is None or (isinstance(key, str) and key in ("null", "Null", "NULL", "~")):
+            key = NULL_KEY
+        if key in frame[1]:
+            return True
+        frame[1].add(key)
+        return False
+
+    def entry_done(frame):  # an entry of a mapping with no `: ` is a key whose value is null
+        twice = frame[0] == "{" and not frame[3] and frame[2] is not None and seen(frame, frame[2])
+        frame[2], frame[3] = None, False
+        return twice
+    while i < n:
+        c = text[i]
+        if c == " ":
+            i += 1
+        elif c in "[{":
+            stack.append([c, set(), None, False])
+            i += 1
+        elif c in "]}":
+            if entry_done(stack.pop()):
+                return True
+            i += 1
+            if not stack:
+                return False
+            if not stack[-1][3]:
+                stack[-1][2] = object()  # a collection as a key
+        elif c == ",":
+            if entry_done(stack[-1]):
+                return True
+            i += 1
+        elif c == ":" and (i + 1 == n or text[i + 1] in " ,[]{}"):
+            frame = stack[-1]
+            if frame[0] == "{" and not frame[3]:
+                if seen(frame, frame[2]):
+                    return True
+                frame[3] = True
+            i += 1
+        elif c in "'\"":
+            end = _quoted(text, i)
+            if not stack[-1][3]:
+                key = _yaml_text("squote" if c == "'" else "dquote", text[i:end])
+                stack[-1][2] = object() if key is None else key
+            i = end
+        else:
+            j = i
+            while j < n and text[j] not in ",[]{}" and not (
+                    text[j] == ":" and (j + 1 == n or text[j + 1] in " ,[]{}")):
+                j += 1
+            if not stack[-1][3]:
+                stack[-1][2] = text[i:j].rstrip(" ")
+            i = j
+    return False
+
+
 def _result_check(pairs, line):
     """WalkOut unless a result's pairs, {key: (line, value)}, hold a plain outcome of the three, an observed on
     differs alone and a note on blocked alone; `line` the result's own."""
@@ -2034,12 +2137,22 @@ class _WalkReader:
                 raise WalkOut(n, "continuation")
             item = _WItem(n, got[0], got[1])
             self._key(top, item, n)
+            self._flow_once(top, item.value, n, item.key)
             top.keys[item.key] = item
             top.item = item
             return
         if not seq:
             raise WalkOut(n, "indent")
-        self._entry(top, _seq(n, line, i), n)
+        got = _seq(n, line, i)
+        self._entry(top, got, n)
+        self._flow_once(top, got[1] if got[0] == "value" else got[2], n, None)
+
+    def _flow_once(self, frame, value, n, key):
+        """WalkOut(duplicate-key) where a flow collection on the line holds a key twice in one of its mappings -- a
+        target's, an expect's or any other -- the stamp's aside, which is read, never refused."""
+        in_stamp = frame.role == "stamp" or (frame.role == "root" and key == "stamp")
+        if value.kind == "flow" and not in_stamp and _flow_twice(value.text):
+            raise WalkOut(n, "duplicate-key")
 
     def _key(self, frame, item, n):
         """WalkOut where a key may not stand in `frame`, or its value may not stand after it."""
@@ -2143,12 +2256,14 @@ def read_walk(data):
 
 
 def _no_text(value):
-    """Whether a result's observed or note value reads as no text: absent, empty, null, ~, '' or ""."""
+    """Whether a result's observed or note value reads as no text: absent, empty, null, ~, or a quoted scalar holding
+    whitespace alone ('' and "" among them). A double-quoted one whose escapes YAML does not define counts as none."""
     if value is None or value.kind == "empty":
         return True
     if value.kind == "plain":
         return value.text in ("null", "Null", "NULL", "~")
-    return value.text in ("''", '""')
+    text = _yaml_text(value.kind, value.text)
+    return text is None or not text.strip()
 
 
 def _stamp_state(w):
@@ -2176,7 +2291,7 @@ def _stamp_state(w):
     if [k for k, _ in got] != ["page", "blob", "at"]:
         return out("keys")
     page, blob, at = (v for _, v in got)
-    if page.kind != "plain" or not _page_path(page.text):
+    if page.kind != "plain" or not _stamp_page(page.text):
         return out("page")
     if blob.kind != "plain" or not OBJECT_ID_RE.fullmatch(blob.text):
         return out("blob")
@@ -2447,7 +2562,8 @@ def _answer(path):
     if not isinstance(a, dict) or a.get("outcome") not in OUTCOMES:
         raise NotRun(WHY_ANSWER)
     want = {"confirmed": set(), "differs": {"observed"}, "blocked": {"note"}}[a["outcome"]]
-    if set(a) != {"outcome"} | want or not all(_one_line(a[k], ANSWER_TEXT_CAP, False) for k in want):
+    if set(a) != {"outcome"} | want or not all(_one_line(a[k], ANSWER_TEXT_CAP, False) and a[k].strip()
+                                               for k in want):  # whitespace alone is no observed text, and no note
         raise NotRun(WHY_ANSWER)
     return a
 
@@ -2472,7 +2588,7 @@ def _steps_spec(path, new):
         and (_one_line(s["target"], STEP_TEXT_CAP) or _flow_object(s["target"]))
         and _flow_object(s["expect"]) and "kind" in s["expect"] for s in steps)
     if ok and new:
-        ok = (isinstance(spec["unit"], str) and _unit_id(spec["unit"])
+        ok = (isinstance(spec["unit"], str) and _walkthrough(spec["unit"])  # written plain, as --id is
               and _one_line(spec["role"], STEP_TEXT_CAP) and _one_line(spec["environment"], STEP_TEXT_CAP)
               and isinstance(spec["preconditions"], list)
               and all(_one_line(p, STEP_TEXT_CAP) for p in spec["preconditions"]))
@@ -2741,6 +2857,12 @@ def _page_path(s):
     return PAGE_PATH_RE.fullmatch(s) is not None and all(seg not in ("", ".", "..") for seg in s.split("/"))
 
 
+def _stamp_page(s):
+    """A stamp's page, and walk-stamp's --page: the page-path class, at most STAMP_PAGE_CAP bytes, so walk-check never
+    prints a longer one."""
+    return _page_path(s) and len(s) <= STAMP_PAGE_CAP  # the class is ASCII: a character is a byte
+
+
 def _args(argv):
     """(the subcommand's function, its arguments), every flag checked; NotRun names the first that fails, and nothing
     is read or run before every flag has passed."""
@@ -2844,7 +2966,8 @@ def _walk_args(a):
     # walk-new writes the id plain, as edit writes --walkthrough, so it takes that class.
     checks = [(_walkthrough(wid), WHY_WALK_ID) if a.verb == "walk-new" else (_unit_id(wid), WHY_ID)]
     if a.verb == "walk-stamp":
-        checks += [(_page_path(got["--page"]), WHY_PAGE), (OBJECT_ID_RE.fullmatch(got["--blob"]) is not None, WHY_BLOB),
+        checks += [(_stamp_page(got["--page"]), WHY_PAGE), (OBJECT_ID_RE.fullmatch(got["--blob"]) is not None,
+                                                          WHY_BLOB_ARG),
                    (STAMP_AT_RE.fullmatch(got["--at"]) is not None, WHY_AT)]
     elif a.verb == "walk-record":
         checks += [(STEP_N_RE.fullmatch(got["--n"]) is not None, WHY_N), (_abs_path(got["--answer"]), WHY_ANSWER_PATH)]
@@ -5073,10 +5196,10 @@ def _wok(steps, confirmed=(), differs=(), blocked=(), dno=(), bnn=(), stamp=None
             "slots": list(slots), "slots_outside_class": outside}
 
 
-def _json_file(tmp, obj, name="in.json"):
+def _json_file(tmp, obj, name="in.json", ascii=True):
     path = os.path.join(tmp, name)
     with open(path, "w", encoding="utf-8") as fh:
-        fh.write(obj if isinstance(obj, str) else json.dumps(obj))
+        fh.write(obj if isinstance(obj, str) else json.dumps(obj, ensure_ascii=ascii))
     return path
 
 
@@ -5455,8 +5578,9 @@ def case_walk_new_canonical(tmp):
 
 def case_walk_new_from_refused(tmp):
     """A --from file outside its class -- a sixth verb, a line break, a string above 500 characters, an expect with
-    no kind, a key outside its class or one YAML reads as no string, an extra key, no step, above 200 steps -- is
-    exit 2, and nothing is made, the walkthroughs directory included."""
+    no kind, a key outside its class or one YAML reads as no string, an extra key, no step, above 200 steps, a unit
+    YAML reads as no string, written plain as it is (null, 123, true) -- is exit 2, and nothing is made, the
+    walkthroughs directory included."""
     top = os.path.join(tmp, "top")
     os.makedirs(os.path.join(top, BACKLOG_DIR))
     step = NEW_SPEC["steps"][0]
@@ -5468,6 +5592,7 @@ def case_walk_new_from_refused(tmp):
             steps(dict(step, expect={"text": "x"})), steps(dict(step, expect={"kind": "x", "Text": "y"})),
             steps(dict(step, target={"y": "10"})), steps(dict(step, note="x")), steps(dict(step, target=["a"])),
             steps(dict(step, expect={"kind": 1})), steps(), steps(*([step] * 201)), dict(NEW_SPEC, unit="../x"),
+            dict(NEW_SPEC, unit="null"), dict(NEW_SPEC, unit="123"), dict(NEW_SPEC, unit="true"),
             dict(NEW_SPEC, role="a\u2028b"), dict(NEW_SPEC, preconditions="x"), dict(NEW_SPEC, extra=1),
             {k2: v for k2, v in NEW_SPEC.items() if k2 != "environment"})):
         code, out, err = _wcall("walk-new", top, "--from", _json_file(tmp, spec, "s%d.json" % k), wid="U-001")
@@ -5576,7 +5701,7 @@ def case_walk_bad_args(tmp):
             (argv("walk-record", "--n", "0", "--answer", answer), WHY_N),
             (argv("walk-record", "--n", "x", "--answer", answer), WHY_N),
             (argv("walk-record", "--n", "01", "--answer", answer), WHY_N),
-            (argv("walk-stamp", *stamp[:3], "zz", *stamp[4:]), WHY_BLOB),
+            (argv("walk-stamp", *stamp[:3], "zz", *stamp[4:]), WHY_BLOB_ARG),
             (argv("walk-stamp", *stamp[:5], "now"), WHY_AT),
             (argv("walk-stamp", *stamp[:5], "2026-11-17 14:03:09Z"), WHY_AT),
             (argv("walk-stamp", "--page", "a/../b.md", *stamp[2:]), WHY_PAGE),
@@ -5687,6 +5812,157 @@ def case_id_class_bad_args(tmp):
         _refused(code, out, err, WHY_USAGE)
 
 
+def case_walk_stamp_page_bounded(tmp):
+    """A stamp's page above 4,096 bytes reads out of its form, reason page, and walk-check prints none of it; one of
+    4,096 bytes reads ok. walk-stamp refuses such a --page before anything is read, and takes one of 4,096 bytes."""
+    at_cap = "docs/" + "a" * (STAMP_PAGE_CAP - len("docs/.md")) + ".md"
+    over = at_cap.replace("docs/", "docs/b", 1)
+    _eq((len(at_cap), len(over)), (STAMP_PAGE_CAP, STAMP_PAGE_CAP + 1), "the fixtures' lengths")
+    example = _ec_example()
+    after = example.index("preconditions:\n")
+
+    def with_page(page):
+        stamp = "stamp:\n  page: %s\n  blob: %s\n  at: \"%s\"\n" % (page, OID_A, AT_1)
+        return example[:after] + stamp + example[after:]
+    _eq(_wshape(tmp, with_page(at_cap), "cap")["stamp"], {"state": "ok", "page": at_cap, "blob": OID_A, "reason": None})
+    top = os.path.join(tmp, "over")
+    _wput(top, with_page(over))
+    code, out, err = _wcall("walk-check", top)
+    _eq((code, err, _obj(out)["stamp"]), (0, "", {"state": "out", "page": None, "blob": None, "reason": "page"}))
+    _true("b" + "a" * 64 not in out and len(out) < 2000, "nothing of the page printed")
+    code, out, err = _stamp(top, page=over)
+    _refused(code, out, err, WHY_PAGE)
+    _eq(dict(_IO), {"git": 0, "reads": 0, "writes": 0}, "--page above the cap: nothing read, run or written")
+    code, out, err = _stamp(top, page=at_cap)
+    _eq((code, err, _obj(out)), (0, "", {"stamp_line": _line_of(example, "preconditions:"), "cleared": []}),
+        "--page at the cap")
+    _eq(_wcheck(top)["stamp"], {"state": "ok", "page": at_cap, "blob": OID_A, "reason": None}, "restamped")
+
+
+def case_walk_flow_duplicate_key_out(tmp):
+    """A key twice in a flow mapping -- an expect's, a target's, one nested, one with no value, a preconditions
+    item's -- is out of shape, duplicate-key, at its line, as the same pair in a block mapping is; a quoted key and a
+    plain one YAML reads alike are one key. A key repeated in two mappings, or a value repeated in a list, is in
+    shape; and a stamp holding a key twice is read, out of its form, never refused."""
+    expect2 = "    expect: { kind: visible, label: \"Item details\" }"
+    target2 = "    target: { label: \"Add item\" }"
+    for name, old, new in (("expect", expect2, "    expect: { kind: visible, kind: hidden }"),
+                           ("quoted", target2, "    target: { label: \"Add item\", \"label\": x }"),
+                           ("nested", target2, "    target: { within: { role: dialog, role: x } }"),
+                           ("no-value", target2, "    target: { label, label }"),
+                           ("precondition", "  - \"catalog seeded\"", "  - { seeded: yes, seeded: no }")):
+        data = _ec_example().replace(old + "\n", new + "\n")
+        _wout(tmp, data, _line_of(data, new), "duplicate-key", name)
+    for name, new in (("apart", "    target: { label: \"Add item\", within: { label: x } }"),
+                      ("in-a-list", "    target: { label: [a, a] }")):
+        _eq(_wshape(tmp, _ec_example().replace(target2 + "\n", new + "\n"), name)["shape"], "ok", name)
+    got = _wshape(tmp, _ec_example() + "stamp: { page: docs/a.md, page: docs/b.md }\n", "stamp")
+    _eq((got["shape"], got["stamp"]["state"], got["stamp"]["reason"]), ("ok", "out", "form"), "stamp")
+
+
+def case_walk_too_large_and_overflow(tmp):
+    """Each writing verb refuses, exit 3, too-large, writing nothing, where the file it would write is above 1 MiB:
+    walk-stamp, walk-record and walk-append on a file 40 bytes under the cap, and walk-new on 200 steps whose escaped
+    strings pass it, nothing made. walk-append refuses too-many-steps where a step number would pass 999,999,999."""
+    head = _ec_example().encode("utf-8")
+    near = head + b"#" * (WALK_CAP - len(head) - 41) + b"\n"
+    _eq(len(near), WALK_CAP - 40, "the fixture is 40 bytes under the cap")
+    one = _json_file(tmp, {"steps": [NEW_SPEC["steps"][0]]}, "one.json")
+    too_large = {"refused": "too-large", "line": None, "reason": None}
+    for name, call in (("stamp", lambda top: _stamp(top)),
+                       ("record", lambda top: _record(top, 1, {"outcome": "differs", "observed": "x" * 100}, tmp)),
+                       ("append", lambda top: _wcall("walk-append", top, "--from", one))):
+        top = os.path.join(tmp, name)
+        _wput(top, near)
+        _eq(_wcheck(top)["shape"], "ok", name + ": in shape before")
+        before = _wstat(top)
+        code, out, err = call(top)
+        _eq((code, err, _obj(out), _IO["writes"]), (3, "", too_large, 0), name)
+        _eq((_wget(top), _wstat(top)), (near, before), name + ": untouched")
+    bidi = "\u202e" * STEP_TEXT_CAP
+    big = _json_file(tmp, dict(NEW_SPEC, steps=[{"action": "click", "target": bidi,
+                                                 "expect": {"kind": bidi, "text": bidi}}] * STEPS_CAP),
+                     "big.json", ascii=False)
+    _true(os.path.getsize(big) <= STEPS_FILE_CAP, "the --from file is in its class")
+    top = os.path.join(tmp, "new")
+    os.makedirs(os.path.join(top, BACKLOG_DIR))
+    code, out, err = _wcall("walk-new", top, "--from", big, wid="U-001")
+    _eq((code, err, _obj(out), _IO["writes"]), (3, "", too_large, 0), "walk-new")
+    _true(not os.path.lexists(os.path.join(top, BACKLOG_DIR, WALK_DIR)), "walk-new: nothing made")
+    data = "walkthrough:\n  id: W-001\n  unit: U-001\nsteps:\n  - n: 999999999\n    action: wait\n"
+    top = os.path.join(tmp, "overflow")
+    _wput(top, data)
+    code, out, err = _wcall("walk-append", top, "--from", one)
+    _eq((code, err, _obj(out)), (3, "", {"refused": "too-many-steps", "line": None, "reason": None}), "overflow")
+    _eq(_wget(top), data.encode("utf-8"), "overflow: untouched")
+
+
+def case_walk_whitespace_is_no_text(tmp):
+    """Whitespace alone is no observed text and no note: walk-record refuses such an answer, exit 2, the answer file
+    outside its class; and walk-check counts a recorded one -- double- or single-quoted, an escape among it -- in
+    differs_no_observed or blocked_no_note, while text with spaces around it counts as text."""
+    for k, answer in enumerate(({"outcome": "differs", "observed": "   "}, {"outcome": "differs", "observed": "\t"},
+                                {"outcome": "blocked", "note": " \u3000 \u00a0"})):
+        _record_refused(tmp, answer, "blank-%d" % k)
+    data = ("walkthrough:\n  id: W-001\n  unit: U-001\nsteps:\n"
+            "  - n: 1\n    action: wait\n    result: { outcome: differs, observed: \"   \" }\n"
+            "  - n: 2\n    action: wait\n    result: { outcome: differs, observed: \"\\t\\u00A0 \" }\n"
+            "  - n: 3\n    action: wait\n    result:\n      outcome: blocked\n      note: '  '\n"
+            "  - n: 4\n    action: wait\n    result: { outcome: differs, observed: \" x \" }\n"
+            "  - n: 5\n    action: wait\n    result: { outcome: blocked, note: \" why \" }\n")
+    _eq(_wshape(tmp, data), _wok([1, 2, 3, 4, 5], differs=[1, 2, 4], blocked=[3, 5], dno=[1, 2], bnn=[3]))
+
+
+def case_constants_assigned_once(tmp):
+    """Every module-level constant -- each WHY_ text, each class, each REASONS tuple, any name in capitals -- is
+    assigned once in the whole script, its self-test included, so no later assignment replaces an earlier one's
+    value unseen, as a second WHY_BLOB once replaced export's line with walk-stamp's."""
+    import ast
+    import collections
+    with open(os.path.abspath(__file__), encoding="utf-8") as fh:
+        tree = ast.parse(fh.read())
+    counts = collections.Counter()
+
+    def scan(body):  # module level, through if, try and with blocks, never into a function or a class
+        for node in body:
+            targets = (node.targets if isinstance(node, ast.Assign)
+                       else [node.target] if isinstance(node, (ast.AnnAssign, ast.AugAssign)) else [])
+            for target in targets:
+                for name in ast.walk(target):
+                    if isinstance(name, ast.Name) and re.fullmatch(r"[A-Z][A-Z0-9_]*", name.id):
+                        counts[name.id] += 1
+            for field in ("body", "orelse", "finalbody", "handlers"):
+                if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    scan(getattr(node, field, None) or [])
+    scan(tree.body)
+    _eq(sorted(name for name, n in counts.items() if n > 1), [], "the constants assigned twice")
+    _true(all(name in counts for name in ("WHY_BLOB", "WHY_BLOB_ARG", "WHY_UNDO", "REASONS", "WALK_REASONS",
+                                          "STAMP_REASONS", "UNIT_ID_RE", "STAMP_AT_RE", "X_RE")), "the scan sees them")
+
+
+def case_export_blob_line_pinned(tmp):
+    """export's exit-2 line for a blob not as its listing named it -- a commit whose tree lists a tree as a file -- is
+    the text it has had since it shipped, byte for byte: a literal here, never the constant, which a second
+    assignment once replaced. docs-verify.md's DOCS_VERIFY_EXPORT stop quotes the script's one stderr line by the
+    opening every such line has, which main writes."""
+    top, oid = _src(tmp, {"a.txt": b"a\n"})
+    tree_oid = _fx(top, "rev-parse", oid + "^{tree}").strip()
+    raw = b"100644 a.txt\0" + bytes.fromhex(tree_oid)
+    crafted = _fx(top, "commit-tree", "-m", "a tree as a file",
+                  _fx_in(top, raw, "hash-object", "-t", "tree", "-w", "--literally", "--stdin").strip()).strip()
+    d, out, man = _xdir(tmp)
+    code, stdout, err = _export(top, crafted, out, man, "--whole")
+    _eq((code, stdout, err),
+        (2, "", "backlog-lines: not run (git did not give a blob of the commit as its listing named it)\n"))
+    with open(DV_PATH, encoding="utf-8") as fh:
+        stop = [ln for ln in fh.read().split("\n")
+                if "`DOCS_VERIFY_EXPORT: backlog-lines.py export could not run" in ln]
+    _eq(len(stop), 1, "docs-verify.md gives the export stop once")
+    _true("<its one stderr line, where it is one line opening backlog-lines: not run (" in stop[0],
+          "the stop quotes the line by its opening")
+    _true(err.startswith("backlog-lines: not run ("), "the line opens so")
+
+
 def case_walk_shape_paragraph_pinned(tmp):
     """EC section 4's shape paragraph names, in its out-of-shape list, exactly the reasons the walkthrough reader
     gives; they are the backlog's line reasons less its four of structure, with the walkthrough's own."""
@@ -5788,7 +6064,9 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_walk_new_from_refused, case_walk_append_after_last, case_walk_append_no_steps,
          case_walk_symlink_refused, case_walk_bad_args, case_walk_changed_while_reading,
          case_walk_changed_after_write, case_walk_counts, case_id_class_matches_walkthrough_flag,
-         case_id_class_bad_args, case_walk_shape_paragraph_pinned, case_slot_comment_pinned,
+         case_id_class_bad_args, case_walk_stamp_page_bounded, case_walk_flow_duplicate_key_out,
+         case_walk_too_large_and_overflow, case_walk_whitespace_is_no_text, case_constants_assigned_once,
+         case_export_blob_line_pinned, case_walk_shape_paragraph_pinned, case_slot_comment_pinned,
          case_visibility_marker_pinned,
          case_shape_paragraph_pinned, case_marker_phrase_pinned)
 
