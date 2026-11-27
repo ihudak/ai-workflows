@@ -1,6 +1,6 @@
 ---
 name: brd-interview
-description: "The BRD-to-PRD route's decision step, once per slice after /prd-ground and /brd-split: generates the round's questions and tags each [G] (answered from the grounding, never asked), [V] (asked of you one at a time, with argumentation) or [C] (held for the customer), then writes decisions.md ([VD#n], [AS#n]), the round record and the customer question set. Gates on merged, verified grounding and a fully allocated ledger; --round N resumes or re-opens a round. Next: /brd-package."
+description: "The BRD-to-PRD route's decision step, once per slice after /prd-ground and /brd-split: generates the round's questions and tags each [G] (answered from the grounding, never asked), [V] (yours: asked one at a time with argumentation, save one the question registry closes without asking) or [C] (held for the customer), then writes decisions.md ([VD#n], [AS#n]), the round record and the customer question set. Gates on merged, verified grounding and a fully allocated ledger; --round N resumes or re-opens a round. Next: /brd-package."
 allowed-tools: Read Edit Write Bash Glob Grep Task Skill
 disable-model-invocation: true
 ---
@@ -31,8 +31,12 @@ other.
 
 **Standing rule, binding on every phase below.** A `[G]` is answered from the grounding findings and
 is **never put to a human** — not the customer, not the delivery team, not the operator watching the
-run (`interview-tagging.md` §1, D8). A `[V]` is put to the operator with recorded argumentation and
-is **never routed to the customer** as a business question (§1, D9). A `[C]` is held. The section
+run (`interview-tagging.md` §1, D8). A `[V]` is the operator's to answer — put to the operator
+with recorded argumentation, or closed by the question registry — applied from an answer the
+operator gave or a decision on file, merged into a question the operator answers, or dropped as no
+answer to it would change anything (*Tag every question*, *The question registry*) — and is **never
+routed to the
+customer** as a business question (§1, D9). A `[C]` is held. The section
 *How no `[G]` reaches a human* below states the ordering that makes the first of those structural
 rather than aspirational.
 
@@ -508,8 +512,8 @@ and nothing downstream can tell the difference afterwards.
     **Phases.** As the run reaches each phase from Phase 1 on, log it first: `phase <folder> <n>`,
     `<n>` its number. Where `run_folder` is `unavailable`, every step that names the folder acts as
     it did before this command kept one — each question asked as before, each guarded write made as
-    before, and the question registry a file `command mktemp` creates (*Tag every question*, *The
-    question registry*) — and a write this command makes into the folder itself that fails is met as
+    before, and the question registry made in a directory `command mktemp -d` creates (*Tag every
+    question*, *The question registry*) — and a write this command makes into the folder itself that fails is met as
     a call's exit 2 (`workflows-core:run-folder` §2): its `NOTE:` printed with the shell's error
     line, and the step going on as it would without the folder.
 
@@ -566,7 +570,8 @@ and nothing downstream can tell the difference afterwards.
    registry** (*Tag every question*, *The question registry*): the `decisions.md` of every other
    slice under the parent, by the same parent test, and of the slice each key of this BRD's
    `depends-on:` resolves to — the registers `workflows-core:question-budget` §8 counts as on file
-   beside this one — and every markdown file under each `bundle-*/` directory of this BRD's folder,
+   beside this one — each with the `interview/round-<N>.md` files beside it, through which §8 reads
+   it; and every markdown file under each `bundle-*/` directory of this BRD's folder,
    which say which held `[C]` a package has already carried. A register or a bundle file that exists
    and cannot be read is reported now, by path. **Every read above is
    through `decision-register-format.md` §8: no torn write counts**, in this BRD's folder, a
@@ -1533,15 +1538,20 @@ Only an answer to a question that puts such a record again re-decides it
 **It takes, too, a record whose basis moved, not in flight**: a `[VD#n]` or `[CD#n]` taken
 `applied` (`decision-register-format.md` §1) that reads `decided` while the decision its
 `applied_from` names reads `reopened`, `superseded` or `withdrawn`, or is no counted record of its
-register (§8) — a decision of this register, or, in the cross-BRD form, of a register *Resolve
-inputs and gate the grounded BRD*, step 9, read. A record taken `applied` rests on that decision
-and on nothing else, so §4's cause reaches it through that decision, and nothing has reopened it
-yet. Where that register cannot be read, the record is reported, by id with the register named,
-and not taken. The *Write the register and the round record* phase of the run that puts its
+register (§8) — a decision of this register, named by its bare id, or, named in the cross-BRD form
+`<BRD-KEY>/<id>`, of the register of a sibling slice or a `depends-on:` slice whose key is
+`<BRD-KEY>`, read as *Resolve inputs and gate the grounded BRD*, step 9, reads it: from the working
+tree, through §8, with that slice's round records. `<BRD-KEY>` is matched against the keys of the
+registers that step read, a known set, and resolved no further. A record taken `applied` rests on
+that decision and on nothing else, so §4's cause reaches it through that decision, and nothing has
+reopened it yet. **Where its key matches none of those registers, or names one that cannot be
+read**, nothing on file says whether its basis stands: the record is reported, by id with the key
+named, and not taken. The *Write the register and the round record* phase of the run that puts its
 question reopens it in the same write as the answer — `status: reopened` and a closing
-`Reopened <YYYYMMDD>:` paragraph naming the decision its `applied_from` names and how that decision
-moved — as *A decision the re-grounding moved* reopens a plain record; on a `[CD#n]` the status and
-that paragraph are all this command writes.
+`Reopened <YYYYMMDD>:` paragraph naming the decision its `applied_from` names, another BRD's as
+`<BRD-KEY> [VD#n]` or `<BRD-KEY> [CD#n]` in prose (§4), and how that decision moved — as *A
+decision the re-grounding moved* reopens a plain record; on a `[CD#n]` the status and that
+paragraph are all this command writes.
 
 **A record is in flight** exactly where a question in a round record on file carries a
 `- **Re-puts:**` line naming it and that question has no terminal disposition. For a `[C]`, the
@@ -1742,9 +1752,11 @@ account line will name, each `[G]` answer, each split and re-tag with its cause.
 before the registry is made, so a resumed run that finds it builds the registry's questions from
 the same round (*Resolve the round*, *A resumed run's round*).
 
-**The registry** (§12) is `<folder>/scratch/question-registry.json` where the run folder is open,
-and otherwise a file `command mktemp` creates (`workflows-core:run-flags` §7), which a later session
-cannot resume from. Every call is
+**The registry** (§12) is `<folder>/scratch/question-registry.json` where the run folder is open
+when the registry is made, and otherwise `question-registry.json` inside a directory
+`command mktemp -d` creates (`workflows-core:run-flags` §7) — a path at which no file stands yet,
+since `init` refuses one that exists — which a later session cannot resume from; the path chosen
+holds for the rest of the run. Every call is
 `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/question-registry.py" <subcommand> --registry '<that path>' …`,
 its stdin a quoted here-document, and its exits are met as §12 says: on 3, the input is rebuilt and
 sent once more, and a second refusal is reported in the final report as a defect of the run, the
@@ -1754,8 +1766,9 @@ registry keeps refusing is never asked round and round; on 2, nothing more is as
 register and the round record* writes every answer this run holds, and the final report names the
 registry as the cause.
 
-- **Where the file already stands** — a resumed run's — it is reused as it stands, and `init` is
-  never called: the questions and answers it records are this run's, and the run goes on from them.
+- **Where the run resumed and `<folder>/scratch/question-registry.json` stands**, it is reused as
+  it stands, and `init` is never called: the questions and answers it records are this run's, and
+  the run goes on from them.
 - **Otherwise make it**: `init`, its stdin `{"budget": <the budget in force>, "questions": [...]}`
   (Phase 0 step 2), one object per question, in round order and then position order. **It holds
   every question on file in the slice** (§8, *Reach*): each question of the round this run works,
@@ -1797,9 +1810,11 @@ record as it stands, to be put again in the next round opened.
 `next --limit <the number of questions it holds>` prints one — a question open and not carried —
 write the planner's input as indented JSON,
 `{"mode": "merge", "budget": <the budget in force>, "questions": [every question as the registry file holds it, in the file's order], "decisions": [...], "findings": [...]}`:
-`decisions`, every record on file that reads `decided`, is no torn write (§8), is not the record a
-question of the registry puts again, and is no record whose basis moved (*A decision reopened
-elsewhere*) — each of those two stands on ground that is moving — as
+`decisions`, every record on file that reads `decided`, is no torn write (§8), carries no
+`conditional_on`, is not the record a question of the registry puts again, and is no record whose
+basis moved (*A decision reopened elsewhere*) — a record conditional on a prerequisite holds only
+while that holds, which an answer applied from it would not say, and each of the other two stands
+on ground that is moving — as
 `{"id", "statement", "chosen", "argumentation"}` — this register's by its own id, and each other
 register's that *Resolve inputs and gate the grounded BRD*, step 9, read by the cross-BRD form
 `<KEY>/[VD#n]` or `<KEY>/[CD#n]`, `<KEY>` that register's BRD (`decision-register-format.md` §5),
@@ -1831,13 +1846,16 @@ defect of the run. A result read is recorded `done <folder> p4-planner`. Then re
 `--sitting 1` so that the first sitting's end-of-sitting list shows it (§10):
 
 - **each merge** — `merge --into <its into> --from <its from, comma-separated> --reason '<its reason>' --sitting 1`;
-- **each drop** — `drop --qid <its qid> --reason '<its reason>' --sitting 1`;
+- **each drop** — `drop --qid <its qid> --reason '<its reason>' --sitting 1` — each reason the
+  planner wrote, between single quotes, each `'` in it written `'\''`, so the shell expands nothing
+  in it;
 - **each applied entry** — a `[V]` a decision on file determines (§2, §8): `record --sitting 1`,
   its event `{"qid": …, "event": "applied", "decision": <the next [VD#n], Decision ids above>, "applied_from": <its applied_from>, "answer": <its answer>, "reason": <its reason>}`
-  — **only where its `applied_from` is a decision of this register**, by its bare id. One the
-  planner names in another BRD's register is not recorded, and its question is asked: an
-  `applied_from` in the cross-BRD form is a field `${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md`
-  §6.2 does not list, so the package's citation check would not read it as qualified.
+  — its `applied_from` the decision's id as `decisions` gives it: a bare id for this register's,
+  the cross-BRD form for a sibling slice's or a `depends-on:` BRD's
+  (`decision-register-format.md` §1), which the package's citation check reads as qualified
+  (`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §6.2). One naming a decision the input
+  does not hold is not recorded.
 
 **None is recorded that names a question putting a record again** (above) — or a `[V]` whose `[V]`
 tag is on file with no `- **Re-puts:**` line, which *Put each `[V]` to the operator*'s tie picker
@@ -2214,7 +2232,13 @@ written as they are given*), before the next prompt is shown:
   registry holds no `[CDF#n]` and no tie.
 
 **Then the answer is applied forward** (`workflows-core:question-budget` §8) — a decision's, never a
-deferral's — before the next question is put:
+deferral's — before the next question is put. **Save a decision whose position may yet be held**:
+one every finding of whose `evidence` carries `horizon: will-change`, which *The will-change rule*
+holds `open` or `conditional_on` its prerequisite unless re-based, and one written `conditional_on`
+a prerequisite's decision. Nothing is applied from either, by its coverage or by the applier: an
+answer applied from it would stand `decided` while its source waits on a prerequisite, and carry no
+`conditional_on` of its own for `/product-workflows:brd-reconcile`'s propagation sweep to find. The
+questions it might have closed stay open, to be asked.
 
 1. **Coverage first.** Each open question the answered one's `covers` names is recorded applied
    from it where the answer chose one of its options: `record --sitting <the sitting>`, event
@@ -2276,13 +2300,23 @@ choices: ["All correct (Recommended)", "Let me name the ones to reopen (you'll b
 
 - ***All correct*** — nothing changes, and the run goes on to *Hold every `[C]`*.
 - ***Let me name the ones to reopen*** — ask in plain text which, by address, or a whole group by
-  the decision it follows. Each named applied question — every one of a named group — has its
-  `decision` read off the registry file first, then is reopened, `reopen --qid <its qid>`, and every
-  question applied from that decision in turn, `reopen --follows <that decision>`; a named merge or
-  drop reopens its question, `reopen --qid`. Each is open in the registry again, and a reopened
+  the decision it follows. **First fix what the answer reopens**: each named question — every one of
+  a named group, and the question of each named merge or drop — with, for an applied one, its
+  `decision` read off the registry file, written as one JSON list of `{"qid", "decision"}` objects
+  (`decision` `null` for a merge or drop) with
+  `put <folder> 'scratch/p6/reopen-<sitting>.json' --from -` — a resumed run that finds the file
+  reads it and builds none — then fact `p6-sitting` set to the next number. **Then reopen**, for
+  each entry in order: `reopen --qid <its qid>`, skipped where the registry already records it
+  open; and, for an applied one, every question applied from its decision in turn,
+  `reopen --follows '<its decision>'`, the id between single quotes, since its brackets and `#`
+  are no shell's to read — a call that reopens nothing where those are open already. Then set
+  fact `p6-reopen-<sitting>` to `done`. Each is open in the registry again, and a reopened
   question's answer was never recorded as decided, since the list comes before the write. Then the
-  next sitting opens over what is open: fact `p6-sitting` set to the next number, and the queue
-  walked again.
+  next sitting opens over what is open, and the queue is walked again. **A resumed run first
+  completes an interrupted reopen**: before it puts a question, for each sitting below the current
+  one whose `scratch/p6/reopen-<sitting>.json` stands and whose fact `p6-reopen-<sitting>` is unset,
+  it makes that file's reopens as above, then sets the fact. Where the run folder is unavailable,
+  the run holds the list and makes the reopens as above.
 - **A typed answer is read as the option it expresses** (`workflows-core:question-budget` §4); one
   naming questions is the second option with those names given. A name that matches nothing listed
   is asked about once more.
@@ -2391,7 +2425,10 @@ finding.** The test fires when *every* finding in the list carries `horizon: wil
 two `will-change` ones — the `current` finding is ground that holds — nor on `evidence: []`, which
 rests on no `will-change` finding either (§6). A `[VD#n]` taken `applied` carries `evidence: []`
 (*Write the register and the round record*): it rests on the decision its `applied_from` names and
-nothing else, so the test never fires on it, and that decision moving reopens it (§4).
+nothing else, so the test never fires on it, and that decision moving reopens it (§4). Nor does a
+resolution here leave one standing on a held position: *Put each `[V]` to the operator* applies
+nothing from a decision this test fires on, nor from one written `conditional_on`, so no answer of
+this run follows a `[VD#n]` this phase holds `open` or makes conditional.
 
 Where it fires, the decision may not be closed. Offer the three resolutions §6 defines — exactly
 three, drawn from that section's own table the way the `[V]` picker draws its options from §1:
@@ -2569,8 +2606,9 @@ both named under what still needs a human in the final report (*A decision the r
 moved*) — a mint with no rewrite, and so no exception.
 
 **The reopen this phase writes includes, too, the one *A decision reopened elsewhere* takes on a
-record whose basis moved**, its `Reopened` paragraph naming the decision its `applied_from` names
-and how that decision moved; on a `[CD#n]` the status and that paragraph are all this command
+record whose basis moved**, its `Reopened` paragraph naming the decision its `applied_from` names —
+another BRD's as `<BRD-KEY> [VD#n]` or `<BRD-KEY> [CD#n]`, in prose (§4) — and how that decision
+moved; on a `[CD#n]` the status and that paragraph are all this command
 writes. **And every reopen or supersession this write makes reaches what was applied from it**
 (`decision-register-format.md` §4): each record of this register taken `applied` and reading
 `decided` whose `applied_from` names a record this write reopens or supersedes — or names one this
@@ -2582,12 +2620,14 @@ decision reopened elsewhere* in the next round opened, and the final report name
 (*Put each `[V]` to the operator*) or from a decision on file (*Tag every question*) — is a
 `[VD#n]` block written from the registry's record of it: `id`, its `decision`; `statement`, its
 `answer`; `options_considered`, that answer alone, and `chosen`, the same, since nothing else was
-put; `argumentation`, its `reason`, after `Applied from <decision-id>: `; `evidence: []`, since it
-rests on the decision it follows and on no finding (§1); `altitude`, by §1's test from the
-question it closes; `status: decided`; `consumed_by: none`; `round`, the round of the question it
-closes, whose record names it; `taken: applied`; and `applied_from`, the decision it follows, by
-its bare id — a decision of this register, as every decision an answer of this run is applied from
-is (*Tag every question*, *Then merge*). It takes no `defects`, `settles` or `conditional_on`.
+put; `argumentation`, its `reason`, after `Applied from <the decision>: ` — its bare id, or, for
+another BRD's, `<BRD-KEY> [VD#n]`, the qualified prose spelling (§4), never the slash form;
+`evidence: []`, since it rests on the decision it follows and on no finding (§1); `altitude`, by
+§1's test from the question it closes; `status: decided`; `consumed_by: none`; `round`, the round
+of the question it closes, whose record names it; `taken: applied`; and `applied_from`, the
+decision it follows as the registry records it — a bare id for this register's, the cross-BRD form
+`<BRD-KEY>/[VD#n]` or `<BRD-KEY>/[CD#n]` for a sibling slice's or a `depends-on:` BRD's (§1). It
+takes no `defects`, `settles` or `conditional_on`.
 
 **Ids this run took and freed.** Where an end-of-sitting list reopened a question applied in this
 run (*Put each `[V]` to the operator*), the `[VD#n]` it had names no block this write makes — an

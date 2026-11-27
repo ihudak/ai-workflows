@@ -95,7 +95,7 @@ applied_from: <decision-id>             # only where taken: applied
 | `consumed_by` | the same field, values, starting-at-`none` rule and add-never-replace rule as `workflows-core:grounding-format` §2, applied to a decision instead of a finding — save §4's return to `none` where a decision's position is replaced |
 | `round` | the interview round that produced the decision, per `references/interview-tagging.md` §5 — on a record taken `applied`, the round of the question it closed, whose record names it (§8). **Omitted where the decision came from no round** — a `[CD#n]` answering an `[AS#n]` that itself carries none (§7) is the case that occurs, and inventing a value there would put it into the set `/brd-package` derives the rounds from. That is the only route to a round-less `[VD#n]`/`[CD#n]`: one taken in a round always carries it |
 | `taken` | how the decision was taken (`workflows-core:question-budget` §8): `asked` — its question was put and answered; `applied` — no one was asked, because the decision `applied_from` names determines it; `table` — confirmed as a row of a table (`workflows-core:question-budget` §9). **Omitted, it reads `asked`**, so every record written before the field existed stays valid; `commands/brd-interview.md` writes it on every `[VD#n]` it records first |
-| `applied_from` | the one decision a record taken `applied` follows, the whole of its basis — a decision of this register, by its bare id. **Only where `taken: applied`**, and omitted otherwise. That decision reopened, superseded or withdrawn reopens this record (§4). An applied record writes `evidence: []`: it rests on no finding of its own, so §6 never fires on it. A decision of another BRD's register would be named in the cross-BRD form §5 uses, `<BRD-KEY>/[VD#n]` or `<BRD-KEY>/[CD#n]`, which no writer uses until `references/bundle-packaging.md` §6.2 lists this field among those its citation check reads as qualified |
+| `applied_from` | the one decision a record taken `applied` follows, the whole of its basis — a decision of this register by its bare id, or one of another BRD's register — a sibling slice's under the same parent, or a `depends-on:` BRD's — in the cross-BRD form §5 uses, `<BRD-KEY>/[VD#n]` or `<BRD-KEY>/[CD#n]`, which `references/bundle-packaging.md` §6.2 reads as qualified. **Only where `taken: applied`**, and omitted otherwise. That decision reopened, superseded or withdrawn reopens this record (§4). An applied record writes `evidence: []`: it rests on no finding of its own, so §6 never fires on it. Prose naming another BRD's decision — the record's `argumentation`, a `Reopened` paragraph — writes it `<BRD-KEY> [VD#n]`, the qualified prose spelling §4 gives a cause from another BRD, never the slash form |
 
 **Which prefix a decision gets is fixed by the tag of the question it answers, not by who typed it.**
 A question tagged `[V]` produces a `[VD#n]`; a question tagged `[C]` produces a `[CD#n]`
@@ -230,8 +230,9 @@ reaches the record applied from it: **reopening, superseding or withdrawing a de
 decision whose `applied_from` names it, and every decision applied from those in turn**, in its own
 register or, through the cross-BRD form, in another BRD's. A record already `reopened`, or
 terminal, does not move again. Its `Reopened <YYYYMMDD>:` paragraph names the decision its
-`applied_from` names and how that decision moved, whose own record names the finding or the
-customer decision behind it. A decision never stands on a basis that is gone.
+`applied_from` names — another BRD's with that BRD's key, in prose (*A cause from another BRD*,
+below) — and how that decision moved, whose own record names the finding or the customer decision
+behind it. A decision never stands on a basis that is gone.
 `commands/brd-interview.md` applies the rule in the register write that moves a record of its own
 register, to the records of that register applied from it, and, in the next round it opens, to a
 record of its register whose basis another run moved (its *A decision reopened elsewhere*).

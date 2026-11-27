@@ -1425,9 +1425,11 @@ qids, a function of the read and never of a session, so a resumed run names each
 session before it did. **Where none is left, nothing is asked**: no registry is made, and the run
 goes to *The write*.
 
-**The registry** (§12) is `<folder>/scratch/question-registry.json` where the run folder is open,
-and otherwise a file `command mktemp` creates (`workflows-core:run-flags` §7), which a later session
-cannot resume from. Every call is
+**The registry** (§12) is `<folder>/scratch/question-registry.json` where the run folder is open
+when the registry is made, and otherwise `question-registry.json` inside a directory
+`command mktemp -d` creates (`workflows-core:run-flags` §7) — a path at which no file stands yet,
+since `init` refuses one that exists — which a later session cannot resume from; the path chosen
+holds for the rest of the run. Every call is
 `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/question-registry.py" <subcommand> --registry '<that path>' …`,
 its stdin a quoted here-document, and its exits are met as §12 says: on 3, the input is rebuilt and
 sent once more, and a second refusal is reported in the Final report as a defect of the run, the
@@ -1436,8 +1438,9 @@ put in this session's **skip set**: no later step sends it another event or puts
 candidate the registry keeps refusing is never asked round and round; on 2, nothing more is asked,
 *The write* runs with the answers this session holds, and the Final report names the registry as
 the cause.
-- **Where the file already stands** — a resumed run's — it is reused as it stands, and `init` is
-  never called: the questions and answers it records are this run's, and the walk goes on from them.
+- **Where the run resumed and `<folder>/scratch/question-registry.json` stands**, it is reused as
+  it stands, and `init` is never called: the questions and answers it records are this run's, and
+  the walk goes on from them.
 - **Otherwise make it**: `init`, its stdin `{"budget": <the budget in force>, "questions": [...]}`,
   one object per candidate in qid order — `qid`; `tag` `"DEF"`; `text`, one line,
   `<class> on [BR#n] — "<the row's text>": <its reason>`, then its *What I saw* field (below) and
@@ -1556,7 +1559,9 @@ Then:
   whose question would carry an *On file* or *Settled* line (below), to be asked singly, since one
   answer for the group could log a defect on file twice; a group left with one candidate is no
   group. The group is named by the first qid left in its `covers`:
-  `merge --into <that qid> --from <the rest, comma-separated> --reason '<its reason>' --sitting 1`,
+  `merge --into <that qid> --from <the rest, comma-separated> --reason '<its reason>' --sitting 1`
+  — the reason the planner wrote, between single quotes, each `'` in it written `'\''`, so the
+  shell expands nothing in it —
   without which `next` would return the others singly; a group any of whose other qids the
   registry already records merged into its qid is skipped — a resumed run's, whose earlier session
   recorded that merge before it stopped. Its `text` is the question's plain line below, and its

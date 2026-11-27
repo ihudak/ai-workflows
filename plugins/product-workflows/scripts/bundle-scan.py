@@ -416,7 +416,8 @@ MARKER_RE = re.compile(r"^\s*(Reopened|Reverted|Withdrawn|Superseded) [0-9]{8}:"
 # to the table's rows and every entry to a fixture of its own, so a field an authority adds stops CI
 # until it is read here and tested.
 STRUCTURED_FIELDS = [
-    ("conditional_on:", "slash", "conditional_on"), ("blocked_on:", "slash", "blocked_on"),
+    ("conditional_on:", "slash", "conditional_on"), ("applied_from:", "slash", "applied_from"),
+    ("blocked_on:", "slash", "blocked_on"),
     ("`prerequisite`", "keyed-else-report", "prerequisite"), ("rejected:", "slash", "rejected"),
     ("customer-amended", "no-id", None), ("resolved-by:", "slash-else-report", "resolved-by"),
     ("a defect entry is raised against", "defect-log-rows", None),
@@ -979,6 +980,12 @@ def citations_selftest(check):
     check("a [VD#n]'s argumentation and a [CD#n]'s Reopened paragraph are the package's own; a [CD#n]'s quoted words are the customer's",
           sorted(h["token"] for h in r["dead"]) == ["[CG#55]", "[CG#57]"]
           and sorted(h["token"] for h in r["customer"]) == ["[BR#77]", "[CG#56]", "[CG#58]"])
+    areg = ("id: [VD#5]\ntaken: applied\napplied_from: S-2/[VD#4]\nargumentation: |\n  Applied from S-2 [VD#4]: x\n\n"
+            "id: [VD#6]\ntaken: applied\napplied_from: [VD#5]\n\nid: [VD#7]\ntaken: applied\napplied_from: K-1/[VD#99]\n")
+    r = run({"K-1-decisions.md": areg}, known_keys=["S-2"])
+    fixture("applied_from:", "applied_from: a sibling's decision is discharged, a bare one and its own key resolved",
+            r["discharged"] == 2 and [h["token"] for h in r["dead"]] == ["[VD#99]"]
+            and not r["unqualified"] and not r["unknown_key"])
     cdl = "id: [CDF#1]\nblocked_on: P-2/[VD#4]\n\nid: [CDF#2]\nblocked_on: K-1/[VD#9]\n"
     r = run({"K-1-code-defect-log.md": cdl}, prereq_keys=["P-2"])
     fixture("blocked_on:", "blocked_on: another key discharged, its own key resolved",

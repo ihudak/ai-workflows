@@ -1591,6 +1591,8 @@ every field `decision-register-format.md` §1 defines:
 | `status` | `decided`, or `open` where the reason is absent and the *Confirm every candidate* phase took that resolution, or where the will-change rule below holds the record open |
 | `consumed_by` | `none` |
 | `round` | the round that raised the question this answers — **omitted where that is an `[AS#n]` carrying no round**, which is what `/product-workflows:create-prd` writes for a customer-authority gap surfaced at PRD authoring (`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §7). Such an answer came from no round, and inventing one here would put a value into the field `/product-workflows:brd-package` derives its round set from |
+| `taken` | omitted: the customer answered what the package put to them, and an omitted `taken` reads `asked` (`decision-register-format.md` §1) |
+| `applied_from` | omitted: the field applies only to a record taken `applied` (`decision-register-format.md` §1) |
 
 **The will-change rule binds a `[CD#n]` exactly as it binds a `[VD#n]` (D19).** Before any record
 this phase writes is written `decided` — a new `[CD#n]`, and an `open` one this run completes alike —
