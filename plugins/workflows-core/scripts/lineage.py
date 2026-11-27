@@ -803,7 +803,34 @@ def test_kind_of():
         _check("kind ard, an area named in the class: " + area, kind_of("specifications/PRD-1-x/" + area) == "ard")
     for name in ("ard-a b.md", "ard-a..b.md", "ard-$(x).md"):
         _check("kind not ard, a name outside the class: " + name, kind_of("specifications/PRD-1-x/" + name) is None)
+    for path in ("specifications/BRD-1-x/ard-seed.md", "specifications/BRD-1-x/PRD-1-01-y/ard-seed.md"):
+        _check("kind not ard, the seed /product-workflows:brd-intake writes: " + path, kind_of(path) is None)
+    _check("kind ard, an area whose name begins with seed", kind_of("specifications/PRD-1-x/ard-seeds.md") == "ard")
     _check("kind unknown", kind_of("specifications/PRD-1-x/notes.md") is None)
+
+
+def test_seed_is_an_uncovered_top():
+    """ard-seed.md is a slice's input and an uncovered top: the walk compares it whole, as it compares
+    prd-seed.md, and never looks for a record of its own (workflows-core:document-lineage §4)."""
+    def body(r):
+        brd = "specifications/BRD-1-intake"
+        os.makedirs(os.path.join(r.root, brd, "PRD-1-01-orders"))
+        seed, ard = f"{brd}/ard-seed.md", f"{brd}/PRD-1-01-orders/ard.md"
+        r.write(seed, "# Architecture seed\n\n## Architecture decisions\n\n### [AD#1]: One queue\n\n**Rule:** one queue.\n")
+        r.commit()
+        r.write(ard, "---\nkind: ard\nkey: PRD-1-01\n---\n# Orders ARD\n\n## Architecture decisions\n\n"
+                     "### [AD#1]: One queue\n\n**Rule:** one queue.\n")
+        stamp(r.root, "main", os.path.join(r.root, ard), capture(r.root, "main", [seed], []))
+        r.commit()
+        res = check(r.root, "main", [ard])
+        _check("seed walked", seed in res["walked"], json.dumps(res["walked"]))
+        _check("seed: no record asked of it", res["missing"] == [] and res["top_missing"] is None, json.dumps(res))
+        r.write(seed, r.read(seed).replace("one queue.", "two queues."))
+        r.commit()
+        res = check(r.root, "main", [ard])
+        _check("seed moved: compared whole", [(s["upstream"], s["changed"]) for s in res["stale"]] == [(seed, ["§file"])],
+               json.dumps(res["stale"]))
+    _with_repo(body)
 
 
 class _Repo:

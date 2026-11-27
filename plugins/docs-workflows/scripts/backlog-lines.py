@@ -36,8 +36,13 @@ is read where no unit's status in the base's backlog differs from its working st
 a merge base's backlog is the base's own blob. An absent backlog on the base, or an entry absent there, moves nothing.
 Where that cannot be told -- the base's backlog unreadable as a kept ref's is, no merge base (an orphan branch, a
 shallow clone), git failing or timing out on the merge bases, or a merge base's backlog unreadable -- the base is
-unreadable, never compared with the working backlog alone, and moves nothing. A move made in a local <base> that
-origin/<base> lacks is not seen: origin/<base>, where it exists, is the base. It lists `git for-each-ref
+unreadable, never compared with the working backlog alone, and moves nothing. Where the base resolved as
+origin/<base>, a local <base> that holds commits origin/<base> lacks -- one that is no ancestor of it -- is read as the
+base is, by the same rule, so a move made there and not pushed is seen; a local <base> that is an ancestor of
+origin/<base>, which then holds every move it holds, is not read, nor one HEAD is on, and one git cannot place is
+unreadable. A limit: a move the local <base> holds and origin/<base> no longer does -- origin/<base> force-pushed
+without it, or a local merge of a branch whose pull request was then closed -- is named as an unpushed move is, since
+nothing either history holds tells the two apart. It lists `git for-each-ref
 --sort=-committerdate` over refs/heads and refs/remotes/origin, each ref with its object id, full name and short name,
 and drops refs/remotes/origin/HEAD, HEAD's branch, <base> and origin/<base> -- by full name, since git shortens
 refs/remotes/origin/HEAD to "origin" and shortens a ref another one shadows to "heads/..." or "remotes/..." -- and
@@ -56,11 +61,16 @@ unit moved on the base, still holding the older status, moves nothing. That back
 kept ref's limits, and one those limits make unreadable makes the ref unreadable; no backlog there, or no entry for
 the unit, is a status that differs; and a ref sharing no merge base with the base is compared as without the flag.
 Without it a merge base's backlog is compared with the ref's by tree entry alone, never read. The flag does not change
-how the base is read. It prints {"moved": {<id>: [<ref>...]}, "unreadable": [<ref>...], "read": <n>, "more": <n>,
-"names_outside_class": <n>}: moved names only the ids the base or some ref moved, the base first, by the name it
-resolved as -- origin/<base> or <base> -- then each ref by its short name, newest first; unreadable lists the base
-first where it is unreadable, then each unreadable ref; read counts the refs kept, each either compared or unreadable,
-and never counts the base; more counts every ref past the point it stopped.
+how the base or the local <base> is read. It prints {"moved": {<id>: [<ref>...]}, "unreadable": [<ref>...], "base":
+{"moved": {<id>: [<ref>...]}, "unreadable": [<ref>...]}, "read": <n>, "more": <n>, "names_outside_class": <n>}:
+moved names only the ids the base or some ref moved, the base first, by the name it
+resolved as -- origin/<base> or <base> -- then the local <base>, as <base>, where it is read, then each ref by its
+short name, newest first; unreadable lists the base first where it is unreadable, then the local <base> where it is
+read and unreadable, then each unreadable ref; base holds the part of moved and unreadable that the base and the
+local <base> give, so that a caller reads a base off it and never off a printed name, which a ref can share -- a local
+branch named origin/<base>, where no remote-tracking ref shadows it, is printed as origin/<base>; read counts the refs
+kept, each either compared or unreadable, and never counts the base or the local <base>; more counts every ref past
+the point it stopped.
 
 edit writes one unit's move. It refuses, exit 3, the file untouched: a backlog out of shape; an --id no entry or two
 entries hold; where --from is given, an entry whose status: is another -- tested before the refusals after it; where
@@ -988,6 +998,25 @@ def cmd_moved(top, base, ids, own_moves=False):
     else:
         for uid in by_base:
             moved[uid] = [base_name]
+    base_moved = {uid: list(names) for uid, names in moved.items()}
+    base_unreadable = list(unreadable)
+    # A local <base> holding commits origin/<base> lacks -- one that is no ancestor of it, read only where the base
+    # resolved as origin/<base> and HEAD is not on the local <base> -- is read as the base is, so a move made there and
+    # not pushed is seen. A local <base> that is an ancestor of origin/<base> holds nothing origin/<base> lacks.
+    if base_name != base and head_ref != "refs/heads/" + base:
+        local_oid = _oid(_git(top, "rev-parse", "--verify", "--quiet", "--end-of-options",
+                              "refs/heads/" + base + "^{commit}"))
+        if local_oid is not None and local_oid != base_oid:
+            behind = _git(top, "merge-base", "--is-ancestor", local_oid, base_oid)
+            by_local = UNKNOWN if behind is None or behind[0] not in (0, 1) else (
+                set() if behind[0] == 0 else _base_moves(top, local_oid, own, ids))
+            if by_local is UNKNOWN:
+                unreadable.append(base)
+                base_unreadable.append(base)
+            else:
+                for uid in by_local:
+                    moved.setdefault(uid, []).append(base)
+                    base_moved.setdefault(uid, []).append(base)
     for oid, name in remaining:
         if examined == EXAMINE_CAP or kept == READ_REFS_CAP:
             break
@@ -1010,8 +1039,10 @@ def cmd_moved(top, base, ids, own_moves=False):
         for uid, status in theirs.items():
             if status != own[uid] and status != at_base.get(uid):
                 moved.setdefault(uid, []).append(name)
-    return 0, {"moved": {uid: moved[uid] for uid in ids if uid in moved}, "unreadable": unreadable, "read": kept,
-               "more": len(remaining) - examined, "names_outside_class": outside}
+    return 0, {"moved": {uid: moved[uid] for uid in ids if uid in moved}, "unreadable": unreadable,
+               "base": {"moved": {uid: base_moved[uid] for uid in ids if uid in base_moved},
+                        "unreadable": base_unreadable},
+               "read": kept, "more": len(remaining) - examined, "names_outside_class": outside}
 
 
 # ---- edit ----
@@ -1890,10 +1921,22 @@ def _moved(top, *ids, base="main", own_moves=False):
     return _call(argv)
 
 
-def _moved_ok(top, *ids, base="main", own_moves=False):
+def _moved_ok(top, *ids, base="main", own_moves=False, bases=None):
+    """moved's object less its `base` member, which is checked here: against `bases`, given as {"moved": ...,
+    "unreadable": ...}, or, where none is given, against the entries of `moved` and `unreadable` named <base> or
+    origin/<base> -- right only where no ref is printed under a base's name, which a case that makes one says."""
     code, out, err = _moved(top, *ids, base=base, own_moves=own_moves)
     _eq((code, err), (0, ""), "moved's exit and stderr")
-    return _obj(out)
+    obj = _obj(out)
+    _true("base" in obj, "moved prints a base member")
+    got = obj.pop("base")
+    if bases is None:
+        names = (base, "origin/" + base)
+        bases = {"moved": {uid: [n for n in refs if n in names] for uid, refs in obj["moved"].items()
+                           if any(n in names for n in refs)},
+                 "unreadable": [n for n in obj["unreadable"] if n in names]}
+    _eq(got, bases, "moved's base member")
+    return obj
 
 
 def _edit(top, uid, status, page_path=None, frm=None, walkthrough=None, block=None):
@@ -2164,12 +2207,12 @@ def case_moved_on_branch(tmp):
     _fx(top, "switch", "-q", "feat/a")  # HEAD's own branch is never examined: the working backlog is its
     _eq(_moved_ok(top, "U-001"), {"moved": {}, "unreadable": [], "read": 0, "more": 0, "names_outside_class": 0},
         "HEAD's branch")
-    _fx(top, "switch", "-q", "-c", "ahead", "main")  # a local <base> ahead of origin/<base> is never examined either
+    _fx(top, "switch", "-q", "-c", "ahead", "main")  # a local <base> ahead of origin/<base> is read as the base is
     _fx(top, "switch", "-q", "main")
     _put(top, DRAFTED)
     _fx(top, "commit", "-qam", "unpushed move on main")
     _fx(top, "switch", "-q", "ahead")
-    _eq(_moved_ok(top, "U-001")["moved"], {"U-001": ["feat/a"]}, "a local base ahead of its remote")
+    _eq(_moved_ok(top, "U-001")["moved"], {"U-001": ["main", "feat/a"]}, "a local base ahead of its remote")
     _fx(top, "switch", "-q", "main")
     _fx(top, "reset", "-q", "--hard", "origin/main")
     _fx(top, "switch", "-q", "-c", "work")
@@ -2187,7 +2230,8 @@ def case_ref_name_outside_class(tmp):
     _branch_with(top, "x$(id)", DRAFTED)
     code, out, err = _moved(top, "U-001")
     _eq((code, err), (0, ""))
-    _eq(_obj(out), {"moved": {}, "unreadable": [], "read": 0, "more": 0, "names_outside_class": 1})
+    _eq(_obj(out), {"moved": {}, "unreadable": [], "base": {"moved": {}, "unreadable": []}, "read": 0, "more": 0,
+                    "names_outside_class": 1})
     _true("$(" not in out + err and "x$" not in out + err, "the name is printed nowhere")
 
 
@@ -2730,8 +2774,8 @@ def case_own_moves_merge_base_unreadable(tmp):
 
 
 def case_own_moves_unchanged_without_flag(tmp):
-    """Without --own-moves, moved prints what it printed before the flag existed, byte for byte: every key, a moved
-    unit, an unreadable ref and a name outside the class, pinned to a literal."""
+    """Without --own-moves, moved prints what it printed before the flag existed, byte for byte, with the `base` member
+    B48 added: every key, a moved unit, an unreadable ref and a name outside the class, pinned to a literal."""
     top = _open_draft_repo(tmp)
     _branch_with(top, "bad-shape", DRAFTED.replace("    roles: [customer]\n", "    roles: |\n"))
     _branch_with(top, "x$(id)", DRAFTED)
@@ -2749,6 +2793,10 @@ def case_own_moves_unchanged_without_flag(tmp):
              '  "unreadable": [\n'
              '    "bad-shape"\n'
              '  ],\n'
+             '  "base": {\n'
+             '    "moved": {},\n'
+             '    "unreadable": []\n'
+             '  },\n'
              '  "read": 3,\n'
              '  "more": 0,\n'
              '  "names_outside_class": 1\n'
@@ -2881,6 +2929,139 @@ def case_base_fork_backlog_unreadable(tmp):
     _fx(top, "commit", "-qam", "main repairs it, U-001 drafted")
     _fx(top, "switch", "-q", "w")
     _eq(_moved_ok(top, "U-001"), _moved_json({}, unreadable=["main"]))
+
+
+THREE = (("U-001", "missing"), ("U-002", "missing"), ("U-003", "missing"))
+
+
+def _cloned(tmp, data):
+    """A clone at <tmp>/top of a bare origin whose one commit holds the backlog `data`, and a second clone at
+    <tmp>/other, which moves origin/main without touching top's local main."""
+    seed = _repo(tmp, data, "seed")
+    up = os.path.join(tmp, "up.git")
+    _fx(tmp, "clone", "-q", "--bare", seed, up)
+    top, other = os.path.join(tmp, "top"), os.path.join(tmp, "other")
+    _fx(tmp, "clone", "-q", up, top)
+    _fx(tmp, "clone", "-q", up, other)
+    return top, other
+
+
+def _commit_units(top, message, *pairs):
+    """A commit on the branch HEAD is on that sets the backlog to one entry per (id, status)."""
+    _put(top, _units(*pairs))
+    _fx(top, "add", "-A")
+    _fx(top, "commit", "-qm", message)
+
+
+def case_local_base_unpushed_move(tmp):
+    """L1: w is cut, then the local main drafts U-001 and is not pushed, so origin/main lacks the move. origin/main
+    moved nothing since w left it; the local main moved U-001: it is named, after the base, by its local name."""
+    top, _ = _cloned(tmp, _units(*THREE))
+    _fx(top, "branch", "w")
+    _commit_units(top, "U-001 drafted on the local main, unpushed", ("U-001", "drafted"), *THREE[1:])
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({"U-001": ["main"]}))
+    _eq(_moved_ok(top, "U-001", own_moves=True), _moved_json({"U-001": ["main"]}), "--own-moves reads it alike")
+
+
+def case_local_base_diverged(tmp):
+    """L3: the local main drafts U-002, unpushed; origin/main drafts U-001 after w was cut. Each names the move it
+    holds, origin/main first."""
+    top, other = _cloned(tmp, _units(*THREE))
+    _fx(top, "branch", "w")
+    _commit_units(top, "U-002 drafted on the local main", THREE[0], ("U-002", "drafted"), THREE[2])
+    _commit_units(other, "U-001 drafted on origin", ("U-001", "drafted"), *THREE[1:])
+    _fx(other, "push", "-q", "origin", "main")
+    _fx(top, "fetch", "-q", "origin")
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({"U-001": ["origin/main"], "U-002": ["main"]}))
+
+
+def case_local_base_behind_not_read(tmp):
+    """L2c: w is cut; the local main takes origin/main's draft of U-001, and origin/main then resets U-001 to missing
+    by hand. A local main that is an ancestor of origin/main holds no move origin/main lacks, so it is not read --
+    read, it would name U-001, which origin/main holds as missing."""
+    top, other = _cloned(tmp, _units(*THREE))
+    _fx(top, "branch", "w")
+    _commit_units(other, "U-001 drafted on origin", ("U-001", "drafted"), *THREE[1:])
+    _fx(other, "push", "-q", "origin", "main")
+    _fx(top, "pull", "-q", "--ff-only", "origin", "main")
+    _commit_units(other, "U-001 reset to missing by hand", *THREE)
+    _fx(other, "push", "-q", "origin", "main")
+    _fx(top, "fetch", "-q", "origin")
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({}))
+
+
+def case_local_base_holds_working_branch(tmp):
+    """L5: w drafts U-003 and the local main merges w, unpushed. The move is w's own, at its merge base with the local
+    main, so nothing is named. Then the local main drafts U-001 too: that move, made after it took w, is named."""
+    top, _ = _cloned(tmp, _units(*THREE))
+    _fx(top, "switch", "-q", "-c", "w")
+    _commit_units(top, "w drafts U-003", THREE[0], THREE[1], ("U-003", "drafted"))
+    _fx(top, "switch", "-q", "main")
+    _fx(top, "merge", "-q", "--no-ff", "-m", "merge w on the local main", "w")
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({}), "w's own draft")
+    _fx(top, "switch", "-q", "main")
+    _commit_units(top, "U-001 drafted on the local main", ("U-001", "drafted"), THREE[1], ("U-003", "drafted"))
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({"U-001": ["main"]}), "a move made after it took w")
+
+
+def case_local_base_same_draft_on_origin(tmp):
+    """L9: the local main and origin/main each merge the branch that drafts U-001, and origin/main then resets U-001 to
+    missing by hand; w is cut from origin/main after. w's merge base with the local main holds the draft, so the local
+    main has not moved U-001 since w left it."""
+    top, other = _cloned(tmp, _units(*THREE))
+    _fx(top, "switch", "-q", "-c", "docs/w-u-001")
+    _commit_units(top, "draft U-001", ("U-001", "drafted"), *THREE[1:])
+    _fx(top, "push", "-q", "origin", "docs/w-u-001")
+    _fx(top, "switch", "-q", "main")
+    _fx(top, "merge", "-q", "--no-ff", "-m", "merge docs/w-u-001 on the local main", "docs/w-u-001")
+    _fx(other, "fetch", "-q", "origin")
+    _fx(other, "merge", "-q", "--no-ff", "-m", "merge docs/w-u-001 on origin", "origin/docs/w-u-001")
+    _commit_units(other, "U-001 reset to missing by hand", *THREE)
+    _fx(other, "push", "-q", "origin", "main")
+    _fx(other, "push", "-q", "origin", "--delete", "docs/w-u-001")
+    _fx(top, "fetch", "-q", "--prune", "origin")
+    _fx(top, "branch", "-q", "-D", "docs/w-u-001")
+    _fx(top, "switch", "-q", "-c", "w", "origin/main")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({}))
+
+
+def case_local_base_head_on_it(tmp):
+    """L6: HEAD on the local main, ahead of origin/main by a draft of U-001. The working backlog is the local main's,
+    so it names nothing, and origin/main has moved nothing."""
+    top, _ = _cloned(tmp, _units(*THREE))
+    _commit_units(top, "U-001 drafted on the local main", ("U-001", "drafted"), *THREE[1:])
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({}))
+
+
+def case_local_base_shallow_unknown(tmp):
+    """L10: a depth-1 clone whose local main is ahead of origin/main by a draft of U-001. No merge base tells whether
+    the local main moved it since w left it: the local main is unreadable and names nothing."""
+    seed = _repo(tmp, _units(*THREE), "seed")
+    _fx(seed, "branch", "w")
+    _note(seed, "main moves on")
+    top = os.path.join(tmp, "top")
+    _fx(tmp, "-c", "protocol.file.allow=always", "clone", "-q", "--depth", "1", "--no-single-branch",
+        "file://" + seed, top)
+    _commit_units(top, "U-001 drafted on the local main", ("U-001", "drafted"), *THREE[1:])
+    _fx(top, "switch", "-q", "w")
+    _eq(_moved_ok(top, "U-001", "U-002", "U-003"), _moved_json({}, unreadable=["main"], read=1))
+
+
+def case_ref_named_as_a_base(tmp):
+    """F1: with no origin the base is the local main, and a local branch named origin/main -- which git prints as
+    origin/main, no remote-tracking ref shadowing it -- drafts U-001. It is a ref, not a base: moved names it, and its
+    base member names no base, so a caller never takes it for the base by its printed name."""
+    top = _repo(tmp, _units(*THREE))
+    _fx(top, "switch", "-q", "-c", "origin/main")
+    _commit_units(top, "a branch named origin/main drafts U-001", ("U-001", "drafted"), *THREE[1:])
+    _fx(top, "switch", "-q", "-c", "w", "main")
+    _eq(_moved_ok(top, "U-001", bases={"moved": {}, "unreadable": []}),
+        _moved_json({"U-001": ["origin/main"]}, read=1))
 
 
 def case_own_moves_bad_args(tmp):
@@ -3707,6 +3888,9 @@ CASES = (case_bf_sample_in_shape, case_crlf_ok, case_quoted_scalars_in, case_blo
          case_base_merge_commit, case_base_squash_branch_deleted, case_base_own_draft_not_moved,
          case_base_reset_on_branch_not_moved, case_base_criss_cross_every_merge_base, case_base_shallow_unknown,
          case_base_orphan_unknown, case_base_fork_backlog_unreadable,
+         case_local_base_unpushed_move, case_local_base_diverged, case_local_base_behind_not_read,
+         case_local_base_holds_working_branch, case_local_base_same_draft_on_origin, case_local_base_head_on_it,
+         case_local_base_shallow_unknown, case_ref_named_as_a_base,
          case_edit_from_refused, case_edit_from_ok, case_edit_walkthrough_unset, case_edit_walkthrough_other,
          case_edit_walkthrough_same, case_edit_no_walkthrough_key, case_edit_block_sets, case_edit_block_refused,
          case_edit_no_blocked_by_key, case_edit_record_noop, case_edit_new_flags_bad_args,
