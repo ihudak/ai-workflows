@@ -59,7 +59,8 @@ set and a fully-allocated ledger are what its Phase 0 gates on.
   successors no longer `will-change`; for any other, any finding it rests on superseded and that
   finding's successors not confirming it (Phase 3 and Phase 8,
   below), a decision reopened elsewhere — by [`/brd-reconcile`](brd-reconcile.md), on a customer
-  answer that constrains it or by its propagation sweep from a BRD it depends on, or by an
+  answer that constrains it or moves the decision it was applied from, or by its propagation sweep
+  from a BRD it depends on, a sibling slice whose decision it was applied from included, or by an
   interrupted run of this command — whose question no round still holds unanswered, which the round
   puts again under the decision's own tag (Phase 3, below), or a re-decision an interrupted run left standing at that round, which the round records
   as a `[V]` already disposed *decided* and puts to nobody (*What it produces*, below) — and opens that round only where some question source puts a question, so a
@@ -564,8 +565,9 @@ option is picked.
   unanswered.
 - **Phase 3 — a decision reopened elsewhere is put again.** A decision can read `reopened` with no
   question putting it: [`/brd-reconcile`](brd-reconcile.md) reopens one when a customer answer
-  contradicts or constrains it without replacing it, its propagation sweep reopens one in a BRD
-  that depends on the BRD it reconciled, and an interrupted run of this command can leave a reopen
+  contradicts or constrains it without replacing it, or moves the decision it was applied from, its
+  propagation sweep reopens one in a BRD that depends on the BRD it reconciled — in a sibling slice
+  too, where the decision there was applied from that BRD's — and an interrupted run of this command can leave a reopen
   whose question it never recorded. Every such decision whose question no round still holds
   unanswered — no question naming it on a `- **Re-puts:**` line still *deferred* or *held for the
   customer* — has its question put again in the round this run opens, under its own tag, against

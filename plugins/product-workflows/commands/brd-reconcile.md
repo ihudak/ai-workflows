@@ -671,17 +671,7 @@ EOF
    never a gate; `interview/customer-questions.md` and every `interview/round-<N>.md`, where on
    file — a slice never interviewed holds neither (step 2) — so each `[C]` is addressed by the
    round and position that identify it
-   (`interview-tagging.md` §5 — a question mints no identifier of its own); for each held `[C]`
-   whose proposal — the last of its `- **Proposed answer:**` and `- **Proposal withdrawn:**` lines
-   at its address in its round record (`decision-register-format.md` §9) — is a proposal ending
-   `— follows <decision-id>`, the decision it follows, read as `/product-workflows:brd-package`
-   Phase 0 step 10 reads it: a bare id in this slice's `decisions.md`; `<BRD-KEY> [VD#n]` in that
-   BRD's, its folder resolved with `resolve-address` (`workflows-core:addressing` §3) and read as
-   it stands there — an
-   `ambiguous`, `misnamed` or `misrooted` resolution stopping the run with `resolve-address`'s own
-   stop, and `absent`, `invalid`, a register missing or unreadable, or no record of that id leaving
-   the decision unread, which is no stop — so the *Confirm every candidate* phase can say where it
-   has moved since the package was built; every
+   (`interview-tagging.md` §5 — a question mints no identifier of its own); every
    `self-review-<YYYYMMDD>.md` on file — the one of the package this review answers is resolved in
    the *Ingest the review* phase, before the reader is dispatched — for the `[SR#n]` ids an
    `escalated-to-customer` disposition put in
@@ -1006,6 +996,42 @@ the same reason. The reconciliation record names the file
 resolved, or that none could be (*Write the reconciliation record*). A `--sent` run has no
 self-review at all and supplies none (*Resolve inputs and gate the sent package*, step 8).
 
+**Read what the package proposed — from the prompt the customer was sent, never from the round
+record's last line.** A `/product-workflows:brd-interview` run between that package and this run
+may have written a later `- **Proposed answer:**` or `- **Proposal withdrawn:**` line beneath a
+question the package carried, in its round record alone (`decision-register-format.md` §9), so the
+record's last such line need not be what the customer saw. From the resolved package's
+`customer-review-prompt-<YYYYMMDD>.md`, take each question its part 7 puts with a proposed answer:
+a `### 7.2` table row's question `<round>/<position>`, proposed answer (a `\|` in a cell read as
+`|`) and the decision its *Why* cell names first, a bare id or `<BRD-KEY> [VD#n]`; and a
+`### 7.1` question's proposed answer. Match each to its line in the round record its
+`<round>/<position>` names, read through §8: the `- **Proposed answer:**` line at that address
+whose text after the label opens with that answer word for word and, for a `### 7.2` row, ends
+`— follows` that decision — the last such line where several match, one written again putting
+the same proposal. That line is **the proposal the package showed**. One ending in no `follows`
+— a strategic question's planned answer — follows no decision, and nothing tests it. For each
+that does follow a decision, note:
+
+- whether a `- **Proposed answer:**` or `- **Proposal withdrawn:**` line follows it at that address
+  — one written after the package was built;
+- the decision's status now, and whether its `argumentation` carries a `Reopened <YYYYMMDD>:`
+  paragraph dated on or after the package's date — reopened since, and re-decided where it reads
+  `decided` again. It is read as `/product-workflows:brd-package` Phase 0 step 10 reads it: a bare
+  id in this slice's `decisions.md`; `<BRD-KEY> [VD#n]` in that BRD's, its folder resolved with
+  `resolve-address` (`workflows-core:addressing` §3) and read as it stands there — an `ambiguous`,
+  `misnamed` or `misrooted` resolution stopping the run with `resolve-address`'s own stop, and
+  `absent`, `invalid`, a register missing or unreadable, or no record of that id leaving the
+  decision unread, which is no stop.
+
+A proposal the prompt shows that matches no line is noted as one whose basis cannot be read. **The
+`Reopened` date is what reaches a re-decision no line here records** — a sibling slice's or a
+`depends-on:` BRD's interview re-deciding its own `[VD#n]`, which writes nothing into this slice
+and leaves the decision reading `decided`. A register carries dates, not times, so a reopening
+dated the package's own date counts as after it, though it may have come before. **Where the
+package stays undetermined**, no prompt says what was proposed: each held `[C]` whose round record
+carries a `- **Proposed answer:** … — follows` line is noted as one whose proposal cannot be read.
+A `--sent` run reads no prompt and notes nothing.
+
 Supply the inputs **exactly as that agent's own Inputs contract declares them**. It refuses to run
 without `review_path`, returning `status: INPUT_MISSING`, and returns `status: REVIEW_MISSING` when
 the path does not resolve. Map either to a stop naming the field or the path it named — both are
@@ -1087,7 +1113,8 @@ every candidate*).
 **A row of the first kind may carry one thing more: `applied from <round>/<position>`**, the marker
 the reviewer's agent writes on an answer it applied from another rather than asked
 (`customer-review-schema.md` §5, *the applied-answer rule*). The reader returns it as the
-decision's `applied_from`, and the *Confirm every candidate* phase confirms such a row with the
+decision's `applied_from_question` — a question's address, which the register's `applied_from`, a
+decision's id, never copies — and the *Confirm every candidate* phase confirms such a row with the
 answer it names (*An answer and the answers applied from it*).
 
 ---
@@ -1106,14 +1133,18 @@ put as *An answer and the answers applied from it* (below) sets out — with:
   outside-the-options form — so that confirming the row confirms that mapping;
 - where its target has a live record (below), that record — its id, status, `chosen` and quoted
   reason — and whether the row as shown would re-affirm it;
-- where its target is a held `[C]` whose proposal follows a decision (*Resolve inputs and gate the
-  sent package*, step 8), the proposed answer and that decision's status now; and where it reads
-  anything but `decided`, or could not be read, a plain line saying so: the package proposed this
-  answer on a basis that has since been reopened, superseded or withdrawn — or that cannot be read
-  — so a customer who confirmed the proposal confirmed a position whose stated basis has moved, and
-  whether this answer is that proposal is the operator's reading of the two, which no option below
-  recommends. A question whose last such line is a withdrawal carries no proposal, and its answer is
-  the customer's own; a strategic question's planned answer follows no decision, and nothing tests it;
+- where its target is a question the package showed a proposal for that follows a decision (*Ingest
+  the review*, *Read what the package proposed*), that proposal, the decision and its status now;
+  and, where that basis has moved since the package was built — the decision reads anything but
+  `decided`, or carries a `Reopened` paragraph dated on or after the package's date, or a later
+  proposal or withdrawal line follows the one the package showed, or any of this cannot be read —
+  a plain line saying which, and that a customer who confirmed the proposal confirmed a position
+  whose stated basis has moved. Whether this answer is that proposal is the operator's reading of
+  the two, and no option recommends it, here or on a group's array (*An answer and the answers
+  applied from it*). Where the prompt showed the question with no proposal following a decision —
+  under `### 7.3`, or with a strategic question's planned answer — the answer is the customer's own
+  and nothing tests it; a withdrawal line means the question carries no proposal only there, where
+  the prompt itself showed none. Where no prompt says what was proposed, the line says that instead;
 - the reason the customer gave, or `not stated` as the plain fact it is;
 - in free-text mode, the agent's own `confidence`, and every `conflict` flag naming the other
   candidate this one pulls against.
@@ -1180,7 +1211,7 @@ customer decision is left for their round to wait on.
 answering a question the package put can take in this command (one answering none takes the two
 below, and two confirmed onto one question are then put to the pick below), the same way `/brd-package`'s disposition picker draws its four from its reviewer agent's
 contract and `/brd-interview`'s will-change picker draws its three from
-`decision-register-format.md` §6. It carries **no bulk confirmation**, and that omission is required
+`decision-register-format.md` §6. The four-option array carries **no bulk confirmation**, and that omission is required
 rather than merely permitted: a "confirm the rest" entry would return the whole mechanism to the
 state D14 exists to end, in one keystroke.
 
@@ -1374,7 +1405,10 @@ a `(catch-up for <pass>)` entry is that pass and otherwise the pass carrying the
 effect once: where several adopted passes' lines carry one effect, a later pass's catch-up of an
 earlier one's, the earliest pass's entry stands and the others are passed over. A `- **Frozen:**`
 entry that was not written causes nothing, and an
-`- **Effects:**` entry left with no cause is void, since its target is reconciled afresh. An entry
+`- **Effects:**` entry left with no cause is void, since its target is reconciled afresh. **The
+record after `applied from` on either line is neither a listed entry nor a cause**: it names the
+record the entry follows (*Freeze the customer decisions*), so only the entry's own id counts as
+listed, and only the `[CD#n]`s after `by` as its causes. An entry
 **landed** where the record holds the status the entry moves it to and `decisions.md` carries the
 `Superseded <YYYYMMDD>: by [CD#m]` or `Reopened <YYYYMMDD>:` paragraph it names, naming those causes
 and dated the adopted pass's date or the date of a pass whose `- **Adopts:**` line names that pass;
@@ -1599,28 +1633,40 @@ its reason — a later candidate onto that target takes *Ask the customer* too, 
 operator has already sent that question back, and a candidate walked later does not close it.
 
 **An answer and the answers applied from it.** A decision the reader returns with an
-`applied_from` naming a question, not `none`, was not asked of the customer: their reviewer's agent derived it from the answer to
+`applied_from_question` naming a question, not `none`, was not asked of the customer: their reviewer's agent derived it from the answer to
 the question that marker names, and showed it to them with that answer, grouped by it, at the end
 of a sitting (`workflows-core:question-budget` §13, items 4 and 5). Its **source** is the one
 decision of the digest whose target is that question. **A group** is a decision returned with
-`applied_from: none` that is another's source — its **root** — every decision whose source it is, and
+`applied_from_question: none` that is another's source — its **root** — every decision whose source it is, and
 every decision whose source is one of those, in turn. Its **members** are those of them this walk
 would put on the four-option array: one the same-review rule skips, or whose target takes the
-two-option array, is no member, and is skipped or put on that array alone, as above. A group with a
-member is put once, at its first member's turn. Every member is shown with the facts above, its
-quotation among them, and, in free-text mode, the statement that its row is an inference; the root
-comes first, shown as skipped or as the array it takes where it is no member, and each other
-decision under the answer it follows. Then ask once:
+two-option array, is no member, and is skipped or put on that array alone, as above. A group is put
+once, at its root's turn, after a root that is no member has been disposed. **Where such a root's
+fate already holds every member** — rejected or recorded for a human on its own array, or skipped
+with no adopted `- **Frozen:**` entry naming a member (below) — no array is put: every member is
+held, and the walk says so. Otherwise every member is shown with the facts above, its quotation
+among them, and, in free-text mode, the statement that its row is an inference; the root comes
+first, shown as skipped or as the array it takes where it is no member, and each other decision
+under the answer it follows. Then ask once, on the first array below — or, where the root or any
+member carries the line saying the basis of a proposal the package showed has moved (above), on
+the second, which recommends nothing, for the reason that line gives:
 
 ```
 choices: ["Confirm the answer and every answer applied from it (Recommended)", "Let me name the ones to correct"]
 ```
 
-The first option is recommended because the customer saw this group together and kept it, and each
-row's quotation is beside it for the operator to check. It takes *Confirm* on every member. *Let me
-name the ones to correct* asks in plain text which members, by the `<round>/<position>` each
-answers, resolved against the group's members and nothing else; each one named is put on the
-four-option array on its own, as any candidate is, and every other member takes *Confirm*. Whatever
+```
+choices: ["Confirm the answer and every answer applied from it", "Let me name the ones to correct"]
+```
+
+Each array is presented as it stands: the marker is never dropped from the first, nor added to the
+second, at run time. On the first, confirming is recommended because the customer saw this group
+together and kept it, and each row's quotation is beside it for the operator to check. On either,
+the first option takes *Confirm* on every member. *Let me name the ones to correct* asks in plain
+text which members, by the `<round>/<position>` each answers, resolved against the group's members
+and nothing else — a name matching no member is asked for again, never read as the nearest one;
+each one named is put on the four-option array on its own, as any candidate is, and every other
+member takes *Confirm*. Whatever
 a member takes, each test above that follows a *Confirm* or a *Correct it* — the conflicting-answer
 picker, the re-affirmation test, the missing-reason picker — is put to it alone, one at a time, a
 source's before those of the members that follow it. A
@@ -1681,7 +1727,9 @@ id this run reuses is never read as the adopted pass's. Then `- **Status:** free
 every record this phase is about to
 freeze, complete from `open` or re-decide in place, each with what it answers — a `[C]` by round and
 position, an `[AS#n]`, or an `[SR#n]` with the self-review file named — and, for one frozen taken
-`applied`, `applied from` and the record it follows; new ids assigned now by the `id` row below, or
+`applied`, `applied from` and the record it follows; new ids assigned now by the `id` row below —
+each source's before the ids of the records applied from it, and the new records later written in
+the order of their ids, so a freeze cut off part-way leaves no gap in the sequence (§1) — or
 `none`. Then `- **Effects:**`, listing every write steps 2 and 3 below are about to
 make on a record already in the register, each with the status the record holds once the catch-up
 below, where there is one, is applied, and every `[CD#n]` that causes it — `[AS#3] open → superseded by [CD#7]`,
@@ -2016,7 +2064,9 @@ Then, in the same phase and from the same confirmed set:
      no id:
      `statement`, `options_considered`, `chosen`, `evidence` (the answered entry's
      `- **Findings:**` line, as the table above takes it), `defects`, `conditional_on`, `status`,
-     `taken` and `applied_from` are written afresh as the table above takes each, the will-change rule tested on it like any
+     `taken` and `applied_from` are written afresh as the table above takes each — a field the
+     table omits for this answer removed from the record where it carried one, so no stale
+     `taken: applied` or `applied_from` outlives the answer that made it — and the will-change rule tested on it like any
      record written `decided`; the customer's reason, quoted, is appended to `argumentation`
      beneath the `Reopened` paragraph and never over it; `round` becomes the round of the question
      it answers; `consumed_by` returns to `none`; `id`, `altitude` and `settles` stand
@@ -2661,7 +2711,12 @@ satisfied, with a dropped class left unsearched.
    records the link in `applied_from` alone, so the scan never reaches it. The key is matched
    against this run's own, which the run already holds; nothing is read out of a folder's name. A
    sibling found so is a dependent BRD from here on, in this phase and wherever a later phase names
-   one, and one the scan also found is swept once.
+   one, and one the scan also found is swept once. **A sibling whose `decisions.md` exists and
+   cannot be read is reported, never passed over in silence**: named by its path relative to the
+   parent's folder, in the reconciliation record's *what still needs a human* and the final report,
+   as a register this sweep could not search for a record applied from this run's; the sibling's
+   own next `/product-workflows:brd-interview` still reaches such a record (*A decision reopened
+   elsewhere*).
 
 **The second source is what makes the *Update the coverage ledger* phase's promise true.** That
 phase writes a `[CD#n]`-driven `deferred-to`, `rejected` or `superseded-by` onto rows of **this**
@@ -3189,7 +3244,8 @@ changed, why, which ids, and what still needs a human:
 - **What changed** — every `[CD#n]` frozen, with its quotation, its status, what it answers — a
   `[C]` by round and position, an `[AS#n]`, or an `[SR#n]` with the self-review file named above —
   and how it was confirmed — for one taken `applied`, the record it follows and that it was
-  confirmed in that answer's group — and, where its `altitude` had nothing to copy, that this run decided
+  confirmed in that answer's group; for one answering a question whose proposal's basis had moved,
+  the line saying so — and, where its `altitude` had nothing to copy, that this run decided
   the `altitude`; where the `[CD#n]` copied `conditional_on` (the field table above), the value
   and the record it was copied from, with whether the assumption's row in the review's section 8
   marks the acceptance contingent — a mark that changes nothing written; and where a `[CD#n]`
@@ -3272,7 +3328,8 @@ changed, why, which ids, and what still needs a human:
   because it was not `decided`, with the `[CD#n]` that contradicts or constrains it; every record
   applied from a decision that moved and left at its status because it was held `open` — in this
   register by step 3, or in a dependent's by the propagation sweep's applied-from pass — with the
-  decision it follows and how that moved; every
+  decision it follows and how that moved; every sibling slice whose `decisions.md` the propagation
+  sweep's sibling read could not read, by its path; every
   candidate whose target's live record reads `withdrawn`, with the customer's words and that record,
   nothing frozen from it, and the held entry closed for it where there was one (*Confirm every
   candidate*); every held entry closed because its requirement defects were all withdrawn (the

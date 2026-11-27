@@ -945,9 +945,12 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
   propose `withdrawn` as an answer, so no value under the proposal's label could be told from one,
   while no writer writes a proposal under this label. **The question's proposal is the last of its
   `- **Proposed answer:**` and `- **Proposal withdrawn:**` lines, read off the round record**, where
-  alone a carried entry's lines are: a withdrawal last means it has none, to every reader, and a
-  proposal last is shown to the customer by `commands/brd-package.md` only while the decision it
-  follows reads `decided` (§3). **`- **Re-tagged:** [C] → [V] — <reason>`** says the question was the delivery team's
+  alone a carried entry's lines are: a withdrawal last means it has none, to every reader of the
+  question's proposal as it stands, and a proposal last is shown to the customer by
+  `commands/brd-package.md` only while the decision it follows reads `decided` (§3).
+  `commands/brd-reconcile.md` reads, instead, the proposal the sent prompt showed — matched to its
+  line here — since a line written after the package does not take back what the customer was
+  shown; such a line is one of the moves it names beside the customer's answer. **`- **Re-tagged:** [C] → [V] — <reason>`** says the question was the delivery team's
   to decide all along (above): an entry carrying it is no longer a question for the customer.
   `commands/brd-interview.md`'s *Hold every `[C]`* fixes when each is written.
 - **A strategic question** (`workflows-core:question-budget` §7; `commands/brd-interview.md`'s

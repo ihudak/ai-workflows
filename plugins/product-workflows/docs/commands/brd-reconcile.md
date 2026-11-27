@@ -409,7 +409,7 @@ command removes none of them; the next `/brd-interview` run does.
   is unconfirmed. The four values are `confirm`, `correct`, `reject` and `ask-the-customer`, and a
   candidate answering no question the package put takes one of two instead — recorded for a human,
   quoting the customer, or rejected — and is never frozen on that form, save that a free-text answer
-  naming the question it does answer re-points it onto the options its target takes; the picker carries no bulk
+  naming the question it does answer re-points it onto the options its target takes; the four-option picker carries no bulk
   confirmation, and a free-text answer is otherwise **normalised into those values or the candidate
   is re-asked** — never written through as another. *Reject* reads **no decision to freeze**: the
   customer declined to answer, or the row is not an answer at all (context, thanks, scheduling). It
@@ -499,29 +499,39 @@ command removes none of them; the next `/brd-interview` run does.
   derived from the answer to that question, and shown to the customer with it at the end of a
   sitting. The answer and every row applied from it — and from those, in turn — are shown together,
   each with its quotation, and asked once:
-  `choices: ["Confirm the answer and every answer applied from it (Recommended)", "Let me name the ones to correct"]`.
-  The second asks which, by `<round>/<position>`; each one named goes to the ordinary four-option
-  picker on its own, and the rest are confirmed. Every check that follows a confirmation — the
+  `choices: ["Confirm the answer and every answer applied from it (Recommended)", "Let me name the ones to correct"]`
+  — or, where any of them carries the line saying the basis of a proposal the package showed has
+  moved (below), `choices: ["Confirm the answer and every answer applied from it", "Let me name the ones to correct"]`,
+  which recommends nothing. The second option asks which, by `<round>/<position>`, and asks again
+  for a name that matches none of them; each one named goes to the ordinary four-option picker on
+  its own, and the rest are confirmed. Every check that follows a confirmation — the
   conflicting-answer picker, the re-affirmation test, the missing-reason picker — still runs on each
   row alone. A confirmed row is frozen as a `[CD#n]` with `taken: applied` and `applied_from` the
-  `[CD#n]` of the answer it follows, written after that one. **A row is frozen as applied only from
-  its answer as the review gives it**: where that answer is corrected, rejected, recorded for a
-  human, sent back to the customer, set aside as a conflicting answer, or sent back or frozen `open`
-  for want of its reason, every row applied from it is **held** — nothing is frozen from it, a held
-  question stays held, and the next package puts it again — because freezing it alone would record
-  the agent's derivation as the customer's word. A row applied from a question no single answer of
+  `[CD#n]` of the answer it follows, numbered and written after that one. **A row is frozen as
+  applied only from its answer as the review gives it**: where that answer is corrected, rejected,
+  recorded for a human, sent back to the customer, set aside as a conflicting answer, or sent back
+  or frozen `open` for want of its reason, or was already reconciled by an earlier pass over the
+  same review that did not list the row as applied from it, every row applied from it is **held** — nothing is frozen from
+  it, a held question stays held, and the next package puts it again — because freezing it alone
+  would record the agent's derivation as the customer's word. Where the answer's own fate already
+  holds every row, the rows are held with no question put. A row applied from a question no single answer of
   the review answers is in no group, and is recorded for a human or rejected. An answer to a
   strategic question closes its own question only: what its coverage names closes only where the
   review answered it or applied it from that answer, and the rest stay held. Where the question's
   record on file is itself an applied one, a row re-affirms it only if it follows the same record;
   otherwise it is a new answer.
-- **Phase 4 — a proposal whose basis has moved is named.** Where a held question's last proposal —
-  read off its round record, a withdrawal last meaning it has none — follows a delivery-team
-  decision, the candidate is shown with the proposal and that decision's status now. Where the
-  decision has since been reopened, superseded or withdrawn, or cannot be read, the walk says
-  plainly that a customer who confirmed the proposal confirmed a position whose stated basis has
-  moved; no option is recommended, and the operator decides. A strategic question's planned answer
-  follows no decision, and nothing tests it.
+- **Phase 4 — a proposal whose basis has moved is named.** The proposal tested is the one the
+  package showed — read from the prompt the customer was sent, its proposals table and its
+  strategic questions, and matched to its line in the question's round record — never the round
+  record's last line, which an interview run after the package may have written. Where that
+  proposal follows a delivery-team decision, the candidate is shown with it and the decision's
+  status now. Where the decision has since been reopened, superseded or withdrawn, or reopened and
+  re-decided since the package's date (its `Reopened` paragraph says when, a sibling's re-decision
+  included), or a later proposal or withdrawal follows the one the customer saw, or any of it cannot
+  be read, the walk says plainly that a customer who confirmed the proposal confirmed a position
+  whose stated basis has moved; no option is recommended, and the operator decides. A question the
+  prompt showed with no proposal following a decision — a strategic question's planned answer, or
+  none — is the customer's own answer, and nothing tests it.
 - **Phase 4 — a reason nobody gave.** A confirmed candidate, or a corrected row, whose reason is
   `not stated` takes one of exactly two routes: ask the customer and freeze nothing, or freeze it `status: open`, which
   puts the answer on the record and makes it unusable downstream until the reason arrives. The picker's third option, *Cancel — return to this candidate's four options*, resolves nothing: it puts the candidate back on the four-option picker, so *Correct it* can be taken there. Supplying
