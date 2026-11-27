@@ -607,7 +607,7 @@ means:
 | an `[AS#n]` | its `round: N` | the record exists: an assumption is recorded only by the run that generates its round (`commands/brd-interview.md`, *Generate the round's question set*), and that run's write of the record is its first |
 | a `[CDF#n]` (`references/code-defect-log-format.md`) | its `round: N` | one of the record's `code defects:` lines names it raised, or its `code defects on file:` baseline line lists it; or a record that is not itself a torn write cites it in `defects`. A record carrying neither line was written before both existed, and names every `[CDF#n]` of its round — no run that writes to such a record leaves it so (the baseline, below) |
 | an entry in `interview/customer-questions.md` | its heading, `## Round <N>, question <position>` | the question at `<position>` carries the tag `[C]` in its last recorded state — *held for the customer*, or *answered by the customer* — or the record carries, at that address, the `- **Re-tagged:** [C] → [V]` line the entry carries too (§9) |
-| a `- **Proposed answer:**` or `- **Re-tagged:**` line beneath an entry that is not itself a torn write | its entry's heading | the record carries the same line at the question's address (§9) |
+| a `- **Proposed answer:**`, `- **Re-tagged:**`, `- **Why we ask:**` or `- **Covers:**` line beneath an entry that is not itself a torn write | its entry's heading | the record carries the same line at the question's address (§9) |
 | a `- **Requirement defect:** [DEF#n]` line on an entry that is not itself a torn write and carries no `- **Re-puts:**` line | its entry's heading | one of the record's `requirement defects:` lines lists that `[DEF#n]` asked, or its `requirement defects on file:` baseline line lists it. A record carrying neither line was written before both existed, and names every such line — no run that writes to such a record leaves it so (the baseline, below) |
 
 **Nothing else is ever a torn write**, and four things in particular are not:
@@ -932,5 +932,21 @@ Requirement 4.3 (`source/acme-export-brd.md › § 4.3`) says the monthly export
   proposal. **`- **Re-tagged:** [C] → [V] — <reason>`** says the question was the delivery team's
   to decide all along (above): an entry carrying it is no longer a question for the customer.
   `commands/brd-interview.md`'s *Hold every `[C]`* fixes when each is written.
+- **A strategic question** (`workflows-core:question-budget` §7; `commands/brd-interview.md`'s
+  *Plan the sittings*) — a `[V]` put in a strategic sitting, or a `[C]` held for the customer —
+  sits at its own position in the round, under the same heading as any question, and carries two
+  lines of its own, written once with its first write, beneath its text and above its first state
+  and any `- **Re-puts:**` line: **`- **Why we ask:** <text>`**, what the questions it covers share
+  and what their answers turn on; and **`- **Covers:** <round>/<position>, …`**, the questions its
+  answer determines, of any round. A strategic `[C]` carries a third beneath them, above its first
+  state, **`- **Proposed answer:** <recommended> — <reason>`**, the answer the plan recommends and why,
+  with no `follows`, since it follows no decision: it is the question's proposal until one a
+  delivery-team answer makes is written beneath it, which, as the last such line, takes its place.
+  Its entry in the question set carries the same three lines, after its `- **Findings:**` and
+  `- **Altitude:**` lines, and its options as a plain list, as any entry's are; it carries no
+  `- **Rejected row:**`, `- **Requirement defect:**`, `- **Defect image:**` or `- **Re-puts:**`
+  line. Each question a strategic `[V]`'s answer closes through its coverage carries
+  `- **State:** applied — [VD#n], from [VD#m]`, `[VD#m]` the strategic answer, in its own round's
+  record.
 - **The scope paragraph, a question's text and a state's explanation are prose** for whoever reads
   the record; no command parses them.

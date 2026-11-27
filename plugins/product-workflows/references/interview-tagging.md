@@ -238,3 +238,17 @@ to resolve — one `[CD#n]` record holds one `chosen` (`references/decision-regi
 it.** That is what makes it answerable later what was known at the time a position was taken — a
 decision from round 1 was taken without anything round 2 discovered, and saying so requires the
 round number to still be there.
+
+**A strategic sitting is a sitting of the round being worked, and its questions are that round's.**
+Where more questions are open for a person than one sitting holds, `commands/brd-interview.md`
+plans strategic questions over the round's questions and every other open one on file
+(`workflows-core:question-budget` §7; that command's *Plan the sittings*): a strategic `[V]`, put
+to the delivery team in a strategic sitting, and a strategic `[C]`, held for the customer. Each is a
+question of the round that run works, tagged like what it covers and addressed by that round and a
+position like any other: it takes the next position after the highest the round holds — on its
+record, or among the questions the run holds for it — each plan's `[C]`s first and then its `[V]`s,
+in the order the plan gives them, so a later strategic sitting's questions continue after the
+last. A strategic `[V]` planned for a sitting the operator chose not to hold is never added to the
+round, and takes no position in its record. The round record carries each strategic question's
+*Why we ask* and what it covers, and its state like any question's; each question its answer
+closes is recorded applied from that answer's decision, in whichever round holds it.

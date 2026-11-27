@@ -159,7 +159,10 @@ open for a person exceed one budget, the run says so before its first question �
 tag; the plan, strategic sittings first; the dispatches it expects — and plans strategic questions.
 
 **Planning.** The planner groups open questions into strategic questions, each in §4's shape with
-*Why we ask* and its `covers`, ranked by §6. A strategic question takes the tag of what it covers:
+*Why we ask* and its `covers`, ranked by §6. **No question is covered twice**: a question an open
+strategic question on file already covers — planned earlier in the run or by a run before it — is
+never covered again, and a strategic question is never covered at all; the planner holds to it and
+the caller leaves out any strategic question that does not. A strategic question takes the tag of what it covers:
 
 - covering `[V]`s, it is a `[V]`, asked of the delivery team in a strategic sitting;
 - covering held `[C]`s, it is a `[C]`, written for the customer — an entry of the current round,

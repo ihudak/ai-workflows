@@ -222,7 +222,11 @@ become a PRD of its own.
 `/brd-interview` then works the BRD's open questions to recorded decisions, one round at a time,
 under a single rule: every question is tagged `[G]` / `[V]` / `[C]` before it is asked, and the tag
 decides who may answer it — a `[G]` from the grounding findings and never a human, a `[V]` from the
-delivery team with recorded argumentation, a `[C]` held for the customer. `/brd-package` takes the
+delivery team with recorded argumentation, a `[C]` held for the customer. It asks at most a budget
+of questions a sitting, and where more are open than one sitting holds, it asks a few strategic
+questions first, each answer closing every question it covers, and asks what is left one by one;
+where more questions are held for the customer than one sitting holds, it writes strategic questions
+for them too, which the package carries like any other. `/brd-package` takes the
 register and the held `[C]` questions, attacks the package before the customer does, refuses to
 build a bundle while any `[SR#n]` self-review finding is undisposed, refuses to ship one whose own
 identifier and filename citations do not resolve inside it, and renders the prompt, the delivery

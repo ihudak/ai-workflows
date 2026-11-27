@@ -3,8 +3,9 @@
 Turns a grounded, fully-allocated BRD into a **decided** one. It generates a round of open questions,
 tags every one of them `[G]`, `[V]` or `[C]` **before a single one is asked**, answers every `[G]`
 from the grounding findings without asking anybody, merges questions that ask the same thing, puts
-each `[V]` nothing has settled to the operator one at a time with mandatory argumentation — at
-most a budget of questions a sitting, the ones beyond it whose answer it is confident of put
+each `[V]` nothing has settled to the operator one at a time with mandatory argumentation — where
+more are open than one sitting holds, a few strategic questions first, each answer closing every
+question it covers; then at most a budget of questions a sitting, the ones beyond it whose answer it is confident of put
 together as one table to accept or name exceptions in, and every answer applied to the questions
 still open, so that one an answer settles is recorded without being asked — and holds every `[C]`
 for the customer, with the answer your team would propose beside it where one of your answers
@@ -146,8 +147,9 @@ prose. Tagging runs over the whole round before any asking phase opens; the phas
 questions raises no prompt of any kind; the operator queue holds exactly what the tagging phase has
 fixed — including a `[G]` re-tagged to `[V]`, which is re-tested there before it joins — and nothing
 reaches it that has not been through that phase, nor anything at all once the queue opens save a
-question it reopens and a held `[C]` of the round one of your answers shows was yours to decide,
-re-tagged `[V]` with its cause recorded — a question the tagging phase tagged; and a
+question it reopens, a held `[C]` of the round one of your answers shows was yours to decide,
+re-tagged `[V]` with its cause recorded — a question the tagging phase tagged — and a strategic
+question planned over `[V]`s the tagging phase tagged, which takes their tag; and a
 `[G]` can leave the `[G]` set only by re-tagging, which re-enters at the tagging phase and is
 admissible only against a named finding nobody could settle — one reading `NOT-PROVABLE`, or one
 whose verifier outcome is `unprovable`, whatever verdict it keeps.
@@ -208,7 +210,8 @@ flowchart TD
     p2 --> p3["Phase 3 — Generate the round's question set"]
     p3 --> p4["Phase 4 — Tag every question, before anything is asked"]
     p4 --> p5["Phase 5 — Answer every [G] from the findings"]
-    p5 --> p6["Phase 6 — Put each [V] to the operator"]
+    p5 --> p55["Phase 5.5 — Plan the sittings"]
+    p55 --> p6["Phase 6 — Put each [V] to the operator"]
     p6 --> p7["Phase 7 — Hold every [C]"]
     p7 --> p8["Phase 8 — The will-change rule"]
     p8 --> p9["Phase 9 — Write the register and the round record"]
@@ -227,12 +230,14 @@ was closed; otherwise it hands off what it wrote — `decisions.md`
 as its header line alone where none was on file, any file a torn-write removal or a completed
 re-disposition changed, a code-defect log an earlier run left changed and uncommitted, and the
 parent's defect log where Phase 10 wrote a resolution into it.
-`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. Beside it the run dispatches two agents that read no code, each on the Opus tier: `workflows-core:question-planner` once tagging is done, to find the questions that ask the same thing, those no answer would change and those a decision on file already settles, and again at the opening of each sitting, to rank the questions left, pick those whose answer it is confident of for the sitting's table, and name any question whose findings cite something other than the BRD showing the code fails what it was itself meant to do; and `workflows-core:answer-applier` after each answer, to find the open questions that answer settles or narrows, and the questions held for the customer it gives a proposed answer or shows were yours to decide. No grounding or review agent is dispatched — every finding this command reads was already independently re-derived by
+`workflows-core:impl-maintenance` runs in the terminal phase for session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`. Beside it the run dispatches two agents that read no code, each on the Opus tier: `workflows-core:question-planner` once tagging is done, to find the questions that ask the same thing, those no answer would change and those a decision on file already settles; where more questions are open than one sitting holds, before each strategic sitting, to group them under strategic questions, each closing the questions it covers; and again at the opening of each sitting of the detailed walk, to rank the questions left, pick those whose answer it is confident of for the sitting's table, and name any question whose findings cite something other than the BRD showing the code fails what it was itself meant to do; and `workflows-core:answer-applier` after each answer, to find the open questions that answer settles or narrows, and the questions held for the customer it gives a proposed answer or shows were yours to decide. No grounding or review agent is dispatched — every finding this command reads was already independently re-derived by
 `/prd-ground`'s own verifier pass.
 
 **Questions are kept in a registry, and every answer is applied to it.** Once every question of the round is tagged, the run builds one registry of every `[V]` and `[C]` question on file in the slice — every round's, rounds written before this release included, with the state each record last gives it. A held `[C]` that a review package has already carried to the customer — its round and position found in one of the slice's `bundle-*/` directories, or any such directory unreadable — is marked carried and left exactly as the customer holds it. A resumed run checks the bundles again before it goes on, since a package may have been built between its sessions: a question carried since is marked carried too, and anything the run had done to it that a carried question may not take — a re-tag, the decision it led to, any answer applied from that decision — is undone and reported. Before the first question, `question-planner` proposes merges of questions asking the same substance (never across tags, never a carried question), drops of questions whose answer would change nothing, and answers a decision on file already determines — a decision of this slice's register, of a sibling slice's under the same parent, or of a BRD this slice's `depends-on:` names, the last two cited with their BRD's key — and the run records them, with the answer a decision on file lets your team propose for a question held for the customer. A question that puts a decision on file again is never merged, dropped, applied, given a proposed answer, re-tagged or put in a table: it is always asked on its own.
 
 **The `[V]`s are put in sittings, at most a budget of questions each** — 25 unless `--budget` says otherwise, numbered `Q1/25`, `Q2/25` and on. Each sitting opens with `question-planner`'s plan: it records any question a decision on file now settles, ranks the rest, and, where more of the round's `[V]`s are open than the budget, picks those whose answer it is confident of. Those are put first, as one table — each row the question, the answer it recommends and why — which counts as one question: accept them all, or name the exceptions, each then asked on its own; each row accepted is recorded as a decision confirmed in a table. A question that puts a decision on file again, or a deferred one the customer's answers have now unblocked, is never a row. Then each `[V]` of the round is put on its own, in the plan's order, never one already closed, in plain words: what is being decided; what the run saw — the rows, each finding with its verdict and outcome and the repository or frame set it came from; the options, each with what it does; and the option it recommends, with why. Choosing the recommended option records that reason as the decision's argumentation; any other option asks why, unless your answer already says. A typed answer is read as the option it expresses, and nothing is asked twice. Deferring a question asks why it cannot be answered yet and, where it waits on questions held for the customer, which — offering those that share one of its rows — and deferring it again keeps what it waited on unless you name others; once the customer's answers to all of those are recorded, the next run says so and puts the question again with that answer as its recommendation, unless a decision on file — that answer among them — now settles it, when it is recorded as applied and shown in the end-of-sitting list. A question deferred only on questions held for the customer does not keep the package from being built, since what it waits on is what the package carries; it never goes to the customer itself. Any other deferred question keeps the package from being built until it is answered. After each answer `answer-applier` reads the other open `[V]` questions, and every question held for the customer, against it — every one save a question that puts a decision on file again, one an earlier release's record leaves untied to any decision it may put again, and one the run set aside after the registry refused it twice: a question the answer settles in one line is recorded as an applied `[VD#n]` naming the decision it follows, and one it settles in part is narrowed to what is still open. A question held for the customer is never answered by you. Where your answer settles what your team would propose, that proposal is recorded beside it, `- **Proposed answer:** <text> — follows [VD#n]`, for the customer to confirm or correct, and the question stays held. Where your answer shows the question was yours to decide all along, it is re-tagged `[V]` with the cause on a `- **Re-tagged:**` line: recorded at once as applied from your answer where that alone decides it, and otherwise re-tagged only where it is a question of the round being worked, which is then put to you in its turn. A question a package has already carried takes a proposal only, written into its round's record and never over the question the customer holds; and a question a requirement defect raised, a rejected row's, one a deferred question of another round waits on, and one of another round your answer does not decide on its own is never re-tagged — where such a verdict carries the answer it would have applied, that answer is recorded as a proposal instead. A deferral the run writes names no question since re-tagged among those it waits on, and one left naming none keeps the package from being built until it is answered. An answer whose position may yet be held — resting only on findings about to change, or written conditional on a prerequisite's decision — is applied to nothing, and the questions it might have closed are asked. At the end of each sitting the run lists everything it closed without asking singly — each applied answer grouped by the decision it follows, each merge and each drop with its reason, each row confirmed in a table — and asks once whether all of it stands, or which to reopen; a reopened question returns to the queue, with every answer applied from it. The table and this list are the only prompts that carry more than one question. Where a sitting reaches its budget with questions left, the run then asks whether to continue with the next sitting now (recommended), stop here and continue later — the run stops with every answer kept, `BRD_INTERVIEW_SITTING_STOPPED`, and running it again resumes at the next question — or defer every question left with one reason you give, which leaves the round open. Nothing is deferred unless you choose it.
+
+**Strategic sittings come first where one sitting cannot hold the questions.** Once the registry has merged what it can, the run counts the round's open `[V]`s and the open questions held for the customer. Where the `[V]`s are more than one budget, it says so before the first question — `Questions for a person after merging: <N> ([V] <n>, [C] <n>). Plan: strategic sittings first, then the detailed walk. Expected agent dispatches: question-planner 1 per sitting + answer-applier 1 per answer.` — and `question-planner` groups the open questions under a few strategic questions, each a plain question with why it is asked, the questions its answer decides, its options and the answer it recommends, never grouping a question twice. A strategic sitting puts those to you, one at a time like any `[V]` and at most a budget of them, with no table and no code-defect question; each answer you give by choosing an option closes every open question it covers as an applied decision that reads on its own, then `answer-applier` reads the rest against it. Deferring a strategic question closes nothing, and asking to split it drops it, its questions left to be asked one by one. After each strategic sitting and its end-of-sitting list the run plans again and asks whether to hold another strategic sitting or go to the detailed questions: another is recommended while more than twice the budget of `[V]`s are still open and fewer than three strategic sittings have run, the detailed questions otherwise; where nothing more groups, it goes on to the detailed questions without asking. Nothing is lost: every question a strategic answer did not close is still there, in its own words, for the detailed walk. Where the questions held for the customer are more than one budget, the same plans also write strategic questions for the customer — each held like any other, with the questions it covers and the answer your team would propose — whether or not your own questions needed strategic sittings; you never answer them. A strategic question is a question of the round being worked, numbered after its last question, and its record lines say why it was asked and what it covers.
 
 **A stopped run resumes with its answers kept.** The run keeps a run folder outside every repository: the round as it was generated, the registry and every answer recorded in it, and the two agents' results. A run stopped mid-way — by an abort, by stopping at a sitting's budget, at a compaction or a restart — offers on its next start to resume, and the resumed run puts no answered question again and goes on at the next unanswered one. Choosing *Start over*, or running without a run folder, works from the round records alone, as before.
 
@@ -383,7 +388,9 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   a held `[C]` re-tagged `[V]` on a line labelled `- **Re-tagged:**` with its cause, written
   together with the `- **Re-puts:** none` line and the state it reached as a `[V]`, a proposed
   answer for a held `[C]` on a line labelled `- **Proposed answer:**`, the last of which is the one
-  that stands, every split with the parts it became, and each question's state — either a **terminal disposition** (*answered from findings*,
+  that stands, on every strategic question a line labelled `- **Why we ask:**` and one labelled
+  `- **Covers:**` naming the questions its answer decides, by round and position, every split with
+  the parts it became, and each question's state — either a **terminal disposition** (*answered from findings*,
   *decided*, *answered by the customer*, *re-tagged*, *split*, *applied* naming the decision it
   follows, *merged* naming the question it was merged into, *dropped* with its reason, *confirmed in
   a table*) or a **holding state** (*held for the
@@ -445,7 +452,11 @@ BRD, and the `PRD-<SLICE-KEY>-<slug>/` slice folder inside it for a slice:
   `- **Proposed answer:**`, with the decision it follows; where one shows the question was yours to
   decide all along, it carries a line labelled `- **Re-tagged:**` with the cause, and is no question
   for the customer any more — no package renders it. An entry a package has already carried is
-  never changed: its proposal goes into its round's record alone.
+  never changed: its proposal goes into its round's record alone. A strategic question for the
+  customer carries, with its options, a line labelled `- **Why we ask:**`, one labelled
+  `- **Covers:**` naming the held questions its answer decides, and a `- **Proposed answer:**` line
+  giving the answer the plan recommends and why, which a proposal one of your answers makes later
+  replaces as the last such line.
 - `code-defect-log.md` — the code-defect log: one `[CDF#n]` per defect in the code that a decision
   turns on, each citing the verified `[CG#n]` that established the behaviour and naming separately
   what the code is supposed to do and what says so. Written where a round raised one **or
@@ -577,6 +588,14 @@ option is picked.
   all is recorded as *needs grounding* and answered by a `/prd-ground` re-run — it is neither
   re-tagged nor asked, because a re-tag with no finding to name would manufacture the trail from "we
   asked the code" to "we asked a person" instead of recording its absence.
+- **Phase 5.5 — strategic sittings only where one sitting cannot hold the questions.** Measured once,
+  after merging: strategic sittings run only where the round's open `[V]`s are more than one budget,
+  and strategic questions for the customer are written only where the open questions held for them
+  are. A strategic plan's question is kept only where it covers two or more open questions of its
+  own tag that no other open strategic question covers, none of them carried, one that puts a
+  decision on file again, or one the registry refused twice; a strategic sitting puts at most a
+  budget of them. After three strategic sittings, or once at most twice the budget of `[V]`s are
+  open, the detailed questions are the recommended next step.
 - **Phase 6 — argumentation is mandatory.** No `[VD#n]` is written without a reason that is not a
   restatement of the decision, not "to be filled in later", and not the name of whoever decided it.
   The test is whether a reader who was not in the room can say what would have to change for the
@@ -589,7 +608,8 @@ option is picked.
 - **Phase 6 — at most a budget of questions a sitting.** A sitting puts at most the budget, the
   table counting one; past it, the rest wait for the next sitting, now or in a later run, unless
   you choose to defer them all with one reason. Only `[V]`s are ever put, singly or in the table,
-  and a question that puts a decision on file again is never a table row.
+  and neither a question that puts a decision on file again nor a strategic question is ever a
+  table row.
 - **Phase 6 — every answer is applied forward, and checked at the end of the sitting.** After each
   answer — one asked, or a table row accepted — the open `[V]` questions, and every question held
   for the customer, are read against it, and a `[V]` it settles in a line is recorded as an applied
@@ -610,9 +630,9 @@ option is picked.
   in the package and is priced by [`/prd-proposal`](prd-proposal.md). For a question a sitting's
   plan looked at, it is asked whichever way that question closed: right after your answer where the
   question was put on its own, and after the end-of-sitting list for one applied or confirmed in a
-  table. Two closes no plan looks at get no such question: a question a decision on file settled
-  before the first sitting, and one held for the customer that an answer shows was yours and closes
-  in the same sitting. It counts nothing against the budget, and one defect is never asked about
+  table. Three closes no plan looks at get no such question: a question a decision on file settled
+  before the first sitting, one held for the customer that an answer shows was yours and closes
+  in the same sitting, and every question a strategic sitting closes. It counts nothing against the budget, and one defect is never asked about
   twice in a run — though a *No* records nothing, so a later run may ask about it again — and a
   decision whose question bears on a defect already recorded names it too, unless it was withdrawn. You can still raise a
   code defect yourself at any point, and the package's review still flags a decision whose
@@ -744,7 +764,8 @@ Work the first round of a slice of a synthetic customer BRD, once the slice's ow
 The run gates on the grounding being merged and verified and the ledger being fully allocated, opens
 round 1, generates its questions, tags every one of them, answers the `[G]`s from the findings,
 merges those that ask the same thing, walks the `[V]`s nothing has settled past the operator one at
-a time — at most a budget a sitting, with those beyond it that it is confident of put as one table —
+a time — strategic questions first where more are open than one sitting holds, then at most a
+budget a sitting, with those beyond it that it is confident of put as one table —
 applying each answer to the rest, lists what it closed without asking singly for you to confirm,
 holds the `[C]`s, writes the register, and offers
 to branch, commit, push, and open a pull request. Its next-step offer names

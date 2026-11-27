@@ -15,7 +15,7 @@ paths:
 
 # BRD route — the sibling re-cut
 
-Loaded with `.claude/rules/brd-route.md`, whose `paths:` it shares. Split out of `.claude/rules/brd-route.md` to keep that file under 20,000 characters; the route's map lines and its folder-kind invariants are there; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded with `.claude/rules/brd-route.md`, whose `paths:` it shares. Split out of `.claude/rules/brd-route.md` to keep that file under 20,000 characters; the route's map lines and its folder-kind invariants are there, `/brd-interview`'s map line in `.claude/rules/brd-route-interview.md`; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 ## Invariants
 

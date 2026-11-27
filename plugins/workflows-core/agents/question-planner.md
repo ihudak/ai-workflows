@@ -12,8 +12,8 @@ what this agent receives, what it returns and the checks it makes before it writ
 restate the rulebook.
 
 Plan the questions of one sitting, and nothing more. The caller — `/brd-intake`'s defect walk in
-mode `intake`, `/brd-interview` in modes `merge` and `plan`, and in mode `strategic` a caller that
-runs strategic sittings (rulebook §7) — hands over its run's
+mode `intake`, and `/brd-interview` in modes `merge`, `plan` and `strategic`, the last before each
+of its strategic sittings (rulebook §7) — hands over its run's
 questions as a file, and records what this agent returns in the run's registry: each merge, each
 drop, each applied answer and proposal, each strategic question and the ranks (rulebook §12).
 **This agent proposes; it closes nothing.** It never runs the registry script, never reads the registry, and asks no one anything.
@@ -137,7 +137,10 @@ word.
    **`strategic`** — before a strategic sitting of the interview (rulebook §7).
    - Group the open, uncarried questions under strategic questions, each one whose answer would
      determine two or more of them, which it lists as its `covers`. A question is covered by at most
-     one. Covering `[V]`s, the strategic question is tag `V`; covering held `[C]`s, tag `C`, its
+     one (rulebook §7): never by two entries, and never where an open strategic question of
+     `questions` — `strategic` true — already names it in its `covers`, an earlier plan's, of this
+     run or a run before it. A strategic question of `questions` is itself never covered.
+     Covering `[V]`s, the strategic question is tag `V`; covering held `[C]`s, tag `C`, its
      `covers` naming no carried one; where a group would hold both, write it as two, one per tag.
    - Each entry is in §4's shape: `text`, one plain line saying what is being decided, in the
      reader's terms; `why`, *Why we ask* — what the covered questions share and what their answers
@@ -181,8 +184,9 @@ word.
      candidates after its first, which appear in neither; no carried question appears in either;
    - `ask` holds at most the budget, less one where `table` holds a row, a group counting one;
    - each `strategic` entry covers two or more open, uncarried questions of its own tag, none
-     covered by another entry, with two to four options and `recommended` one of them or `""`,
-     never `""` on a `C`;
+     strategic, none covered by another entry and none an open strategic question of `questions`
+     already covers, with two to four options and `recommended` one of them or `""`, never `""` on
+     a `C`;
    - each `code_defects` entry's `[CG#n]` is among its own question's `findings` and qualifies — in
      the input's `findings`, with an `outcome` other than `unprovable` and a verdict listed above —
      and the evidence its `intent_basis` is copied from is in `findings`.
