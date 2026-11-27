@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.44.4] — 2026-11-26
+## [1.44.4] — 2026-11-27
 
 **What changes for you.** `/docs-write <unit-id>` on a branch the default branch has moved that unit past stops before its consent, `DOCS_WRITE_BASE_MOVED`, rather than asking whether to continue and drafting the unit a second time when you do. The default branch includes your local one where it holds commits `origin`'s lacks, so a unit drafted and merged on your local default branch and not pushed is no longer drafted again on a branch cut before it — `--next` and `--batch` pass it over too.
 

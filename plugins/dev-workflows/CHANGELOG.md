@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.71.4] — 2026-11-26
+## [4.71.4] — 2026-11-27
 
 **What changes for you.** `/implement` addressed with an `@<path>` to a unit folder outside the specs repository's work tree — a second clone, say — reads that folder's own ARD, never one of the same key under `$SPECS_PATH`, gates nothing there, reports `Lineage: not checked — no specs repository` rather than `Lineage: current`, and follows each command it names by a key with a sentence saying that command finds the folder by its key in `$SPECS_PATH`. Update with `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
 

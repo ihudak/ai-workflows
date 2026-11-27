@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [3.88.5] — 2026-11-26
+## [3.88.5] — 2026-11-27
 
 **What changes for you.** `/harvest-decisions` passes over `ard-seed.md`, the seed `/brd-intake --sort-existing` writes, wherever it stands: it mints no team record from a slice's seed and reports no BRD folder's seed as an unparseable ARD. Update with `workflows-core` 1.100.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
 

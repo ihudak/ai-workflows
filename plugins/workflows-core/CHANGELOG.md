@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.100.5] — 2026-11-26
+## [1.100.5] — 2026-11-27
 
 `ard-seed.md` reads as a seed, never an ARD, to `ard-resolution` and the lineage kind table; `ard-resolution`, `phase-handoff` and `document-lineage` name `/dev-workflows:implement` beside the three commands that read a folder outside the specs repository's work tree as unmanaged; and `components` §6 reads such a PRD folder's multi-component prerequisites `unmanaged`. **What changes for you.** A lineage check walking from an ARD written from a `/product-workflows:brd-intake --sort-existing` seed no longer asks for the seed's own lineage record, nor names `/product-workflows:create-ard` to revise it. `/dev-workflows:implement` and `/product-workflows:epics` on a PRD folder outside the specs repository's work tree no longer ask about, or print a landing for, a multi-component prerequisite there. Update with `dev-workflows` 4.71.4 and `product-workflows` 3.88.5 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.5 bullet).
 
