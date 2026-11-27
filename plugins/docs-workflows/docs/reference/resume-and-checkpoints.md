@@ -1,6 +1,6 @@
 # Resume and checkpoints
 
-A pipeline command ends by doing two separate things: in its report it suggests — never performs — the right context action for what comes next, `/compact`, `/clear` or a session `/rename`, and then, in its terminal cost phase, it writes a small pointer file recording where things stand. The mechanism is shared across the family and belongs to the companion `workflows-core` plugin's session-hygiene reference; this page says what this plugin's eight commands do with it, and names the other state a command here leaves between runs.
+A pipeline command ends by doing two separate things: in its report it suggests — never performs — the right context action for what comes next, `/compact`, `/clear` or a session `/rename`, and then, in its terminal cost phase, it writes a small pointer file recording where things stand. The mechanism is shared across the family and belongs to the companion `workflows-core` plugin's session-hygiene reference; this page says what this plugin's nine commands do with it, and names the other state a command here leaves between runs.
 
 ## Which commands write `resume.md`
 
@@ -8,7 +8,7 @@ Two, both on a PRD folder: [`/document`](../commands/document.md) in keyed mode 
 
 The others write none:
 
-- **`/docs-init`, `/docs-audit`, [`/docs-write`](../commands/docs-write.md) and a standalone `/docs-brand`** run the resume-pointer step, but resolve no PRD folder, so the shared rule's second rung applies: no file, and the printed `### Next step` is the record. An `--inline` `/docs-brand` has no tail of its own.
+- **`/docs-init`, `/docs-audit`, [`/docs-write`](../commands/docs-write.md), [`/docs-verify`](../commands/docs-verify.md) and a standalone `/docs-brand`** run the resume-pointer step, but resolve no PRD folder, so the shared rule's second rung applies: no file, and the printed `### Next step` is the record. An `--inline` `/docs-brand` has no tail of its own.
 - **`/document` in direct mode** takes no address, so it has no PRD folder to anchor a pointer to, and is on the shared skip list.
 - **`/docs-profile` and `/docs-serve`** have no resume step at all.
 
@@ -39,13 +39,13 @@ Both commands end their report with a `### Context hygiene` block — guidance o
 - **Keyed `/document`** suggests `/compact` before going on to `/release-notes` for the PRD, since that run is still the Dev's, and `/rename <PRD-ID>-<slug>-dev`.
 - **`/release-notes`** suggests nothing where the PRD is fully processed, `/clear` before switching roles where an architecture or Epic phase is still pending for the PRD, and `/rename <PRD-ID>-<slug>-<role>`, `<role>` being `pm` on the early run and `dev` on the late one ([Roles and phases](../roles-and-phases.md)).
 
-Direct-mode `/document`, `/docs-init`, `/docs-audit`, `/docs-write`, `/docs-brand`, `/docs-profile` and `/docs-serve` print no such block.
+Direct-mode `/document`, `/docs-init`, `/docs-audit`, `/docs-write`, `/docs-verify`, `/docs-brand`, `/docs-profile` and `/docs-serve` print no such block.
 
 ## Checkpoints
 
 - **The cost checkpoint.** Every cost-emitting run here advances a small local file, keyed by session id and never committed, that records where the last cost phase left off, so the next run's cost window starts there — `--skip-costs` included. [Session cost](session-cost.md) describes it.
 - **`/docs-serve`'s run state.** `/docs-serve` records each server it starts in `.dev-workflows/docs-serve.state.json` in the documentation repository, keyed by the port the server bound, with its process, process group and log. A later `/docs-serve` reads it to find a server already running, and `--status` and `--stop` read it to report or end one. It is local bookkeeping: never staged, never committed, and kept out of `git status` by an ignore line for the file alone, since `.dev-workflows/` also holds the committed profile.
-- **`/docs-write`'s unfinished units.** A unit that `/docs-write` did not commit leaves the files the run created for it under `.dev-workflows/unfinished/<unit-id>/` in the documentation repository, or the next free `-2`, `-3` directory. The next run names each such directory and reads nothing in it: they block nothing, and no run resumes from them.
+- **The backlog runs' unfinished units.** A unit that `/docs-write` or `/docs-verify` did not commit leaves the files the run created for it — and, for `/docs-verify`, its page as the run left it, where that differs from the page you consented to — under `.dev-workflows/unfinished/<unit-id>/` in the documentation repository, or the next free `-2`, `-3` directory. The next run names each such directory and reads nothing in it: they block nothing, and no run resumes from them.
 
 None of this plugin's commands keeps a session file to resume a half-finished run from.
 

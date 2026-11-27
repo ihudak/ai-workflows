@@ -364,7 +364,7 @@ outcome the command cannot deliver.
 
 Used when a diff-summarizer or code-scanner batch returns `REPO_MISSING` at
 Phase 5 after Phase 4 already checked, in `/idea` Phase 2.6, which has no
-earlier check, in `/implement` Phase 1.7, and in `/docs-workflows:docs-write` twice: at its Phase 1, before any scan, where a source repository resolves by neither its recorded path nor its origin, and at its Phase 4 on `REPO_MISSING`. `REPO_MISSING` means `repo_path`
+earlier check, in `/implement` Phase 1.7, and in `/docs-workflows:docs-write` twice: at its Phase 1, before any scan, where a source repository resolves by neither its recorded path nor its origin, and at its Phase 4 on `REPO_MISSING`; and in `/docs-workflows:docs-verify` at the same two points, at its Phase 2 and its Phase 5. `REPO_MISSING` means `repo_path`
 is not a directory, **or** it holds no `.git` of its own, or the clone's `origin` slug does not match
 `repo_url_slug`, or it has no `origin` to compare — the agent's note says which,
 and in the last three the directory exists; *Specify a different absolute path for this repo* is the
@@ -374,15 +374,15 @@ which option is right depends entirely on why the repo is absent.
 
 ## Stashing the user's changes
 
-**Seven stash choices run this procedure**: the Stash choice of § *Dirty working tree*, and the
+**Eight stash choices run this procedure**: the Stash choice of § *Dirty working tree*, and the
 "Stash … and continue" choices of the documentation commands that branch a repository they write
-into (`/document` Phase 6.2's two, `/docs-profile` Phase 5, `/docs-init` Phase 2.5, `/docs-brand` Phase 7 and `/docs-write` Phase 3, through `docs-workflows:finish-and-handoff` §6.2). `/implement` and `/upgrade` keep their own: each records a `stash_ref` that
+into (`/document` Phase 6.2's two, `/docs-profile` Phase 5, `/docs-init` Phase 2.5, `/docs-brand` Phase 7, `/docs-write` Phase 3 and `/docs-verify` Phase 4, through `docs-workflows:finish-and-handoff` §6.2). `/implement` and `/upgrade` keep their own: each records a `stash_ref` that
 `dev-workflows:code-handoff` reads; `/vuln` never stashes.
 
 1. **Stash under a name no other run shares**, reading the stash ref on both sides of it:
    `git -C "<repo>" rev-parse -q --verify refs/stash` (empty where there is none), then
    `git -C "<repo>" stash push -u -m "<command> <KEY>: <why> <UTC timestamp>"`, untracked files
-   included, since `status --porcelain` counts them, then the same `rev-parse` again. A caller that names a pathspec appends it to that push after `--`, so the stash takes only the paths it names: `/docs-workflows:docs-write` names `. ':(exclude).dev-workflows/unfinished'`, so that a stash never takes the files of a unit an earlier run did not commit.
+   included, since `status --porcelain` counts them, then the same `rev-parse` again. A caller that names a pathspec appends it to that push after `--`, so the stash takes only the paths it names: `/docs-workflows:docs-write` and `/docs-workflows:docs-verify` name `. ':(exclude).dev-workflows/unfinished'`, so that a stash never takes the files of a unit an earlier run did not commit.
    `<KEY>` is the run's key, or its command name alone where it has none. Never a bare `git stash`. **Where the
    ref did not change, nothing was stashed** — git prints `No local changes to save` and exits 0 on
    a clean tree — so record nothing and say so. Where the choice was § *Dirty working tree*'s, present that choice again rather than re-dispatching: what stash cannot take (changed content inside a submodule) keeps the tree dirty, and a re-dispatch would only return `DIRTY_TREE` again. Anywhere else, go on as the choice says. **Where the push exits
@@ -415,8 +415,8 @@ line each, read by the run itself since `DIRTY_TREE` carries no paths: every cho
 Used in `/document` Phase 5 when a diff-summarizer returns `DIRTY_TREE`. `/create-ard`, `/design`,
 `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without reproducing the list,
 so per the "Choice lists are presented verbatim" convention they use the list written under
-this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list inline. **`/docs-audit`
-and `/docs-write` (Phase 4) reproduce a list without the second choice**, and each says why: a
+this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list inline. **`/docs-audit`,
+`/docs-write` (Phase 4) and `/docs-verify` (Phase 5) reproduce a list without the second choice**, and each says why: a
 coverage denominator, or a page, is a claim about the product as it ships. A new citer that reproduces a list inline states which one it uses.
 
 **The uncommitted changes are the user's, in a repository the run only reads, so no choice commits,
@@ -445,7 +445,7 @@ left it, and asks nothing, save a Stash that stashed nothing (§ *Stashing the u
 
 `choices: ["Use `<fallback>` (default for this command)", "Use my initials (you'll be prompted for them)"]`
 
-Used by every branch-creating command (`/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` standalone, `/docs-write`, `/upgrade`, `/vuln`, and `/promote-decisions` for its branch in the architecture repository) when the `branch-naming.md` §2 identity ladder — `$GIT_USER_INITIALS`, `git config user.initials`, then inference from existing branches — yields nothing. `<fallback>` is that command's own default (`feat/`, `docs/`, `fix/`, `chore/`).
+Used by every branch-creating command (`/implement`, `/document` (keyed mode only — a direct-mode run creates no branch), `/docs-profile`, `/docs-init`, `/docs-brand` standalone, `/docs-write`, `/docs-verify`, `/upgrade`, `/vuln`, and `/promote-decisions` for its branch in the architecture repository) when the `branch-naming.md` §2 identity ladder — `$GIT_USER_INITIALS`, `git config user.initials`, then inference from existing branches — yields nothing. `<fallback>` is that command's own default (`feat/`, `docs/`, `fix/`, `chore/`).
 
 **Identity variant.** When the value is filling an **identity** placeholder in a convention documented by the repo itself (`<your-name-or-initials>`, `<user>`, …), the fallback choice is omitted — a generic prefix is not a name, and the documented convention requires a real identity — and so is the picker: an answer that is text with no default is asked in plain text, its way out named in the question (§0, *A selection carries no text*), as `branch-naming.md` §2.5 asks it, in one prompt whose opening line names the convention:
 
@@ -460,10 +460,10 @@ A `cancel` answer — or a blank one, where the host sends it — ends the run b
 `choices: ["Continue with current local state", "Skip this repo", "Cancel"]`
 
 Used in `/document` Phase 5 when a diff-summarizer returns `REFRESH_BLOCKED`. `/create-ard`, `/design`,
-`/docs-audit`, `/docs-write`, `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without
+`/docs-audit`, `/docs-write`, `/docs-verify`, `/release-notes` and `/implement` (Phase 1.7) cite this rule by name without
 reproducing the list, so per the "Choice lists are presented verbatim" convention they use the
 list written under this heading; `/epics` (Phase 5) and `/specify` (Phase 4) reproduce the same list
-inline. **`/docs-audit` and `/docs-write` (Phase 4) reproduce a list without *Continue with current local state* after a read by ref of the session's own repository — `/docs-write` after one of the documentation repository it commits to, too**, and each says why: a coverage denominator, or a page, is a claim about the product as it ships, which that checkout's branch is not (`workflows-core:scan-refresh` §6 lets a fixed-policy caller leave it out). A new citer that reproduces a list inline states which one it uses.
+inline. **`/docs-audit`, `/docs-write` (Phase 4) and `/docs-verify` (Phase 5) reproduce a list without *Continue with current local state* after a read by ref of the session's own repository — `/docs-write` and `/docs-verify` after one of the documentation repository each commits to, too**, and each says why: a coverage denominator, or a page, is a claim about the product as it ships, which that checkout's branch is not (`workflows-core:scan-refresh` §6 lets a fixed-policy caller leave it out). A new citer that reproduces a list inline states which one it uses.
 
 ## Read-only mount — ref stale or diverged
 
@@ -666,7 +666,7 @@ and nothing here offers another; a `BLOCK` the first settle prompt's **Proceed**
 fixer ran spent neither half, and is offered the re-review as above. **Which commands it reaches is a behavioural test, as above: a command whose cap
 allows a re-review, whose verdict that is not `BLOCK` leads to the handoff without one, and which can
 edit the reviewed artifact on the way.** The eight commands that fix inline edit it through the offer
-above, and the six of the asking set through their decision questions too; `/epics`, `/document` and `/docs-write` dispatch `doc-fixer` over the findings — `/epics` also folds a
+above, and the six of the asking set through their decision questions too; `/epics`, `/document`, `/docs-write` and `/docs-verify` dispatch `doc-fixer` over the findings — `/docs-verify` also `doc-writer`, over a finding on an answer's application, and `/epics` also folds a
 finding's rewording in itself, under any verdict, where the user takes it for text they chose, and splits, at its last count, an Epic an *Epic size* finding named —
 and `/implement` `review-fixer`, over the findings and over those the user applies at the offer above. The open questions `A finding left open that needs a decision is
 recorded in the artifact` writes answer no finding, and make no offer. `/vuln` and `/upgrade` re-run their review after the `PASS WITH RECOMMENDATIONS`
@@ -870,13 +870,13 @@ This picker is the prompt *Provide manual fix notes (you'll be prompted)* promis
 A free-text answer to the picker is that BLOCKER's notes.
 
 **A BLOCKER whose fix needs a decision the run does not have gets no draft** (as a BLOCKER
-`doc-fixer` deferred with `Stop condition flag: NEEDS HUMAN` in `/document`, `/epics` or `/docs-write` does), since a
+`doc-fixer` deferred with `Stop condition flag: NEEDS HUMAN` in `/document`, `/epics`, `/docs-write` or `/docs-verify` does), since a
 draft would take that decision for the user. The run drafts nothing and asks in plain text, as §0
 asks: the prompt's first line says that the run waits for the notes and does nothing until they
 arrive, and the prompt then names the decision the notes must settle and the options the finding
 names, recommending none.
 
-Everything after is unchanged: the notes are applied in one bounded pass, with no further re-review — read first per *An inline fix is read against what it overlaps* in a command that fixes inline, and once more, in a command that dispatches `overlap-reader`, as *The read after the last review* says; and applied through `doc-fixer` in `/epics`, `/document` and `/docs-write`, as their commands say.
+Everything after is unchanged: the notes are applied in one bounded pass, with no further re-review — read first per *An inline fix is read against what it overlaps* in a command that fixes inline, and once more, in a command that dispatches `overlap-reader`, as *The read after the last review* says; and applied through `doc-fixer` in `/epics`, `/document` and `/docs-write`, and in `/docs-verify` through the agent the finding belongs to — `doc-writer` for a finding on an answer's application, `doc-fixer` for any other — as their commands say.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /document
 
@@ -886,7 +886,7 @@ Used in `/document` Phase 7 at either of two points: when `doc-fixer` returns `S
 Escalate per unresolved BLOCKER individually. "Manual fix notes" gets the BLOCKER's notes as
 *Manual fix notes — the run drafts them* says. "Override" asks for the rationale in plain text, which
 `/document` records with the finding in `### Deferred items`. `/docs-workflows:docs-write` escalates at
-the same two points (its Phase 8) with a list of its own, which its command holds, since this one's
+the same two points (its Phase 8), and `/docs-workflows:docs-verify` at them and wherever a finding needs more than a rewording, which no agent makes on a page being verified (its Phase 9), each with a list of its own, which its command holds, since this one's
 *Defer* names `/document`'s report and a unit deferred there is not committed.
 
 ## Review verdict BLOCK (unresolved after one fix cycle) — /epics

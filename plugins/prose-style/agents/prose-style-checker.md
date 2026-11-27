@@ -17,7 +17,7 @@ docs-style-checker finding schema.
 ## When to invoke
 
 - From `docs-workflows`' `docs-style-checker`, on every style check it runs — `/document` keyed
-  mode Phase 6.4 and direct mode Phase 3.5, and `/docs-write` Phase 6 — as the complementary
+  mode Phase 6.4 and direct mode Phase 3.5, `/docs-write` Phase 6 and `/docs-verify` Phase 7 — as the complementary
   semantic pass beside a repo linter that produced a result, the fallback where every linter
   failed, or the sole check where the repository configures none.
 - From `/epics` Phase 6.2 — as the primary style checker for Epic drafts, which live in the

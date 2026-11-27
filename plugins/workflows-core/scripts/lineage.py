@@ -876,6 +876,9 @@ class _Repo:
         self.run("init", "-q", "-b", "main")
         self.run("config", "user.email", "t@example.invalid")
         self.run("config", "user.name", "t")
+        # No detached auto-maintenance after a commit: its objects/maintenance.lock comes and goes on its own
+        # schedule, under the directory the nothing-written checks list (_repo_state).
+        self.run("config", "maintenance.auto", "false")
         self.dir = "specifications/PRD-1-checkout"
         os.makedirs(os.path.join(tmp, self.dir))
         self.prd = f"{self.dir}/prd.md"

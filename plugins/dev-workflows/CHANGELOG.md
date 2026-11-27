@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [4.71.6] — 2026-11-27
+## [4.71.8] — 2026-11-27
 
 **What changes for you.** `/conformance` reads a threat model's acceptance whose review date alone is missing or malformed as `review due`, and no longer withholds *Accept as shipped* from every architecture Rule of that model's folder on its account. `/design` classes such a threat `accepted`, never as a malformed threat put to you as deferred.
 
@@ -16,6 +16,27 @@ A section headed `— Unreleased` has not been published yet; where more than on
 - **`docs/commands/conformance.md`** says such an acceptance is a Disposition the run can read.
 - **`/conformance` Phase 0 step 5.4** lists the `conformance/` branches with `%(refname)` and names each by its full ref in its commands and by its name in its stops, so a branch sharing its name with a tag is neither dropped by the prefix filter nor read at the tag.
 - **`docs/commands/design.md`** says an acceptance whose review date alone is faulted stays an accepted threat.
+
+## [4.71.7] — 2026-11-27
+
+**What changes for you.** When you resume or restart a `/design` run, the files it lists as changed since the unit began now include a file added since then, as `/ready` and `/conformance` already list theirs. `docs/reference/environment.md` says that a path holding a bidirectional control stops a run at resolution, as `workflows-core` 1.101.1 now does.
+
+### Fixed
+
+- **`/design`'s changed-files line** hashed each path its saved listing named with `git hash-object -- "$SPECS_PATH/<the path>"`, building a command from a file's name read back from the specs tree. It now compares that listing with the same listing built now, `comm -3` over the two sorted, as `/ready` and `/conformance` do, so no file's name reaches a command.
+- **`docs/reference/environment.md`** names a bidirectional control beside a line break and another control character among what stops a run on a path `ADDRESS_FOLDER_NAME` prints none of.
+
+## [4.71.6] — 2026-11-27
+
+DOC-D-G1, sub-project 2, batch 2: five pages name `docs-workflows` 1.45.0's `/docs-workflows:docs-verify`, and one count that was already short is corrected. No command, agent or reference changes, and nothing a run does or prints. Released with `docs-workflows` 1.45.0 and `workflows-core` 1.101.0; its pages need neither, nor they it. 4.71.6 carries 4.71.5, 4.71.4 and 4.71.3, so the 1.100.6, 1.100.5 and 1.100.3 bullets of `.claude/rules/plugin-updates-coupling.md` apply to it, which `workflows-core` 1.101.0, carrying all three, `product-workflows` 3.88.7, carrying 3.88.6, 3.88.5 and 3.88.3, and `docs-workflows` 1.45.0, carrying 1.44.5, meet, beside `security-workflows` 0.13.3 or later, which 1.100.6's bullet names.
+
+### Fixed
+
+- **The environment page's branch-naming ladder** is applied by ten commands that name branches outside the specs repository, `/docs-workflows:docs-write` and `/docs-workflows:docs-verify` among them, each where it cuts a branch rather than continuing on yours; it said eight, a count `docs-workflows` 1.43.0's `/docs-write` had already made short. Its `REPOS_PATH` paragraph names `/docs-verify` beside `/docs-audit` and `/docs-write` as the commands that match a docs profile's recorded `origin` as `<owner>/<repo>` rather than build the slug→clone map.
+
+### Changed
+
+- **Pages.** The model-routing page counts twenty-six companion commands that classify themselves, thirty-two in all, `/docs-verify` among them; the session-cost page files `/docs-verify` per documentation repository under `documenting`/`dev` and counts seven `docs-workflows` commands; the roles-and-phases and workflow pages name `/docs-verify` in the Dev role, the `documenting` phase and the commands that emit their own session bookkeeping.
 
 ## [4.71.5] — 2026-11-27
 

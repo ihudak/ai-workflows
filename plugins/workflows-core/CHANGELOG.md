@@ -5,9 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
-## [1.100.7] — 2026-11-27
+## [1.101.2] — 2026-11-27
 
-A branch name a listing prints, a path or a blob a lineage record holds, and an acceptance whose review date is faulted are each read one stated way. **What changes for you.** Wherever a command lists branches, a branch whose name holds a character other than ASCII letters, digits and `. _ / @ + -`, or begins with one other than a letter, a digit or `_`, is passed over and never printed; an upstream whose recorded path or blob is malformed is reported as not checkable rather than read; and a threat model's acceptance whose review date alone is missing or malformed reads as an acceptance, never as a Disposition in none of the three forms. Needs `product-workflows` 3.88.7 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.7 bullet).
+A branch name a listing prints, a path or a blob a lineage record holds, and an acceptance whose review date is faulted are each read one stated way. **What changes for you.** Wherever a command lists branches, a branch whose name holds a character other than ASCII letters, digits and `. _ / @ + -`, or begins with one other than a letter, a digit or `_`, is passed over and never printed; an upstream whose recorded path or blob is malformed is reported as not checkable rather than read; and a threat model's acceptance whose review date alone is missing or malformed reads as an acceptance, never as a Disposition in none of the three forms. Needs `product-workflows` 3.88.9 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.2 bullet).
 
 ### Fixed
 
@@ -23,6 +23,54 @@ A branch name a listing prints, a path or a blob a lineage record holds, and an 
 - **`scripts/specs-git.py`, G0's branch to rejoin** is listed with `lstrip=2`, never `:short`, so a tag sharing a local branch's name no longer turns it into `heads/<name>` in the notice; its selftest gains the case, seen failing first.
 - **`references/document-lineage.md` §2, §5 step 2 and §6 step 3, and `scripts/lineage.py`.** A recorded path outside §1's class is never read, walked or accepted: `check` reports its link stale and not checkable, by its place in the record, with no path, and `stamp` drops, unread, an accepted entry whose path is outside it. §6 words that line and prints no path outside the class anywhere, a stale or absent line included; its selftest gains the case, seen failing first. §1's schema comment says a blob id is 64 hex in a SHA-256 repository.
 - **`references/threat-model-format.md` §4 and §6, and `references/pre-lint.md`.** `ard-reviewer` is named as the gate that blocks a faulted review date, and the pre-lint as the advisory pass that flags it first; §6 says a refine lists a faulted acceptance for renewal or re-disposition.
+
+## [1.101.1] — 2026-11-27
+
+**What changes for you.** A frame set whose folder name is outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — is read by no command that lists a `design/` folder's frame sets, and `grounding-format` §6.1 now says so for each of them; `/product-workflows:brd-package`, which copies the frames its bundled documents name and lists no `design/` folder, is not one of them. `addressing` §2's listings of the checkout keep every folder's and file's position true when a name holds a line feed, say how a caller names a file refused by its name, and say how a caller tells a folder it cannot list from an empty one. A path holding a bidirectional control — a character that reorders how text shows — now stops a run at resolution, as a line break or another control character does; a zero-width joiner or non-joiner, which Persian, Arabic-script and Indic names and emoji hold, does not. Update with `product-workflows` 3.88.8 (`.claude/rules/plugin-updates-coupling.md`, its 1.101.1 bullet).
+
+### Fixed
+
+- **`references/grounding-format.md` §6.1** states that a frame set's name, read back from the tree, is held to `addressing` §2's class before any command is built from it, that a set outside the class is read nowhere and named by its position with its remedy, and that an agent with no shell is handed only a set its caller tested — naming what `/frames`, `/product-workflows:prd-ground` and `/product-workflows:brd-split` each do with one.
+- **`references/addressing.md` §2's checkout listings** printed one line per line of `find`'s output, so a folder whose name held a line feed took two lines and moved every later folder's position: a stop then named the wrong folder for renaming. Each listing is now `find … -print0 | LC_ALL=C sort -z | tr '\n\0' '?\n'`, one line per entry, a line feed inside a name printed as `?`, which is outside the class too; the `epic.md` and `brd-link.md` listings print the same way.
+- **`references/addressing.md` §2** gains *A file refused by its name*, `entry <n> of the checkout's listing of <P>'s files`, and *A folder that cannot be listed is never an empty one*: a caller that must tell the two apart runs the listing under `pipefail` and takes a non-zero exit on a directory as unreadable, naming it.
+- **`references/addressing.md` §3, *A printable value*** — the one statement of what a program of the family may print of a name read back from the tree: UTF-8, with no control character, no U+2028 or U+2029 and no bidirectional control (U+061C, U+200E, U+200F, U+202A to U+202E, U+2066 to U+2069), every other character, the other format characters among them, passing. The resolution program now holds every line it prints to it, so a path holding a bidirectional control is refused with `reason: control`, whose message names it, where it had printed it in another order than it stands; its test is written in escapes, no invisible character in its source.
+- **`references/addressing.md` §2's *Whether it may be an Epic folder* and *Whether it may be a slice*** say that a `?` in the checkout's listings stands in for a line feed, so two folders can print alike, and that a line naming that printed name holds for each, which each test then says of each — both outside the class, and read by neither.
+- **`references/threat-intake.md` and `references/ard-resolution.md`**, which restate §2's checkout listings, list the same way, so a position each prints stays true; `threat-intake`'s second tree listing now carries `pipefail` too.
+- **`references/phase-handoff.md` §4.0's register** states `/product-workflows:brd-reconcile`'s stale cross-reference sweep's reach as every markdown file under the parent its listing reads, a captured file's under any printable name, read with the Read or the Grep tool and never in a shell command.
+- **`docs/reference/grounding.md`** says that a frame set named outside the class is read by no command that lists the frame sets; **`docs/reference/environment.md`** names a bidirectional control among what stops a run on a path `ADDRESS_FOLDER_NAME` prints none of.
+
+## [1.101.0] — 2026-11-27
+
+DOC-D-G1, sub-project 2, batch 2: the shared references register `/docs-workflows:docs-verify`, which `docs-workflows` 1.45.0 ships. **What changes for you.** A `/docs-verify` run files its cost entry, at the `documenting` stage, and its feedback under its documentation repository, as a `/docs-write` run does; a branch it cuts takes the `docs/` prefix where nothing else names one; and its stash, its scans' escalations, its review's fixes and its routing follow the family's rules, which now name it. The model routing names `claim-reader`'s reading on the Opus chain. Update with `docs-workflows` 1.45.0, and with `product-workflows` 3.88.6, `dev-workflows` 4.71.5 and `security-workflows` 0.13.3 or later, which the earlier bullets 1.101.0 carries name (`.claude/rules/plugin-updates-coupling.md`, its 1.101.0 bullet).
+
+### Added
+
+- **`scripts/command-namespaces.json`** lists `docs-verify` under `docs-workflows`.
+- **`references/cost-emission.md`.** §7 gains `/docs-verify`'s row, `documenting`, `dev`, so thirty-one of the thirty-three commands with a §7 row cite the file from their terminal phase; §8 files its entry under `$SPECS_PATH/documentation/<docs-repo-slug>/`, beside the other five documentation runs that resolve no PRD folder.
+- **`references/feedback-emission.md` §2** files its feedback there too, the same six; the automatic callers are thirty-one.
+- **`references/branch-naming.md`** names `/docs-verify` among its consumers, once per run where it cuts a branch, its prefix row, `docs/`, and its §3 slug, `docs-verify-<id>`.
+- **`references/model-routing/classification.md` §9.2: the synthesis row names `claim-reader`'s reading of a page's claims**, which a unit's move to `verified` rests on, on §2's Opus chain, so the *Reader* row's §2.1 Sonnet chain is never read to cover it.
+
+### Changed
+
+- **`references/escalation-rules.md`.** Eight stash choices run *Stashing the user's changes*, `/docs-verify` Phase 4 through `docs-workflows:finish-and-handoff` §6.2 the eighth, with `/docs-write`'s pathspec; *Dirty working tree* and *Refresh blocked* name `/docs-verify` Phase 5 among the commands that reproduce a shorter list, for `/docs-write`'s reason; *Repo missing* names its two checks, at its Phase 2 and Phase 5; the branch-prefix list, *The unspent re-review* and *Manual fix notes* name it, its fix cycle sending a finding on an answer's application to `doc-writer` and any other to `doc-fixer`; and the `/document` BLOCK section says it keeps a list of its own for a review left blocked. `reference-parts/escalation-rules/` is regenerated.
+- **`references/finding-triage.md`** gains the `doc-reviewer` → `doc-writer` row (`/docs-verify`, a finding on an answer's application) and names `/docs-verify` on the `doc-reviewer` → `doc-fixer` and style-checker rows; its parts are regenerated.
+- **`references/next-phase-offer.md`** *Not pipeline nodes* names `/docs-verify`, six commands now; its part is regenerated.
+- **`references/source-truth.md`** says that `claim-reader` applies §3 and §4.2's step 4, which `/docs-verify` hands it, and names `/docs-verify` among the dependents' commands that verify user-visible claims.
+- **`references/followup-emission.md`** counts fourteen commands, and **`references/dependencies.md`** all nine of `docs-workflows`' commands and eight of its twelve agents reading the shared corpus; **`references/doc-structure-conventions.md`**, **`references/components.md`** (the slug→clone maps it is not among) and **`references/read-only-repos.md`** (the commands that base a branch in a docs repository), and the agents **`code-scanner`** (its §8.5 callers) and **`doc-fixer`**, name `/docs-verify` where it reads or dispatches them.
+- **Pages.** The family map draws `/docs-verify` in the portal lane, after `/docs-write`, and the agents, grounding, references, session-feedback and roles-and-phases pages name it.
+
+### Fixed
+
+- **`scripts/lineage.py --selftest` no longer fails at random.** Its throwaway repository let each `git commit` start git's detached auto-maintenance. That process's `objects/maintenance.lock` could stand in the *before* snapshot of the nothing-written check in `test_capture_disk_is_what_git_add_stores` and be gone in the *after* one, so the check failed although the capture wrote nothing: 8 of 15 runs on git 2.56.1, and none of 15 with auto-maintenance off. The fixture now sets `maintenance.auto` to `false`. No command's behaviour changes, and the fix adds no case: the self-test counts 67, the case 1.100.5 added among them.
+
+### Fixed — GIT-G1 sentences made false by `/docs-verify`, truth only
+
+Each is a truth edit under the maintainer's 2026-11-17 standing approval for DOC-D-G1, named in the pull request.
+
+- **G3, `references/specs-repo-git.md` §3.1.** `/docs-verify` joins the commands for which the specs repository holds only bookkeeping, which run on with `$SPECS_PATH` unset — the sentence ends "Those three classes are every caller of this entry point".
+- **G4, `references/phase-handoff.md` §5 rule 2.** On a specs tree that is no git repository, `/docs-workflows:docs-verify` refuses there, as `/docs-workflows:docs-write` does, the backlog unit that cites a gated deliverable. `reference-parts/phase-handoff/require-on-main.md` is regenerated.
+- **G1 and G2, the repository's `.claude/rules/workflows-core-git.md`** (not shipped in any plugin): `commit-artifacts` is consumed by thirty-seven commands of the family's forty, seven of `docs-workflows`' nine, its recipe returning the same thirty-seven; and twenty of the thirty-seven resolve or run inside an implementation repository, ten of them also resolving for docs grounding.
 
 ## [1.100.6] — 2026-11-27
 

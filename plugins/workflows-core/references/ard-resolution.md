@@ -41,7 +41,8 @@ convention live in ONE place.
    `/product-workflows:brd-intake --sort-existing` writes, never an ARD: `/product-workflows:create-ard`
    Phase 0 step 4), read off a line of that listing that is, whole,
    `<folder>/` followed by one path component, or off the working tree's listing of the folder's
-   files, `(cd "$SPECS_PATH" && find "./<folder>" -mindepth 1 -maxdepth 1 -type f) 2>/dev/null | LC_ALL=C sort`.
+   files, `(cd "$SPECS_PATH" && find "./<folder>" -mindepth 1 -maxdepth 1 -type f -print0) 2>/dev/null | LC_ALL=C sort -z | tr '\n\0' '?\n'`,
+   `addressing.md` §2's listing of a folder's files, a line feed inside a name printed as `?`.
    A name of the second kind is held to `addressing.md` §2's class of a folder's name before any
    command is built from it, `require-on-main`'s and every read below among them: checked as text
    for a `'`, then handed, as one single-quoted argument, to that section's `python3 -I -c`

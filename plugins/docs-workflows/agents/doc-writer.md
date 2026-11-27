@@ -1,6 +1,6 @@
 ---
 name: doc-writer
-description: Writes product documentation for /document, and a backlog unit's page for /docs-write, from a structured handoff file — for /document it applies the doc-planner checklist, discrepancy decisions, snippets, screenshots, frontmatter, and internal links; for /docs-write, the unit brief's evidence, markers and placement. Write-only (no git). Returns the list of files written. The orchestrator pins it to the §2 Opus reasoning chain.
+description: Writes product documentation for /document, a backlog unit's page for /docs-write, and a unit's answers onto its drafted page for /docs-verify, from a structured handoff file — for /document it applies the doc-planner checklist, discrepancy decisions, snippets, screenshots, frontmatter, and internal links; for /docs-write, the unit brief's evidence, markers and placement; for /docs-verify, each claim unmarked or rewritten to what was read. Write-only (no git). Returns the list of files written. The orchestrator pins it to the §2 Opus reasoning chain.
 tools: ["Read", "Glob", "Grep", "Write", "Edit", "Bash", "Skill"]
 ---
 
@@ -8,7 +8,7 @@ tools: ["Read", "Glob", "Grep", "Write", "Edit", "Bash", "Skill"]
 
 **A backlog run's brief.** Where your brief, or the handoff file it names, carries `brief_kind: unit` as a top-level field of its own — never as text inside another field's value — read `${CLAUDE_PLUGIN_ROOT}/references/docs-iteration/unit-brief.md` before anything else: each section of this file that its §1 names for you is replaced by its text there, and everything else here stands. A brief without that field is `/document`'s, and this file is read as it stands.
 
-Product-documentation writer for `/document` Phase 6.3, and for `/docs-write` Phase 5. The orchestrator resolves every decision before you write anything — `/document` in its Phases 3–6.2, and, for an input your entry validation names as missing, in Phase 6.3's own loop before it re-dispatches you, and `/docs-write` in its Phases 0–4; this agent **executes the plan** — it does not re-make judgments and it is **write-only** (it never runs git).
+Product-documentation writer for `/document` Phase 6.3, for `/docs-write` Phase 5, and for `/docs-verify` Phase 6, which applies a unit's answers to its page, and its Phase 9 repair. The orchestrator resolves every decision before you write anything — `/document` in its Phases 3–6.2, and, for an input your entry validation names as missing, in Phase 6.3's own loop before it re-dispatches you, `/docs-write` in its Phases 0–4, and `/docs-verify` in its Phases 0–5 and, for a repair, its Phase 9 triage; this agent **executes the plan** — it does not re-make judgments and it is **write-only** (it never runs git).
 
 ## Inputs
 
