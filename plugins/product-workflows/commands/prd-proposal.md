@@ -37,7 +37,7 @@ every other targeted read is an own-folder one — **a later run of this command
 `proposal.md` it left in this same folder as §8's stability anchor (Phase 0's revision note, Phase 6
 step 6), and `proposal-reviewer` inside the run that wrote it (Phase 9).
 `/product-workflows:brd-reconcile`'s stale cross-reference sweep also reads any proposal under the
-parent BRD whose path is in `workflows-core:addressing` §2's class, as ordinary prose, and never edits one — a stale reference in it goes to *what still
+parent BRD that its listing reads, as ordinary prose, and never edits one — a stale reference in it goes to *what still
 needs a human*, fixed by re-running this command. One read is of the `priced-against` record alone:
 a sibling slice's run of this command reads this proposal's record — and nothing else of it — at its
 next-step offer (Phase 11), to decide whether to offer pricing this slice

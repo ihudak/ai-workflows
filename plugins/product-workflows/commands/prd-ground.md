@@ -1707,22 +1707,31 @@ def ok(name):  # workflows-core:addressing §2's class, on a name's bytes read a
     except UnicodeError:
         return False
     return n != "" and ".." not in n and (n[0] == "_" or n[0].isalnum()) and all(c.isalnum() or c in "._@+-" or unicodedata.category(c).startswith("M") for c in n)
-def printable(b):  # UTF-8 holding no control character (Cc, U+2028, U+2029), so it can neither end its line nor begin another
+def printable(b):  # UTF-8 holding no control or format character (Cc, Cf, U+2028, U+2029), so it can neither end its line, begin another, nor reorder what is shown
     try:
-        return not any(unicodedata.category(c) == "Cc" or c in "  " for c in b.decode("utf-8"))
+        return not any(unicodedata.category(c) in ("Cc", "Cf") or c in "  " for c in b.decode("utf-8"))
     except UnicodeError:
         return False
 def out(*parts):  # one line, written as bytes whatever the locale
     sys.stdout.buffer.write(b" ".join(p if isinstance(p, bytes) else p.encode() for p in parts) + b"\n")
-def regular(top):  # every regular file at or below top, no symbolic link followed, as (its path relative to top, its path)
-    found = []
-    for root, subdirs, names in os.walk(top):
-        subdirs.sort()
-        for name in sorted(names):
-            p = os.path.join(root, name)
+def realdir(path):  # a directory, and no symbolic link to one
+    try:
+        return stat.S_ISDIR(os.lstat(path).st_mode)
+    except OSError:
+        return False
+def regular(top):  # every regular file at or below the directory top, as (its path relative to top, its path): walked with a stack, never by recursion, and no symbolic link followed
+    found, stack = [], [top]
+    while stack:
+        try:
+            entries = sorted(os.scandir(stack.pop()), key=lambda e: e.name)
+        except OSError:
+            continue
+        for e in entries:
             try:
-                if stat.S_ISREG(os.lstat(p).st_mode):
-                    found.append((os.path.relpath(p, top), p))
+                if e.is_dir(follow_symlinks=False):
+                    stack.append(e.path)
+                elif e.is_file(follow_symlinks=False):
+                    found.append((os.path.relpath(e.path, top), e.path))
             except OSError:
                 pass
     return found
@@ -1743,24 +1752,18 @@ def digest(path):  # the SHA-256 of a regular file, opened without waiting on a 
             return None
 folder, mode = os.fsencode(sys.argv[1]).rstrip(b"/"), sys.argv[2]
 design = os.path.join(folder, b"design")
-try:  # design/'s directories, no symbolic link, byte-wise: the order workflows-core:addressing §2's listing of a folder's folders prints them in
-    names = sorted(e.name for e in os.scandir(design) if e.is_dir(follow_symlinks=False)) if stat.S_ISDIR(os.lstat(design).st_mode) else None
-except FileNotFoundError:
-    names = None
-except OSError:
-    names = False
+names = None  # design/'s directories, no symbolic link, byte-wise: the order workflows-core:addressing §2's listing of a folder's folders prints them in
+if realdir(design):
+    try:
+        names = sorted(e.name for e in os.scandir(design) if e.is_dir(follow_symlinks=False))
+    except OSError:
+        names = False
 if mode == "sets":
-    if names is None:
-        out("status: none")
-    elif names is False:
-        out("status: unreadable")
-    else:
-        out("status: listed")
-        for n, name in enumerate(names, 1):
-            if ok(name):
-                out(b"set", name)  # in the class, so printable
-            else:
-                out("refused", str(n))
+    for n, name in enumerate(names or [], 1):
+        if ok(name):
+            out(b"set", name)  # in the class, so printable
+        else:
+            out("refused", str(n))
 elif mode == "held":  # each frame under the parent's brd/source/ and brd/source-external/, held where a file of a set in the class has its SHA-256
     sets = set()
     for name in names or []:
@@ -1771,31 +1774,44 @@ elif mode == "held":  # each frame under the parent's brd/source/ and brd/source
                     sets.add(d)
     brd = os.path.join(os.path.dirname(folder), b"brd")
     for top in (b"source", b"source-external"):
-        for rel, p in regular(os.path.join(brd, top)):
-            path = os.path.join(top, rel)
-            if path.lower().endswith(FRAME) and printable(path):
-                d = digest(p)
-                out(b"held" if d and d in sets else b"not-held", path)
+        if realdir(brd) and realdir(os.path.join(brd, top)):
+            for rel, p in regular(os.path.join(brd, top)):
+                path = os.path.join(top, rel)
+                if path.lower().endswith(FRAME) and printable(path):
+                    d = digest(p)
+                    out(b"held" if d and d in sets else b"not-held", path)
+out("status: " + ("none" if names is None else "unreadable" if names is False else "listed"))
 EOF
 ```
 
 `<BRD-dir>` is the resolved folder, double-quoted as §2 says a path built from folder names stays,
-and the mode is `sets` or `held`. **`sets`** prints `status: none` where `design/` is not a
-directory — a symbolic link is none — `status: unreadable` where it cannot be listed, and otherwise
-`status: listed`, then one line per subdirectory in the order §2's listing of `design/`'s folders
-prints them: `set <name>` for a name in the class, a frame set this run may read, and `refused <n>`
-for one outside it, `<n>` its place in that listing. **A refused set is read by no step of this
+and the mode is `sets` or `held`. **Each ends with one terminal line**: `status: listed`,
+`status: none` where `design/` is not a directory — a symbolic link is none — or
+`status: unreadable` where it cannot be listed. **`sets`** prints, before it, one line per
+subdirectory in the order §2's listing of `design/`'s folders prints them: `set <name>` for a name
+in the class, a frame set this run may read, and `refused <n>` for one outside it, `<n>` its place
+in that listing. **The program has read `design/` only where it exits 0 and its last line is one
+of those three**: any other outcome — no output, a non-zero exit, as where no `python3` runs, or a
+last line that is no `status:` line — is read as `status: unreadable`, and nothing it printed is
+taken for the whole. **A refused set is read by no step of this
 run** — nothing is dispatched on it, listed, hashed or captured, and no command or file names it by
 its name: Phase 8's census records it `refused: name` by its position, and Phase 10 and the Final
 report name it by its position, `entry <n> of the checkout's listing of <P>'s folders`, `<P>` the
 `design/` folder's path relative to `$SPECS_PATH`, with the remedy §2's *A folder refused by its
-name* gives. A `status: unreadable` is read by every step as a `design/` holding no set, and the
-Final report says that `design/` could not be listed. **`held`** is Phase 8's held-image test: it
+name* gives. **A `status: unreadable` is read by every step as a `design/` none of whose sets can
+be read**: no set is dispatched on, listed, captured or placed; Phase 8's census says the folder
+could not be listed; Phase 10 presents the repair arrays; and the Final report says that `design/`
+could not be listed. **`held`** is Phase 8's held-image test: it
 prints, for each regular file carrying a frame extension under the parent's `brd/source/` and
 `brd/source-external/`, `held <path>` where a file some set in the class holds has its SHA-256 and
 `not-held <path>` otherwise or where it cannot be read, `<path>` relative to the parent's `brd/` and
-printed only where it holds no control character and is UTF-8. It reads every file itself, so no
-command is built from a captured file's name or from a name inside a set.
+printed only where it is UTF-8 and holds no control or format character — `Cc`, `Cf`, U+2028 or
+U+2029, the characters §2's class shuts out for the same reason. It walks every folder with a stack,
+never by recursion, and follows no symbolic link: a `brd/`, `brd/source/` or `brd/source-external/`
+that is one is not walked, nor is one inside a set. It reads every file itself, so no
+command is built from a captured file's name or from a name inside a set. **Where `held` has not
+read `design/`** — its outcome read as `status: unreadable` above — no image can be shown held, and
+each is named as not shown held because the frame sets could not be read.
 
 **Then `design-grounder`, unless `--no-design`.** Run *The frame sets on disk* (`sets`); each `set`
 line names a candidate exported frame set. The location and the index requirement are
@@ -2883,7 +2899,7 @@ The object holds:
 - `inputs_read` — every file *Record what the run reads* (Phase 0 step 4) has noted: Phase 9's.
 - `body_facts` — Phase 9's, as it states them.
 - `frame_sets` — each row of the `## Frame sets covered` section this phase wrote, with a stale
-  set's index path, and `images` — every customer image no frame set holds, with the `[BR#n]`
+  set's index path, or its line saying `design/` could not be listed, and `images` — every customer image no frame set holds, with the `[BR#n]`
   citing it: Phase 10's frame-set test and the lines above its array.
 - `undecided` — Phase 4's undecided prerequisites, by key: Phase 10's prerequisite test.
 - `confirmed` — on `route: idea`, Phase 10's `<N>`, counted from the findings this phase wrote.
@@ -3051,8 +3067,9 @@ tests that follow.
 **That offer carries two qualifying tests, and this run holds the answer to both.** **The
 frame-set test picks the next step.** `/brd-split`'s
 Phase 0 step 7, test b stops on any `design/` subdirectory this run recorded `skipped: no index`,
-`skipped: stale index` or `refused: name`, and on any it could not cover. So where Phase 8's `## Frame sets covered`
-section carries such a row, present one of the **last four** arrays below in place of the first
+`skipped: stale index` or `refused: name`, on any it could not cover, and on a `design/` it cannot
+list. So where Phase 8's `## Frame sets covered` section carries such a row, or says that `design/`
+could not be listed, present one of the **last six** arrays below in place of the first
 two: `/brd-split` would refuse the key just ground, so an array recommending it is not the array to
 show. They offer the repair that stop itself names, and name `/brd-split` nowhere in their options,
 since no half of that repair has run yet; the prose above the arrays still says where it sits in
@@ -3062,14 +3079,16 @@ and missing from the census, takes the third or fourth array: `/workflows-core:f
 writes the missing index, after which a `--no-code` re-run of this command reconciles the set. A set
 recorded `skipped: stale index`, where no such set, nor one recorded `refused: name`, stands beside it, takes the fifth or sixth:
 `/frames` writes nothing over a set whose frames are gone (Phase 5), so the repair is restoring the
-frames and re-running this command with `--no-code`. Where a stale set stands beside one that
-takes the third or fourth array — one with no index, one missing from the census, or one recorded
-`refused: name` (below) — that array is presented, and the stale sets are named above it with their own repair, each by its index
-path. **A set recorded `refused: name` takes the third or fourth array too**, whatever stands
-beside it: renamed into `workflows-core:addressing` §2's class, it is a set `/workflows-core:frames`
-indexes — `/frames` indexes none outside the class — and this command then grounds. Each such set is named
-above the array by its position, with §2's remedy, as *The frame sets on disk* (Phase 5) says,
-before the array's own repair. **Above whichever array is presented, print every customer image Phase 8 found no frame set
+frames and re-running this command with `--no-code`. **A set recorded `refused: name`, or a census
+saying `design/` could not be listed, takes the seventh or eighth array** where no set with no index
+and none missing from the census stands beside it: `/workflows-core:frames` indexes no set named
+outside `workflows-core:addressing` §2's class and lists nothing in a `design/` it cannot read, so
+the repair is the rename, or making the folder readable, before `/frames` and a `--no-code` re-run;
+where such a set does stand beside it, the third or fourth array is presented, and each refused set
+is named above it by its position, with §2's remedy, as *The frame sets on disk* (Phase 5) says.
+Where a stale set stands beside one that takes the third, fourth, seventh or eighth array, that
+array is presented, and the stale sets are named above it with their own repair, each by its index
+path. **Above whichever array is presented, print every customer image Phase 8 found no frame set
 holds**, each with the `[BR#n]` citing it and its route — a report, which selects no array. **The prerequisite test picks whether the array offers *Decide a prerequisite
 first*.** It does only where Phase 4's set of undecided prerequisites holds at least one — a declared
 prerequisite slice whose report does not read `decisions frozen`. Grounding a prerequisite would not
@@ -3118,7 +3137,7 @@ makes this slice PRD-eligible
 (`${CLAUDE_PLUGIN_ROOT}/references/coverage-ledger-format.md` §5), so it is a real next step, not a
 formality.
 
-No frame set left unreconciled — every one on disk recorded `ground` or `skipped: --no-design`, or `design/` holds none — and no undecided prerequisite (Phase 4):
+No frame set left unreconciled — every one on disk recorded `ground` or `skipped: --no-design`, or `design/` holds none, and the census does not say `design/` could not be listed — and no undecided prerequisite (Phase 4):
 ```
 choices: ["Allocate this slice's ledger — /product-workflows:brd-split <BRD-KEY> (Recommended — allocate-only, so no child is created) <merge-clause>", "Stop here"]
 ```
@@ -3128,25 +3147,42 @@ No frame set left unreconciled, and at least one undecided prerequisite:
 choices: ["Allocate this slice's ledger — /product-workflows:brd-split <BRD-KEY> (Recommended — allocate-only, so no child is created) <merge-clause>", "Decide a prerequisite first — prints the brd-interview command for <PREREQ-KEY>[, <PREREQ-KEY> …] (its frozen decisions are what move this slice's horizons)", "Stop here"]
 ```
 
-At least one frame set recorded `skipped: no index` or `refused: name`, or on disk and missing from Phase 8's census — and no undecided prerequisite:
+At least one frame set recorded `skipped: no index`, or on disk and missing from Phase 8's census — and no undecided prerequisite:
 ```
 choices: ["Write the missing frame-set index — /workflows-core:frames <BRD-KEY> (Recommended — nothing can reconcile a frame set that has no index; re-ground it here with --no-code afterwards)", "Stop here"]
 ```
 
-At least one frame set recorded `skipped: no index` or `refused: name`, or on disk and missing from Phase 8's census, and at least one undecided prerequisite:
+At least one frame set recorded `skipped: no index`, or on disk and missing from Phase 8's census, and at least one undecided prerequisite:
 ```
 choices: ["Write the missing frame-set index — /workflows-core:frames <BRD-KEY> (Recommended — nothing can reconcile a frame set that has no index; re-ground it here with --no-code afterwards)", "Decide a prerequisite first — prints the brd-interview command for <PREREQ-KEY>[, <PREREQ-KEY> …] (its frozen decisions are what move this slice's horizons)", "Stop here"]
 ```
 
-At least one frame set recorded `skipped: stale index`, none recorded `skipped: no index` or `refused: name` or missing from Phase 8's census — and no undecided prerequisite:
+At least one frame set recorded `skipped: stale index`, none recorded `skipped: no index` or `refused: name` or missing from Phase 8's census, and the census does not say `design/` could not be listed — and no undecided prerequisite:
 ```
 choices: ["Restore the missing frames, then re-ground the set — /product-workflows:prd-ground <BRD-KEY> --no-code (Recommended — its index is intact and its frames are gone, so /workflows-core:frames would write nothing; run it only if the set changed while they were away)", "Stop here"]
 ```
 
-At least one frame set recorded `skipped: stale index`, none recorded `skipped: no index` or `refused: name` or missing from Phase 8's census, and at least one undecided prerequisite:
+At least one frame set recorded `skipped: stale index`, none recorded `skipped: no index` or `refused: name` or missing from Phase 8's census, and the census does not say `design/` could not be listed, and at least one undecided prerequisite:
 ```
 choices: ["Restore the missing frames, then re-ground the set — /product-workflows:prd-ground <BRD-KEY> --no-code (Recommended — its index is intact and its frames are gone, so /workflows-core:frames would write nothing; run it only if the set changed while they were away)", "Decide a prerequisite first — prints the brd-interview command for <PREREQ-KEY>[, <PREREQ-KEY> …] (its frozen decisions are what move this slice's horizons)", "Stop here"]
 ```
+
+At least one frame set recorded `refused: name`, or a census saying `design/` could not be listed, and none recorded `skipped: no index` or missing from Phase 8's census — and no undecided prerequisite:
+```
+choices: ["Repair the frame sets nothing can read — prints each, with its repair (Recommended — /workflows-core:frames and this command read no set named outside the folder-name class, nor any set in a design/ that cannot be listed; once each is repaired, index it and re-ground it here with --no-code)", "Stop here"]
+```
+
+At least one frame set recorded `refused: name`, or a census saying `design/` could not be listed, and none recorded `skipped: no index` or missing from Phase 8's census, and at least one undecided prerequisite:
+```
+choices: ["Repair the frame sets nothing can read — prints each, with its repair (Recommended — /workflows-core:frames and this command read no set named outside the folder-name class, nor any set in a design/ that cannot be listed; once each is repaired, index it and re-ground it here with --no-code)", "Decide a prerequisite first — prints the brd-interview command for <PREREQ-KEY>[, <PREREQ-KEY> …] (its frozen decisions are what move this slice's horizons)", "Stop here"]
+```
+
+**On *Repair the frame sets nothing can read* the run prints, and runs nothing**: one line per set
+recorded `refused: name`, by its position, with `workflows-core:addressing` §2's remedy — or, for a
+`design/` that could not be listed, `<BRD-dir>/design/ could not be listed — make it readable` —
+then `/workflows-core:frames <BRD-KEY>`, which indexes a renamed set that carries no index, and
+`/product-workflows:prd-ground <BRD-KEY> --no-code`, which grounds it; and Phase 11 then ends the
+run. Neither command runs here, as *Decide a prerequisite first* runs none.
 
 ### Context hygiene
 

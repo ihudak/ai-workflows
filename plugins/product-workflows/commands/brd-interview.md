@@ -1208,7 +1208,11 @@ finding on file that passes all four of these tests against it —
    **Every set the placement reads is named in `workflows-core:addressing` §2's class**: list
    `<BRD-dir>/design/`'s immediate subdirectories as §2's listing of a folder's folders does, `<P>`
    the `design/` folder's path, and hold each name to that class before any command is built from
-   it — checked as text for a `'`, then with that section's program. A set named outside it is
+   it — checked as text for a `'`, then with that section's program — the listing run as §2's *A
+   folder that cannot be listed is never an empty one* says. **A `design/` that cannot be listed
+   stops the run**, since a set it cannot read may be the one a finding belongs to:
+   `BRD_INTERVIEW_DESIGN_UNREADABLE: <BRD-KEY>'s design/ folder could not be listed, so this run cannot tell which frame set a design finding belongs to, nor whether a superseded one has a successor, and wrote nothing. Make it readable, then re-run.`
+   A set named outside the class is
    read nowhere, as `/product-workflows:prd-ground`'s own placement reads none, so it places no
    finding; name it in the Final report by its position, with its remedy, as §2's *A folder refused
    by its name* gives them, as a set this run did not read.

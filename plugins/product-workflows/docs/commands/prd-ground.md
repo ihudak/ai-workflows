@@ -135,7 +135,8 @@ and there it is **optional and ungated**: nothing in [`/create-ard`](create-ard.
   folder-name class every folder name the family reads is held to — letters, digits and combining
   marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..`: the run reads a set
   named outside it nowhere, and names it by its position in a listing of **design/**'s folders, with
-  the advice to rename it, never by its name.
+  the advice to rename it, never by its name. A design/ folder that cannot be listed is read as
+  one whose sets nothing can read, never as an empty one, and the run says so.
 - **`--no-docs`** (optional) — turn documentation grounding off for this run.
 - **`--docs <path>`** (optional) — point documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`. The flag and its value are stripped together before the address is parsed.
 - **`--rebaseline`** (optional) — re-run grounding against code that has moved since the last
@@ -640,7 +641,9 @@ slice holding a design frame set the run could not reconcile, which `/brd-split`
 offer recommends `/workflows-core:frames` — which ships in the companion plugin — to write the
 missing index, and a `--no-code` re-run here to ground the set, before `/brd-split` can be taken at
 all, naming first, by its position, any set it read nowhere because its folder name is outside the
-folder-name class, to be renamed before `/frames` can index it; where the set's index is intact and its frames are gone, it recommends restoring them and the
+folder-name class, to be renamed before `/frames` can index it; where no set lacks an index and the
+blocker is such a set, or a design/ folder that cannot be listed, it recommends that repair itself —
+the rename, or making the folder readable — before `/frames` and the re-run; where the set's index is intact and its frames are gone, it recommends restoring them and the
 `--no-code` re-run instead, since `/frames` writes nothing over an empty set. Above the offer, the run
 names every image in the parent's captured source that a row of this slice cites and no frame set
 holds, with the route that grounds it — a report only.
@@ -676,8 +679,9 @@ Phase 10's offer depends on the route, and nothing is run for you. An offer mark
 **On the BRD route** (always a slice):
 
 - **No frame set left unreconciled** → [`/brd-split <BRD-KEY>`](brd-split.md) (recommended), after the merge. It runs `allocate-only` on a slice, so no child is created. [`/brd-interview`](brd-interview.md) comes after it and is offered by `/brd-split`, not here.
-- **A frame set with no index, one named outside the folder-name class, or one on disk and missing from the census** → `/workflows-core:frames <BRD-KEY>` (recommended), from the companion `workflows-core` plugin, to write the index, then a `--no-code` re-run of this command. A set named outside the class is named above the offer by its position, with the advice to rename it first: `/frames` indexes no such set. `/brd-split` is not offered: it would refuse the slice.
-- **A frame set whose index is intact but whose frames are gone, and no set lacks an index, is named outside the class or is missing from the census** → restore the frames, then `/prd-ground <BRD-KEY> --no-code` (recommended). Where a set of the line above stands beside it, the `/workflows-core:frames` offer above is shown instead, with each set whose frames are gone named above it, by its index path, with this repair.
+- **A frame set with no index, or one on disk and missing from the census** → `/workflows-core:frames <BRD-KEY>` (recommended), from the companion `workflows-core` plugin, to write the index, then a `--no-code` re-run of this command. Any set named outside the folder-name class is named above the offer by its position, with the advice to rename it first: `/frames` indexes no such set. `/brd-split` is not offered: it would refuse the slice.
+- **A frame set named outside the folder-name class, or a design/ folder that cannot be listed, and no set lacking an index or missing from the census** → *Repair the frame sets nothing can read* (recommended), which prints each such set by its position with the advice to rename it — or says to make design/ readable — then `/workflows-core:frames <BRD-KEY>` and a `--no-code` re-run, and runs nothing.
+- **A frame set whose index is intact but whose frames are gone, and no set of the two lines above** → restore the frames, then `/prd-ground <BRD-KEY> --no-code` (recommended). Where a set of either line above stands beside it, that line's offer is shown instead, with each set whose frames are gone named above it, by its index path, with this repair.
 - **A declared prerequisite slice whose decisions are not frozen yet** → *Decide a prerequisite first* beside the options above. It prints `/brd-interview <PREREQ-KEY>` for each such slice and a re-run of this command once its decisions are frozen, and runs nothing.
 
 Above any of these lists, the run names every customer image a row of this slice cites that no frame set holds — a copy only a set named outside the folder-name class holds counting as none, since nothing reads that set — a report only.

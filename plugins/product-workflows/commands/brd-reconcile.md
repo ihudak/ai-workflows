@@ -502,16 +502,70 @@ write would re-ask a question already answered.
    on no other run: a review that came back as a file came with no pull request, and where step 6's
    gate returned `unmanaged` there is no history to read. Take `M`, the commit that brought the review
    onto `<default-ref>` — `git -C "$SPECS_PATH" log --first-parent -m --diff-filter=A -1 --format=%H <default-ref> -- "<path>"`
-   — and list everything it changed in this folder save the review: every entry of
-   `git -C "$SPECS_PATH" diff -z --relative --name-status --no-renames <M>^1 <M> -- <BRD-dir>/`
-   whose path is not named exactly `<BRD-KEY> Customer Review <YYYYMMDD>.md`, each with the commits
-   that changed it (`git -C "$SPECS_PATH" log --format='%h %an %s' <M>^1..<M> -- "<file>"` — under a
-   merge-commit merge `M`'s own author is whoever merged it, not who made the change).
+   — and list everything it changed in this folder save the review, each file with the commits that
+   changed it — under a merge-commit merge `M`'s own author is whoever merged it, not who made the
+   change — and where it stands on `<default-ref>` now: **restored since** where it is as it was
+   before the pull request, **unchanged since the pull request** where it is as the pull request
+   left it, and **changed again since** otherwise. **Those files are named by the customer's pull
+   request**, an outside party's, so no command is built from one: this program makes every git
+   read itself, each name handed to git as data in an argument list, no shell between, and as a
+   literal pathspec, so a `$(`, a quote or a `*` in a name is only a name:
 
-   Beside each listed file, say where it stands on `<default-ref>` now: **restored since** where
-   `git -C "$SPECS_PATH" diff --quiet <M>^1 <default-ref> -- "<file>"` succeeds, **unchanged since
-   the pull request** where `git -C "$SPECS_PATH" diff --quiet <M> <default-ref> -- "<file>"` does, and
-   **changed again since** otherwise.
+```bash
+python3 -I - "$SPECS_PATH" '<M>' "<folder>" '<default-ref>' '<BRD-KEY>' <<'EOF'
+import os, re, subprocess, sys, unicodedata
+KEY = re.compile(r"[A-Z][A-Z0-9_]*(-[0-9]+)+")  # workflows-core:addressing §1's grammar
+def printable(b):  # UTF-8 holding no control or format character (Cc, Cf, U+2028, U+2029)
+    try:
+        return not any(unicodedata.category(c) in ("Cc", "Cf") or c in "  " for c in b.decode("utf-8"))
+    except UnicodeError:
+        return False
+def out(*parts):  # one line, written as bytes whatever the locale
+    sys.stdout.buffer.write(b" ".join(p if isinstance(p, bytes) else p.encode() for p in parts) + b"\n")
+def git(*args):  # git run with its arguments as a list, no shell, every path a literal pathspec
+    return subprocess.run(["git", "--literal-pathspecs", "-C", specs, *args], capture_output=True)
+specs, m, folder, ref, key = sys.argv[1:6]
+if not re.fullmatch(r"[0-9a-f]{40}", m) or not KEY.fullmatch(key):
+    out("status: invalid")  # a value the program does not take: nothing is read
+    sys.exit(0)
+listed = git("diff", "-z", "--relative", "--name-status", "--no-renames", m + "^1", m, "--", folder.rstrip("/") + "/")
+if listed.returncode != 0:
+    out("status: failed diff")
+    sys.exit(0)
+fields = listed.stdout.split(b"\0")[:-1]  # a status, then its path, NUL-separated
+review = re.compile(re.escape(key).encode() + rb" Customer Review [0-9]{8}\.md")
+n = 0
+for change, path in zip(fields[0::2], fields[1::2]):
+    if review.fullmatch(os.path.basename(path)):
+        continue
+    n += 1
+    log = git("log", "--format=%h%x00%an%x00%s", m + "^1.." + m, "--", path)
+    since_base = git("diff", "--quiet", m + "^1", ref, "--", path)
+    since_pr = git("diff", "--quiet", m, ref, "--", path)
+    if log.returncode != 0 or since_base.returncode not in (0, 1) or since_pr.returncode not in (0, 1):
+        out("status: failed entry", str(n))
+        sys.exit(0)
+    out("entry", str(n), change)
+    out(b"path", path) if printable(path) else out("path-unprintable")
+    for line in log.stdout.splitlines():
+        h, _, rest = line.partition(b"\0")
+        rest = rest.replace(b"\0", b" ")
+        out(b"commit", h, rest) if printable(rest) else out(b"commit", h)
+    out("now", "restored since" if since_base.returncode == 0 else "unchanged since the pull request" if since_pr.returncode == 0 else "changed again since")
+out("status: listed", str(n))
+EOF
+```
+
+   `<M>` is the full commit id the command above printed, `<folder>` this folder's path relative to
+   `$SPECS_PATH`, every component in `workflows-core:addressing` §2's class (§3), and `<BRD-KEY>`
+   the run's key. For each file the diff `-z --name-status --no-renames <M>^1 <M>` lists in the
+   folder, save one named exactly `<BRD-KEY> Customer Review <YYYYMMDD>.md`, it prints
+   `entry <n> <status>`; `path <path>`, relative to `$SPECS_PATH`, only where the path is UTF-8 and
+   holds no control or format character (`Cc`, `Cf`, U+2028, U+2029), else `path-unprintable`, the
+   file then named by its `<n>` alone; one `commit <hash> <author> <subject>` line for each commit of
+   `<M>^1..<M>` that changed it, the author and subject left off where they are not printable; and
+   `now` with its state. Its last line is `status: listed <count>`. Each path is shown to the
+   operator as text and read, where anything reads it, with the Read tool, never in a shell command.
 
    **The run reports this list and decides nothing.** The delivery note asked the pull request to add
    the review and change nothing else, so whatever is listed is something changed in the delivery
@@ -524,10 +578,12 @@ write would re-ask a question already answered.
    says what it could not see**, every time: it covers this slice's folder alone, never the parent's
    files or a sibling's; and **where `M` has one parent** — a squash, a fast-forward, or a pull
    request rebased onto the branch — it is that commit's change alone, so an earlier commit of the
-   same pull request is not in it. **Where any of this step's commands fails** — exits with git's
-   error status, never `diff --quiet`'s 1, which only says the file differs — `M` or `<M>^1` not
-   resolving in a shallow clone, say — say the list could not be made, and why, and ask the same
-   array. The reconciliation record and the final report repeat the list, with each file's state, or
+   same pull request is not in it. **Where the list cannot be made** — the command finding `M`
+   exits with git's error status, or the program prints `status: failed` (a git read inside it
+   exited with git's error status, never `diff --quiet`'s 1, which only says the file differs),
+   `status: invalid`, exits non-zero, or ends on no `status:` line: `M` or `<M>^1` not resolving in
+   a shallow clone, say, or no `python3` — say the list could not be made, and why, and ask the same
+   array; never take what the program printed before it stopped for the whole list. The reconciliation record and the final report repeat the list, with each file's state, or
    that it was empty or could not be made, and its limits.
 6c. **Settle the parent's defect log before any answer is confirmed.** The *Resolve the defects the
    review settled* phase writes this run's defect resolutions into the parent's
@@ -2673,67 +2729,132 @@ too. Any other is put again.
 root bounds everything here except search 1's literal-id pass, which also reads the previous phase's
 already-resolved dependent set (below). The root is the
 source-owning BRD's directory and every slice inside it — so that a *sibling* slice still asserting a
-superseded position is reached. Every markdown file under it that *The sweep's listing* (below)
-names is in scope:
+superseded position is reached. Every markdown file under it for which *The sweep's listing*
+(below) prints a `file` or a `captured` line is in scope:
 the seeds, `slices.md`, the inventory, the figures file, the ledger, the grounding files, every
 register, the code-defect log, every round record, every dated snapshot, every effort proposal and
 its brief with their archived revisions — a slice's and the umbrella's — and the customer's own
 captured files.
 
-**The sweep's listing.** A folder's or a file's name below the parent is read back from the tree —
-a captured file keeps the name it arrived with — so no command is built from one before it has
-passed `workflows-core:addressing` §2's class, and the scope is listed by this program, which walks
-the root itself and builds no command from any name it meets:
+**The sweep's listing.** A folder's or a file's name below the parent is read back from the tree,
+so the scope is listed by this program, which walks the root itself and builds no command from any
+name it meets. **A name the family writes is held to `workflows-core:addressing` §2's class**
+before anything names it. **A name under a customer folder is the customer's own** — under a
+`brd/source/` or `brd/source-external/` directly in a folder of the root, where a captured file
+keeps the name it arrived with, and in a `bundle-<YYYYMMDD>/` or `customer-sent-<YYYYMMDD>/`
+directly in one, whose files carry names made from those — so it holds spaces as a rule, and is held
+only to being printable instead: UTF-8, with no control or format character (`Cc`, `Cf`, U+2028,
+U+2029), the characters §2's class shuts out so that a name can neither break a line nor show as
+another. Such a name is read only with the Read or the Grep tool, never in a shell command:
 
 ```bash
 python3 -I - "$SPECS_PATH" "<P>" <<'EOF'
-import os, sys, unicodedata
+import os, re, sys, unicodedata
+RESERVED = {b"brd", b"grounding", b"interview", b"dev-workflows", b"design", b"attachments", b"revisions", b"Doc screenshots"}  # workflows-core:addressing §2's reserved names
+DATED = re.compile(rb"(bundle|customer-sent)-[0-9]{8}")  # the dated customer folders, reserved there too
 def ok(name):  # workflows-core:addressing §2's class, on a name's bytes read as UTF-8
     try:
         n = name.decode("utf-8")
     except UnicodeError:
         return False
     return n != "" and ".." not in n and (n[0] == "_" or n[0].isalnum()) and all(c.isalnum() or c in "._@+-" or unicodedata.category(c).startswith("M") for c in n)
+def printable(b):  # UTF-8 holding no control or format character (Cc, Cf, U+2028, U+2029)
+    try:
+        return not any(unicodedata.category(c) in ("Cc", "Cf") or c in "  " for c in b.decode("utf-8"))
+    except UnicodeError:
+        return False
 def out(*parts):  # one line, written as bytes whatever the locale
     sys.stdout.buffer.write(b" ".join(p if isinstance(p, bytes) else p.encode() for p in parts) + b"\n")
 specs, top = os.fsencode(sys.argv[1]).rstrip(b"/"), os.fsencode(sys.argv[2]).strip(b"/")
-def walk(rel):  # rel: a folder's path below $SPECS_PATH, every component of it in the class
+stack = [(top, "specs", 0)]  # (a folder's path below $SPECS_PATH, its kind, its depth below the parent's folder), walked with a stack, never by recursion
+while stack:
+    rel, kind, depth = stack.pop()
     try:
         entries = list(os.scandir(os.path.join(specs, rel)))
         folders = sorted(e.name for e in entries if e.is_dir(follow_symlinks=False))
         files = sorted(e.name for e in entries if e.is_file(follow_symlinks=False))
+        links = sorted(e.name for e in entries if e.is_symlink())
     except OSError:
-        out(b"unreadable", rel)
-        return
+        out(b"unreadable", rel)  # rel passed the test its kind takes, so it prints
+        continue
+    mine = kind != "customer"  # a name the family writes, held to the class; under a customer folder a name is the customer's own, held to printable
     for n, name in enumerate(files, 1):  # byte-wise: the order §2's listing of a folder's files prints them in
         if name.endswith(b".md"):
-            out(b"file", (rel + b"/" + name)[len(top) + 1:]) if ok(name) else out(b"name", str(n).encode(), rel)
+            if mine and ok(name):
+                out(b"file", (rel + b"/" + name)[len(top) + 1:])
+            elif not mine and printable(name):
+                out(b"captured", (rel + b"/" + name)[len(top) + 1:])
+            else:
+                out(b"name", str(n).encode(), rel)
+    for n, name in enumerate(links, 1):  # a symbolic link is followed nowhere, and named
+        out(b"link", str(n).encode(), rel)
+    children = []
     for n, name in enumerate(folders, 1):  # byte-wise: the order §2's listing of a folder's folders prints them in
-        if name == b"Doc screenshots":  # §2's one reserved name outside the class: a documentation page's staged images, no markdown file
+        if kind == "specs" and name == b"Doc screenshots":  # §2's one reserved name outside the class, directly in a specs folder: a documentation page's staged images, no markdown file
             continue
-        walk(rel + b"/" + name) if ok(name) else out(b"folder", str(n).encode(), rel)
-walk(top)
+        if mine and not ok(name) or not mine and not printable(name):
+            out(b"folder", str(n).encode(), rel)
+            continue
+        if kind == "customer" or kind == "specs" and DATED.fullmatch(name) or kind == "brd" and name in (b"source", b"source-external"):
+            child = "customer"
+        elif kind == "specs" and name == b"brd":
+            child = "brd"
+        elif kind == "specs" and depth < 2 and name not in RESERVED and not DATED.fullmatch(name):
+            child = "specs"
+        else:
+            child = "family"
+        children.append((rel + b"/" + name, child, depth + 1))
+    stack.extend(reversed(children))  # so the folders are walked in their listing's order
+out("status: done")
 EOF
 ```
 
 `<P>` is the parent's folder's path relative to `$SPECS_PATH` — the resolved slice's path there
 without its last component, every component of it in the class (§3) — double-quoted, as §2 says a
-path built from folder names stays. The program prints one line per entry it reports:
-`file <path>` for each file whose name ends `.md` and is in the class, under folders all in it,
-`<path>` relative to the parent's folder; `name <n> <Q>` for such a file named outside the class,
-`entry <n> of the checkout's listing of <Q>'s files` (§2, *A file refused by its name*);
-`folder <n> <Q>` for a folder named outside the class, which it does not enter,
-`entry <n> of the checkout's listing of <Q>'s folders` (§2, *A folder refused by its name*); and
-`unreadable <Q>` for a folder it could not list — `<Q>` each time a folder's path relative to
-`$SPECS_PATH`, in the class whole. It passes over a symbolic link, and `Doc screenshots/`, the one
-name §2 reserves outside the class, which holds a documentation page's staged images and no markdown
-file. **The scope is the `file` lines and nothing else**: both searches below read only those files,
-each named `"<the parent's folder>/<path>"` or read with the Read tool, and no other line's entry is
-read. **Every other line is passed over and named**, by its position or, for `unreadable`, its path:
-in the Final report's account of this sweep, and in the reconciliation record's *what still needs a human*, as a place
-this sweep did not read, for a person to read for the positions this run changed — a captured file
-under a name outside the class among them, whose name the customer's own links resolve, so it is
-read where it is rather than renamed.
+path built from folder names stays. **A folder of the root** is the parent's own, each folder
+directly in it but a reserved one (§2) and each directly in one of those, the three levels §3
+resolves. The program walks with a stack, never by recursion, and prints one line per entry it
+reports, then **`status: done` last**:
+
+- `file <path>` — a file whose name ends `.md` and is in the class, under folders all in it;
+- `captured <path>` — such a file under a customer folder, its name and every folder name between
+  that folder and it printable — `<path>` in both relative to the parent's folder;
+- `name <n> <Q>` — a markdown file named outside what its place takes: `entry <n> of the checkout's
+  listing of <Q>'s files` (§2, *A file refused by its name*);
+- `folder <n> <Q>` — a folder named so, which it does not enter: `entry <n> of the checkout's
+  listing of <Q>'s folders` (§2, *A folder refused by its name*);
+- `link <n> <Q>` — a symbolic link, which it follows nowhere: `entry <n> of the checkout's listing of
+  <Q>'s symbolic links`, `<n>` its place among the lines
+  `(cd "$SPECS_PATH" && find "./<Q>" -mindepth 1 -maxdepth 1 -type l -print0) 2>/dev/null | LC_ALL=C sort -z | tr '\n\0' '?\n'` prints, counted as §2 counts the other two;
+- `unreadable <Q>` — a folder it could not list.
+
+`<Q>` is each time a folder's path relative to `$SPECS_PATH`: in the class whole, or, under a
+customer folder, printable — text shown to a person, never a command's. It passes over unnamed only
+`Doc screenshots/` directly in a folder of the root, the one name §2 reserves outside the class,
+which holds a documentation page's staged images and no markdown file; a folder of that name
+anywhere else is named like any other. **The scope is the `file` and `captured` lines and nothing
+else**: both searches below read a `file` line's file by any means, named
+`"<the parent's folder>/<path>"`, and a `captured` line's only with the Read or the Grep tool, by
+that path, never in a shell command; no other line's entry is read. **Every other line is passed
+over and named**, by its position or, for `unreadable`, its path: in the Final report's account of
+this sweep, and in the reconciliation record's *what still needs a human*, as a place this sweep did
+not read, for a person to read for the positions this run changed.
+
+**The listing walked the root whole only where the program exits 0 and its last line is
+`status: done`.** Any other outcome — no output, a non-zero exit, as where no `python3` runs or a
+traceback cuts it short, or a last line that is not `status: done` — is a listing that did not
+finish: the searches read the `file` and `captured` lines it did print, and the parent's folder is
+named, in the Final report and in *what still needs a human*, as a tree this sweep could not walk
+whole, for a person to read — never what it printed taken for the whole.
+
+**Why a folder named outside the class is passed over here, where Phase 10 stops on one.** Since
+`workflows-core` 1.100.6 no command resolves a slice or an Epic folder named outside the class —
+`resolve-address` stops on it with `ADDRESS_FOLDER_NAME` — so nothing in one reaches a package or a
+build until a person renames it, and the record names it for that person; a stale position in it
+cannot ship unseen. A dependent Phase 10 cannot read is different: that phase writes dispositions
+into a dependent's register and records each it could not write, so that a re-run sweeps it again,
+and a dependent it never read would be left holding a superseded position with no such line —
+which is why that phase stops before writing anything.
 
 **Two searches, and the second is the one that matters.**
 
@@ -2980,9 +3101,9 @@ changed, why, which ids, and what still needs a human:
   that dependent's register is on the default branch; every `needs-a-human` hit, in prose, in a
   structured record or in an effort proposal, the last with the proposal re-run the stale
   cross-reference sweep names as its fix; every entry the stale cross-reference sweep's listing
-  passed over — a folder or a markdown file named outside `workflows-core:addressing` §2's class, by
-  its position, and a folder it could not list, by its path — as a place that sweep did not read,
-  for a person to read for the positions this run changed; every requirement the customer asked for that no `[BR#n]`
+  passed over — each `name`, `folder` and `link` line, by its position, and each `unreadable` line,
+  by its path — and, where that listing did not finish, the parent's folder, each as a place that
+  sweep did not read, for a person to read for the positions this run changed; every requirement the customer asked for that no `[BR#n]`
   covers; and every row the customer dropped that another BRD holds (*Resolve the defects the
   review settled*), with that BRD named; and every `duplicate` settled by keeping the part, with
   the obligations the kept row does not cover named; and every inventory row drawn from an image
@@ -3507,7 +3628,8 @@ sweep** — the changed-id set as fixed, and, per dependent it was carried for, 
 set carried in beside it; per dependent BRD, the `conditional_on` positions first, then the citing items, each with
 its disposition, plus every dependent recorded-not-written with its concrete state; **the
 stale cross-reference sweep** — the hit counts by outcome and every `needs-a-human` hit named,
-and every entry its listing passed over, by its position or path, or an explicit "none";
+and every entry its listing passed over, by its position or path, or an explicit "none", and
+whether that listing finished;
 **what still needs a human**, in full; the artifacts written, by path; the feedback path (or, under `--skip-feedback`, the `Session feedback: …` line) and cost path (or, under `--skip-costs`, the `Session cost: …` line);
 **both** `Phase handoff:` outcome lines — §4.1 counts one **per handoff offered** and this command
 offers two — **each labelled with the handoff it reports and neither printed bare**, as that

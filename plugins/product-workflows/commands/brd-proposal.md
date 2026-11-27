@@ -37,7 +37,7 @@ proposal**, and every targeted read of the umbrella this run writes is an own-fo
 run of this same command, reading its `priced-against` record to say whether it is current (Phase 2)
 and anchoring its re-estimate on it (§8), and `proposal-reviewer` inside this
 run (Phase 10); `/product-workflows:brd-reconcile`'s stale cross-reference sweep reads it only as
-prose, among every file under the parent whose path is in `workflows-core:addressing` §2's class,
+prose, among every file under the parent that its listing reads,
 and never edits it: `/create-ard`, `/specify`, `/epics`,
 `/dev-workflows:design`, `/dev-workflows:implement` and `/dev-workflows:ready` each resolve a slice
 folder and neither know nor care whether anything above it holds a proposal, and no readiness tier

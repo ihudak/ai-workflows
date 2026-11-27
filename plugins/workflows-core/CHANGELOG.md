@@ -7,14 +7,16 @@ A section headed `— Unreleased` has not been published yet; where more than on
 
 ## [1.100.7] — 2026-11-27
 
-**What changes for you.** A frame set whose folder name is outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — is read by no command of the family, and `grounding-format` §6.1 now says so for every reader of a `design/` folder. `addressing` §2 says how a caller names a file refused by its name: by its position in a listing of the folder holding it. Update with `product-workflows` 3.88.7 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.7 bullet).
+**What changes for you.** A frame set whose folder name is outside the folder-name class — letters, digits and combining marks of any script and `. _ @ + -`, first a letter, a digit or `_`, no `..` — is read by no command that lists a `design/` folder's frame sets, and `grounding-format` §6.1 now says so for each of them; `/product-workflows:brd-package`, which copies the frames its bundled documents name and lists no `design/` folder, is not one of them. `addressing` §2's listings of the checkout keep every folder's and file's position true when a name holds a line feed, say how a caller names a file refused by its name, and say how a caller tells a folder it cannot list from an empty one. Update with `product-workflows` 3.88.7 (`.claude/rules/plugin-updates-coupling.md`, its 1.100.7 bullet).
 
 ### Fixed
 
 - **`references/grounding-format.md` §6.1** states that a frame set's name, read back from the tree, is held to `addressing` §2's class before any command is built from it, that a set outside the class is read nowhere and named by its position with its remedy, and that an agent with no shell is handed only a set its caller tested — naming what `/frames`, `/product-workflows:prd-ground` and `/product-workflows:brd-split` each do with one.
-- **`references/addressing.md` §2**, *A folder refused by its name*, gains *A file refused by its name*: `entry <n> of the checkout's listing of <P>'s files`, `<n>` its place among the lines `find "./<P>" -mindepth 1 -maxdepth 1 -type f`, sorted byte-wise, prints. §2 already held each caller that lists files to the class; it named no position for a file outside it.
-- **`references/phase-handoff.md` §4.0's register** states `/product-workflows:brd-reconcile`'s stale cross-reference sweep's scope as every markdown file under the parent whose path is in `addressing` §2's class, as the sweep now reads it.
-- **`docs/reference/grounding.md`** says that a frame set named outside the class is read by no command.
+- **`references/addressing.md` §2's checkout listings** printed one line per line of `find`'s output, so a folder whose name held a line feed took two lines and moved every later folder's position: a stop then named the wrong folder for renaming. Each listing is now `find … -print0 | LC_ALL=C sort -z | tr '\n\0' '?\n'`, one line per entry, a line feed inside a name printed as `?`, which is outside the class too; the `epic.md` and `brd-link.md` listings print the same way.
+- **`references/addressing.md` §2** gains *A file refused by its name*, `entry <n> of the checkout's listing of <P>'s files`, and *A folder that cannot be listed is never an empty one*: a caller that must tell the two apart runs the listing under `pipefail` and takes a non-zero exit on a directory as unreadable, naming it.
+- **`references/threat-intake.md` and `references/ard-resolution.md`**, which restate §2's checkout listings, list the same way, so a position each prints stays true; `threat-intake`'s second tree listing now carries `pipefail` too.
+- **`references/phase-handoff.md` §4.0's register** states `/product-workflows:brd-reconcile`'s stale cross-reference sweep's reach as every markdown file under the parent its listing reads, a captured file's under any printable name, read with the Read or the Grep tool and never in a shell command.
+- **`docs/reference/grounding.md`** says that a frame set named outside the class is read by no command that lists the frame sets.
 
 ## [1.100.6] — 2026-11-27
 

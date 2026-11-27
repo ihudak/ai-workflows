@@ -280,7 +280,11 @@ four-resolution one.
       (`workflows-core:grounding-format` §6.1) — as `workflows-core:addressing` §2's listing of a
       folder's folders does, `<P>` the `design/` folder's path, **each name held to that section's
       class before any command is built from it**, checked as text for a `'`, then with that
-      section's program. **None, or no `design/` folder → this test is
+      section's program — the listing run as §2's *A folder that cannot be listed is never an empty
+      one* says. **A `design/` that cannot be listed → stop**, first, since a folder this run cannot
+      read may hold sets no design grounding covers:
+      `BRD_SPLIT_DESIGN_UNREADABLE: <BRD-KEY>'s design/ folder could not be listed, so this run cannot tell which frame sets it holds or whether design grounding covers them, and allocated nothing and wrote nothing. Make it readable, then re-run.`
+      **None, or no `design/` folder → this test is
       satisfied**, and says so in the final report rather than passing silently. **That emptiness is
       the whole of the condition**: a BRD with no exported frame set has no design grounding to
       require, which is what keeps this test inside `workflows-core:phase-handoff` §5 rule 3 (a gate

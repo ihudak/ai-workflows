@@ -297,7 +297,9 @@ name that is not UTF-8 is outside. `str.isalnum()` holds for exactly the letters
 and digits of Unicode's `L` and `N` categories, and a category opening `M` is a combining mark.
 **First, as text, the name is checked for a `'`**, the one character that ends a single-quoted word:
 a name holding one is outside the class and is never handed to the program, nor is any other command
-built from it. A name read from a listing holds no line feed, since a line of a listing ends at one.
+built from it. A name read from a listing holds no line feed: git's listings quote a name holding
+one (below), and the checkout's print it as `?` (*A folder refused by its name*), so a name is one
+line either way, and a name holding `?` is outside the class whichever it held.
 **Why a name in the class is safe in a command**, single-quoted or double-quoted: no shell
 metacharacter, quote, backslash or `$` passes, nor any whitespace, nor a control or format character
 (categories `Cc` and `Cf`, a bidirectional override among them); every character it admits outside
@@ -327,16 +329,20 @@ is not tested here.
 **A folder refused by its name, among the folders a caller lists under a folder `<P>`** — `<P>`
 the folder's path relative to `$SPECS_PATH`, as the caller holds it. The caller names it by its
 position: `entry <n> of the checkout's listing of <P>'s folders`, `<n>` its place, counting from 1,
-among the lines `(cd "$SPECS_PATH" && find "./<P>" -mindepth 1 -maxdepth 1 -type d) 2>/dev/null | LC_ALL=C sort`
-prints, or, for a folder only `<default-ref>` holds, `entry <n> of the default branch's listing of
+among the lines `(cd "$SPECS_PATH" && find "./<P>" -mindepth 1 -maxdepth 1 -type d -print0) 2>/dev/null | LC_ALL=C sort -z | tr '\n\0' '?\n'`
+prints — one line per folder, in byte-wise order: `find` ends each path with a NUL, which no name
+holds, `sort -z` orders them, and `tr` prints a line feed inside a name as `?` before each NUL
+becomes a line's end, so a name holding a line feed is still one line and moves no other folder's
+place — or, for a folder only `<default-ref>` holds, `entry <n> of the default branch's listing of
 <P>'s folders`, among the lines its `git -C "$SPECS_PATH" -c core.quotePath=false ls-tree -d
 --name-only "<default-ref>" -- "./<P>/"` prints — and gives the remedy: `rename it into
 workflows-core:addressing §2's class — letters, digits and combining marks of any script and
 . _ @ + -, first a letter, a digit or _, no .. — or move it out of <P>`. **Whether it may be an
 Epic folder** — one holding an `epic.md` — is read off a listing of `<P>`'s files, compared as text,
 its name entering no command: in the checkout, a line of
-`(cd "$SPECS_PATH" && find "./<P>" -mindepth 2 -maxdepth 2 -type f -name epic.md) 2>/dev/null` that
-is, whole, `./<P>/<its name>/epic.md`; on `<default-ref>`, a line of
+`(cd "$SPECS_PATH" && find "./<P>" -mindepth 2 -maxdepth 2 -type f -name epic.md -print0) 2>/dev/null | tr '\n\0' '?\n'`
+that is, whole, `./<P>/<its name>/epic.md`, `<its name>` as the listing of `<P>`'s folders printed
+it; on `<default-ref>`, a line of
 `git -C "$SPECS_PATH" -c core.quotePath=false ls-tree -r --name-only "<default-ref>" -- "./<P>/"`
 that is, whole, `<P>/<its name>/epic.md`. A folder no such line names holds no `epic.md` either
 listing can show, and a caller that says what it leaves out for an Epic leaves it out of that.
@@ -345,8 +351,13 @@ listing can show, and a caller that says what it leaves out for an Epic leaves i
 `epic.md`; a folder neither listing shows holding one is no slice, and the caller passes over it.
 **A file refused by its name**, among the files a caller lists in a folder `<P>`, is named the same
 way: `entry <n> of the checkout's listing of <P>'s files`, `<n>` its place, counting from 1, among
-the lines `(cd "$SPECS_PATH" && find "./<P>" -mindepth 1 -maxdepth 1 -type f) 2>/dev/null | LC_ALL=C sort`
-prints.
+the lines `(cd "$SPECS_PATH" && find "./<P>" -mindepth 1 -maxdepth 1 -type f -print0) 2>/dev/null | LC_ALL=C sort -z | tr '\n\0' '?\n'`
+prints, one line per file, as the listing of its folders prints one per folder. **A folder that
+cannot be listed is never an empty one.** The checkout's listings discard `find`'s errors, so a
+caller that must tell a `<P>` it cannot read from one holding nothing runs the listing as
+`(set -o pipefail; <the listing>)` and reads its exit: where `<P>` is a directory
+(`test -d "$SPECS_PATH/<P>"`) and that exit is not 0, `find` could not read it, and the caller
+takes it as unreadable — naming it, and what it therefore did not read — never as empty.
 
 **What it covers, and what it does not.** Every name `<KIND>-<KEY>-<slug>` whose slug holds only
 letters, digits and combining marks of any script and `-` is inside it — the slug
