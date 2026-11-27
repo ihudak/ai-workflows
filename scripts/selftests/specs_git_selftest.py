@@ -636,6 +636,28 @@ def selftest(groups=None):
               and r.git("diff", "--cached", "--name-only") == "",
               "handoff-commit: the staged removal and both halves of the rename committed, nothing left staged (%r, %r)"
               % (got, sorted(carried)))
+        # handoff_swap: a declared folder replaced by a file of its name, and a declared file by a folder holding the
+        # declared file under it: step 3's update-index --replace stages both, where without --replace it stopped
+        r = new_repo(tmp, "handoff-swap")
+        f = "specifications/PRD-A-3-w/"
+        r.write(f + "dirf/inner.md", "a file in a folder\n")
+        r.write(f + "file.md", "a file\n")
+        r.commit_all("base")
+        shutil.rmtree(os.path.join(r.path, f + "dirf"))
+        r.write(f + "dirf", "now a file\n")
+        os.remove(os.path.join(r.path, f + "file.md"))
+        r.write(f + "file.md/inner.md", "now a folder\n")
+        decl = ["--path=" + f + n for n in ("dirf", "dirf/inner.md", "file.md", "file.md/inner.md")]
+        got = cli("--specs", r.path, "handoff-stage", *decl)
+        check(got.get("_rc") == 0 and got.get("error") is None
+              and sorted(got.get("staged") or []) == sorted(d[len("--path="):] for d in decl),
+              "handoff-stage: a folder and a file that swapped places, staged with no error (%r)" % got)
+        got = cli("--specs", r.path, "handoff-commit", "--message-file", msg, *decl)
+        carried = set(r.git("diff-tree", "--no-commit-id", "--name-only", "-r", "-z", "--no-renames",
+                            "HEAD").split("\0")) - {""}
+        check(got.get("status") == "committed" and carried == {d[len("--path="):] for d in decl}
+              and r.git("status", "--porcelain") == "",
+              "handoff-commit: both swaps committed whole (%r, %r)" % (got, sorted(carried)))
 
     def scenarios_mode(tmp):
         r = new_repo(tmp, "mode")
@@ -2094,11 +2116,11 @@ def selftest(groups=None):
                 "root.left-behind", "root.left-behind.nested", "root.left-behind.dir", "root.left-behind.close", "env.changed"]
         missing = [i for i in ids if i not in T]
         check(not missing, "l_ids: every id the interface names is a template (missing %r)" % missing)
-        check(len(lines.ROWS) == 30 and lines.ROWS[0] == "pushed-plugin"
+        check(len(lines.ROWS) == 31 and lines.ROWS[0] == "pushed-plugin" and "in-progress" in lines.ROWS
               and lines.ROWS[-8:] == ("misrooted", "superseded", "held", "held-stuck", "midrun-kept", "there", "here",
                                       "silent")
               and all(("row." + r in T) == (r != "silent") for r in lines.ROWS),
-              "l_ids: 30 rows in §6's order, each a row.<id> template but silent (%r)" % (lines.ROWS,))
+              "l_ids: 31 rows in §6's order, each a row.<id> template but silent (%r)" % (lines.ROWS,))
         check(all("\n" not in t for k, t in T.items() if k not in lines.BLOCKS),
               "l_ids: every template but the three blocks is one line")
         # The landing's refusal codes, read through globals() so that a missing constant fails its check rather than
@@ -2571,7 +2593,8 @@ def selftest(groups=None):
         os.chmod(os.path.join(shim, "git"), 0o755)
         S, paths = os.path.join(tmp, "a specs repo"), ["my notes.md", "n.md"]
         plain = g1_fill(lines, S, paths)
-        added, committed_specs = "--add|--remove|--|my notes.md|n.md|", "--|:(literal)my notes.md|:(literal)n.md|"
+        added, committed_specs = ("--add|--remove|--replace|--|my notes.md|n.md|",
+                                  "--|:(literal)my notes.md|:(literal)n.md|")
         blocks = [("g0", lines.fill("g0", {"<SPECS_PATH>": S, "<sha7>": "abc1234", "<YYYY-MM-DD>": "2026-11-10",
                                            "<branch>": "main"}), ["switch|-c|rescue/2026-11-10|"]),
                   ("g1", plain, ["status|", "update-index|" + added, "commit|" + committed_specs]),
@@ -2641,7 +2664,7 @@ def selftest(groups=None):
                     break
                 part.append(row[len("Fix:"):].strip() if not part else row.strip())
             listed = b"--|" + b"|".join(b":(literal)" + os.fsencode(p) for p in odd) + b"|\n"
-            raw = b"--add|--remove|--|" + b"|".join(os.fsencode(p) for p in odd) + b"|\n"
+            raw = b"--add|--remove|--replace|--|" + b"|".join(os.fsencode(p) for p in odd) + b"|\n"
             expect = {"status": b"-C|" + os.fsencode(S) + b"|status|\n",
                       "add": b"-C|" + os.fsencode(S) + b"|update-index|" + raw,
                       "switch": b"-C|" + os.fsencode(S) + b"|switch|main|\n"}
@@ -2778,6 +2801,76 @@ def selftest(groups=None):
         check(lines.artifacts([lit]) == "a\\\\nb.md" and lines.artifacts([lf]) == "a\\nb.md",
               "l_shown_backslash: <artifacts> shows the two names apart (%r, %r)"
               % (lines.artifacts([lit]), lines.artifacts([lf])))
+
+        # l_fix_states: G1's Fix part resolves the states a plain update-index or commit stopped on, pasted into bash
+        # against a real git: a folder replaced by a file and a file by a folder (update-index --replace); a rename
+        # whose new file was then deleted (RD) and a staged file then deleted (AD), whose paths neither HEAD nor the
+        # working tree holds and the commit leaves out -- RD's commit carries the original's removal, AD's line commits
+        # nothing; a worktree rename of an intent-to-add file ( R), whose original G1 lists too; and a repository of
+        # its own inside the specs repository (?? sub/), which G1 names on its Found line as one to handle by hand and
+        # its Fix part neither stages nor commits, so no gitlink is committed. Each but the last leaves status() no
+        # OTHER path; the last leaves the embedded repository alone
+        g1_in = globals().get("_g1_in_progress")
+        for case in ("dirfile", "filedir", "rd", "ad", "itarn", "embedded"):
+            r = new_repo(tmp, "l-states-" + case)
+            for p in ("old.md", "dirf/inner.md", "keep.md"):
+                r.write(p, "the base of %s\n" % p)
+            r.commit_all("NOISSUE base")
+            base_head = r.git("rev-parse", "HEAD")
+            want_head, want_left = None, []
+            if case == "dirfile":
+                shutil.rmtree(os.path.join(r.path, "dirf"))
+                r.write("dirf", "now a file\n")
+                want_head = ["A\tdirf", "D\tdirf/inner.md"]
+            elif case == "filedir":
+                os.remove(os.path.join(r.path, "old.md"))
+                r.write("old.md/inner.md", "now a folder\n")
+                want_head = ["D\told.md", "A\told.md/inner.md"]
+            elif case == "rd":
+                r.git("mv", "--", "old.md", "new.md")
+                os.remove(os.path.join(r.path, "new.md"))
+                want_head = ["D\told.md"]
+            elif case == "ad":
+                r.write("f.md", "staged, then deleted\n")
+                r.git("add", "--", "f.md")
+                os.remove(os.path.join(r.path, "f.md"))
+            elif case == "itarn":
+                os.rename(os.path.join(r.path, "old.md"), os.path.join(r.path, "new.md"))
+                r.git("add", "-N", "--", "new.md")
+                want_head = ["A\tnew.md", "D\told.md"]
+            else:
+                sub = os.path.join(r.path, "sub")
+                os.makedirs(sub)
+                subprocess.run(["git", "init", "-q", sub], check=True)
+                with open(os.path.join(sub, "f"), "w") as fh:
+                    fh.write("x\n")
+                subprocess.run(["git", "-C", sub, "-c", "user.email=t@t", "-c", "user.name=t", "add", "f"], check=True)
+                subprocess.run(["git", "-C", sub, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "s"],
+                               check=True)
+                r.write("note.md", "mine\n")
+                want_head, want_left = ["A\tnote.md"], ["sub/"]
+            listed = status(r.path)["other"]
+            block = g1(lines, r.path, listed, g1_in(r.path) if g1_in else None) if g1 else ""
+            rows = block.split("\n")
+            found = next((row for row in rows if row.startswith("Found:")), "")
+            i = next((k for k, row in enumerate(rows) if row.startswith("Fix:")), None)
+            part = []
+            for row in rows[i:] if i is not None else []:
+                if part and not row.startswith(" "):
+                    break
+                part.append(row[len("Fix:"):].strip() if not part else row.strip())
+            ran = subprocess.run(["bash", "-c", "\n".join(part)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                 cwd=tmp, env=dict(os.environ, GIT_EDITOR=editor))
+            moved = r.git("rev-parse", "HEAD") != base_head
+            show = r.git("show", "--name-status", "--no-renames", "--format=", "HEAD").split("\n") if moved else None
+            check(i is not None and ran.returncode == 0 and (show == want_head if want_head else not moved)
+                  and status(r.path)["other"] == want_left
+                  and (case != "embedded" or ("a git repository of its own stands at sub/" in block
+                                              and "sub" not in r.git("ls-tree", "--name-only", "HEAD").split("\n"))),
+                  "l_fix_states: %s: G1's Fix part, run through bash on a real git, resolves what G1 found (listed %r, "
+                  "rc %s, %r, HEAD %r, left %r, found %r)" % (case, listed, ran.returncode,
+                                                              ran.stderr.decode("utf-8", "replace")[:300], show,
+                                                              status(r.path)["other"], found[-260:]))
 
         # l_shown_comma: two different sets never show alike: shown_path writes a comma followed by a space as \, so a
         # list joined by ", " reads one way -- G1's Found line, <artifacts> and a [, …] clause -- and a value that is
@@ -3801,6 +3894,53 @@ def selftest(groups=None):
               and left == [] and on_origin(r) == head(r),
               "e_staged_removal: a staged removal and a rename's halves, committed by two ends, no commit failing "
               "(%r, left %r)" % (seeded, left))
+        # e_staged_swap: a session folder replaced by a session file of its name: the end's update-index --replace
+        # stages both, where without --replace it stopped (appears as both a file and as a directory)
+        r, env = world(tmp, "e-staged-swap")
+        r.write(fb + "d/x.md", "an entry\n")
+        r.commit_all("NOISSUE a session folder")
+        r.git("push", "-q", "origin", "main")
+        shutil.rmtree(os.path.join(r.path, fb + "d"))
+        r.write(fb + "d", "now a file\n")
+        seed(env, "/create-prd")
+        got = run_end(env, "/create-prd")
+        check(got.get("row") == "pushed-default" and sorted(_commit_paths(r.path, "HEAD")) == [fb + "d", fb + "d/x.md"]
+              and r.git("status", "--porcelain") == "",
+              "e_staged_swap: a session folder become a file, committed cleanly (%r)" % got.get("line"))
+
+        # e_in_progress: a merge stopped on a conflict, a cherry-pick stopped on one, and a revert stopped on one, a
+        # session file dirty beside each: the end stages and commits nothing while it is in progress -- the merge's
+        # commit would otherwise carry the staged session file, and the revert would be committed through -- and
+        # prints the in-progress row naming the marker; the session file stays unstaged, HEAD where it was
+        for kind, marker in (("merge", "MERGE_HEAD"), ("cherry-pick", "CHERRY_PICK_HEAD"), ("revert", "REVERT_HEAD")):
+            r, env = world(tmp, "e-in-progress-" + kind)
+            r.write("f.md", "a\n")
+            r.commit_all("NOISSUE a")
+            r.git("switch", "-q", "-c", "other")
+            r.write("f.md", "b\n")
+            r.commit_all("NOISSUE b")
+            r.git("switch", "-q", "main")
+            r.write("f.md", "c\n")
+            r.commit_all("NOISSUE c")
+            if kind == "merge":
+                r.git("merge", "-q", "other", check=False)
+            elif kind == "cherry-pick":
+                r.git("cherry-pick", "other", check=False)
+            else:
+                r.write("f.md", "d\n")
+                r.commit_all("NOISSUE d")
+                r.git("revert", "--no-edit", "HEAD~1", check=False)
+            r.write(fb + "s.md", "this run's entry\n")
+            h = head(r)
+            seed(env, "/create-prd")
+            got = run_end(env, "/create-prd")
+            want = lines.fill(T["row.in-progress"], {"<path>": ".git/" + marker}) if "row.in-progress" in T else None
+            check(got.get("row") == "in-progress" and want is not None and (got.get("line") or "").startswith(want)
+                  and head(r) == h and os.path.exists(os.path.join(r.path, ".git", marker))
+                  and fb + "s.md" not in r.git("diff", "--cached", "--name-only").split("\n")
+                  and "?? " + fb + "s.md" in r.git("status", "--porcelain", "--untracked-files=all"),
+                  "e_in_progress: a %s in progress: the end stages and commits nothing, and says so (%r)"
+                  % (kind, got.get("line")))
 
         # e_silent
         plain = os.path.join(tmp, "e-silent-plain")
@@ -9175,7 +9315,7 @@ def selftest(groups=None):
               and block == g1_plain(r, ["my notes.md", "notes.md"]) and got.get("guard") == "G1"
               and got.get("specs_git") is None and got.get("branch") == "prd/ACME-9-q" and head(r) == h
               and "?? " + RESUME in r.git("status", "--porcelain", "--untracked-files=all")
-              and "artifact area: my notes.md, notes.md\n" in shown and "update-index --add --remove -- 'my notes.md' notes.md &&" in shown
+              and "artifact area: my notes.md, notes.md\n" in shown and "update-index --add --remove --replace -- 'my notes.md' notes.md &&" in shown
               and "commit -- ':(literal)my notes.md' ':(literal)notes.md'\n" in shown,
               "t_g1: the block lists the paths, comma-separated, then shell-quoted; no flush, no switch (%r)" % got)
         rec = record(env, "/feedback") or {}
@@ -9218,12 +9358,38 @@ def selftest(groups=None):
             ran = subprocess.run(["bash", "-c", fix[len("Fix:"):].strip()], stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE) if fix else None
             check(got.get("guard") == "G1" and want_found is not None and found == "Found:    " + want_found
-                  and fix == 'Fix:      git -C "%s" status' % r.path and rows[k + 1].startswith("If ignored:")
+                  and fix == 'Fix:      git -C "%s" status' % r.path
+                  and rows[k + 1] == "If ignored: " + T.get("g1.in-progress.if_ignored", "")
+                  and "Not done: " + T.get("g1.in-progress.not_done", "") in rows
                   and ran is not None and ran.returncode == 0 and head(r) == h
                   and os.path.exists(os.path.join(r.path, marker))
                   and "?? notes.md" in r.git("status", "--porcelain", "--untracked-files=all"),
                   "t_g1_in_progress: a %s in progress: G1 says so, its Fix line is git status alone, and it changes "
                   "nothing (%r)" % (kind, rows))
+
+        # t_flush_in_progress: a merge stopped on a conflict in a session file, nothing of the user's dirty, so no guard
+        # fires: the flush stages and commits nothing while the merge is in progress, and says so in the in-progress
+        # row's Specs preflight: form; HEAD, the marker and the unmerged index are as they were
+        r, env = world(tmp, "t-flush-in-progress")
+        sess = "specifications/PRD-ACME-1-x/dev-workflows/feedback/x.md"
+        r.write(sess, "base\n")
+        r.commit_all("NOISSUE x")
+        r.git("push", "-q", "origin", "main")
+        r.git("switch", "-q", "-c", "side")
+        r.write(sess, "side\n")
+        r.commit_all("NOISSUE side")
+        r.git("switch", "-q", "main")
+        r.write(sess, "main\n")
+        r.commit_all("NOISSUE main")
+        r.git("merge", "-q", "side", check=False)
+        h = head(r)
+        got = run_start(env, "/feedback")
+        want = lines.preflight_form(lines.fill(T["row.in-progress"], {"<path>": ".git/MERGE_HEAD"})) \
+            if "row.in-progress" in T else None
+        check(want is not None and want in (got.get("print") or []) and head(r) == h
+              and os.path.exists(os.path.join(r.path, ".git", "MERGE_HEAD"))
+              and r.git("ls-files", "-u") != "",
+              "t_flush_in_progress: the flush commits nothing during a merge, and says so (%r)" % got.get("print"))
 
         # t_g2, t_g2_implement
         r, env = world(tmp, "t-g2")

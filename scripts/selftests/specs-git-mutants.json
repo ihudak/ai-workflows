@@ -179,7 +179,7 @@
     "id": "lines_l_fix_pathspecs_rename",
     "group": "lines",
     "file": "plugins/workflows-core/scripts/specs-git.py",
-    "old": "            if record[0] == \"R\" and original and not sb.classify(original):",
+    "old": "            if \"R\" in record[:2] and original and not sb.classify(original):",
     "new": "            if False:",
     "fails": "l_fix_pathspecs:"
   },
@@ -203,7 +203,7 @@
     "id": "end_e_staged_removal",
     "group": "end",
     "file": "plugins/workflows-core/scripts/specs-git.py",
-    "old": "    r = sb.git(root, \"update-index\", \"--add\", \"--remove\", \"--\", *paths, check=False)  # literal paths: no pathspec",
+    "old": "    r = sb.git(root, \"update-index\", \"--add\", \"--remove\", \"--replace\", \"--\", *paths, check=False)  # literal paths",
     "new": "    r = sb.git(root, \"add\", \"-A\", \"--\", *_literal(paths), check=False)",
     "fails": "e_staged_removal:"
   },
@@ -211,9 +211,65 @@
     "id": "handoff_staged_removal",
     "group": "handoff",
     "file": "plugins/workflows-core/scripts/specs-git.py",
-    "old": "        r = sb.git(root, \"update-index\", \"--add\", \"--remove\", \"--\", *staged, check=False)  # literal: no pathspec",
+    "old": "        r = sb.git(root, \"update-index\", \"--add\", \"--remove\", \"--replace\", \"--\", *staged, check=False)  # literal",
     "new": "        r = sb.git(root, \"add\", \"-A\", \"--\", *_literal(staged), check=False)",
     "fails": "handoff-stage: a declared path whose removal is already staged"
+  },
+  {
+    "id": "handoff_swap",
+    "group": "handoff",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "        r = sb.git(root, \"update-index\", \"--add\", \"--remove\", \"--replace\", \"--\", *staged, check=False)  # literal",
+    "new": "        r = sb.git(root, \"update-index\", \"--add\", \"--remove\", \"--\", *staged, check=False)",
+    "fails": "handoff-stage: a folder and a file that swapped places"
+  },
+  {
+    "id": "end_e_staged_swap",
+    "group": "end",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    r = sb.git(root, \"update-index\", \"--add\", \"--remove\", \"--replace\", \"--\", *paths, check=False)  # literal paths",
+    "new": "    r = sb.git(root, \"update-index\", \"--add\", \"--remove\", \"--\", *paths, check=False)",
+    "fails": "e_staged_swap:"
+  },
+  {
+    "id": "end_e_in_progress",
+    "group": "end",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    held = _g1_in_progress(root)  # a merge's commit would carry what this stages, and a revert would be committed through",
+    "new": "    held = None",
+    "fails": "e_in_progress:"
+  },
+  {
+    "id": "lines_l_fix_states_replace",
+    "group": "lines",
+    "file": "plugins/workflows-core/scripts/specs_git_lines.py",
+    "old": "          git -C \"<SPECS_PATH>\" update-index --add --remove --replace -- <path list> && git -C \"<SPECS_PATH>\" commit -- <path list>",
+    "new": "          git -C \"<SPECS_PATH>\" update-index --add --remove -- <path list> && git -C \"<SPECS_PATH>\" commit -- <path list>",
+    "fails": "l_fix_states: dirfile"
+  },
+  {
+    "id": "lines_l_fix_states_drop",
+    "group": "lines",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "        if not folder and (os.path.lexists(full) or p in in_head):",
+    "new": "        if True:",
+    "fails": "l_fix_states: rd"
+  },
+  {
+    "id": "lines_l_fix_states_itarn",
+    "group": "lines",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "            if \"R\" in record[:2] and original and not sb.classify(original):",
+    "new": "            if record[0] == \"R\" and original and not sb.classify(original):",
+    "fails": "l_fix_states: itarn"
+  },
+  {
+    "id": "lines_l_fix_states_embedded",
+    "group": "lines",
+    "file": "plugins/workflows-core/scripts/specs-git.py",
+    "old": "    embedded = [p for p in paths if p.endswith(\"/\")]",
+    "new": "    embedded = []",
+    "fails": "l_fix_states: embedded"
   },
   {
     "id": "gate_g_file",

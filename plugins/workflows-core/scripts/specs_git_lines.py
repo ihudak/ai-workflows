@@ -39,7 +39,7 @@ Not done: the preflight did not switch branches, and did not commit or push
           the end of the run — commit-artifacts stages only the §2.1 artifact
           paths.
 Fix:      git -C "<SPECS_PATH>" status
-          git -C "<SPECS_PATH>" update-index --add --remove -- <path list> && git -C "<SPECS_PATH>" commit -- <path list>
+          git -C "<SPECS_PATH>" update-index --add --remove --replace -- <path list> && git -C "<SPECS_PATH>" commit -- <path list>
 If ignored: nothing is lost — your files stay uncommitted, and this run's
           artifacts are committed alongside them. But the preflight ends here
           on EVERY later run too, so the leftover flush and the branch
@@ -93,19 +93,32 @@ T = {
     # done in its place, by the same kind; its Fix and If ignored stand (specs-repo-git §5).
     "g1.landing.not_done.landed": "the preflight did not switch branches, and did not commit or push these files. Those files are yours, and switching branches would carry them along. This run's own artifacts were committed at the end of the run on <default>, not on <branch>, <which no key of this run names | which is merged into <default> | where <command>'s run in this session was open when this run started>, and your checkout is not moved; the Specs repo: line above this notice names that commit.",
     # The not-committed form (specs-repo-git §5): at the run's end where no stay stands, after a line that committed
-    # none of the run's files (nothing, locked, commit-failed, midrun-kept, no-identity, session-not-run) or the
-    # end.stopped line -- the plain block's Not done and If ignored in their place, the mid-run form's Not done where no
-    # stay stands; Fix stands.
+    # none of the run's files (nothing, locked, in-progress, commit-failed, midrun-kept, no-identity, session-not-run)
+    # or the end.stopped line -- the plain block's Not done and If ignored in their place, the mid-run form's Not done
+    # where no stay stands; Fix stands.
     "g1.not_done.uncommitted": "the preflight did not switch branches, and did not commit or push these files. Those files are yours, and switching branches would carry them along. This run's own artifacts were to be committed at the end of the run — commit-artifacts stages only the §2.1 artifact paths; the Specs repo: line above this notice says what came of them.",
     "g1.if_ignored.uncommitted": "nothing is lost — your files stay uncommitted, and the Specs repo: line above this notice says what came of this run's artifacts. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped until these paths are committed or removed. A deliverable whose handoff was declined — \"just write the files\" — is the usual cause, and it is a supported state — this is what it costs.",
     "g1.midrun.if_ignored": "nothing is lost — these may be <command>'s files in progress, and nothing is to be run here while that run is open: let it finish, or end it, first; if you stopped that run, /clear, typing <command> again[ with <keys>], or HEAD leaving the branch ends it. Nothing of this run's is committed with them. Until these paths are committed or removed, the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped.",
-    "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" update-index --add --remove -- <path list> && git -C \"<SPECS_PATH>\" commit -- <path list>",
+    "g1.merged.fix": "git -C \"<SPECS_PATH>\" switch <default> && git -C \"<SPECS_PATH>\" update-index --add --remove --replace -- <path list> && git -C \"<SPECS_PATH>\" commit -- <path list>",
+    # §5: where no listed path is left for the commit -- each is one neither HEAD nor the working tree holds, a staged
+    # file since deleted -- the Fix line in G1's every form but the in-progress and mid-run ones, on its one line; and
+    # where every listed path is a repository of its own inside the specs repository, g1.by-hand.fix in its place.
+    "g1.index-only.fix": "git -C \"<SPECS_PATH>\" update-index --add --remove --replace -- <path list>",
+    "g1.by-hand.fix": "git -C \"<SPECS_PATH>\" status",
+    # §5: where a listed path is a repository of its own inside the specs repository (status' ?? <dir>/): replaces the
+    # text after "Found:    " in G1, on its one line, <path> each such path, the in-progress form's Found taking
+    # precedence.
+    "g1.embedded.found": "<SPECS_PATH> has <N> uncommitted change(s) outside the plugin's artifact area: <path list>; a git repository of its own stands at <path>[, …], which this notice stages and commits nothing of, since a commit would record only a link to its commit: move it out of the specs repository, or name it in .git/info/exclude, and the preflight stops ending here for it",
     # §5: where a rebase, merge, cherry-pick or revert, or an unresolved conflict, is in progress in the checkout
     # (session-branch.py's _in_progress, its path <path>): each replaces the text after its label ("Found:    ",
     # "Fix:      ") in G1, whatever form G1 takes, save that the mid-run form's empty Fix stands; <path list> is the Found
     # line's, as shown_list writes it.
     "g1.in-progress.found": "<SPECS_PATH> has <N> uncommitted change(s) outside the plugin's artifact area: <path list>; a rebase, merge, cherry-pick or revert, or an unresolved conflict, is in progress there (<path>), so this notice gives no commit until it is finished: finish it, or abort it, as git status says, and the next run's notice gives the commands for what is left",
     "g1.in-progress.fix": "git -C \"<SPECS_PATH>\" status",
+    # §5: the in-progress form's Not done and If ignored, in the plain block (each on its one line); a stay's landing
+    # form and the mid-run form replace them as they replace the plain block's.
+    "g1.in-progress.not_done": "the preflight did not switch branches, and did not commit or push these files. Those files are yours, and switching branches would carry them along. This run's own artifacts are committed at the end of the run only where it is finished by then — commit-artifacts stages and commits nothing while one is in progress.",
+    "g1.in-progress.if_ignored": "nothing is lost — your files stay uncommitted, and so do this run's artifacts while it is in progress; the first run after it is finished commits them. But the preflight ends here on EVERY later run too, so the leftover flush and the branch settle (stages 2-3) stay skipped until these paths are committed or removed.",
     # §5 part 3: where refs/heads/<default> names no commit and <default-ref> names one, a Fix line that opens with the
     # switch to <default> -- G2's plain and session-branch-itself forms, g1.merged.fix -- has that switch replaced by
     # this, the rest of the line as it stands; judged each time the block is printed.
@@ -168,6 +181,9 @@ T = {
     "row.failed": "Specs repo: committed <sha7> (<N> files) on <branch> — push FAILED (<reason>); the commit is local and a later run retries it",
     "row.nothing": "Specs repo: no session artifacts to commit",
     "row.locked": "Specs repo: skipped — another session holds the repo (index.lock); the next run picks the artifacts up",
+    # §4 step 3 and §3.4's flush, where a rebase, merge, cherry-pick or revert, or an unresolved conflict, is in progress
+    # in the checkout (session-branch.py's _in_progress, its marker or unmerged path <path>): nothing staged.
+    "row.in-progress": "Specs repo: NOT COMMITTED — a rebase, merge, cherry-pick or revert, or an unresolved conflict, is in progress in the checkout (<path>), and this plugin stages and commits nothing in it until that is finished; the session files stay in your working tree, and the first run after it is finished commits them",
     "row.commit-failed": "Specs repo: NOT COMMITTED — the commit failed (<the first line of git's error or the hook's output>); the artifacts stay staged, and a later run commits them once git accepts the commit (a merge concluded, a hook satisfied)",
     # Followed by the G0 block.
     "row.blocked": "Specs repo: NOT COMMITTED — see the notice below",
@@ -377,7 +393,8 @@ T = {
 ROWS = (
     "pushed-plugin", "pushed-default", "pushed-session", "no-identity", "session-not-run", "not-ours", "no-remote",
     "elsewhere", "remote-deleted", "origin-lacks", "refused-before", "push-refused", "scope", "replayed",
-    "already-there", "moved", "rejected", "failed", "nothing", "locked", "commit-failed", "blocked", "misrooted",
+    "already-there", "moved", "rejected", "failed", "nothing", "locked", "in-progress", "commit-failed", "blocked",
+    "misrooted",
     "superseded", "held", "held-stuck", "midrun-kept", "there", "here", "silent",
 )
 
