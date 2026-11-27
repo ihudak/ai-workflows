@@ -157,13 +157,17 @@ until each part carries exactly one, and the `[G]` part is answered first, becau
 routinely changes what the business question should ask. A question nobody can tag is
 under-specified and is rewritten — never filed with a guessed tag.
 
-**A requirement whose grounding settled nothing raises a question for a person.** That is a
-finding reading `NOT-PROVABLE` — the repository could not settle it — and equally a finding whose
-verifier outcome is `unprovable`, whatever verdict it keeps other than `SUPERSEDED`: where `/prd-ground`'s verifier
-re-derived the finding twice, blind, and the two disagreed, the finding keeps its verdict beside
-that outcome, and the run reads the outcome as well as the verdict, so a requirement nobody could
-settle is never treated as grounded. The question arrives at tagging carrying that finding, and is
-tagged `[V]` or `[C]`, never `[G]`.
+**A requirement whose grounding settled nothing raises a question for a person — one, however many
+repositories it was grounded against.** A row raises a question for an unsettled claim only where no repository in the run settles it; a repository settles it where its verified finding carries a verdict other than `NOT-PROVABLE` and a verifier outcome other than `unprovable`.
+A finding reading `NOT-PROVABLE` — that repository could not settle it — settles nothing, and
+neither does a finding whose verifier outcome is `unprovable`, whatever verdict it keeps other than
+`SUPERSEDED`: where `/prd-ground`'s verifier re-derived the finding twice, blind, and the two
+disagreed, the finding keeps its verdict beside that outcome, and the run reads the outcome as well
+as the verdict, so a requirement nobody could settle is never treated as grounded. A repository
+that lacks a feature its sibling has therefore raises no such question of its own, whichever verdict
+grounding gives that absence, and a row no repository settles raises one question, not one per
+repository. The question arrives at tagging carrying every finding on the row that could not
+settle it, and is tagged `[V]` or `[C]`, never `[G]`.
 
 All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 12's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 12's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins the one dispatched agent in this run — `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the round's reading, tagging and interactive walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
@@ -491,7 +495,8 @@ option is picked.
   in the *untagged* holding state, with what is wrong with it recorded; it is never asked in that
   state.
 - **Phase 5 — a re-tag needs a cause.** A `[G]` grounding cannot settle is re-tagged only against a
-  named `NOT-PROVABLE` finding or an `unprovable` verifier outcome. A finding reading `SUPERSEDED`
+  named `NOT-PROVABLE` finding or an `unprovable` verifier outcome, and never while another
+  repository's finding settles it. A finding reading `SUPERSEDED`
   answers no `[G]` and causes no re-tag, though it keeps its claim and its verifier outcome as they
   stood: its successors are read in its place. A `[G]` no finding bears on at
   all is recorded as *needs grounding* and answered by a `/prd-ground` re-run — it is neither
@@ -554,11 +559,15 @@ option is picked.
   this run opened, regenerates it and asks only what is still askable.
 - **Phase 10 — an `unsourced` defect a verified finding settles may be closed, on confirmation.**
   Before the handoff, each `unsourced` requirement defect still `open` in the parent's defect log,
-  raised on a row this slice builds or defers, where every code finding of this slice on that row
-  that is not superseded carries a verdict other than `NOT-PROVABLE`, an outcome other than
-  `unprovable` and a `current` horizon, all of them the same verdict, is listed with those findings,
-  each with its verdict, outcome and horizon. Where any of them fails, the defect is reported
-  instead, with why — a finding a prerequisite decision is about to overturn closes nothing. The
+  raised on a row this slice builds or defers, is listed with the row's code findings, each with its
+  verdict, outcome and horizon, where some repository settles the row — the same row-level reading
+  a question takes (under *The tag decides who may answer*, above): a code finding of this slice on
+  that row, not superseded, carrying a verdict other than `NOT-PROVABLE` and an outcome other than
+  `unprovable` — and every finding that settles it carries a `current` horizon, all of them the same
+  verdict. A finding that settles nothing takes no part, so a repository that lacks the feature
+  never keeps a sibling's finding from settling the row. Where no finding settles the row, or one
+  that settles it fails, the defect is reported instead, with why — a finding a prerequisite
+  decision is about to overturn closes nothing. The
   operator chooses to write
   `resolved-by: <SLICE-KEY>/[CG#n]` for every one, for some, or for none, the value then printed to
   write by hand. Nothing is recommended: whether the finding settles the defect is the operator's to

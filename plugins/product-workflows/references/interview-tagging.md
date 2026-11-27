@@ -110,12 +110,25 @@ the verifier could not settle the claim either way (`workflows-core:grounding-fo
 finding settles nothing a question could rest on, and everything below said of a `NOT-PROVABLE`
 finding holds of it, the re-tag naming it with its verdict and that outcome.
 
-Usually `[V]`, because of what a `NOT-PROVABLE` verdict actually reports: the repository does not
-answer this, so somebody must now choose. Choosing, with reasons, in a domain the delivery team
-owns, is the definition of a `[V]`. Re-tagging to `[C]` is available and is the exception — correct
-only when what the repository could not settle turns out to be a business question that was
-mistaken for a technical one, not merely a technical question that turned out to be hard. "The code
-does not tell us" is never on its own a reason to ask the customer.
+**Grounding cannot settle a claim only where no repository can.** A row raises a question for an
+unsettled claim only where no repository in the run settles it; a repository settles it where its
+verified finding carries a verdict other than `NOT-PROVABLE` and a verifier outcome other than
+`unprovable`. A BRD grounded against several repositories can hold a finding from each on a row,
+and a repository that lacks the feature raises no such question on its own where a sibling settles
+the row: the rule reads only whether some repository settles it, never the verdict the lacking
+repository's finding is given, so it holds whichever verdict grounding gives that absence. A row no
+repository settles raises one question, never one per repository, carrying every finding on it
+that could not settle it, and a `[G]` is never re-tagged while a sibling's finding settles it
+(`commands/brd-interview.md`, *Round 1 is generated from the grounding* and *Answer every `[G]`
+from the findings*).
+
+Usually `[V]`, because of what a `NOT-PROVABLE` verdict actually reports where no repository settles
+the row: the code does not answer this, so somebody must now choose. Choosing, with reasons, in a
+domain the delivery team owns, is the definition of a `[V]`. Re-tagging to `[C]` is available and
+is the exception — correct only when what the repository could not settle turns out to be a
+business question that was mistaken for a technical one, not merely a technical question that
+turned out to be hard. "The code does not tell us" is never on its own a reason to ask the
+customer.
 
 **Every re-tag records its cause.** The `NOT-PROVABLE` finding is that cause, and the re-tagged
 question names it. Without the naming, the trail from "we asked the code" to "we asked a person"
