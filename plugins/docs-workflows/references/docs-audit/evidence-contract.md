@@ -127,7 +127,7 @@ The reader names the line and the reason — line `0` where the reason is the wh
 | Answer | Means | Also records |
 |---|---|---|
 | `confirmed` | the step did what `expect` says | nothing further |
-| `differs` | the step worked, and showed something else — a control it acts on found under another name among it, one not there being `blocked` | **the actual observed text**, required |
+| `differs` | the step worked, and showed something else — a control the step names found under another name too; one not found is `blocked`, save where `expect` says it is hidden or absent, when not finding it is `confirmed` | **the actual observed text**, required — for a renamed control, its name now and what the step then showed |
 | `blocked` | the step's outcome could not be established | why — a missing precondition, an environment that would not come up, a step taken whose `expect.kind` nothing could evaluate |
 
 **`differs` recording the observed text is what turns a walkthrough into a correction rather than a red X.** "Step 4 failed" sends somebody back to the environment to find out what it says instead; "step 4 shows *Create order*, not *New order*" is the page edit, already written down by the person who was looking at the screen. A `differs` answer with no observed text is an incomplete answer and is re-asked, not recorded.

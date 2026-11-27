@@ -67,7 +67,7 @@ Today a person walks it. `/docs-verify` asks you each step in its session and wr
 | Your answer | Means | You also write down |
 |---|---|---|
 | `confirmed` | it did what the step says it would | nothing |
-| `differs` | it worked, and showed you something else — a control it acts on found under another name too; one not there is `blocked` | **what it actually said** — required |
+| `differs` | it worked, and showed you something else — a control the step names, found under another name, too; one not found is `blocked`, unless the step expects it hidden or gone, when that is `confirmed` | **what it actually said** — for a renamed control, its name now and what the step then showed — required |
 | `blocked` | you could not establish what the step did | why — a precondition that was not met, an environment that would not start, or a step you took whose expected result you had no way to check |
 
 **Writing down the actual text on a `differs` is the part that pays for the whole exercise.** "Step 4 failed" sends somebody back to the environment to find out what it says instead. "Step 4 shows *Create order*, not *New order*" **is** the page edit, already written down by the person who was looking at the screen — a correction rather than a red X. A `differs` with nothing written down is an incomplete answer: `/docs-verify` asks for the text when you answer `differs` and asks again where you give none, and, taking answers recorded in the file, walks again each `differs` recorded without text. Walking by hand the rule is the same — do not write the answer down until you have the text in front of you.
