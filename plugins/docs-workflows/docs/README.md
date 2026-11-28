@@ -10,7 +10,8 @@
 | work out what documentation the product is missing | [`/docs-audit`](commands/docs-audit.md) |
 | know what to do with the backlog `/docs-audit` wrote | [The documentation route](docs-workflow.md) |
 | draft the page for a backlog unit, and commit it with the unit's move | [`/docs-write`](commands/docs-write.md) |
-| verify a drafted engineering page's claims in the code, and commit it with the unit's move | [`/docs-verify`](commands/docs-verify.md) |
+| verify a drafted page's claims — walk a user page, or read an engineering page's in the code — and commit it with the unit's move | [`/docs-verify`](commands/docs-verify.md) |
+| prepare a user page's walk for somebody to take outside the session, then take their answers | [`/docs-verify`](commands/docs-verify.md) — `--prepare`, then without it |
 | document a feature from its PRD and its shipped diffs | [`/document`](commands/document.md) |
 | make a one-off prose edit in a docs repo | [`/document`](commands/document.md) — direct mode |
 | teach this plugin what a docs repository looks like | [`/docs-profile`](commands/docs-profile.md) |
@@ -33,13 +34,13 @@ Four pages orient you before you touch a command: [Getting started](getting-star
 - [`/docs-serve`](commands/docs-serve.md) — start, stop, or check a profiled repo's dev server, and report a URL that actually opens from the host.
 - [`/docs-audit`](commands/docs-audit.md) — enumerate what documentation the product is missing, from its own code and the specs tree, into a coverage grid and a prioritised backlog you keep in the repository.
 - [`/docs-write`](commands/docs-write.md) — draft one page per backlog unit from that unit's evidence, then build it, review it and commit it with its navigation and the unit's move to `drafted`, on a branch, offering one push.
-- [`/docs-verify`](commands/docs-verify.md) — read a drafted engineering page's claims in the code at today's commit, apply the readings you take, then build it, review it and commit it with the unit's move to `verified`, on a branch, offering one push.
+- [`/docs-verify`](commands/docs-verify.md) — walk a drafted user page with you, step by step, from a walkthrough it composes or extends — or, with `--prepare`, commit that walkthrough with a checklist for a walk outside the session, whose answers a later run takes — or read a drafted engineering page's claims in the code at today's commit; apply your answers or the readings you take, then build it, review it and commit it with the unit's move to `verified`, on a branch, offering one push.
 - [`/document`](commands/document.md) — write or update product documentation: a one-shot direct edit, or the full keyed feature-documentation workflow.
 - [`/release-notes`](commands/release-notes.md) — draft a release-notes Summary for a resolved PRD, shaped by the destination it resolves to.
 
 ## Reference
 
-- [Agents](reference/agents.md) — the subagent inventory: what each of the twelve agents does and which command dispatches it.
+- [Agents](reference/agents.md) — the subagent inventory: what each of the thirteen agents does and which command dispatches it.
 - [References](reference/references.md) — the reference-doc inventory under `references/`, grouped by concern.
 - [Skills](reference/references.md#skills) — the one bundled skills entry, `docs-frontmatter`: what it is for, and whether it is user-invocable.
 - [Environment](reference/environment.md) — every environment variable the plugin reads, and what it configures.
@@ -47,7 +48,7 @@ Four pages orient you before you touch a command: [Getting started](getting-star
 - [Documentation visibility](reference/docs-visibility.md) — the two-build public/internal model a scaffolded portal uses, the two traps that make the obvious checks useless, and the CI gates that assert on built output instead.
 - [Coverage model](reference/docs-coverage-model.md) — what counts as a documentation surface and how the seven kinds are found — five in code, two in the specs tree — how a surface differs from a backlog unit, which page types a surface earns, and what decides the order they get written in.
 - [Documentation backlog](reference/docs-backlog.md) — the file an audit writes and you keep: where it lives, what each block holds, the states a page moves through and which of them anything automates yet, and what the coverage fraction actually counts.
-- [Evidence and walkthroughs](reference/docs-evidence.md) — what a page's claims are allowed to rest on for each audience, the three kinds of evidence, what an unverified claim looks like on the page, and how to walk a verification checklist by hand.
+- [Evidence and walkthroughs](reference/docs-evidence.md) — what a page's claims are allowed to rest on for each audience, the three kinds of evidence, what an unverified claim looks like on the page, and how a walkthrough is walked, with `/docs-verify` or by hand.
 - [Session cost](reference/session-cost.md) — which commands here emit a cost entry, what they charge to, and where the file lands.
 - [Session feedback](reference/session-feedback.md) — which commands here emit automatic feedback, where the file lands, what is redacted, and what `--skip-feedback` keeps.
 - [Resume and checkpoints](reference/resume-and-checkpoints.md) — the resume pointer keyed `/document` and `/release-notes` write, the context suggestion beside it, and the state `/docs-serve` keeps between runs.
@@ -66,4 +67,4 @@ Neither pipeline plugin is a dependency in either direction; this plugin install
 
 ## Status
 
-This plugin ships 9 slash commands, 12 agents, 26 reference files and 2 hooks — and it ships one bundled skills entry, `docs-frontmatter`. `prose-style` is a declared dependency, so no style check here skips or degrades for want of it. `dev-workflows` and `product-workflows` each ship a `preload-context` hook of their own, covering their own commands; [Hooks](reference/hooks.md) says how the three plugins' hooks share a prompt.
+This plugin ships 9 slash commands, 13 agents, 26 reference files and 2 hooks — and it ships one bundled skills entry, `docs-frontmatter`. `prose-style` is a declared dependency, so no style check here skips or degrades for want of it. `dev-workflows` and `product-workflows` each ship a `preload-context` hook of their own, covering their own commands; [Hooks](reference/hooks.md) says how the three plugins' hooks share a prompt.

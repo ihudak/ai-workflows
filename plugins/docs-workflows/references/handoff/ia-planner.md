@@ -54,7 +54,7 @@ units:                                 # exactly backlog-format.md §1's fields 
     churn_adapted: false
     status: missing                    # always `missing` here
     page_path: null                    # always null here — no page exists yet
-    walkthrough: null                  # always null here — nothing in this increment composes one
+    walkthrough: null                  # always null here — no walkthrough exists yet; /docs-verify composes a user unit's later
     evidence: []                       # always empty here — a unit's own evidence is written only on a surface: null unit
     blocked_by: []                     # always empty here
 
