@@ -110,7 +110,9 @@ record that a sentence of prose was read into it by an agent.
   confirmed set and nothing else.
 - Every candidate is put **one at a time, with its verbatim quotation**. There is no bulk
   confirmation, and that omission is required rather than permitted — the quotation is the whole
-  mechanism, and batching turns a confirmation into a formality.
+  mechanism, and batching turns a confirmation into a formality. The one group put together is one
+  the review itself draws: an answer and the answers the reviewer's agent applied from it, which the
+  customer was shown together, each still with its own quotation (*Gates*, Phase 4).
 - A reason nobody gave is **never supplied**. A row confirmed or corrected with `reason: not stated`
   cannot be frozen as `decided` by anyone in the run, and a correction takes a reason — or an answer
   outside the options put — only as the customer's own words, copied out of the returned review, never
@@ -325,6 +327,14 @@ finding's answer as `unmatched` — an answer the customer gave, reported as mat
 indistinguishable from one they never gave. The reader also reports which sets it was given, so an
 unmatched row can be told apart from a question set nobody passed.
 
+**A `[C]` row may also say it was applied from another answer.** The prompt tells the reviewer's
+agent to apply each answer forward to the questions it plainly decides, and to record each such
+answer as its own row ending `applied from <round>/<position>`, naming the question whose answer it
+follows. The reader returns that marker exactly as written — in free-text mode only where the
+quoted passage carries it word for word — and reports a malformed one as an anomaly rather than
+repairing it. The run then confirms such a row together with the answer it follows (*Gates*,
+Phase 4).
+
 **A torn write matches nothing.** An entry, a record or a code-defect entry stamped with a round
 whose `interview/round-<N>.md` does not exist or does not name it — what a
 [`/brd-interview`](brd-interview.md) run left when it stopped before writing that record — counts
@@ -366,7 +376,7 @@ command removes none of them; the next `/brd-interview` run does.
   (`proposal.md` or `proposal-brief.md`, a slice's or the umbrella's, reachable only where a
   `--sent` package carried one, since a package [`/brd-package`](brd-package.md) builds carries
   none). A row asking to change a coverage-ledger `disposition`, an inventory row's
-  `id`/`text`/`source_anchor`, **any field of a register record** — all thirteen of them,
+  `id`/`text`/`source_anchor`, **any field of a register record** — all fifteen of them,
   `argumentation` among them —
   `brd-link.md`'s `parent:`/`claims:`, any field of a `[CDF#n]` in the code-defect log, or any line
   of an effort proposal or of an archived revision of one is **`refused-with-reason`** — each is
@@ -399,7 +409,7 @@ command removes none of them; the next `/brd-interview` run does.
   is unconfirmed. The four values are `confirm`, `correct`, `reject` and `ask-the-customer`, and a
   candidate answering no question the package put takes one of two instead — recorded for a human,
   quoting the customer, or rejected — and is never frozen on that form, save that a free-text answer
-  naming the question it does answer re-points it onto the options its target takes; the picker carries no bulk
+  naming the question it does answer re-points it onto the options its target takes; the four-option picker carries no bulk
   confirmation, and a free-text answer is otherwise **normalised into those values or the candidate
   is re-asked** — never written through as another. *Reject* reads **no decision to freeze**: the
   customer declined to answer, or the row is not an answer at all (context, thanks, scheduling). It
@@ -484,6 +494,48 @@ command removes none of them; the next `/brd-interview` run does.
   candidate is confirmed onto a question another candidate of the walk already took, the operator is
   shown both and picks one to freeze — or asks the customer and freezes neither; the one set aside is
   named under what still needs a human as a conflicting answer, beside the one frozen in its place (or noting that the one kept went back to the customer for its reason); a later candidate onto a question the operator sent back to the customer goes back with it.
+- **Phase 4 — an answer and the answers applied from it are confirmed as one group.** A row the
+  reviewer's agent marked `applied from <round>/<position>` was not asked of the customer: it was
+  derived from the answer to that question, and shown to the customer with it at the end of a
+  sitting. The answer and every row applied from it — and from those, in turn — are shown together,
+  each with its quotation, and asked once:
+  `choices: ["Confirm the answer and every answer applied from it (Recommended)", "Let me name the ones to correct (you'll be prompted)"]`
+  — or, where any of them carries the line saying the basis of a proposal the package showed has
+  moved (below), `choices: ["Confirm the answer and every answer applied from it", "Let me name the ones to correct (you'll be prompted)"]`,
+  which recommends nothing. The second option asks which, by `<round>/<position>`, and asks again
+  for a name that matches none of them; each one named goes to the ordinary four-option picker on
+  its own, and the rest are confirmed. Every check that follows a confirmation — the
+  conflicting-answer picker, the re-affirmation test, the missing-reason picker — still runs on each
+  row alone. A confirmed row is frozen as a `[CD#n]` with `taken: applied` and `applied_from` the
+  `[CD#n]` of the answer it follows, numbered and written after that one. **A row is frozen as
+  applied only from its answer as the review gives it**: where that answer is corrected, rejected,
+  recorded for a human, sent back to the customer, set aside as a conflicting answer, or sent back
+  or frozen `open` for want of its reason, or was already reconciled by an earlier pass over the
+  same review that did not list the row as applied from it, every row applied from it is **held** — nothing is frozen from
+  it, a held question stays held, and the next package puts it again — because freezing it alone
+  would record the agent's derivation as the customer's word. Where the answer's own fate already
+  holds every row, the rows are held with no question put. A row applied from a question no single answer of
+  the review answers is in no group, and is recorded for a human or rejected. An answer to a
+  strategic question closes its own question only: what its coverage names closes only where the
+  review answered it or applied it from that answer, and the rest stay held. Where the question's
+  record on file is itself an applied one, a row re-affirms it only if it follows the same record;
+  otherwise it is a new answer.
+- **Phase 4 — a proposal whose basis has moved is named.** The proposal tested is the one the
+  package showed — read from the prompt the customer was sent, its proposals table and its
+  strategic questions, and matched to its line in the question's round record — never the round
+  record's last line, which an interview run after the package may have written. Where that
+  proposal follows a delivery-team decision, the candidate is shown with it and the decision's
+  status now. Where the decision has since been reopened, superseded or withdrawn, or reopened and
+  re-decided since the package's date (its `Reopened` paragraph says when, a sibling's re-decision
+  included), or a later proposal or withdrawal follows the one the customer saw, or any of it cannot
+  be read, the walk says plainly that a customer who confirmed the proposal confirmed a position
+  whose stated basis has moved; no option is recommended, and the operator decides. A question the
+  prompt showed with no proposal following a decision — a strategic question's planned answer, or
+  none — is the customer's own answer, and nothing tests it. A proposal is matched to its line
+  exactly, never to a later, longer line following the same decision, and is shown in the prompt's
+  own words. Where the run cannot tell which package the review answers, it says that no prompt
+  says what was proposed for each question carrying a proposal that follows a decision, and that
+  line takes the group array that recommends nothing too.
 - **Phase 4 — a reason nobody gave.** A confirmed candidate, or a corrected row, whose reason is
   `not stated` takes one of exactly two routes: ask the customer and freeze nothing, or freeze it `status: open`, which
   puts the answer on the record and makes it unusable downstream until the reason arrives. The picker's third option, *Cancel — return to this candidate's four options*, resolves nothing: it puts the candidate back on the four-option picker, so *Correct it* can be taken there. Supplying
@@ -525,6 +577,12 @@ command removes none of them; the next `/brd-interview` run does.
   moves, and may revert or reopen it in place. The propagation sweep's citation pass also reaches a
   held record of either kind that names an id a later reconciliation changed, and may withdraw or
   revert one held open.
+- **Phase 5 — what is applied from a decision moves with it.** Where the freeze supersedes or
+  reopens a record of the slice's register, every record there taken `applied` from it — and from
+  those, in turn — is reopened in the same write, naming the record it followed and how that moved,
+  and the slice's next [`/brd-interview`](brd-interview.md) puts it again. One already reopened or
+  terminal does not move again; one held `open`, which cannot be reopened, is named for a human. A
+  record this run's own answers replace takes that instead.
 - **Phase 6 — the correction gate.** Every section-12 row takes `applied`,
   `applied-with-deviation`, `refused-with-reason` or `deferred-to-next-round`.
 - **Phase 7 — dated snapshots are bannered, never rewritten.** A banner is prepended; nothing beneath
@@ -555,7 +613,10 @@ command removes none of them; the next `/brd-interview` run does.
   the restored evidence fires the will-change rule and the restored position carries none of its
   resolutions. An item whose record is `superseded` or `withdrawn` is not presented at all: its row
   is written `inherited-unchanged`, and it is named for a human where this run's change would have
-  moved it. A resumed run skips what an earlier pass disposed **and wrote**, and re-sweeps in full every
+  moved it. An item reached through `applied_from` is not presented: the rule that a decision never
+  stands on a basis that is gone disposes it — `reopened` where it is decided, `inherited-unchanged`
+  where it is already reopened or terminal, and `inherited-unchanged` and named for a human where it
+  is held `open`. A resumed run skips what an earlier pass disposed **and wrote**, and re-sweeps in full every
   dependent that pass could only record — otherwise merging that dependent's pull request, which is
   exactly what unblocks the sweep, would never let it land.
 
@@ -563,10 +624,16 @@ A run that stops — on a refusal under *What it needs*, a gate above, or a *Can
 
 ## The two sweeps
 
-**Propagation.** Two sets are swept, and only the first is a scan: every BRD whose `brd-link.md`
+**Propagation.** Three sets are swept, and only the first is a scan: every BRD whose `brd-link.md`
 declares `depends-on:` carrying this key — a slice, in practice, since every command that writes
-the field refuses a root, though the scan searches every level for a hand-edited one; **and every BRD
-this ledger delegates to**, looked up from its own `covered-by` rows. The second exists because a
+the field refuses a root, though the scan searches every level for a hand-edited one; **every BRD
+this ledger delegates to**, looked up from its own `covered-by` rows; **and every sibling slice
+under the same parent whose register holds a decision applied from one of this slice's that this
+run reopened, superseded or re-decided** — found among the parent's slices by their `brd-link.md`
+naming that parent, and by the decision's `applied_from` field naming this slice's key, never by a
+folder's name. A sibling need not declare `depends-on:` to rest on this slice's decision, since
+[`/brd-interview`](brd-interview.md) applies answers from its siblings' registers and records that
+link in `applied_from` alone. The second exists because a
 child is carved with `parent:` and `claims:` and no `depends-on:` naming the BRD it was carved from
 — so the scan alone could not reach it, and a customer withdrawing a
 requirement this BRD had delegated would have left the owning BRD still grounding, interviewing and
@@ -574,7 +641,15 @@ packaging an obligation that was gone. A row whose disposition this run moved pu
 the set on that account alone, whether or not anything there cites a changed id. Decisions and assumptions carrying `conditional_on` are the **first** target and are
 swept whether or not they cite a changed id — that is what the field is for, and the order is
 load-bearing: the `conditional_on` pass is the complete one, found mechanically by a field, and
-running the incomplete textual pass first makes the complete one an afterthought. A dependent whose
+running the incomplete textual pass first makes the complete one an afterthought. **Then the
+`applied_from` pass**, by a field too: every decision of a swept register applied from one of this
+slice's that this run reopened, superseded or re-decided — and every decision of that register
+applied from those, in turn — is reopened where it reads `decided`, in its own slice's register, so
+that slice's next
+[`/brd-interview`](brd-interview.md) puts it again; and a `reopened` or `withdrawn` write any pass
+makes reaches the decisions of that register applied from the one it moves the same way. A decision
+of yet another register applied from one this sweep moves is left to that register's next
+interview, which reads the basis as it then stands. A dependent whose
 own register is in flight is **recorded, never written**, so nothing overwrites somebody else's open
 pull request and no downstream BRD can stall the prerequisite's customer loop. Every id a sweep
 write names carries the key of the BRD whose numbering it is, always in prose as `<BRD-KEY> [CD#n]`
@@ -731,7 +806,7 @@ Phase 14 presents one of two lists, decided by what this run left behind, and ru
 
 - **Nothing left to re-enter for** → where no claimed ledger row is still `unallocated`, at least one is `covered-here`, and the slice's `prd.md`, if one is written, is on the default branch, wherever the specs tree is a git repository, [`/create-prd <SLICE-KEY>`](create-prd.md), [`/create-ard <SLICE-KEY>`](create-ard.md) and [`/specify <SLICE-KEY>`](specify.md) — each after the merge, `/create-prd` only where the slice holds no `prd.md`: beside one already on the default branch, or in the folder of a specs tree that is no git repository, the run names [`/update-prd <SLICE-KEY>`](update-prd.md) in prose in its place, since `/create-prd` would open on its existing-PRD question, recommending that refresh. Where a `prd.md` is written and not on the default branch of a specs tree that is a git repository, none of the three is offered: the run prints that file's landing, says why each was dropped, and puts no question. Where either ledger test fails, none of the three is offered either: the run says which test failed, and, where `claims:` names rows, none of them `covered-here` and none `unallocated`, what each resolved to and that no command applies, and puts no question — and, where the slice claims no row, names [`/brd-split <PARENT-KEY>`](brd-split.md), the run that keeps or removes it, saying which form applies by the parent's ledger, which it leaves to you to check. Where the slice's `coverage-ledger.md` is absent or unreadable while its `brd-link.md` claims rows, none of the three is offered either, and the run reports the ledger's path and names [`/prd-ground <SLICE-KEY>`](prd-ground.md) in prose — never as an option, since it stops on that slice by design — as the run that tells a carve interrupted before the ledger was written from a file lost or damaged after it, and names the repair. Reconciling another BRD or slice is named in the prose list.
 - **A decision reopened, a question held for the customer, a code claim challenged, or a dependent only recorded** → only the re-entries those triggers fire: another [`/brd-interview`](brd-interview.md) round — with a plain [`/prd-ground <BRD-KEY>`](prd-ground.md) named before it where the round it resumes holds a question that needs grounding; [`/brd-package`](brd-package.md) again, after the merge; `/prd-ground <BRD-KEY> --rebaseline`, after the merge; or this command again on the same review, after the merge and once each dependent's register is on the default branch.
-- **Beside either list** → `/brd-interview <DEPENDENT-KEY>` for each dependent BRD whose decision the propagation sweep reopened; and, where this run froze a `[CD#n]`, [`/prd-proposal <SLICE-KEY>`](prd-proposal.md), which prices the slice once its `prd.md` is on the default branch — save on a slice holding no `prd.md` that fails its ledger tests or whose ledger cannot be read, where no proposal is named, since `/create-prd` would stop there.
+- **Beside either list** → `/brd-interview <DEPENDENT-KEY>` for each dependent BRD whose decision the propagation sweep reopened — a sibling slice whose decision followed one of this slice's among them; and, where this run froze a `[CD#n]`, [`/prd-proposal <SLICE-KEY>`](prd-proposal.md), which prices the slice once its `prd.md` is on the default branch — save on a slice holding no `prd.md` that fails its ledger tests or whose ledger cannot be read, where no proposal is named, since `/create-prd` would stop there.
 
 The detail follows.
 

@@ -33,6 +33,12 @@ this repository's design spec, and the decision rows above:
 - the citation check that resolves every numbered identifier in the rendered prompt against the
   package's own records, which is why section 1 forbids one even as an example —
   `references/bundle-packaging.md` §6.2, relation 1
+- the rules the reviewer's agent puts the package's questions by — sittings within a budget,
+  strategic questions first, each answer to a numbered question applied forward, proposals for the
+  questions that are not strategic and requirement confirmations put as tables — which the prompt
+  carries beside this body, copied verbatim into the part that
+  asks the questions, and two of which the body states as *the pre-fill rule* and *the
+  applied-answer rule* — `workflows-core:question-budget` §13
 
 **Consumed by two shipped commands.** One renders the body below into the prompt a customer
 pastes — from the boundary this preamble declares, never in full. The other parses a returned review
@@ -81,6 +87,17 @@ section of this schema.** The body has two numbered spines running through it an
 reviewer only has one of them; this schema's own rules are referred to by name — *the
 evidence-limitations rule*, *the one-new-file rule* — so that a bare "section 4" is never ambiguous
 to the reader who matters.
+
+**The prompt carries a second block of rules beside this body**: how the reviewer's agent puts the
+package's questions to the reviewer, copied verbatim, in the part of the prompt that asks them, from
+the reference the preamble names. Two of its rules shape the returned review itself, and the body
+states both in full — *the pre-fill rule* for the review's section 4, and *the applied-answer
+rule* for its section 7, which also says which answers an applied row may follow and how a proposal
+confirmed in a table is recorded — so the review's shape never rests on a reader having met that
+block first. The two texts must agree: a change to the block's rules for applying an answer
+forward, for putting proposals as a table or for section 4 is made in the block and in the body in
+one change, and the body never contradicts the block. The block is held to this section's prohibitions as the body is, and
+the prompt's plugin-free scan reads both.
 
 **Documents are named, never pathed.** The review refers to a bundle document by its filename, and
 the reviewer is told to find it by searching for that name. Paths drift the moment a bundle is
@@ -148,10 +165,10 @@ the review's; the table below is the review's spine.)
 | 1 | Review identity and evidence limitations | The `Package reviewed:` line the prompt gives, copied exactly as its own line; who reviewed, in what role, on what date; the documents and repositories actually available; the tier statement the evidence-limitations rule obliges; anything that could not be opened |
 | 2 | Executive verdict | One of `approved`, `approved-with-required-changes`, `not-approved`, and one paragraph saying why |
 | 3 | Approved and deferred scope | What is approved to proceed now, what is deferred, and what a deferral is waiting for |
-| 4 | Requirement traceability | Per requirement in scope, exactly one of four values and no other: `confirmed` — the package's reading matches the customer's intent, including a requirement the package says will not be built where the customer agrees it should not be; `corrected` — it does not, and the row says what the customer meant; `missing` — a requirement the package left out entirely, stated as its own row; `withdrawn` — the customer drops the requirement, saying why in this row; where the package put a question about that requirement, the answer to that question goes in section 7 as every answer does, and a withdrawal the package asked about nowhere is stated here alone. Where the package includes its transcription of the customer's images, that transcription — for each image bearing on a requirement in scope — is part of its reading, and the reviewer confirms or corrects it as they do a requirement. A correction the transcription itself must carry is also entered in section 12, as a required change naming the document that holds the transcriptions by its filename and the image by its heading there |
+| 4 | Requirement traceability | Per requirement in scope, exactly one of four values and no other: `confirmed` — the package's reading matches the customer's intent, including a requirement the package says will not be built where the customer agrees it should not be; `corrected` — it does not, and the row says what the customer meant; `missing` — a requirement the package left out entirely, stated as its own row; `withdrawn` — the customer drops the requirement, saying why in this row; where the package put a question about that requirement, the answer to that question goes in section 7 as every answer does, and a withdrawal the package asked about nowhere is stated here alone. Where the package includes its transcription of the customer's images, that transcription — for each image bearing on a requirement in scope — is part of its reading, and the reviewer confirms or corrects it as they do a requirement. A correction the transcription itself must carry is also entered in section 12, as a required change naming the document that holds the transcriptions by its filename and the image by its heading there. *The pre-fill rule* says how the reviewer's agent proposes `confirmed` and puts those rows as one table |
 | 5 | Code-grounding confirmations and challenges | Both: which code claims the reviewer confirms and how, and which they challenge and on what evidence |
 | 6 | Design review | The design positions the package takes, confirmed or challenged, including anything that contradicts the customer's own environment |
-| 7 | The decision log | One row per decision the package asked the customer to take: the answer, and the reason for it |
+| 7 | The decision log | One row per decision the package asked the customer to take: the answer, and the reason for it; a question the reviewer was not asked because an earlier answer decided it still gets its row, carrying `applied from <round>/<position>` (*the applied-answer rule*) |
 | 8 | Accepted assumptions and rejected alternatives | One row per assumption the package surfaced, and every alternative the customer rules out, with the reason |
 | 9 | Ownership | Who on the customer side owns each approved area and each decision, and who to ask when a later question arises |
 | 10 | Unresolved blockers | What prevents this proceeding, what would clear it, and who clears it |
@@ -167,7 +184,8 @@ sentences mean very different things and an absent section means neither.
 package's own identifier for it, copied exactly as it appears — every identifier the package uses is
 bracketed, a short prefix, a `#` and the record's number, shown here as `[BR#n]` or `[CG#n]` with
 `n` standing for that number, whatever kind of record it names, and a question is cited by the
-round and position that identify it. The review never assigns identifiers of its own in
+round and position that identify it, written `<round>/<position>` as the prompt heads the
+question. The review never assigns identifiers of its own in
 those namespaces: the registers on the delivery-team side own that numbering, and an identifier
 whose origin is ambiguous is worse than no identifier. Plain list numbers inside a review section
 are local to the review and are not identifiers.
@@ -188,6 +206,14 @@ package understood what the customer asked for. Requirements the package missed 
 highest-value rows here and are stated as their own rows rather than folded into a correction. The
 review does not set the delivery team's coverage bookkeeping.
 
+**Section 4 — the pre-fill rule.** For each requirement in scope, the reviewer's agent compares the
+package's reading with the customer's own source text. Where the two match, it proposes
+`confirmed`, and puts every such row to the reviewer as one table — accept them all, or name the
+ones to look at; each row where it sees a mismatch, and each row the reviewer names, it asks about
+on its own. A row the reviewer accepts from that table is `confirmed`, their own answer; a
+`confirmed` the agent proposed and the reviewer never saw is no answer, and that row is still to be
+asked.
+
 **Section 5 — confirmations without challenges are not a review.** A section holding only
 confirmations has either been rubber-stamped or has hit a limit the reviewer has not admitted, and
 section 1 is where that limit belongs. Each confirmation says *how* it was checked, or states
@@ -207,6 +233,21 @@ is the only one — and say when it should be asked again, should the requiremen
 raised only about defects in a requirement dropped that way is closed, unless it already holds an
 earlier answer of yours; any other that touches it may still be asked. A requirement marked withdrawn in section 4
 alone is passed to the delivery team and drops nothing until they act on it.
+
+**Section 7 — the applied-answer rule.** A question the reviewer was not asked, because an earlier
+answer plainly decided it, still gets a row of its own: the question's round and position, the
+answer it takes, the one-line reason, and, after the reason, `applied from <round>/<position>` —
+those two words, a space, and the round and position of the question whose answer it follows,
+written as the prompt heads that question — once on the row. **It names a question only**: an
+answer to anything else the package asks — an assumption, or a finding it puts to the reviewer —
+decides no other question this way, and a question it bears on is asked and answered in a row of
+its own, without the marker. The marker is how the delivery team
+tells an answer the reviewer gave from one their agent derived from it, and an answer is recorded on
+the delivery side only once it is confirmed there, either way. A row the reviewer reopened at the
+end of a sitting and then answered is an ordinary row and carries no marker, and so is a proposed
+answer the reviewer confirmed in a table, which is their own answer. **Where the prompt and another
+document of the package differ about a question, the prompt governs**: a proposed answer a document
+shows and the prompt does not put is withdrawn, and the question is answered as the prompt puts it.
 
 **Section 8 — every assumption the package surfaced gets exactly one row**, marked accepted,
 corrected, or cannot-say. Cannot-say is a real answer and is not a failure to respond. An accepted

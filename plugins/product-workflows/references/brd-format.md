@@ -386,15 +386,27 @@ quoted:
 | id | text | source_anchor | defects |
 |---|---|---|---|
 | [BR#1] | The monthly report lists every invoice. | 2. Monthly report | [DEF#1] |
-| [BR#2] | Every monthly report must include these fields: … Invoice number | source/appendix/fields.md › Required report fields | [DEF#2] |
+| [BR#2] | Every monthly report must include these fields: … Invoice number | source/appendix/fields.md › Required report fields | |
 | [BR#3] | Every monthly report must include these fields: … Customer name | source/appendix/fields.md › Required report fields | |
 | [BR#4] | Every monthly report must include these fields: … Invoice date | source/appendix/fields.md › Required report fields | |
+| [BR#5] | The report is sent on the first working day of the month. | 3. Delivery | [DEF#2] |
+| [BR#6] | The report is sent on the last day of the month. | 4. Schedule | |
+| [BR#7] | The monthly report lists all invoices. | 5. Summary | |
+
+## Inventory notes
+
+- [BR#2] — split from "Every monthly report must include these fields:"
+- [BR#3] — split from "Every monthly report must include these fields:"
+- [BR#4] — split from "Every monthly report must include these fields:"
+- [BR#7] — restates [BR#1]
 ````
 
 The frontmatter is the folder's carrier on a source-owning BRD, and a slice's adds `parent:` and
 `source:` (§2.1); the title line names the same key; the table carries the four fields above as its
-four columns, in that order, one row per `[BR#n]` in id order. `id` is written bracketed, and
-`defects` as §2.3 writes a list. **An inventory holding no row** is that frontmatter less its
+four columns, in that order, one row per `[BR#n]` in id order; and the `## Inventory notes` section
+below it is written only where the inventory holds a note (*The inventory's notes*, below). `id` is
+written bracketed, and `defects` as §2.3 writes a list. **An inventory holding no row** is that
+frontmatter less its
 `document:`, its `captured:` map, its `accounts:` map and its `quoted:` list, which record what the
 rows were reconciled against and where they came from and so have nothing to record,
 the title and the table's header — what `/brd-intake` Phase 2
@@ -474,11 +486,16 @@ rows are copied from its parent's.
 
 **A requirement carrying more than one obligation is split.** When one numbered item in the source
 binds the delivery team to two or more separable obligations, each obligation becomes its own
-`[BR#n]` rather than being inventoried as one row with a compound `text`. **The split is one defect,
-however many rows it yields**: one `[DEF#n]` of class `duplicate` (§3), raised on the first row the
-split produced and naming every other row it produced — never one per row — so the inventory does
-not silently multiply one source requirement into several without a defect marking that it did, and
-does not turn one act of splitting into several defects a customer is asked about separately.
+`[BR#n]` rather than being inventoried as one row with a compound `text`. **A split is recorded in
+the inventory, never as a defect**: every row it yields — the first included — carries the note
+`- [BR#n] — split from <item>`, written by the intake that reads the split (*The inventory's notes*,
+below, which also says when an inventory an earlier release wrote gains them), and no `[DEF#n]` is
+raised for the split. The notes are what keep the inventory from silently multiplying one source requirement into
+several — a reader sees every row that came from one item, and which item — while splitting it,
+which is the plugin's act and no fault of the customer's text, never becomes a question to the
+customer. **A defect log already on file keeps the split entries an earlier release raised**, each a
+`duplicate` on the first row a split produced naming the others: a `[DEF#n]` is permanent (§4), so
+such an entry keeps its id, its rows, its reason and its resolution as they stand.
 
 **A split row's `text` takes one fixed form, `<lead-in> … <item>`**: the words the split obligations
 share — a list's lead-in, or the subject of a sentence carrying several clauses — then ` … `, then
@@ -490,6 +507,51 @@ where they share one `source_anchor` (`commands/brd-intake.md` Phase 3).
 
 `[BR#n]` numbers are never reused and never renumbered, including across a split: once assigned, an
 id is permanent even if the row it names is later split, superseded, or found defective.
+
+**The inventory's notes.** An inventory may end with a `## Inventory notes` section after its table
+— a slice's holding only the `restates` notes §2.1 copies into it — a blank line, the heading, a
+blank line, then one list item per note, in
+the id order of the row each note is about, a row's split note before any restatement note. It
+holds two forms of line, and no other:
+
+- **`- [BR#n] — split from <item>`** — the row is one of several a split produced from one customer
+  item (above). `<item>` is that item's lead-in, verbatim and in double quotes, where the split
+  rows share one — the `<lead-in>` of their `text` — and otherwise the item's `source_anchor` as the
+  rows carry it; written the same on every row of one split, on one line, a line break in it written
+  `<br>` as a cell writes one (§2.3).
+- **`- [BR#n] — restates [BR#m]`** — the row repeats `[BR#m]`, and the repetition was recorded as
+  no defect: a `duplicate` candidate (§3) the operator, at `/brd-intake`, took for a restatement
+  rather than a `[DEF#n]` — one line per row the candidate names, `[BR#m]` the row it was raised
+  on. A `duplicate` the operator logs as a `[DEF#n]` is a defect, and gets no note.
+
+**A note is no row and no defect.** It adds no `[BR#n]`, lists no `[DEF#n]` and changes no row's
+cells: it records where a row came from, or what it repeats, so a reader of the inventory sees which
+rows belong together. **A reader of the inventory's rows reads the table**, and a note is not one
+of them: a `[BR#n]` a note names is a row of the table above it, and a lookup of a row by its id
+takes the table's row, never a note naming it. An inventory holding no note has no
+`## Inventory notes` heading, and ends at its table.
+
+**The two forms live differently, because one is derived and the other is an answer.** On a
+source-owning BRD `/brd-intake` is the section's one writer: a run that writes the inventory's rows
+writes the section whole once its defect walk has settled (`commands/brd-intake.md`), and a run
+that keeps the inventory as it stands keeps the notes with it.
+
+- **A split note is derived data, rewritten on every such write.** The write takes every
+  `split from` note afresh from that run's read — one note for each row the read returned as split
+  (`agents/brd-reader.md`, its `splits`), mapped to the row's id as the read's rows are — so a note
+  always matches its row's current `text`: an item the customer rewrote, or no longer writes as one
+  item, leaves no stale note behind. A row on file the read did not return keeps its `text` as it
+  stands, so it keeps the split note it had, which still matches that text. **Every row the
+  inventory holds as split therefore carries one — the first included — once an intake that writes
+  notes has written the rows**: notes first appear at such a run, and an inventory an earlier
+  release wrote holds none until its next intake writes its rows, so a split row there may carry
+  none, and no reader may take a missing note for a row that was never split.
+- **A `restates` note records the operator's answer**, and is kept on a re-run only while the read
+  still proposes the restatement. A re-run matches a `duplicate` candidate joining the note's two
+  rows to the note, in either direction, and does not put it to the operator again (§4); the note
+  is kept. A note whose pair no `duplicate` candidate of the run's read joins — the rows no longer
+  repeat each other in the read's judgement, or the read no longer returned one of its two rows —
+  is dropped by the write, and a new answer adds a note.
 
 **`source_anchor` takes one of three forms**, by where the requirement is stated:
 
@@ -719,7 +781,19 @@ A slice **does** hold its own `brd/brd-inventory.md`: the subset of its parent's
 from the parent's inventory, in §2's layout — each cell exactly as it stands in the parent's file,
 since §2.3's encoding is the same at both levels and a cell copied as written needs no decoding, save
 where the parent's file predates that layout: a cell is then taken as that file gives it and encoded
-by §2.3 as it is written (§2.3).
+by §2.3 as it is written (§2.3). **With its rows it copies each of the parent's `restates` notes
+whose two rows the slice both claims** (§2, *The inventory's notes*), as it stands, under the same
+`## Inventory notes` heading and in the parent's order — none, and no heading, where no note
+qualifies — so the slice's own inventory still shows the pair as one obligation said twice. A
+`restates` note naming a row the slice does not claim stays in the parent's inventory alone: it
+would name a requirement outside the slice's own files, which every reader of the slice resolves
+against, and the bundle's citation check would find it dead (`references/bundle-packaging.md` §6).
+**A split note is never copied**: the split row's own `text` and `source_anchor` already say where
+it came from (§2), and the note's `<item>` — the customer's lead-in or an anchor, outside any table
+cell — would stand in the bundle where the plugin-free scan reads the plugin's own writing, so a
+`§` in it would stop the package (`references/bundle-packaging.md` §6.3). A write that adds a row
+to a slice's inventory or withdraws one copies its notes again by the same test, so a note never
+outlives a row it names there.
 **"Its parent" is literal and unambiguous**: nesting is capped at one level
 (`workflows-core:addressing` §6), so a slice's parent is always the BRD that owns the source
 document — there is no chain to walk and no case in which the named parent holds neither.
@@ -886,8 +960,10 @@ Exactly six. Each fires on a one-line test a reader applies to a single `[BR#n]`
 naming no counterpart is incomplete. **Each such relation is raised once, from one end**: a
 `duplicate` in which one row is a part of another is raised on the whole, naming its part or parts;
 a `duplicate` in which rows restate one another, and a `conflict`, is raised on the lowest-numbered
-of its rows, naming the others; and a split's is raised as §2 fixes. Raised from both ends, one clash
-would become two defects and two questions to the customer. `unsourced` is a pointer forward: it
+of its rows, naming the others. Raised from both ends, one clash would become two defects and two
+questions to the customer. **A split raises none**: the rows a split produced are parts of one
+customer item, not restatements or parts of one another, and the inventory records the split as
+notes (§2), never as a `duplicate`. `unsourced` is a pointer forward: it
 flags a requirement whose truth grounding must settle, not a requirement grounding has already
 checked and found wanting.
 
@@ -943,18 +1019,22 @@ key: <the key of the BRD that owns the source document>
 | id | class | raised on | names | reason | resolution |
 |---|---|---|---|---|---|
 | [DEF#1] | ambiguity | [BR#1] | | "every invoice" does not say which invoices one month's report covers | open |
-| [DEF#2] | duplicate | [BR#2] | [BR#3], [BR#4] | one list item per field, split from "Every monthly report must include these fields:" | open |
+| [DEF#2] | conflict | [BR#5] | [BR#6] | the first working day and the last day of the month cannot both be the day the report is sent | open |
 ````
 
 `kind: brd-defect-log` names this document, a kind `workflows-core:addressing` §4 passes over, as
 §1.1 says of the link log. `id` is the entry's `[DEF#n]`; `class` one of §3's six; `raised on` the
 **one** `[BR#n]` the defect was raised on; `names` the counterparts a `conflict` or `duplicate`
-names, empty for every other class; `reason` the confirmed reason, as `/brd-intake` Phase 4's
-operator confirmed or edited it; `resolution` one of the four values above. **A log holding no
+names, empty for every other class; `reason` the reason `/brd-intake` Phase 4 logged — the
+candidate's own where the operator confirmed it, the narrowed one where the operator narrowed it,
+and, on an entry the operator sent on unreviewed, the candidate's own with
+` — not reviewed at intake` after it; `resolution` one of the four values above. **A log holding no
 entry** is its frontmatter, its title and the table's header. **An entry written before this layout
 was fixed** records every row it was recorded against in one list: a reader takes the first of them
 as its `raised on` and every other as its `names`, and `/brd-intake` Phase 4 writes it that way when
-it carries the entry into this layout (§2.3).
+it carries the entry into this layout (§2.3). **An entry an earlier release raised for a split** — a
+`duplicate` on the first row the split produced, naming the others — is read like any `duplicate`
+and kept as it stands, as every entry is (below); a split now raises no entry (§2).
 
 **A `conflict` or `duplicate` is listed in the `defects` column of the row it is raised on only.**
 Its counterparts are named in its entry, never given the id in their own `defects` column — so a
@@ -973,6 +1053,18 @@ the inventory and the confirmed set, never of the order a walk put questions in.
 depends on it: an id that moved, vanished or came back naming another defect would re-point each of
 them without a trace. `commands/brd-intake.md` Phase 4 holds it on a re-run, by matching what a new
 extraction proposes against the entries already on file.
+
+**A re-run matches against the inventory's `restates` notes as well as the log** (§2, *The
+inventory's notes*), since a restatement the operator recorded as no defect left a note and no
+entry. A `duplicate` candidate joins its row to each row it names; **a pair a `restates` note on
+file joins — in either direction, `[BR#n]` restating `[BR#m]` or `[BR#m]` restating `[BR#n]` — is
+settled by that note**, and the note is kept. A candidate whose every pair a note joins matches
+those notes and is not put to the operator again, exactly as one whose every pair an entry on file
+joins matches those entries; one some of whose pairs a note joins is put for the others alone, as
+the walk puts a candidate some of whose pairs the log already joins, and the pairs a note joins are
+named beside it as settled. Only a `duplicate` candidate matches a note: a `conflict` or an
+`ambiguity` the read now raises on the same two rows says they differ in substance, and is walked
+as its class is; a note no `duplicate` candidate of the read matches is dropped (§2).
 
 There is exactly one **requirement** defect log per source document, held by the BRD that owns that
 document; a slice reads its parent's rather than keeping one of its own (§2.1). That is a statement

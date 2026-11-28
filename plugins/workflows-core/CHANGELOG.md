@@ -5,6 +5,76 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.105.0] — 2026-11-27
+
+**What changes for you.** Nothing changes in a command of this plugin. `product-workflows` 3.92.0's `/brd-package` now copies `question-budget` §13's customer block into the customer's prompt word for word, and its `/brd-reconcile` confirms an answer and the answers the customer's agent applied from it as one group; this release words the block, §8 and one picker row for them, which they need, and brings the rulebook and both agents into line with 3.92.0's `/brd-interview` and `/brd-intake`: a strategic question is left for its own answer, every option of one decides what it covers, and a question the operator reopens is asked singly (`.claude/rules/plugin-updates-coupling.md`, its 1.105.0 bullet).
+
+### Changed
+
+- **`references/question-budget.md` §13**, between its customer markers, the lines `/brd-package` copies. Item 4: an answer is applied forward only where it answers a question the package numbers `<round>/<position>`; an answer to an assumption, or to a finding the package puts to the reviewer, decides no question this way — the questions it bears on are asked, saying what it already decided. Item 6: the proposals table holds only questions that are not strategic, a strategic question's proposed answer being put with it, first (item 1).
+- **`references/question-budget.md` §8.** Its head scopes it to a caller that applies answers forward, `/brd-interview`: intake's walk applies none, putting candidates with a common cause as one question instead. **A strategic question is never closed or narrowed by another answer**, by the applier or as an answer a decision on file determines: its own answer closes what it covers, so it stays open, to be put, and a held strategic `[C]` takes a proposal at most. *When the source moves*: an applied answer is reopened too where a decision outside the slice was reopened and re-decided in place since it was applied, read off that decision's `Reopened` date; a proposal is never reopened, since it answers nothing, and is shown to the customer only while the decision it follows stands — where that decision is the slice's own, an answer re-deciding it under its own id and proposing nothing again for the question withdraws it; where it is outside the slice, which no withdrawal reaches, only while that decision's register shows it never reopened, even where the proposal was made again since, the package naming each one it leaves out.
+- **`references/question-budget.md` §10**: a question the person names to reopen at an end-of-sitting list, or as an exception to a table, is put singly in its turn for the rest of the run — no later plan records it applied or tables it, no strategic answer closes it through its coverage, and the applier is never given it after a later answer. §8's steps 1 and 2 and its *Reach* say the same.
+- **`references/question-budget.md`, §3, §12 and the head.** §3: a resumed run given `--budget` asks by that value, the caller counting each sitting against it, where it said the value was passed to `next` as `--limit`, which no caller does. §12: a run with no folder keeps its registry at a path at which no file stands yet, inside a directory `mktemp -d` makes — never a file `mktemp` made, which `init` refuses — and a "why" may be recorded with its choice as one answer where the caller says so. The head's citer recipe searches `plugins/*/references/*.md` too, its result less the rulebook itself.
+- **`agents/question-planner.md`**: in mode `strategic`, each option of a strategic question, chosen, decides every question it covers in one line, as `answer-applier`'s `determined` would — an option such as *Partly* that leaves one open is no option — and its check before it writes says so; in modes `merge` and `plan`, a strategic question is never put in `applied`.
+- **`agents/answer-applier.md`**: a strategic `[V]` takes `untouched` alone, and a strategic held `[C]` `proposal` or `untouched`, whatever this answer settles — its own answer closes what it covers. Its `candidates` never hold a question the person asked to answer themselves (§10), which its caller keeps out.
+- **`references/escalation-rules.md`**, *Closed-vocabulary pickers must normalise the free-text answer*, row 1, with its generated `pickers` part: the candidate-confirmation picker gains its group form for an answer and the answers applied from it — two fixed arrays, one recommending confirmation and one, where the group's root or any member carries the line saying the basis of a proposal the package showed has moved, or that no prompt says what was proposed, recommending nothing; confirm every member, or name the ones to correct, the second option marked `(you'll be prompted)` since it asks for their addresses, each named re-asked on the four-option form — never a freeze of a member not confirmed. It stays one row of the eleven.
+
+### Known limits
+
+- **1.104.0's limit is lifted**: `/product-workflows:brd-package` 3.92.0 opens its customer prompt's part 7 with §13's block and puts strategic questions first, each with why it is asked, what it covers and its proposed answer.
+
+## [1.104.0] — 2026-11-27
+
+**What changes for you.** Nothing changes in a command of this plugin. `product-workflows` 3.91.0's `/brd-interview` now runs the strategic sittings `question-budget` §7 defines, dispatching `question-planner` in mode `strategic` before each; this release brings the two texts it follows into line with that command, which needs it (`.claude/rules/plugin-updates-coupling.md`, its 1.104.0 bullet): no question is grouped twice, and the choice after a strategic sitting is made before anything is planned again.
+
+### Changed
+
+- **`references/question-budget.md` §7.** *Planning*: no question is covered twice — a question any strategic question on file names in its `covers`, whatever that question's state and whichever run planned it, is never covered again, and a strategic question is never covered at all; what a strategic answer did not close, and what a split or deferred strategic question covers, is asked in detail; the planner holds to it, and the caller leaves out any strategic question that does not. *After each strategic sitting*: the stop rule is measured before anything is planned again, and what is left is planned once the choice is made — by another strategic sitting's own plan, or by the detailed walk's first sitting's.
+- **`agents/question-planner.md`** names `/brd-interview` as its caller in mode `strategic`, before each of its strategic sittings, beside `merge` and `plan`; in that mode it never covers a question a strategic question of its input already names in its `covers`, in any state, nor a strategic question itself, and its own check before it writes says so.
+
+### Known limits
+
+- **1.103.0's last limit is lifted, save §13**: `/product-workflows:brd-interview` runs strategic sittings and dispatches the planner in mode `strategic`. No package prompt carries §13's block yet: `/product-workflows:brd-package` renders a strategic `[C]` as it renders any held question.
+
+## [1.103.0] — 2026-11-27
+
+**What changes for you.** Nothing changes in a command of this plugin. `product-workflows` 3.90.0's `/brd-interview` now asks its questions by `question-budget` and dispatches `question-planner` and `answer-applier`, the caller 1.102.0 named for them; this release brings four texts into line with that command, which needs it (`.claude/rules/plugin-updates-coupling.md`, its 1.103.0 bullet).
+
+### Changed
+
+- **`references/question-budget.md`.** §12 lists `carry`, which `product-workflows`' `question-registry.py` gains in 3.90.0: it marks a held `[C]` carried where a package carried it after it entered the registry, a resumed run calling it once it has undone anything the run did to the question that a carried one may not take; the script then refuses `rank` on it too. §7: a caller runs strategic sittings only where its own text says it does, citing the section; one whose text does not plans no strategic question, and every sitting it opens is one of its detailed walk.
+- **`agents/answer-applier.md`**: the caller records a `retag` verdict as a re-tag where its own rules let it re-tag the question, and may decline one and record the verdict's `answer` as a proposal instead; the verdict is the same either way.
+- **`agents/question-planner.md`** names `/brd-interview` as its caller in modes `merge` and `plan`, and mode `strategic` as a caller's that runs strategic sittings.
+- **`references/phase-handoff.md` §3.4**, the `/brd-package` round row, with its generated `require-on-main` file: `BRD_PACKAGE_ROUND_UNSETTLED` stops on a round holding a deferred question save a `[V]` deferred only on questions held for the customer, which 3.90.0's `/brd-package` admits.
+- **Pages.** The references page says strategic questions come first in a command that runs strategic sittings.
+
+### Known limits
+
+- **1.102.0's limit is lifted, save the strategic mode and §13 (next item)**: `/product-workflows:brd-interview` now follows the rulebook, dispatching `question-planner` in modes `merge` and `plan` and `answer-applier` after each answer it records, so the rulebook, both agents and the agents page describe a caller that uses them.
+- **No command runs a strategic sitting yet**: the planner's mode `strategic` and §7 have no caller until `/brd-interview` adopts them in a later release, and no package prompt carries §13's block yet.
+
+## [1.102.0] — 2026-11-27
+
+**What changes for you.** Nothing changes in a command of this plugin. It adds the rulebook the BRD route asks people questions by, `question-budget`, and the two agents that plan those questions and apply each answer to the rest, `question-planner` and `answer-applier`. `product-workflows` 3.89.0's `/brd-intake` asks its defect walk's questions by the rulebook and dispatches `question-planner`, and needs this release (`.claude/rules/plugin-updates-coupling.md`, its 1.102.0 bullet).
+
+### Added
+
+- **`references/question-budget.md`**, the single source of truth for how the BRD route puts questions to people, read whole — it has no entry point — and cited by section. §2's value test: a question is put only where its answer would change what gets built, what the customer is asked or a recorded decision, nothing on file or answered already decides it, and no other open question asks the same; one that fails is dropped with its reason, shown and undoable, and the budget is never a reason to drop, apply or table one. §3's budget: 25 questions a sitting, `--budget <N>` from 5 to 50 where a command takes it, `<CMD>_BAD_BUDGET` on anything else, each asked question numbered `Q<n>/<budget>`, and the sitting stopping at the budget with the rest left open, a bulk path never the recommended option. §4's question shape: one plain line saying what is decided, what the agent saw, two to four options each saying what it does, a recommendation with its reason where there is one, every claim about a row, finding or the code checked before it is written, a typed answer read as the option it expresses and the same dialog never put twice. §5 merging (never across a tag, never a carried question), §6 ranking (coverage first, then Impact × Uncertainty), §7 strategic sittings, §8 applying an answer to the whole registry and the reopen cascade, §9 the tail table, §10 the end-of-sitting list, where anything closed without being asked singly can be reopened, §11 the account, §12 the registry and the exits of `product-workflows`' `question-registry.py`, and §13 the plain-text block for the customer's prompt.
+- **`agents/question-planner.md`** plans one sitting from a JSON file its caller writes: it proposes merges and drops (mode `merge`), groups intake's defect candidates (`intake`), plans strategic questions with their coverage (`strategic`), or ranks the queue into what to ask, table or hold back (`plan`), and in `merge` and `plan` finds what a decision on file already settles. It asks and closes nothing.
+- **`agents/answer-applier.md`** reads one answer against the open questions: per question, whether the answer determines it, with the derived answer and a one-line derivation, narrows it, or leaves it, and whether a held customer question becomes a proposal or was the delivery team's to decide. It never closes on a guess.
+
+  Both agents are dispatch-pinned to the §2 Opus chain, write their whole result to the `result_path` they are given and reply with its path and counts — never the result inline; given no `input_path` or `result_path` they refuse — and end with the canonical *Untrusted content* block.
+
+### Changed
+
+- **`references/grilling-technique.md`** says the BRD route's question sittings rank by its Impact × Uncertainty and number against their budget as a bounded grill numbers against its cap, without being grills: a sitting's tables and its end-of-sitting list are the rulebook's rules, not this file's one question at a time.
+- **`references/docs-grounding.md`**, `/product-workflows:brd-intake`'s paragraph: it said that command's defect walk visits every candidate and has no question budget, which `product-workflows` 3.89.0 makes false. It now says the walk accounts for every candidate and its budget bounds one sitting, never how many candidates the walk takes, so ranking still removes nothing and a candidate raised from documentation moves the last-ranked one to a later sitting rather than appending a question.
+- **Pages.** The agents page lists the two agents, 13 in all, and the references page the rulebook, 44 files; the README, the docs index and the getting-started and workflow pages give the new counts.
+
+### Known limits
+
+- **Only `/product-workflows:brd-intake` follows the rulebook in this release**, dispatching `question-planner` in mode `intake`. `/product-workflows:brd-interview` asks its questions as before, though the rulebook, both agents' own text and the agents page already name it: `answer-applier` and the planner's `merge`, `strategic` and `plan` modes have no caller until it adopts them in a later release, and no package prompt carries §13's block yet.
+
 ## [1.101.6] — 2026-11-28
 
 DOC-D-G1, sub-project 2, batch 4: the family map accounts for the walk outside the session that `docs-workflows` 1.47.0's `/docs-workflows:docs-verify --prepare` ships. **What changes for you.** Nothing a run does or prints: one sentence of `docs/family-map.md` now names the `prepare` commit among `/docs-verify`'s commits. Released with `docs-workflows` 1.47.0. No run decides anything by the family map's words, so neither release needs the other. 1.101.6 carries 1.101.5 and the chain before it, 1.101.4 and 1.101.3, so the 1.101.3 bullet of `.claude/rules/plugin-updates-coupling.md` applies to it.

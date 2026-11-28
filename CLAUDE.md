@@ -91,6 +91,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `brd-route.md` | `product-workflows/**`; `dev-workflows/commands/`: `design.md`, `ready.md`, `implement.md`, `conformance.md`; `workflows-core/references/`: `addressing.md`, `cost-emission.md`; `workflows-core/commands/frames.md`; `docs-workflows/commands/`: `document.md`, `release-notes.md`; `security-workflows/commands/scan.md` | BRD-route map lines, folder-kind invariants |
 | `brd-route-recut.md` | as `brd-route.md` | the sibling re-cut |
 | `brd-route-detection.md` | as `brd-route.md` | BRD-route detection |
+| `brd-route-interview.md` | as `brd-route.md` | `/brd-interview`'s map line |
 | `prd-ground-verification.md` | as `brd-route.md` | `/prd-ground`'s blind verification |
 | `docs-workflows.md` | `docs-workflows/**`; `product-workflows/`: `commands/epics.md`, `agents/epic-*.md`, `docs/commands/epics.md` | invariants, map, callers |
 | `docs-workflows-gates.md` | as `docs-workflows.md` | three gate authorities |
@@ -112,7 +113,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `plugin-updates.md` | `**` (any file) | updating installed plugins after editing |
 | `plugin-authoring.md` | `**` (any file) | the command, agent and skill taxonomy; the Karpathy notes; adding a new plugin |
 | `plugin-updates-coupling.md` | `*/.claude-plugin/plugin.json`, `*/CHANGELOG.md`; `.claude-plugin/marketplace.json` (repo root) | which plugins to update together, one bullet per release pair |
-| `plugin-updates-coupling-history.md`, then `plugin-updates-coupling-history-2.md` to `-history-6.md` | as `plugin-updates-coupling.md` | its older bullets, in that order: `workflows-core` up to 1.58.0, 1.59.0 to 1.74.0, 1.75.0 to 1.83.1, 1.84.0 to 1.91.1, 1.92.0 to 1.97.0, 1.98.0 to 1.100.0 |
+| `plugin-updates-coupling-history.md`, then `plugin-updates-coupling-history-2.md` to `-history-6.md` | as `plugin-updates-coupling.md` | its older bullets, in that order: `workflows-core` up to 1.58.0, 1.59.0 to 1.74.0, 1.75.0 to 1.83.1, 1.84.0 to 1.91.1, 1.92.0 to 1.97.0, 1.98.0 to 1.100.5 |
 
 The evidence behind the rules — measured cases, refused widenings, history — is in `docs/maintainers/rationale.md`, reached by each rule's `why` link. It is never auto-loaded; read a rule's section before proposing to change the rule.
 
@@ -167,6 +168,7 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 - `workflows-core:security-register-format` — the security findings register: its layout, run records, statuses, roles and the rules `register.py` applies, and §7's weakness classes → `security-workflows.md`
 - `workflows-core:threat-model-format` — the ARD threat model: `threat-model.md`'s sections, a threat's fields and its one disposition, the decision-pair and cross-folder forms, `[TH#N]` identity, the check, an agent's reply → `threat-model.md`
 - `workflows-core:doc-structure-conventions` — traceability boundary, callout scope and adjacency, component-pattern fidelity → `workflows-core.md`
+- `workflows-core:question-budget` — how the BRD route asks people questions, and §13's customer block → `workflows-core.md`
 - `workflows-core:finding-triage` — the orchestrator's step between a reviewer's findings and a fixer (keep, mark unverified or dismiss), its re-review rules, and the patch gate → `workflows-core-triage.md`
 - `workflows-core:specs-repo-git` — `specs-preflight`, `commit-artifacts`, the bounded write authority, the specs-repo git hard rules → `workflows-core-git.md`
 - `workflows-core:phase-handoff` — `handoff-to-main`, `require-on-main`, `branch-check`, the branch-prefix authority, the handoff consent choice → `workflows-core-handoff.md`

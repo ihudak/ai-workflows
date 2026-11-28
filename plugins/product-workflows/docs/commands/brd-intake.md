@@ -3,8 +3,9 @@
 Copies a customer-supplied business requirements document into the specs repo verbatim — and with it
 every file that document links, wikilinks included, after showing you the list — transcribes every
 linked image it takes, extracts a `[BR#n]` requirement inventory from the document, its linked
-markdown and those transcriptions, confirms the document's defects with a human, and writes a
-coverage ledger where every requirement starts `unallocated`.
+markdown and those transcriptions, settles with you which possible defects in the document's
+wording become questions for the customer — at most a budget of plain-language questions a
+sitting — and writes a coverage ledger where every requirement starts `unallocated`.
 
 ## Who runs it
 
@@ -33,7 +34,7 @@ there and prints the value to write by hand. Every command of the route runs as 
 ## Synopsis
 
 ```
-/brd-intake <BRD-KEY> @<brd-file> [--sort-existing <dir>] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
+/brd-intake <BRD-KEY> @<brd-file> [--budget <N>] [--sort-existing <dir>] [--no-docs] [--docs <path>] [--skip-costs] [--skip-feedback] [--enforce-model=<model>]
 ```
 
 - **`<BRD-KEY>`** (mandatory) — a short stable identifier for the BRD. Format-validated only
@@ -42,13 +43,14 @@ there and prints the value to write by hand. Every command of the route runs as 
 - **`@<path>` in place of the key** — an `@` token naming an existing directory under `$SPECS_PATH/specifications/` is the address: it resolves that folder and nothing else, the run taking the key the folder asserts, and it is how you get past an `ambiguous` stop naming two folders that assert one key. A bare key beside it — never a flag or a flag's value — naming the same folder is dropped as the same address typed twice; any other such bare token stops with `BRD_INTAKE_TWO_ADDRESSES`. Any other `@` token is the source file, which is always a markdown file and never a directory.
 - **`@<brd-file>`** (mandatory) — the customer's source document. Must already be markdown — a PDF,
   a Word document, or a slide deck is rejected rather than converted.
+- **`[--budget <N>]`** (optional) — the most questions one sitting of the defect walk asks, a whole number from 5 to 50; 25 without it. Anything else stops the run with `BRD_INTAKE_BAD_BUDGET` before anything is written. On a run that resumes, the value given now applies, and without one the value the run started with.
 - **`[--sort-existing <dir>]`** (optional) — additionally migrate an already-hand-written package
   at `<dir>` into seed files. The source is still required and still gated (Phase 0) — this never
   replaces the extraction, it only adds Phase 6 on top of it.
 - **`[--no-docs]`** (optional) — turn documentation grounding off for this run.
 - **`[--docs <path>]`** — points documentation grounding at that root for this run instead of `${DOCS_PATH:-/workspace/docs}`. The flag and its value are stripped together before the address is parsed.
 
-All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 9's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `figure-reader` and `brd-reader` (overriding their frontmatter Opus pin), `workflows-core:docs-grounder`, `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the interactive Phase 1 confirmation and Phase 4 defect classification still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
+All three run flags apply to this command. `--skip-costs` (or `WORKFLOWS_SKIP_COSTS`) skips Phase 9's session-cost entry, still advancing the checkpoint and dropping any deferred cost record a [ceded](../reference/session-cost.md#ceded-runs) `/prompt-brainstorm` or `/prompt-grill-me` run left pending in this session — see [Session cost](../reference/session-cost.md). `--skip-feedback` (or `WORKFLOWS_SKIP_FEEDBACK`) narrows Phase 9's maintenance step to bugs-only, dispatching `defect-reporter` in place of `impl-maintenance` — see [Session feedback](../reference/session-feedback.md). `--enforce-model=<model>` (or `WORKFLOWS_ENFORCE_MODEL`) pins every dispatched agent in this run — `figure-reader` and `brd-reader` (overriding their frontmatter Opus pin), `workflows-core:docs-grounder`, `workflows-core:question-planner`, `workflows-core:impl-maintenance`, and, under `--skip-feedback`, `defect-reporter` — to one model; the interactive Phase 1 confirmation and the Phase 4 defect walk still run on the session's own model, since enforcement pins subagent dispatches and never the orchestrator's own inline work — see [Model routing](../reference/model-routing.md).
 
 ## How it runs
 
@@ -68,11 +70,11 @@ flowchart TD
     p8 --> p9["Phase 9 — Session maintenance, feedback & cost"]
 ```
 
-Four subagents are dispatched: `figure-reader` (Phase 2.5, frontmatter-pinned to Opus except under `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` — it
+Five subagents are dispatched: `figure-reader` (Phase 2.5, frontmatter-pinned to Opus except under `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` — it
 transcribes every linked image the run takes, in parallel batches, without reading the document that
 links it), `brd-reader` (Phase 3, frontmatter-pinned to Opus except under `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` — its defect candidates are judgement
 over a long, contradictory document, and a conflict it never proposes reaches no one), `workflows-core:docs-grounder` (Phase 3.5, read-only grounding on the shipped product docs — default
-ON when `$DOCS_PATH` resolves, advisory, never a gate) and `workflows-core:impl-maintenance` (Phase 9, session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`).
+ON when `$DOCS_PATH` resolves, advisory, never a gate), `workflows-core:question-planner` (Phase 4, on Opus, passed by the run — it groups the defect candidates that share a cause into one question and ranks the rest, and asks nobody anything) and `workflows-core:impl-maintenance` (Phase 9, session lessons-learned — replaced by `defect-reporter` under `--skip-feedback`/`WORKFLOWS_SKIP_FEEDBACK`).
 
 ## What it needs
 
@@ -183,10 +185,19 @@ name the run creates:
   on. Before it copies anything, that re-run
   records which document the rows were last read from — out of the link log it is about to rewrite,
   where there is one — so a run that stops before reconciling still leaves the document on record
-  for [`/brd-split`](brd-split.md) and [`/brd-package`](brd-package.md) to name.
-- `brd/brd-defect-log.md` — one entry per confirmed `[DEF#n]`, resolution `open`. A re-run keeps
-  every entry already there, id and resolution unchanged, and adds only the defects it newly
-  confirms.
+  for [`/brd-split`](brd-split.md) and [`/brd-package`](brd-package.md) to name. After its table, an
+  *Inventory notes* list says which rows came from one customer item that the reader split into
+  several — a split is recorded there and never becomes a defect or a question — and which rows
+  you recorded in the defect walk as restating another rather than as a defect. The split notes are
+  written afresh from each run's read; a restatement note stays while a re-run's read still finds
+  the two rows repeating each other, and is dropped, and named in the final report, where it no
+  longer does. The notes are written once the defect walk has settled, so a run that ends before
+  then leaves them as they stood.
+- `brd/brd-defect-log.md` — one entry per `[DEF#n]` the walk logs, resolution `open`: each you
+  chose to ask the customer about, each possible gap in what the current system does that grounding
+  settles later, and each you chose to send on unreviewed, its reason marked *not reviewed at
+  intake*. A re-run keeps every entry already there, id and resolution unchanged, and adds only the
+  defects it newly logs.
 - `coverage-ledger.md` — one row per `[BR#n]`, disposition `unallocated` on every row.
 - With `--sort-existing <dir>`: `prd-seed.md`, `ard-seed.md`, `spec-seed.md`, sorted by altitude
   from the hand-written package — seeds only, never findings.
@@ -203,10 +214,13 @@ slice's `/brd-reconcile`, which waits at its gate on the defect log.
 
 ## Gates
 
-- **Phase 3 — `brd-reader`** (Opus, frontmatter-pinned; no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one). Read-only extraction from the document, its
-  linked markdown and the image transcriptions: it proposes a `[BR#n]` row per requirement plus
-  unconfirmed candidate defects — an `ambiguity` on any obligation only an image states — and
-  never decides a defect itself. `EMPTY` (no identifiable requirement) short-circuits Phase 4. On a
+- **Phase 3 — `brd-reader`** (Opus, frontmatter-pinned; no override unless `--enforce-model`/`WORKFLOWS_ENFORCE_MODEL` enforces one). Extraction from the document, its
+  linked markdown and the image transcriptions, which it reads and never changes, writing only its
+  own result file: it proposes a `[BR#n]` row per requirement plus
+  unconfirmed candidate defects — each saying what it saw (the two readings of an ambiguous row,
+  what two rows clash over, the measure an untestable row lacks) and how sure it is, an `ambiguity`
+  on any obligation only an image states — lists the rows it split out of one customer item rather
+  than proposing a defect for the split, and never decides a defect itself. `EMPTY` (no identifiable requirement) short-circuits Phase 4. On a
   first intake it writes the inventory and the ledger with no row — and the run says so plainly,
   because the route stops on a claimless BRD: Phase 8 then offers a re-run of this command with a
   corrected source instead of offering `/brd-split`, which would refuse the BRD. Over an inventory
@@ -267,42 +281,82 @@ slice's `/brd-reconcile`, which waits at its gate on the defect log.
   `docs_references` — what the product already ships and documents — is reported for `/prd-ground`
   to check against code, and written nowhere; the ledger's `evidence` column stays empty until
   grounding runs, and [`/prd-ground`](prd-ground.md) fills it when it does.
-- **Phase 4 — interactive defect confirmation**, not an agent gate, and a triage that resolves
-  nothing: the walk opens by saying so, every question closes by asking whether its candidate is a
-  real defect in the customer's text, and no option is marked recommended. Every candidate defect
-  not already logged (below) is walked one class at a time, in the fixed order of the six classes — `ambiguity`, `conflict`, `untestable`, `unsourced`,
-  `duplicate`, `scope-leak` — via `AskUserQuestion`,
-  each put with the same facts — its class, its row and that row's text, its reason, the rows a
-  `conflict` or `duplicate` names, and an image-drawn row's picture. A split of one requirement into
-  several rows is one `duplicate`, asked once, and any other `conflict` or `duplicate` is raised from
-  one end only; where one read raises one relation more than once anyway — from both ends, or
-  among three or more rows as several candidates — they are asked as one question, naming every row
-  they join. Only a confirmed candidate is assigned a `[DEF#n]` id,
-  once the walk ends, in the order of the row it was raised on — never in the order the questions
-  were asked. A rejected candidate is dropped, not recorded. A confirmed one is logged `open`, and
-  the customer's document is never edited: the customer's answer settles it later — asked by
-  [`/brd-interview`](brd-interview.md), recorded by [`/brd-reconcile`](brd-reconcile.md) — or a
-  person records a [`/prd-ground`](prd-ground.md) finding that does. **A re-run does not ask again about a defect already logged**: a candidate with the same
-  class and row as an entry on file is that entry — a `conflict` or `duplicate` matching where the
-  entries on file already join the same rows, raised from either end — keeping its id, reason and
-  resolution; where several share one class and row they pair in order, and a candidate left over is
-  asked with those entries shown beside it, so a restatement is rejected rather than logged twice,
-  and a `conflict` or `duplicate` some but not all of whose pairs the log already joins is asked
-  with each entry joining one of them and, confirmed, records only the pairs none of them joins,
-  which its question says, so a pair on file is not logged twice and one nothing joins is not
-  dropped;
-  only the rest are walked, taking ids after the highest in use; and an entry this read did not
-  propose again — for a `conflict` or `duplicate`, one no pair of whose rows a candidate joins — is
-  kept, and reported as not re-raised, while one only some of whose pairs a candidate joins counts
-  as re-raised and is reported with the pairs no candidate joined. A `[DEF#n]` id is never reused,
-  renumbered or deleted, so an inventory or ledger row, or a held customer question, naming it still
-  names the same defect.
+- **Phase 4 — the defect walk**, not an agent gate: a walk through what the reader proposed, at most
+  a budget of questions a sitting — 25 unless `--budget` says otherwise — each about the
+  **wording** of the customer's document, never about code. It opens by saying so: *These questions
+  check the wording of the BRD. A problem you confirm becomes a question to the customer later;
+  one you mark clear is dropped. Each question shows what I saw and the answer I recommend.*
+  - **What needs no human gets no question of its own.** A row split out of one customer item is
+    recorded in the inventory's notes and is no defect. A possible gap in what the current system
+    does (`unsourced`) is logged without a question, since grounding settles it and the customer is
+    never asked about it; a row that only restates another (`duplicate`) is noted in the inventory
+    as a restatement and not logged, so the pair stays visible and no customer question follows.
+    Both are shown once, as one list, with one question: all fine as listed, or name the ones to
+    look at, which are then asked about singly.
+  - **The rest is grouped and ranked.** `question-planner` puts candidates with a common cause —
+    one term used in two senses across a dozen rows — as one question, and ranks the queue so the
+    least certain, and those touching the most rows, come first. Where more remain than the budget
+    allows, those the reader was most sure of, and whose recommendation the planner puts forward
+    too, may be put as one table to accept, or to name the exceptions in, which are then asked
+    singly; nothing raised from documentation, or that the reader was less sure of, goes in it.
+    Where `question-planner` fails twice, the walk does not stop: nothing is grouped or tabled, the
+    rest is asked one by one in the order the candidates are numbered, and the final report names
+    the failure.
+  - **Each question stands on its own.** It opens *This is about the wording of requirement
+    [BR#n] in the BRD.*, quotes the row, says what the reader saw — the two readings side by side,
+    what two rows clash over, what cannot be measured, the implementation detail a row prescribes —
+    and offers *Ask the customer about this*, *Ask the customer, about a narrower point*, *The
+    wording is clear — nothing to ask* and *Cancel*, each saying what it does, one marked
+    recommended with its reason, from how sure the reader was. A narrower point asks you for the
+    narrowed reason, which the customer's question is later built from. An answer you type is read
+    as the option it expresses, and the same question is never put to you twice; you are asked why
+    only where you chose against the recommendation without saying.
+  - **At the end of each sitting** — at the budget, or once nothing is left to ask — what it closed
+    without asking you singly is shown once for you to accept or reopen: each group with the
+    candidates it covers, each candidate folded into another, each restatement the list noted and each row of the table. The `unsourced`
+    candidates the list logged are not shown again. **At the budget** you then choose to go on with
+    the next sitting now (recommended), stop and continue later, or send the rest on as open
+    defects, unreviewed — one for each candidate still open, a group counting each it covers — each
+    marked so in the defect log. Sending the rest on is never the default, since
+    an open defect becomes a question to the customer.
+  - **Only what the walk logs becomes a `[DEF#n]`**, numbered once the walk ends, in the order of
+    the row it was raised on — never in the order the questions were asked. The customer's document
+    is never edited: the customer's answer settles a defect later — asked by
+    [`/brd-interview`](brd-interview.md), recorded by [`/brd-reconcile`](brd-reconcile.md) — or a
+    person records a [`/prd-ground`](prd-ground.md) finding that does. The final report gives the
+    walk's account: every candidate the reader proposed, and what became of it.
+  - **A re-run does not ask again about a defect already logged, or a restatement already
+    noted**: a candidate with the same class and row as an entry on file is that entry — a
+    `conflict` or `duplicate` matching where the entries on file already join the same rows, raised
+    from either end, and a `duplicate` where a restatement note already joins them — keeping its id,
+    reason and resolution; where several share one class and row they pair in order, and a
+    candidate left over is asked with those entries shown beside it, so a restatement is not logged
+    twice, and a `conflict` or `duplicate` some but not all of whose pairs the log already joins is
+    asked with each entry joining one of them and, logged, records only the pairs none of them
+    joins, which its question says, so a pair on file is not logged twice and one nothing joins is
+    not dropped; only the rest are walked, taking ids after the highest in use; and an entry this
+    read did not propose again — for a `conflict` or `duplicate`, one no pair of whose rows a
+    candidate joins — is kept, and reported as not re-raised, while one only some of whose pairs a
+    candidate joins counts as re-raised and is reported with the pairs no candidate joined; a
+    defect an earlier release logged for a split is kept and reported as recorded as a split. A
+    `[DEF#n]` id is never reused, renumbered or deleted, so an inventory or ledger row, or a held
+    customer question, naming it still names the same defect.
 - **Phase 5 — the allocation gate downstream.** `/brd-intake` itself never blocks on the ledger — it
   only ever writes `unallocated` rows. The gate that gates on them is the **allocation** gate (no
   `unallocated` row may survive), not a merge-state one, and it belongs to
   [`/brd-split`](brd-split.md), which walks it on both the root and each slice.
 
-A run that stops — on a refusal under *What it needs*, a stop above, *Stop* or *Stop and convert* at the confirmation, or a *Cancel* that ends the run — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer; what it copied or wrote before the stop stays in the folder, uncommitted. Cancelling the handoff is not a stop: the files stay written and the run goes on to its next-step offer. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
+A run that stops — on a refusal under *What it needs*, a stop above, *Stop* or *Stop and convert* at the confirmation, a *Cancel* that ends the run, or *Stop here and continue later* between two sittings of the defect walk — still writes the session-cost entry and ends with the terminal commit of the specs repository and its `Specs repo:` line, with no session maintenance, feedback or resume pointer; what it copied or wrote before the stop stays in the folder, uncommitted. A stop taken once the run's folder is open also prints, after its own message, a `Run folder kept:` line ([Stopping and resuming](#stopping-and-resuming)). Cancelling the handoff is not a stop: the files stay written and the run goes on to its next-step offer. Where `SPECS_PATH` is unset or misplaced, the cost entry stays in the run's printed output and nothing is committed.
+
+## Stopping and resuming
+
+A session can end in the middle of the defect walk — you stop between two sittings, the conversation is compacted, a container restarts. So the run keeps its working state in a **run folder**, which it opens in Phase 0 once every refusal there has had its chance, and running `/product-workflows:brd-intake <BRD-KEY> @<brd-file>` again on the same machine offers to continue it. The folder lies outside every repository, so nothing in it is ever committed; where it lives, and how to keep it across a container restart, is on `workflows-core`'s own environment page. Where no folder can be made or written, the run prints one `NOTE:` line, goes on exactly as it would without one, and cannot then be resumed.
+
+- **Your answers.** Every answer in the defect walk is recorded as you give it, before the next question is shown, so a resumed run goes on at the next question you have not answered, in the sitting you were in — or, after *Stop here and continue later*, the next one. A *Cancel* is never recorded, so a resume asks that question again.
+- **Agent results.** `brd-reader`'s and `question-planner`'s results are saved once the run has gone on with them, and reused while the dispatch it would make now is the same — the same files, byte for byte, and the same agent instructions and model. The final report of a resumed run says what it reused, on one `Resumed:` line.
+- **What the run already wrote.** Once Phase 3 has written the inventory, a resumed run does not read the source again — it would take its own inventory for an earlier intake's — and goes on from what it recorded then; where the earlier session stopped before that write, the run goes through Phases 1 to 3 again, re-using every copy and transcription already there. Once the walk has written the defect log, a resumed run does not walk again. Your handoff choice is recorded too, and the handoff, the session maintenance, the feedback, the cost entry and the resume pointer are each recorded once made, so a resumed run never branches, pushes, opens a pull request or writes a cost entry twice.
+
+Another session that resumes the run, or starts it over, takes it over: the first one stops at its next step with `BRD_INTAKE_RUN_TAKEN_OVER` and writes nothing more — no cost entry, no terminal commit and no final report. A run that finishes removes its folder; one that stops keeps it.
 
 ## Example
 
@@ -319,9 +373,10 @@ reason, and **by path** every file outside the folder and every file that is nei
 image — copies it verbatim into `brd/source/` together with the files you took, records in
 `brd/brd-link-log.md` each link in a copied file whose target it did not copy, and why,
 transcribes the linked images,
-dispatches `brd-reader` to extract the `[BR#n]` inventory from all of it, walks its defect
-candidates with you class by class, writes the coverage ledger with every row `unallocated`, and
-offers to branch, commit, push, and open a pull request.
+dispatches `brd-reader` to extract the `[BR#n]` inventory from all of it, asks you at most 25
+plain-language questions a sitting about the wording of the rows its defect candidates sit on —
+after one list of what needs no question of its own — writes the defect log and the coverage ledger
+with every row `unallocated`, and offers to branch, commit, push, and open a pull request.
 
 ## What it offers next
 
@@ -342,6 +397,7 @@ Phase 8 offers the next step from the inventory and ledger this run leaves, and 
 - The `addressing` reference (shipped in `workflows-core`, listed on its References page) — the `<BRD-KEY>` grammar and folder
   resolution this command uses.
 - [References](../reference/references.md) — the plugin's own formats this command applies: the BRD format (the `[BR#n]` row shape, the immutability rule, what `brd/source/` and `brd/source-external/` hold and the link log beside them, the figures file, and the six defect classes this command confirms against), linked sources (how Phase 1 finds, resolves and walks the document's links) and the coverage ledger format (the ledger row shape, the six dispositions, and the ledger line every command of the BRD-to-PRD route ends its final report with).
+- The `question-budget` reference (shipped in `workflows-core`, listed on its References page) — the budget, the shape of every question, the table, the end-of-sitting list and the account the defect walk follows; `question-planner`'s contract is on `workflows-core`'s Agents page.
 - The `docs-grounding` reference (shipped in `workflows-core`, listed on its References page) — the `$DOCS_PATH` resolution gate,
   the `docs grounding:` line this command shows verbatim, and the grill-rank consumption mode.
 - [Agents](../reference/agents.md) — `figure-reader`'s, `brd-reader`'s and `docs-grounder`'s full

@@ -663,6 +663,7 @@ moment it does. Those that exist today:
 | Field | Authority | What that authority defines it to name |
 |---|---|---|
 | `conditional_on: <BRD-KEY>/<decision-id>` | `references/decision-register-format.md` §5 | one specific decision in a named prerequisite's own register |
+| `applied_from: <BRD-KEY>/<decision-id>` | `references/decision-register-format.md` §1 | the one decision of another BRD's register — a sibling slice's under the same parent, or a `depends-on:` BRD's — that a record taken `applied` follows. Its bare form names a decision of the record's own register, which relation 1 resolves as it resolves any bare id |
 | `blocked_on: <BRD-KEY>/<decision-id>` | `references/code-defect-log-format.md` §5 | one specific decision in a named prerequisite's own register — the decision that would settle a `conditional` `[CDF#n]`'s scope question. Its other spelling is prose naming no bracketed identifier, which no relation ever meets |
 | `prerequisite` | `workflows-core:grounding-format` §2, §5 | the prerequisite BRD's decision a `will-change` finding's horizon turns on |
 | `rejected: <SLICE-KEY>/[CD#n]` | `references/coverage-ledger-format.md` §3 | the customer decision that withdrew a requirement, in the named slice's own register. `/brd-reconcile` writes it only onto its own slice's ledger, so in that slice's bundle the key is its own partition's and relation 1 resolves it there (below), as it does `resolved-by: <this slice>/[CD#n]`; the key is carried because the row is also read from other folders (that reference's §6.1 hop, a sibling's interview) |
@@ -1139,6 +1140,10 @@ because that is a read failure wearing the shape of a discrepancy.
   the closed list §7.1 opens with and does not name it, so a row left off that list, or named there
   that the ledger does not put out of scope, is review's to catch — as is a wrong id there, since
   §6's relation 1 discharges a qualified one rather than resolving it.
+- **The what-could-still-move part's list of positions that follow another BRD's decision**
+  (`commands/brd-package.md`'s part 8). It names records from the register the bundle carries, by
+  their `applied_from`, but relation 1's closed scope does not name it, so a position left off it,
+  or named there without such an `applied_from`, is review's to catch.
 - **A record a list mentions in an item's text rather than opening an item with.** Relation 1 reads
   members off item openers (§7.1), so a sentence inside an item that presents another record as
   listed — a withdrawn one among them — is not compared; review reads for it.

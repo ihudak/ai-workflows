@@ -195,8 +195,11 @@ terminal phase for session lessons-learned — replaced by `defect-reporter` und
   `[AS#n]` that [`/create-prd`](create-prd.md) wrote included — rather than being reported as a
   finished state it never reached.
 - **Every interview question settled, or held for the customer.** Any question still *deferred*,
-  *needs grounding* or *untagged* stops with `BRD_PACKAGE_ROUND_UNSETTLED` — see
-  [Gates](#gates) for why *held for the customer* is the one holding state this command admits.
+  *needs grounding* or *untagged* stops with `BRD_PACKAGE_ROUND_UNSETTLED` — save a delivery-team
+  `[V]` deferred only on questions held for the customer, which is admitted, never sent to the
+  customer, and named in the run's final report as waiting on their answers — see
+  [Gates](#gates) for why *held for the customer* is the one holding state this command admits,
+  with a `[V]` whose deferral waits on such questions alone.
 - **Something for the customer to decide.** No `[C]` question, no open `[AS#n]` and no `[VD#n]` at
   all stops with `BRD_PACKAGE_NOTHING_TO_REVIEW`: every question the rounds asked was settled from
   verified findings, so there is nothing in them to ask a customer. Whether that leaves the BRD
@@ -281,8 +284,8 @@ Assembled from the package, never hand-written, in a fixed order that is not re-
 | 4 | Code baselines and the verification procedure | `baselines.md`, with the three pin commands written out |
 | 5 | The single most important claim to verify first | the finding the most decisions rest on, else the most-relied-on open assumption, else the finding the most held `[C]` questions bear on — or a statement that none rests on one |
 | 6 | Review scope | the ledger's dispositions — the rows this slice answers for, each orphan row (a claim the parent withdrew) as another BRD's, `<PARENT-KEY> [BR#n]`, not for review — plus every `in-scope` `[CDF#n]` |
-| 7 | The decisions the customer must make | the `[C]` question set, every open `[AS#n]`, every escalated `[SR#n]` |
-| 8 | What could still move | prerequisites not yet customer-reviewed, every live `conditional_on` position and open `conditional_on` assumption, and every `conditional` `[CDF#n]` |
+| 7 | The decisions the customer must make | the rules for putting the questions; the `[C]` question set — strategic questions first, then proposals as a table, then the rest; every open `[AS#n]`; every escalated `[SR#n]` |
+| 8 | What could still move | prerequisites not yet customer-reviewed, every live `conditional_on` position and open `conditional_on` assumption, every position applied from another BRD's decision, every `conditional` `[CDF#n]` |
 | 9 | Where to attack us hardest | every open `[AS#n]`, and every `accepted-risk` `[SR#n]` |
 | 10 | The required output file, its exact name, and the inlined schema | the one-new-file rule, the `Package reviewed` line section 1 repeats, and the rendered schema |
 | 11 | What this session cannot settle | the ledger, the prerequisites, the review's own limits, and every `out-of-scope` `[CDF#n]` |
@@ -299,6 +302,36 @@ decide it — an assumption corrected while it is still an assumption is the che
 whole loop. Part 9 invites them to attack it. Removing either copy as redundant always loses the
 attack.
 
+**Part 7 opens with the rules for putting the questions, and puts the strategic questions first.**
+The customer's agent has nothing installed, so the rules your own sittings follow reach it as plain
+text: part 7 opens with the customer block of the `question-budget` reference (shipped in
+`workflows-core`), copied word for word — sittings of at most 25 questions, strategic questions
+first, each answer to a question applied forward to the questions it decides and recorded in the
+review's decision log as applied from the question whose answer it follows — never an answer to an
+assumption or a finding, whose bearing is asked about — the applied answers shown at the end of
+each sitting, and proposed answers to the questions that are not strategic, and confirmed
+requirement readings, put as tables. Then come the
+held `[C]` questions, each headed `Question <round>/<position>`, the address the review's decision
+log cites, under three sub-headings: the strategic questions, each with why it is asked, the
+questions its answer settles and the answer your team proposes; then the questions carrying a
+proposed answer, as one table to confirm or correct; then the rest. A question's proposal is read
+from its round's record, so one your answer made for a question an earlier package already carried
+— whose entry is never edited — reaches the customer in the next package. A proposal is shown only
+while the decision it follows reads decided and the interview has not withdrawn it: one whose
+decision was reopened, superseded or withdrawn since, or cannot be read, is left out, and one the
+interview marked `Proposal withdrawn` — because one of your answers re-decided its decision and
+proposed nothing again — is not shown either. Nor is one following a sibling's or a prerequisite's
+decision that was ever reopened: that slice's own interview may have re-decided it in place, which
+writes nothing into this slice, so the package leaves the proposal out whenever that decision
+carries a `Reopened` paragraph, even where your team proposed it again since. The question is then put without it, or, on a
+strategic question, with the answer its plan recommended; the final report names each, and where
+the bundled question set still shows the proposal, the prompt says it is withdrawn, and that the
+prompt governs wherever the two differ.
+
+**Part 8 also names every position applied from another BRD's decision** — a sibling slice's or a
+prerequisite's — because it moves if that decision moves. The customer is told so and asked for no
+mark on it.
+
 ## Gates
 
 - **Phase 0 — the root refusal, tested the moment the folder resolves.** A resolved `BRD-` root
@@ -307,10 +340,18 @@ attack.
   other gate runs.
 - **Phase 0 — the register merged, the rounds settled, something to review.** All three run before
   anything else is read. The rounds gate admits exactly one holding state, *held for the customer*,
-  and refuses the other three. That reading is forced: a round holding a `[C]` stays open **until the
+  and refuses the other three — save a `[V]` deferred only on questions held for the customer,
+  whose round record names them on a `- **Blocked-on:**` line under its deferral. That reading is
+  forced: a round holding a `[C]` stays open **until the
   answer comes back through the package**, or the question stops applying, and the package is what this command builds, so requiring
-  every round to be closed would deadlock the route. The other three holding states each name work
-  that is still the delivery team's.
+  every round to be closed would deadlock the route — and a `[V]` waiting only on those answers
+  would deadlock it the same way, so it is admitted too, goes to the customer in no form, and is
+  named in the final report; [`/brd-interview`](brd-interview.md) puts it again once the answers are
+  recorded. The interview's one other way out of a held `[C]` — re-tagging it `[V]` where one of
+  your answers shows it was yours to decide all along, before any package carries it — corrects a
+  mis-tag and never closes a genuine customer question, so it opens no way around that. A `[V]`
+  deferred on a question since re-tagged waits on you for that one, not the customer: it is admitted
+  only while every question its line names is still held for the customer. The other three holding states each name work that is still the delivery team's.
 - **Phase 0 — a dated bundle is never rewritten.** A `bundle-<date>/` that already exists stops the
   run with `BRD_PACKAGE_BUNDLE_EXISTS`. Rewriting it destroys the only evidence of what the reviewer
   of that date was looking at, and the command cannot tell whether the existing directory was already
@@ -323,6 +364,21 @@ attack.
   once its last check passes, so a build that stops leaves no directory for this gate to refuse. The next run that day overwrites a stopped
   run's files whole, never reads its self-review as a prior review, and says the disposition walk
   starts again.
+- **Phase 0 — the customer block.** Part 7 opens with the `question-budget` reference's customer
+  block, read in Phase 0 from between its two markers and from nowhere else in that reference, and
+  the run stops there, before the self-review, with `BRD_PACKAGE_CUSTOMER_BLOCK_MISSING` where the
+  reference no longer carries both — most likely a `workflows-core` older than this plugin needs:
+  update it, restart, and re-run. Rules written from memory would put the customer's questions by
+  rules nothing verified. The prompt's plugin-free scan reads the copied block as it reads the rest.
+- **Phase 0 and Phase 6 — a proposal whose decision no longer stands.** Phase 0 reads the decision
+  each proposal follows — in this slice's register, or in a sibling's or prerequisite's, resolved
+  by its key there, so a key naming more than one folder, or a folder named outside the allowed
+  characters, stops the run before the self-review, while one naming no folder only leaves that
+  decision unread — and Phase 6 shows a proposal only where that decision reads decided and no
+  withdrawal line follows it, and, for a sibling's or prerequisite's decision, only where it
+  carries no `Reopened` paragraph. One left out is not a stop: the question is put without it, and
+  the final report names it with the status its decision reads, the `Reopened` paragraph, why that
+  decision could not be read, or its withdrawal.
 - **Phase 4 — the disposition gate.** No bundle is built while any `[SR#n]` is undisposed. The gate
   is keyed on **every finding carrying a non-`undisposed` value**, and on nothing else: the reviewer
   agent returns no severity and no PASS/BLOCK verdict by design, so the disposition is the only gate
@@ -531,8 +587,9 @@ A run that stops — at any gate or check above, on a refusal under *What it nee
   note is printed for pasting. Delivery is the operator's.
 - **It writes no `[CD#n]`, and it ingests no returned review.**
   [`/brd-reconcile`](brd-reconcile.md) is what turns a returned answer into a confirmed customer
-  decision, so the round holding each `[C]` stays open until that run records it, or finds its
-  question has stopped applying.
+  decision, so the round holding each `[C]` this package carries stays open until that run records
+  it, or finds its question has stopped applying — once a package has carried a question, no later
+  interview answer re-tags it.
 - **It changes no ledger disposition.** The final report's ledger line reports where allocation
   stands; allocation itself is `/brd-split`'s walk. Two other runs may move a row afterwards, and
   neither is this one: [`/brd-reconcile`](brd-reconcile.md) freezes a customer decision that settles

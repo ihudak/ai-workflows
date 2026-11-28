@@ -74,11 +74,14 @@ them is.
    prompt* phase reads the boundary statement out of the file before it renders, and stops if it is
    no longer there. Rendering the whole file would put that file's own `references/…` citations in
    front of a reader with no plugin — the exact failure D12 exists to prevent — and the citations
-   are collected in the preamble precisely so that the boundary has something to protect.
+   are collected in the preamble precisely so that the boundary has something to protect. **The
+   customer block part 7 opens with is rendered the same way**: the lines between the two markers
+   `workflows-core:question-budget` §13 sets, copied verbatim, and never that reference's other
+   sections, whose citations and section numbers a reader with no plugin cannot resolve.
 
 2. **The prompt is assembled, never hand-written.** Every one of its eleven parts is filled from a
-   named artifact — the register, the findings, the ledger, the `[C]` question set, the self-review,
-   `baselines.md`, `brd-link.md`. A part with no source is an empty part that says so, not a part
+   named artifact — the register, the findings, the ledger, the `[C]` question set, the round
+   records, the self-review, `baselines.md`, `brd-link.md`. A part with no source is an empty part that says so, not a part
    somebody writes from memory. Prose written fresh into a customer prompt is prose nothing
    verified, and it is where an in-house reference gets explained rather than removed.
 
@@ -523,18 +526,36 @@ cannot review, and they will not tell you that — they will review it anyway, b
    carries either a terminal disposition or the holding state *held for the customer*** — the
    vocabulary `/brd-interview`'s *Resolve the round* phase fixes, and the state that phase's
    append-only record **last** records at that question's address, which is what a re-tagged
-   question carrying two states at one number turns on. Any question in the *deferred*,
-   *needs grounding* or *untagged* holding state → stop, naming each one, its round, its holding
-   state and the concrete fix:
+   question carrying two states at one number turns on — **or is a `[V]` deferred only on questions
+   held for the customer**: its last state *deferred*, with the `- **Blocked-on:**` line written on
+   the line after that state (`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §9)
+   naming one or more `<round>/<position>` addresses, each a question whose last state in its own
+   round's record is *held for the customer* — one this package carries, or one an earlier bundle
+   already carried. Any other question in the *deferred*, *needs grounding* or *untagged* holding
+   state → stop, naming each one, its round, its holding state and the concrete fix:
    `BRD_PACKAGE_ROUND_UNSETTLED: N questions in <BRD-KEY>'s rounds are still deferred, needs-grounding or untagged — run /product-workflows:brd-interview <BRD-KEY> (a needs-grounding question is answered by /product-workflows:prd-ground <BRD-KEY> first).`
+   **A `[V]` this admits goes to the customer in no artifact this run writes** — no part of the
+   prompt renders a `[V]` question, and the delivery note is the customer's — and the final report
+   names each one, with the held questions it waits on, as a delivery decision waiting on the
+   customer's answers to them.
 
-   **Why *held for the customer* is admitted and the other three are not.** The design's
+   **Why *held for the customer* is admitted, with a `[V]` deferred only on it, and the other three
+   are not.** The design's
    precondition for this command is that the interview's open rounds are closed, and read literally
    that is a deadlock: a round holding a `[C]` stays open **until the answer comes back through the
    package**, or its question stops applying (`${CLAUDE_PLUGIN_ROOT}/references/interview-tagging.md` §5), and the package is what
-   this command builds. So the only reading under which the route can run at all is the one taken
+   this command builds. The one other way out, `/brd-interview`'s re-tag of a held `[C]` an answer
+   shows was the delivery team's to decide all along, corrects a mis-tag before any package carries
+   it; it never closes a genuine customer question, so it opens no way around the deadlock. So the only reading under which the route can run at all is the one taken
    here — everything the delivery team can settle is settled, and what remains is exactly the set
-   this package is being built to carry. The other three holding states are the opposite case: each
+   this package is being built to carry. **A `[V]` deferred only on questions held for the customer
+   is the same case from the delivery team's side**: what it still owes waits on exactly the answers
+   this package goes out to fetch, so refusing it would deadlock the route the same way — the
+   package carrying those questions could never be built while the `[V]` waiting on them is deferred.
+   Admitting it hands the customer nothing the delivery team owes: `/brd-interview` puts the `[V]`
+   again once those answers come back (its *Resolve the round*, *A deferred `[V]` whose wait is
+   over*). The other three holding states are the opposite case — a deferral that names no held
+   question, or names one no longer held, among them: each
    names work that is still ours, and packaging around one asks the customer to approve a position
    the delivery team has not finished taking.
 
@@ -661,7 +682,7 @@ cannot review, and they will not tell you that — they will review it anyway, b
    and never the ledger line, for the reason that section gives.
 10. **Read the inputs the rest of the run works from**, all from the gated folder:
     `decisions.md` (every `[VD#n]`, `[CD#n]` and `[AS#n]` with its `status`, `evidence`, `argumentation`,
-    `conditional_on`, `altitude` and `round` **where it carries one**); every verified
+    `conditional_on`, `altitude`, `round`, `taken` and `applied_from` **where it carries one**); every verified
     `[CG#n]`/`[DG#n]` with its `verdict`, `evidence`, `control` where it carries one, `horizon` and
     verifier `outcome`; `grounding/baselines.md`; `brd/brd-inventory.md`'s
     `[BR#n]` rows; `coverage-ledger.md`; every `[CDF#n]` in `code-defect-log.md` with its
@@ -701,6 +722,29 @@ cannot review, and they will not tell you that — they will review it anyway, b
     the target as written it names beside a captured file, markdown or image (rule 6). Only a link
     that does not resolve as written has a row there; one that does reaches its copy by its own
     path, which the manifest's map already carries, so no target as written is named for it.
+
+    **Read the customer block here too, before anything is composed or reviewed.** Load
+    `workflows-core:question-budget` (`Skill(skill: "workflows-core:reference", args: "question-budget")`)
+    and take every line strictly between its `<!-- question-budget:customer:begin -->` and
+    `<!-- question-budget:customer:end -->` markers (§13) — the lines the prompt's part 7 opens with,
+    copied there verbatim (*Render the customer prompt*). Where the reference does not carry both
+    markers, once each and in that order, stop:
+    `BRD_PACKAGE_CUSTOMER_BLOCK_MISSING: workflows-core:question-budget carries no customer block between its two markers — the likeliest cause is a workflows-core older than this product-workflows needs. Update the workflows-core plugin, restart Claude Code, and re-run '/product-workflows:brd-package <BRD-KEY>'. Nothing was written: a prompt whose rules for putting the questions are written from memory, or taken from the rest of that reference, puts this package's questions by rules nothing verified, and cites what the customer cannot resolve.`
+
+    **And read what each held `[C]`'s proposal follows**, so that a folder the proposals name stops
+    the run here, before the self-review, rather than after it. For each held entry, read the last
+    of its `- **Proposed answer:**` and `- **Proposal withdrawn:**` lines at its address in its
+    round record (`decision-register-format.md` §9); where that line is a proposal ending
+    `— follows <decision-id>`, read the decision it follows: a bare id in this slice's
+    `decisions.md`, read above; `<BRD-KEY> [VD#n]` in that BRD's `decisions.md`, its folder resolved
+    with `resolve-address` (`Skill(skill: "workflows-core:reference", args: "addressing resolve-address")`,
+    §3) and read as it stands in that folder, as step 7a reads another folder's records. An
+    `ambiguous`, `misnamed` or `misrooted` resolution stops the run with `resolve-address`'s own
+    stop, as everywhere; `absent` or `invalid`, a register missing or unreadable, or no record of
+    that id leaves the decision unread, which is no stop. Carry, per such proposal, the decision's
+    `status` and `statement` — and, for a decision of another BRD's register, whether its
+    `argumentation` carries any `Reopened <YYYYMMDD>:` paragraph (§4) — or why it could not be read,
+    to *Render the customer prompt*'s part 7.
 11. **Fix the run's date.** One `<YYYYMMDD>` stamp, taken once, used for every artifact this run
     writes. If `bundle-<YYYYMMDD>/` already exists in the BRD folder, stop:
     `BRD_PACKAGE_BUNDLE_EXISTS: <BRD-dir>/bundle-<YYYYMMDD>/ already exists — a dated bundle is never rewritten. Package on the next date; or, where it was never sent, move the directory out of the specs repository and delete this date's self-review, prompt and delivery note beside it too, since a run reads them as its own once no bundle of this date stands.`
@@ -1179,15 +1223,16 @@ run has ended.
 | 4 | Code baselines and the verification procedure | `grounding/baselines.md`, with the three commands written out |
 | 5 | The single most important claim to verify first | the register, the findings and the held `[C]` entries, by the rule below |
 | 6 | Review scope | `coverage-ledger.md` dispositions, `brd/brd-inventory.md`, and every `in-scope` `[CDF#n]` |
-| 7 | The decisions the customer must make | `interview/customer-questions.md`, every open `[AS#n]`, and every `escalated-to-customer` `[SR#n]` |
-| 8 | What could still move | the prerequisites resolved above, every live `conditional_on` position, a `[VD#n]` or a `[CD#n]`, and open `conditional_on` assumption (D20), and every `conditional` `[CDF#n]` |
+| 7 | The decisions the customer must make | `workflows-core:question-budget` §13's customer block, `interview/customer-questions.md` with each held `[C]`'s proposal from its round record, every open `[AS#n]`, and every `escalated-to-customer` `[SR#n]` |
+| 8 | What could still move | the prerequisites resolved above, every live `conditional_on` position, a `[VD#n]` or a `[CD#n]`, and open `conditional_on` assumption (D20), every live position applied from another BRD's decision (`applied_from`), and every `conditional` `[CDF#n]` |
 | 9 | Where to attack us hardest | every open `[AS#n]`, and every `accepted-risk` `[SR#n]` |
 | 10 | The required output file, its name, and the inlined schema | the D13 rule, the `Package reviewed` line, and `render-schema` below |
 | 11 | What this session cannot settle | the ledger, the prerequisites, every `out-of-scope` `[CDF#n]`, and the review's own limits |
 
 **No fixed sentence this command renders carries an identifier with a number in it.** Every sentence
 this command writes the same way into every package — part 1's capability line, locating instruction
-and OS note; the one-line statements parts 6, 8 and 11 carry; part 10's filename instruction; the
+and OS note; the one-line statements parts 6, 7, 8 and 11 carry, and the customer block part 7
+copies; part 10's filename instruction; the
 delivery note's own wording; the manifest's lines; the note that stands in for the figures file's
 frontmatter; and the sentences the de-Obsidianising pass leaves where an image or a link is not
 included — writes any example identifier in the placeholder form, `[BR#n]`, never with a number.
@@ -1220,6 +1265,15 @@ may cite a sibling freely. A list with nothing in it keeps its sub-heading and s
 as an empty part does. **Whatever a part carries after one of these lists goes under a `###`
 sub-heading of its own** — part 9's accepted-risk findings among them — because a list runs to the
 next heading of its level or higher, and a record rendered as a `####` heading must not end it.
+
+**Four more sub-headings are fixed, and rule 9 compares none of them**: part 7's three question
+sub-headings, which come before its `Open assumptions` list (*Part 7 — the decisions the customer
+must make*, below), and part 8's `Positions that follow another BRD's decision`, which comes after
+its `Positions and assumptions that could still move` list (*Part 8 — what could still move*). A
+question carries no minted identifier, so there is no record set to compare its list with, and the
+applied positions' list is outside the closed scope relation 1 opens with
+(`${CLAUDE_PLUGIN_ROOT}/references/bundle-packaging.md` §7.2). Each keeps its sub-heading where it
+has nothing to list, and says `None` and why, as the six above do.
 
 **Part 1 — Setup.** States, in this order: the one-line capability set the prompt assumes — *this
 prompt assumes an agent that can read files in a folder and search for a file by name; the pin check
@@ -1313,7 +1367,9 @@ question to the customer that never went through the tag test — the failure `i
 and the answer comes back in the review's section 7 like any other.
 
 **Each held `[C]` entry is rendered with what the customer needs to answer it and to cite it**: the
-question as it will be put; its round and position, which the review's section 7 cites it by; the
+question as it will be put; its round and position, which the review's section 7 cites it by, as
+the `####` heading it is rendered under, `#### Question <round>/<position>`, both read off its
+entry's heading, `## Round <N>, question <position>`; the
 findings on its `- **Findings:**` line, with their verdicts — an entry written before 3.7.0
 carries no such line, and its findings are read from its prose where they are named there, because
 a `[C]` rendered with none asks the customer in the abstract, which is what pinning the line
@@ -1330,7 +1386,106 @@ withdrawn — the record itself, or the live successor its supersessions lead to
 any other while it is held: a customer's reply is the one thing that can close it, and leaving it
 out would hold its round open for good. `/product-workflows:brd-reconcile` closes it on the first
 review that answers it, whichever way its operator takes that answer (its *Confirm every
-candidate* phase), so once answered it is no longer held and no later package carries it.
+candidate* phase), so once answered it is no longer held and no later package carries it. **Nor is
+an entry carrying a `- **Re-tagged:** [C] → [V]` line held**: an answer showed its question was the
+delivery team's to decide all along, and `/product-workflows:brd-interview` decides or applies it as
+a `[V]` (its *Hold every `[C]`*), so no part of the prompt renders it, as no part renders a `[V]`
+(`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §9).
+
+**Part 7 — the decisions the customer must make.** It opens, directly under its heading, with
+the customer block Phase 0 step 10 read — the lines between the two markers
+`workflows-core:question-budget` §13 sets, copied verbatim, the markers left out and nothing
+reworded, reordered or added. It is how the customer's agent, which has nothing installed, puts
+this package's questions in sittings, applies each answer forward, puts the proposals and the
+review's section 4 confirmations as tables, and records an answer it applied in section 7 — the
+reference's other sections are never copied, since their citations and section numbers resolve for
+no reader of the prompt; a reference carrying no block stopped the run at that step
+(`BRD_PACKAGE_CUSTOMER_BLOCK_MISSING`), before anything was composed or reviewed. Under the
+block, where the package holds a question set, one fixed line: *each question below is
+headed by its round and its position in that round, `<round>/<position>`, and is the entry headed
+`Round <round>, question <position>` in* the question set's bundled filename (*Assemble the bundle*
+rule 1) *— cite it by that address in your section 7; where this part and that file differ, this
+part governs: a proposed answer the file shows and this part does not put is withdrawn, and each
+question is put as it stands here.*
+
+**Then the held `[C]`s, under three sub-headings in this order**, each question under them in round
+order, then position order, and the `Open assumptions` list after them, numbered on, then the
+escalated findings under a sub-heading of their own:
+
+- **`### 7.1 Strategic questions`** — every held entry carrying a `- **Covers:**` line, the strategic
+  `[C]`s (`/product-workflows:brd-interview`, *Plan the sittings*), under the fixed line *ask each of
+  these before any other question: its answer settles the questions it names*. Each is rendered as
+  every held entry is, with three things more, in this order: why it is asked, from its entry's
+  `- **Why we ask:**` line; the questions its answer settles, how many and each by its
+  `<round>/<position>`, from its entry's `- **Covers:**` line — naming only questions this part
+  renders, since one no longer held (answered, or re-tagged) is nothing left for the customer to
+  settle, and is never named as open; and the package's proposed answer, its proposal by the rule
+  below — its own planned answer where a later one is left out or withdrawn — written as the text
+  after the label on that proposal's `- **Proposed answer:**` line, word for word, as the line gives
+  it: `/product-workflows:brd-reconcile` matches the answer the prompt showed to that line
+  exactly.
+- **`### 7.2 Proposed answers to confirm or correct`** — every other held entry whose proposal
+  stands, under the fixed line *confirm these as one table, or name the ones to correct, and ask
+  each one named as an ordinary question*: one table, `| Question | Proposed answer | Why |`, a row
+  per question — its `<round>/<position>`, the proposal's answer, its line's text after the label up
+  to ` — follows `, word for word, and the decision it follows named
+  as its line names it, a bare id or another BRD's `<BRD-KEY> [VD#n]`, with that decision's
+  `statement` quoted from its register, a `|` inside a cell written `\|` — and then each of those
+  questions rendered in full, so one named for correction can be asked.
+- **`### 7.3 Other questions`** — every other held entry, under the fixed line *put each of these
+  as an ordinary question*.
+
+Each keeps its sub-heading where it has nothing to list, and says `None` and why.
+
+**A held `[C]`'s proposal is read from its round record, never from its entry**: the last of its
+`- **Proposed answer:**` and `- **Proposal withdrawn:**` lines at the question's address in
+`interview/round-<N>.md`, the round its heading names, as Phase 0 step 10 read it — **a
+withdrawal last means the question has none**: `/product-workflows:brd-interview` writes one where
+an answer re-decided the decision the proposal followed and proposed nothing again, the line having
+rested on an answer that no longer stands
+(`${CLAUDE_PLUGIN_ROOT}/references/decision-register-format.md` §9). A carried entry — one an
+earlier bundle already put to the customer — is never edited, so a proposal or a withdrawal found
+for it after it was sent is on the record alone, and the next package shows what it says
+(`workflows-core:question-budget` §8; `decision-register-format.md` §9); an entry not yet carried
+holds the same lines, written in the same write, or it is a torn write step 5c has already refused
+(§8 there). Either way the question's own text is rendered unchanged, and of its entry's labelled
+lines only what this part takes from them above — never a proposal line, which this paragraph
+and the next settle: the review cites the question by its round
+and position, and nothing rewrites what a customer may already hold.
+
+**A proposal stands only while the decision it follows does.** A line ending
+`— follows <decision-id>` names the delivery-team decision it rests on, which Phase 0 step 10 read
+— a bare id in this slice's `decisions.md`, or `<BRD-KEY> [VD#n]` in that BRD's own register, a
+sibling slice's or a `depends-on:` BRD's. The proposal is rendered only where that decision reads
+`decided` (`decision-register-format.md` §3). One reading `open`, `reopened`, `superseded` or
+`withdrawn` leaves the proposal out, and so does a decision that step could not read. Nothing that
+reopens, supersedes or withdraws a decision takes the line off a question, which is why this run
+tests the decision rather than trusting the line; a re-decision, which leaves the decision reading
+`decided` with a different answer under the same id, is the one move that test cannot see. The
+interview's withdrawal line answers it for a decision of this slice's own register. **A decision of
+another BRD's register is re-decided by that BRD's interview, which writes no withdrawal here**, so a
+proposal following one is rendered only where that decision also carries no `Reopened` paragraph:
+one that was ever reopened may have been re-decided in place since the proposal was made, which
+neither its status nor any line here says, so the proposal is left out — even where this slice
+proposed it again since, the safe side — and the question carries none
+(`workflows-core:question-budget` §8; `decision-register-format.md` §9). On a question that is not strategic, a proposal left out or
+withdrawn leaves it with none — an earlier proposal line never stands in for it — and the question
+goes under 7.3. **A strategic question** stays under 7.1, and there its own planned answer, the
+`- **Proposed answer:**` line with no `follows` its first write carries, stands in, since it
+follows no decision and so no decision's status tests it
+(`decision-register-format.md` §9, *A strategic question*). The Final report names each proposal
+left out or withdrawn. A line with no `follows` is a strategic question's own planned answer, and
+is rendered as written.
+
+**The bundle carries the question set whole** (*Assemble the bundle*), so where a question's entry
+there shows, on its last `- **Proposed answer:**` line, a proposal this part does not put — it puts
+none, or, on a strategic question, the planned answer standing in — the question's rendering says
+so in one fixed line — *the proposed answer* the question set's bundled filename *shows last for
+this question is withdrawn: put the question as this prompt puts it* — which holds both where this
+part puts the question with no proposal and where, on a strategic question, it puts the planned
+answer, beside the line under the customer block saying that this part governs wherever the two
+differ. Without both, the
+customer's agent meets in the file a proposal the package no longer stands behind, and puts it.
 
 **Part 7 and part 9 both carry every open `[AS#n]`, and that duplication is deliberate.** They ask
 for different things. Part 7 asks the customer to **decide** — an assumption is corrected in one
@@ -1361,8 +1516,23 @@ and the affected assumptions they accept in their section 8, as contingent, and 
 blocking, it is unsettled, and the two get very different treatment on the delivery side; and,
 where a `[CD#n]` is listed, that a decision of their own listed here needs no row and no mark —
 it is named so they know it could move, and re-answering it would be a row nothing reconciles. A package
-with no prerequisite at all says so explicitly — a reviewer who was told nothing could move writes
-no contingent rows, and their absence then means what it says.
+with no prerequisite at all says so explicitly — a reviewer told that no prerequisite is unsettled
+writes no contingent rows, and their absence then means what it says.
+
+**And every live position that follows another BRD's decision**, under a sub-heading of its own
+directly after that list, `### 8.<n> Positions that follow another BRD's decision`: every `[VD#n]`
+or `[CD#n]` reading `open`, `decided` or `reopened`, taken `applied`, whose `applied_from` names a
+decision of another BRD's register — a sibling slice's or a `depends-on:` BRD's, the field's
+`<BRD-KEY>/<decision-id>` form with a key other than this slice's (`decision-register-format.md`
+§1). Each is an item opening with its id, then its `statement` and the decision it follows, written
+`<BRD-KEY> [VD#n]`, the qualified prose spelling `bundle-packaging.md` §6.2 gives another BRD's id —
+never the field's slash form, which the citation check reports as unqualified outside its field.
+Such a position was never asked: it was closed because that decision determined it
+(`workflows-core:question-budget` §8), so it moves when that decision moves, whether or not that BRD
+is a prerequisite this part names, and a customer shown only the positions resting on a prerequisite
+would take it for settled. Under the fixed line *each of these follows a decision taken for another
+BRD, named beside it, and moves if that decision moves; it is named so you know it could move, and
+needs no mark in your review*. Where no position does, the sub-heading says `None` and why.
 
 **And every `[CDF#n]` disposed `conditional`**, named by id with its `statement` and its `blocked_on`.
 An unsettled scope condition on a repair is exactly what this part is for: say what would have to be
@@ -2365,11 +2535,12 @@ auto-run.
 Terminal phase — runs after *Next steps*, and NEVER interrupts an earlier phase. A run that took *Ending early*'s refusal tail runs only this phase's cost-entry and commit steps.
 
 **Capture-at-block invariant.** If an EARLIER phase halts on a plugin / skill / command / reference
-gap, `emit-block` (`workflows-core:feedback-emission`) fires at that halt before escalating. Seven of
+gap, `emit-block` (`workflows-core:feedback-emission`) fires at that halt before escalating. Eight of
 this command's stops **do** qualify and are the reason the invariant is named here:
-`BRD_PACKAGE_SCHEMA_BOUNDARY`, `BRD_PACKAGE_SCHEMA_EXAMPLE_ID` and `BRD_PACKAGE_PROMPT_LEAK` are all
-reference-integrity gaps — a rendered authority whose boundary moved, a rendered authority carrying
-an example identifier with a number in it, and a package artifact carrying a citation, or a model
+`BRD_PACKAGE_SCHEMA_BOUNDARY`, `BRD_PACKAGE_SCHEMA_EXAMPLE_ID`, `BRD_PACKAGE_CUSTOMER_BLOCK_MISSING`
+and `BRD_PACKAGE_PROMPT_LEAK` are all reference-integrity gaps — a rendered authority whose boundary
+moved, a rendered authority carrying an example identifier with a number in it, a rendered
+authority whose customer block's markers are gone, and a package artifact carrying a citation, or a model
 id, that should never have been written into it; `BRD_PACKAGE_CORPUS_UNREADABLE` and `BRD_PACKAGE_SET_UNREADABLE`
 are record-integrity gaps — each is, by its own text, this command's parse or read of the plugin's
 own records failing on content that is there, which no sentence in the package can fix (a copied
@@ -2440,11 +2611,19 @@ degradation, named again here because a self-review that ran on a weaker model i
 `[SR#n]` with its disposition**, and every `- **Re-escalates:**` line written, grouped by
 disposition, with the `accepted-risk` ones listed in
 full because those are the ones the customer will read; whether a second reviewer pass ran after a
-`fixed` correction and what it added; the counts the prompt carries — `[C]` questions, open
-`[AS#n]`, `escalated-to-customer` findings, and the `[CDF#n]` counts parts 6, 8 and 11 each carry,
-`in-scope`, `conditional` and `out-of-scope` respectively; where Phase 0 step 7a's *Ship anyway*
+`fixed` correction and what it added; the counts the prompt carries — `[C]` questions, and of them
+the strategic ones and those put with a proposal, open
+`[AS#n]`, `escalated-to-customer` findings, positions that follow another BRD's decision, and the `[CDF#n]` counts parts 6, 8 and 11 each carry,
+`in-scope`, `conditional` and `out-of-scope` respectively; every proposal part 7 left out or found
+withdrawn, by its question's `<round>/<position>`, with the decision it follows and why — the
+status that decision reads, the `Reopened` paragraph another BRD's decision carries, why it could
+not be read, or the withdrawal line — and, on a strategic
+question, that its planned answer stood in — plugin-internal; where Phase 0 step 7a's *Ship anyway*
 was taken, `Flagged code defects shipped: [CDF#n] (<record> › <what was found>), …`, naming every
-flag it shipped — plugin-internal, and in no customer artifact; **every prerequisite named under *what
+flag it shipped — plugin-internal, and in no customer artifact; every `[V]` Phase 0 step 7 admitted
+as deferred only on questions held for the customer, by its round and position, with each question
+it waits on, as a delivery decision waiting on the customer's answers to them — plugin-internal too;
+**every prerequisite named under *what
 could still move***, with whether it resolved, whether its decisions are customer-reviewed, and whether a
 package of its own was copied in — and every model id *Assemble the bundle* rule 7 left standing in
 a copied-in package, by bundled filename and line, as *in `<PREREQ-KEY>`'s `bundle-<YYYYMMDD>/`,

@@ -222,7 +222,11 @@ become a PRD of its own.
 `/brd-interview` then works the BRD's open questions to recorded decisions, one round at a time,
 under a single rule: every question is tagged `[G]` / `[V]` / `[C]` before it is asked, and the tag
 decides who may answer it — a `[G]` from the grounding findings and never a human, a `[V]` from the
-delivery team with recorded argumentation, a `[C]` held for the customer. `/brd-package` takes the
+delivery team with recorded argumentation, a `[C]` held for the customer. It asks at most a budget
+of questions a sitting, and where more are open than one sitting holds, it asks a few strategic
+questions first, each answer closing every question it covers, and asks what is left one by one;
+where more questions held for the customer than one sitting holds are not grouped yet, it writes
+strategic questions for them too, which the package puts to the customer first. `/brd-package` takes the
 register and the held `[C]` questions, attacks the package before the customer does, refuses to
 build a bundle while any `[SR#n]` self-review finding is undisposed, refuses to ship one whose own
 identifier and filename citations do not resolve inside it, and renders the prompt, the delivery
@@ -270,13 +274,19 @@ a superseded `[CD#n]`'s live successor and freezes nothing beside a withdrawn on
 question whichever way the operator takes the answer.
 
 **A decision reopened elsewhere is put again too.** `/brd-reconcile` reopens a decided `[VD#n]` or
-`[CD#n]` when a customer answer contradicts or constrains it without replacing it, and its
-propagation sweep reopens one in a dependent BRD when the prerequisite decision it rests on moves.
+`[CD#n]` when a customer answer contradicts or constrains it without replacing it, or moves the
+decision it was applied from, and its propagation sweep reopens one in a dependent BRD when the
+prerequisite decision it rests on moves — in a sibling slice too, where the decision there was
+applied from this slice's.
 The next `/brd-interview` round opened on that BRD puts the decision's question again, under its own
 tag and against the current findings, with each `Reopened` paragraph quoted as context, unless a
 question already putting it is still unanswered; the answer re-decides it in place, keeping its id.
 Every question that puts a decision again names it on a `- **Re-puts:**` line, and that line is how
-each command ties the answer back to the decision.
+each command ties the answer back to the decision. A decision applied from another BRD's decision is put again too where
+that decision was reopened and re-decided in place since it was applied — that BRD's own interview
+writes nothing into this slice, so the applied decision is dated, and a `Reopened` paragraph on the
+decision it follows, dated that day or later, says it moved. For the same reason, `/brd-package`
+never shows the customer a proposal following another BRD's decision that was ever reopened.
 
 **Where the route hands over is `/brd-reconcile`**: a BRD whose customer decisions are frozen and
 whose tree holds nothing the review made false is the state the PRD pipeline is entered from.
@@ -341,10 +351,10 @@ each of those three also has a keyed form that this route never uses.
 
 | Command | Required | Optional | Notes |
 |---|---|---|---|
-| `/brd-intake` | `<BRD-KEY> @<brd-file>` | `--sort-existing <dir>`, `--no-docs`, `--docs <path>` | Source must already be markdown — a PDF or similar is rejected, never converted. `<BRD-KEY>` names a folder, never a tracker ticket |
+| `/brd-intake` | `<BRD-KEY> @<brd-file>` | `--budget <N>`, `--sort-existing <dir>`, `--no-docs`, `--docs <path>` | Source must already be markdown — a PDF or similar is rejected, never converted. `<BRD-KEY>` names a folder, never a tracker ticket |
 | `/prd-ground` | `<BRD-KEY>` | `--repos <name>,…`, `--repos-path <dir>[:…]`, `--from-split <BRD-KEY>`, `--depends-on <BRD-KEY>…`, `--rebaseline`, `--[no-]derivation-matrix`, `--no-code`, `--no-design`, `--no-docs`, `--docs <path>` | A root BRD is never ground (`PRD_GROUND_ROOT_LEVEL`). No `--repos`: it lists clones, asks; *Ground now* passes `--from-split`, `--repos-path` if you typed one. Needs `$REPOS_PATH`; read-only on repos |
 | `/brd-split` | `<BRD-KEY> [<instruction>]` | — | No flags. Mandatory on a root still holding an unallocated row (`BRD_SPLIT_NEEDS_INSTRUCTION`), optional on a slice (allocate-only there), and on a fully allocated root it means the sibling re-cut |
-| `/brd-interview` | `<BRD-KEY>` | `--round N` | Only a slice is interviewed — a root stops with `BRD_INTERVIEW_ROOT_LEVEL`. No flag continues at the first open question; `--round N` resumes or re-opens one, cause recorded |
+| `/brd-interview` | `<BRD-KEY>` | `--round N`, `--budget <N>` | Only a slice is interviewed — a root stops with `BRD_INTERVIEW_ROOT_LEVEL`. No flag continues at the first open question; `--round N` resumes or re-opens one, cause recorded |
 | `/brd-package` | `<BRD-KEY>` | `--depends-on <BRD-KEY>…` | Only a slice is packaged — a root stops with `BRD_PACKAGE_ROOT_LEVEL`. `--depends-on` is repeatable; a mistyped key is warned and dropped, never fatal |
 | `/brd-reconcile` | `<BRD-KEY> [@<review-file>]` | `--sent <path>…`, `--free-text` | Only a slice is reconciled — a root stops with `BRD_RECONCILE_ROOT_LEVEL`. The review is a path you give, or the one the customer committed beside the bundle, once you confirm it |
 | `/create-prd` | `<SLICE-KEY>` | `--lean`/`--hybrid`/`--full`, `--no-docs`, `--docs <path>`, `@<path>` (extra grounding, never the seed) | A `BRD-` container is refused. Offered only where the slice's claimed rows leave none `unallocated` and one `covered-here`, and no `prd.md` is written. Defaults to `--full`. `--from-prd` is refused |
@@ -408,7 +418,7 @@ specifications/BRD-<BRD-KEY>-<slug>/
 │   ├── brd-inventory.md         # [BR#n] rows, /brd-intake
 │   ├── brd-link-log.md          # captured files' uncaptured links, with reasons, and the as-written map, /brd-intake
 │   ├── brd-figures.md           # each captured image's transcription and the rows it yields, /brd-intake; /brd-reconcile applies a customer's correction
-│   └── brd-defect-log.md        # confirmed [DEF#n] entries, /brd-intake; resolutions /brd-reconcile, and /brd-interview for an unsourced one
+│   └── brd-defect-log.md        # logged [DEF#n] entries, /brd-intake; resolutions /brd-reconcile, and /brd-interview for an unsourced one
 ├── coverage-ledger.md           # one row per [BR#n]; /brd-intake writes it, /brd-split resolves it
 ├── slices.md                    # slice rationale and deferral notes, /brd-split
 ├── design/                      # exported frame sets — one subdirectory each, images + an index; /frames indexes it, no grounding reads it (a root is never ground)
