@@ -14,7 +14,7 @@ Eight of this plugin's nine commands classify their own task before doing real w
 | [`/docs-brand`](../commands/docs-brand.md) | `MODERATE` | `docs-scaffold-reviewer`, on the standalone path only |
 | [`/docs-audit`](../commands/docs-audit.md) | `SIGNIFICANT` | `ia-planner` and `docs-audit-reviewer`, by their frontmatter |
 | [`/docs-write`](../commands/docs-write.md) | `MODERATE`, per unit | `doc-writer`, pinned to the Opus chain by the dispatch; `doc-reviewer`, by its own frontmatter |
-| [`/docs-verify`](../commands/docs-verify.md) | `MODERATE`, per unit | `walkthrough-composer` or `claim-reader`, and `doc-writer`, pinned to the Opus chain by the dispatch; `doc-reviewer`, by its own frontmatter |
+| [`/docs-verify`](../commands/docs-verify.md) | `MODERATE`, per unit | `walkthrough-composer` or `claim-reader`, and `doc-writer`, pinned to the Opus chain by the dispatch; `doc-reviewer`, by its own frontmatter; with `--prepare`, the composer alone |
 
 Every other step these commands dispatch — reading, summarising, locating, scanning, style-checking, fixing and session maintenance: `diff-summarizer`, `doc-location-finder`, `docs-style-checker`, `doc-fixer`, `release-notes-writer`, `code-scanner`, `docs-auditor`, `docs-grounder`, `/release-notes`' own style gate (`prose-style-checker` and `prose-fixer`), `/document`'s three general-purpose maintenance agents, `impl-maintenance` and, under `--skip-feedback`, `defect-reporter`, `/docs-profile`'s detection scan and direct mode's exploration — runs on the Sonnet chain, even on an Opus session, so mechanical work never burns Opus.
 
