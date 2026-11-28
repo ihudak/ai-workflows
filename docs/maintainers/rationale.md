@@ -717,9 +717,20 @@ print(total)
 
 ## docs-backlog
 
-The reasons behind four invariants of `.claude/rules/docs-workflows-backlog.md`, moved here on 2026-11-28 (DOC-D-G1 batch 4) to keep that file under its 20,000-character warning. Each rule stays in the rules file; only its reason moved, under a short form of its bullet's opening.
+The reasons behind four invariants of `.claude/rules/docs-workflows-backlog.md`, moved here on 2026-11-28 (DOC-D-G1 batch 4) to keep that file under its 20,000-character warning. Each rule stays in the rules file; only its reason moved, under a heading of its own that its bullet's `why` link names, opening with a short form of the bullet's opening.
 
-- **The line shapes and `backlog-lines.py` change in one commit.** The `--selftest` reads the out-of-shape reasons, the schema and the walkthrough example and stamp from the references themselves, so a reason added to one side and not the other turns the build red. It pins the page-level marker's phrase and the visibility marker in each program that matches them, so a reword of either side turns the build red rather than ending every unit after its review. `export` lives in `backlog-lines.py` so that the same step runs its cases: `.github/workflows/validate-catalog.yml`'s *Self-test the backlog line reader* step, which runs the `--selftest`, runs them too, where a script of its own would need a CI step of its own.
-- **A unit moves only in the commit that finishes it.** So a page that never reached its commit step carries no unit id, and `/docs-workflows:docs-audit --refresh`, which matches a page to its unit by that id, never finds it.
-- **A backlog run reads one kind of specs document.** So no scan reads, switches or pulls the specs checkout, and no other specs document reaches a page — one reason a `release` unit is refused (`/docs-write`'s Phase 1 unit test 4): reading its `release-notes.md` would add a third reader to the two that `workflows-core:phase-handoff`'s row for that file names as not reading the working copy.
-- **`/docs-verify` moves a unit in the one commit that holds its resolved page.** Its marker program removes the page-level marker at Phase 6, before any gate, so every gate reads the page as it will be committed. Neither writing agent removes it, so a writing agent's failed return never strips it. `--from` ends the unit on an entry another writer moved meanwhile, since a reading or a walk takes time and the script's own read is all `edit` re-checks.
+### docs-backlog-shapes
+
+**The line shapes and `backlog-lines.py` change in one commit.** The `--selftest` reads the out-of-shape reasons, the schema and the walkthrough example and stamp from the references themselves, so a reason added to one side and not the other turns the build red. It pins the page-level marker's phrase and the visibility marker in each program that matches them, so a reword of either side turns the build red rather than ending every unit after its review. `export` lives in `backlog-lines.py` so that the same step runs its cases: `.github/workflows/validate-catalog.yml`'s *Self-test the backlog line reader* step, which runs the `--selftest`, runs them too, where a script of its own would need a CI step of its own.
+
+### docs-backlog-move
+
+**A unit moves only in the commit that finishes it.** So a page that never reached its commit step carries no unit id, and `/docs-workflows:docs-audit --refresh`, which matches a page to its unit by that id, never finds it.
+
+### docs-backlog-specs
+
+**A backlog run reads one kind of specs document.** So no scan reads, switches or pulls the specs checkout, and no other specs document reaches a page — one reason a `release` unit is refused (`/docs-write`'s Phase 1 unit test 4): reading its `release-notes.md` would add a third reader to the two that `workflows-core:phase-handoff`'s row for that file names as not reading the working copy.
+
+### docs-backlog-verify
+
+**`/docs-verify` moves a unit in the one commit that holds its resolved page.** Its marker program removes the page-level marker at Phase 6, before any gate, so every gate reads the page as it will be committed. Neither writing agent removes it, so a writing agent's failed return never strips it. `--from` ends the unit on an entry another writer moved meanwhile, since a reading or a walk takes time and the script's own read is all `edit` re-checks.

@@ -11,7 +11,7 @@
 | know what to do with the backlog `/docs-audit` wrote | [The documentation route](docs-workflow.md) |
 | draft the page for a backlog unit, and commit it with the unit's move | [`/docs-write`](commands/docs-write.md) |
 | verify a drafted page's claims — walk a user page, or read an engineering page's in the code — and commit it with the unit's move | [`/docs-verify`](commands/docs-verify.md) |
-| prepare a user page's walk for somebody to take outside the session, then take their answers | [`/docs-verify`](commands/docs-verify.md) — `--prepare` |
+| prepare a user page's walk for somebody to take outside the session, then take their answers | [`/docs-verify`](commands/docs-verify.md) — `--prepare`, then without it |
 | document a feature from its PRD and its shipped diffs | [`/document`](commands/document.md) |
 | make a one-off prose edit in a docs repo | [`/document`](commands/document.md) — direct mode |
 | teach this plugin what a docs repository looks like | [`/docs-profile`](commands/docs-profile.md) |
