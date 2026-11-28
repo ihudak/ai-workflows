@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow semver at the plugin level.
 A section headed `— Unreleased` has not been published yet; where more than one of them stands, they all ship together in the next release.
 
+## [1.101.6] — 2026-11-28
+
+DOC-D-G1, sub-project 2, batch 4: the family map accounts for the walk outside the session that `docs-workflows` 1.47.0's `/docs-workflows:docs-verify --prepare` ships. **What changes for you.** Nothing a run does or prints: one sentence of `docs/family-map.md` now names the `prepare` commit among `/docs-verify`'s commits. Released with `docs-workflows` 1.47.0. No run decides anything by the family map's words, so neither release needs the other. 1.101.6 carries 1.101.5 and the chain before it, 1.101.4 and 1.101.3, so the 1.101.3 bullet of `.claude/rules/plugin-updates-coupling.md` applies to it.
+
+### Changed
+
+- **`docs/family-map.md`, the *Reading it* note on the audit backlog's units** (:198), a truth edit. The sentence enumerates what `/docs-verify` commits — the page with the unit's move to `verified`, the record of why a claim does not resolve, and a walk that does not finish — so beside `docs-workflows` 1.47.0 it left out the `prepare` commit that release makes. It now adds: "with `--prepare`, it commits a user page's walkthrough, stamped and holding no answer, and prints a checklist for a walk outside the session, whose answers a later run takes, the unit staying `drafted`."
+
+### Departures from the plan
+
+- **The plan said batch 4 changes no `workflows-core` file.** `docs/superpowers/plans/2026-11-17-doc-d-g1-docs-verify.md`, *Global Constraints*: "Batches 1, 3 and 4 change no file under `plugins/workflows-core/`", so that `workflows-core` would take one minor. The batch's controller ruled this one site in: `--prepare` made the sentence false, and the plan's alternative — report it and leave it — would have shipped it false. So batch 4 releases this patch, as batch 3 released 1.101.5. Only that one page sentence changes: no reference, generated part, script or GIT-G1 file does.
+
 ## [1.101.5] — 2026-11-27
 
 DOC-D-G1, sub-project 2, batch 3: the shared references and pages account for the walk of a user page that `docs-workflows` 1.46.0's `/docs-workflows:docs-verify` ships. **What changes for you.** Nothing a run does or prints: the shared references and pages that describe `/docs-verify` now account for its walk of a user page — an agent count, a list and a sentence narrowed to engineering pages, and pages and a sentence saying it walks one — one of them a truth edit for the GIT-G1 owner. Released with `docs-workflows` 1.46.0 and `dev-workflows` 4.71.10; no run decides anything by these words, so neither needs this release, nor it them. 1.101.5 carries 1.101.4 and 1.101.3, so the 1.101.3 bullet of `.claude/rules/plugin-updates-coupling.md` applies to it.
