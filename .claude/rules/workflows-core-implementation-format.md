@@ -3,11 +3,12 @@ paths:
   - "plugins/workflows-core/**"
   - "plugins/*/commands/*.md"
   - "plugins/*/agents/*.md"
+  - "plugins/*/references/**"
 ---
 
 # workflows-core — the implementation-format authority
 
-Loaded with `.claude/rules/workflows-core.md`, whose `paths:` it shares: the commands and agents that cite the reference, `unit-branch`'s callers among them, are in other plugins. Split out of `.claude/rules/workflows-core.md` to keep that file under 20,000 characters; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
+Loaded with `.claude/rules/workflows-core.md`, whose `paths:` it shares, and with every reference file: commands, agents and references in other plugins cite the reference, `unit-branch`'s callers among them. Split out of `.claude/rules/workflows-core.md` to keep that file under 20,000 characters; repo-wide rules are in `CLAUDE.md`; evidence is in `docs/maintainers/rationale.md`.
 
 ## Authority
 

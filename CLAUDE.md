@@ -106,7 +106,7 @@ The table abbreviates each file's `paths:` frontmatter, which is authoritative: 
 | `workflows-core-bounded-run.md` | `*/scripts/`: `bounded.py`, `tree-snapshot.py`, `run-folder.py`; `*/commands/*.md`, `*/agents/*.md`, `*/references/**`; `.github/workflows/validate-catalog.yml` (repo root) | the bounded-run authority and the copied-scripts rule |
 | `workflows-core-run-folder.md` | `*/scripts/run-folder.py`, `*/commands/*.md`, `*/agents/*.md`, `*/references/**` | the run-folder authority and its invariants |
 | `workflows-core-triage.md` | as `workflows-core.md` | the finding-triage authority |
-| `workflows-core-implementation-format.md` | as `workflows-core.md` | the implementation-format authority |
+| `workflows-core-implementation-format.md` | as `workflows-core.md`, plus `*/references/**` | the implementation-format authority |
 | `workflows-core-git.md` | `workflows-core/scripts/`: `session-branch.py`, `specs-git.py`, `specs_git_state.py`, `specs_git_lines.py`; `workflows-core/skills/specs-git/**`; `*/commands/*.md`, `*/references/**` (the git references among them), `*/agents/*.md` | git authorities and invariants |
 | `workflows-core-read-only.md` | as `workflows-core-git.md` | the read-only-repos authority |
 | `workflows-core-handoff.md` | as `workflows-core-git.md` | the `phase-handoff` authority |
@@ -188,6 +188,6 @@ Each reference below is the **single source of truth** for what it owns; `<plugi
 
 - `origin` → `git@github.com:ihudak/ai-workflows.git`
 - Default branch: `main`
-- **Verify the current branch immediately before every commit — `git branch --show-current`.** The branch checked at the start of a run is not evidence about the branch you are on now. ([why](docs/maintainers/rationale.md#verify-branch-before-commit))
-- **When work must land on `main` while this tree sits on another branch, use `git worktree add` — never `git checkout` here.** Cherry-pick or commit in the temporary worktree, run the gates there, push from there, then `git worktree remove`. Leave another session's branch exactly as you found it: not rewritten, not deleted, not pushed. ([why](docs/maintainers/rationale.md#worktree-not-checkout))
+- **Verify the current branch immediately before every commit — `git branch --show-current`.** This checkout can be shared by more than one agent session at once, and a `git checkout` in any of them moves the working tree for all of them. The branch checked at the start of a run is not evidence about the branch you are on now. ([why](docs/maintainers/rationale.md#verify-branch-before-commit))
+- **When work must land on `main` while this tree sits on another branch, use `git worktree add` — never `git checkout` here.** Switching this tree yanks it out from under whoever else is working in it. Cherry-pick or commit in the temporary worktree, run the gates there, push from there, then `git worktree remove`. Leave another session's branch exactly as you found it: not rewritten, not deleted, not pushed. ([why](docs/maintainers/rationale.md#worktree-not-checkout))
 - **Never bare `git stash`** — the stash stack is shared with every worktree and session; use a WIP commit, or `git stash push -u -m <tag>` and `apply <sha>`.
