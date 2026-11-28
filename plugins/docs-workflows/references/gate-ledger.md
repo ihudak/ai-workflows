@@ -195,9 +195,9 @@ block to its review gate with the §6 contract. Nothing in §2, §3, or §5 is `
 
 | Gate id | Phase | Precondition | Primary | Fallback |
 |---|---|---|---|---|
-| `toolchain_preflight` | 0 | as §9 | as §9 | none |
+| `toolchain_preflight` | 0 | as §9, outside a prepare | as §9 | none |
 | `repo_checklist` | 7 | as §9 | `repo_verification_gates` applied to the page | none |
 | `style_check` | 7 | as §9 | as §9 | `prose-style-checker` alone |
 | `build_check` | 8 | as §9 | as §9 | none |
 
-§9's paragraphs *One ledger per unit* and *`build_check` decides whether the unit moves*, and its last paragraph, hold here as written, `/docs-verify`'s phases in place of `/docs-write`'s: a run verifies one unit, so it keeps one ledger. The block goes to `doc-reviewer` under an apply brief, whose Verification-gate integrity row reads it against this section and §6 (`docs-iteration/unit-brief.md` §4.6).
+§9's paragraphs *One ledger per unit* and *`build_check` decides whether the unit moves*, and its last paragraph, hold here as written, `/docs-verify`'s phases in place of `/docs-write`'s: a run verifies one unit, so it keeps one ledger — save **a prepare** (`--prepare`), which keeps none: it runs no gate of this registry, its Phase 0 skipping the toolchain preflight, writes nothing to the page and dispatches no `doc-reviewer`, so no ledger exists for §8's rule on an omitted row to bind, and its report says that no gate ran. The block goes to `doc-reviewer` under an apply brief, whose Verification-gate integrity row reads it against this section and §6 (`docs-iteration/unit-brief.md` §4.6).
