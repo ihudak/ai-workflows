@@ -372,7 +372,7 @@ The *reads more* cases of the `workflows-core` 1.45.0 coupling bullet in `.claud
 
 ## verify-branch-before-commit
 
-That is not hypothetical: one session branched away from `main` between two commits of another session's run, and the second commit — a fix for a release-gating defect — landed on the unrelated feature branch, where a `git push origin main` would have left it behind.
+The repository's checkout can be shared by more than one agent session at once, and a `git checkout` in any of them moves the working tree for all of them. That is not hypothetical: one session branched away from `main` between two commits of another session's run, and the second commit — a fix for a release-gating defect — landed on the unrelated feature branch, where a `git push origin main` would have left it behind. (The opening sentence moved here from `CLAUDE.md` § Git to keep that file under its 36,000-character warning.)
 
 ## docs-workflows-not-a-dependency
 
@@ -397,7 +397,7 @@ A trailing `echo "EXIT=$?"` prints the **chain's** status correctly — `$?` exp
 
 ## worktree-not-checkout
 
-A duplicate commit on another session's branch is theirs to resolve and, where the content is identical, merges cleanly.
+Switching the shared checkout yanks it out from under whoever else is working in it (shared as [verify-branch-before-commit](#verify-branch-before-commit) says). A duplicate commit on another session's branch is theirs to resolve and, where the content is identical, merges cleanly. (The opening sentence moved here from `CLAUDE.md` § Git to keep that file under its 36,000-character warning.)
 
 ## verifier-blind-batched
 
