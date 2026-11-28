@@ -2408,12 +2408,13 @@ unset acts on the reused answer for each row still open.
   reads. Then each row so recorded is applied forward as an answer is (*Then the answer is applied
   forward*, below), in the rows' order.
 - ***Let me name the exceptions*** — ask in plain text which rows, by address, gate
-  `p6-table-<sitting>.which`. First write the qids named, as one JSON list, with
+  `p6-table-<sitting>.which`. A name matching no row is asked about once more, and the row its answer
+  names, where it names one, is named too. Then, before any row is recorded or applied forward, write the qids of
+  every row named, those the re-ask resolved among them, as one JSON list, with
   `put <folder> 'scratch/p6/exceptions-<sitting>.json' --from -` — a resumed run that finds the file
-  reads it and builds none — or held by the run where the run folder is unavailable: they join the
-  put-singly set (*The end-of-sitting list*, below). Each row named stays open and is put singly in
-  its turn, and every other is recorded as on *Accept all as recommended*. A name matching no row is
-  asked about once more.
+  reads it, builds none and asks no name again — or held by the run where the run folder is
+  unavailable: they join the put-singly set (*The end-of-sitting list*, below). Each row named stays
+  open and is put singly in its turn, and every other is recorded as on *Accept all as recommended*.
 - **A typed answer is read as the option it expresses** (§4): one naming rows is the second option
   with those names given, and one accepting the rows is the first; one clarifying question, in
   plain text, is asked only where it maps to no option, and the same dialog is never put twice.
@@ -2845,8 +2846,8 @@ answer is a re-decision* says, no result of this answer proposing again.
 1. **Coverage first** (§8 step 1). Where the answer chose one of the options its question was put
    with, each question its `covers` names that the registry records open and not carried — of any
    round (§8, *Reach*) — is recorded applied from it, save one the applier's input below leaves
-   out (in the skip set, putting a record again, or a `[V]` a later tie picker may tie), and save
-   one of the put-singly set (*The end-of-sitting list*, below), each of which stays open, to be
+   out — in the skip set, putting a record again, a `[V]` a later tie picker may tie, or one of the
+   put-singly set (*The end-of-sitting list*, below) — each of which stays open, to be
    asked: `record --sitting <the sitting>`, event `applied`, `decision` the next
    `[VD#n]`, `applied_from` the answer's `[VD#n]`, `answer` the covered question's text as the
    registry holds it, then ` — `, then the option chosen, so that the decision reads on its own,
@@ -2860,9 +2861,11 @@ answer is a re-decision* says, no result of this answer proposing again.
    round, carried or not — its `carried` field telling the applier the one rule a carried question
    takes (§8) — outside the skip set,
    other than a question putting a record again — its `- **Re-puts:**` line, or this run's tie
-   picker's answer, naming one — and other than a `[V]` whose `[V]` tag is on file with no such line
+   picker's answer, naming one — other than a `[V]` whose `[V]` tag is on file with no such line
    and no such answer, which a later run's tie picker may yet tie (*Tag every question*, *The
-   question registry*). Write its input as indented JSON,
+   question registry*), and other than a question of the put-singly set (*The end-of-sitting list*,
+   below), which the operator asked to answer and no later answer's application closes. Write its
+   input as indented JSON,
    `{"answer": {"qid": <the answered question's>, "decision": <its [VD#n]>, "statement": …, "chosen": …, "argumentation": …}, "candidates": [each such question, as the registry file holds it, in the file's order], "decisions": [...]}`,
    `decisions` being the planner's (*Tag every question*, *Then merge*) followed by each `[VD#n]`
    this run has taken so far, as `{"id", "statement", "chosen", "argumentation"}` — an asked one
@@ -3047,10 +3050,11 @@ choices: ["All correct (Recommended)", "Let me name the ones to reopen (you'll b
   was, by `reopen --follows`, is not in it. A question of the set is put singly in its turn — one
   of another round by a run that works that round — and for the rest of this run no sitting's plan
   records it applied (*Each sitting opens with its plan*), no table keeps it as a row (*The tail
-  table*), and no strategic answer closes it through its coverage (*Then the answer is applied
-  forward*, step 1). Otherwise the next plan, re-deriving it
-  from the decision it was applied from, would close it again, and the operator's reopen would never
-  reach a question.
+  table*), no strategic answer closes it through its coverage (*Then the answer is applied
+  forward*, step 1), and `answer-applier` is never given it after a later answer (*Then the answer
+  is applied forward*, step 2), so no application of that answer closes it. Otherwise the next plan, re-deriving it
+  from the decision it was applied from, would close it again, or a later answer's applier would,
+  and the operator's reopen would never reach a question.
 - **A typed answer is read as the option it expresses** (`workflows-core:question-budget` §4); one
   naming questions is the second option with those names given. A name that matches nothing listed
   is asked about once more.

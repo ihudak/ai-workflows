@@ -202,12 +202,14 @@ every question that answer determines, worded the same or not, across every open
 (*Reach*). **The next question shown is never one an answer has already closed.**
 
 1. **Coverage first.** Each question the answered one `covers` is closed as applied from it, its
-   reason the coverage, where the answer chose one of the options. A free-text answer that chose
-   none sends its coverage to the applier with the rest.
-2. **The applier reads the rest** — given the answer, the open questions the coverage did not close,
-   and the decisions on file — and returns per question **determined** (the derived answer, the
-   decision it follows and a one-line reason), **narrowed** (the question rewritten to what is still
-   open) or **untouched**.
+   reason the coverage, where the answer chose one of the options — save one the person asked to
+   answer themselves (§10), which stays open. A free-text answer that chose none sends its coverage
+   to the applier with the rest.
+2. **The applier reads the rest** — given the answer, the decisions on file and the open questions
+   the coverage did not close, less every one the person asked to answer themselves (§10), which it
+   is never given — and returns per question **determined** (the derived answer, the decision it
+   follows and a one-line reason), **narrowed** (the question rewritten to what is still open) or
+   **untouched**.
 3. **It closes only what it can derive in one line.** A question it cannot derive with confidence
    is narrowed or left untouched, never closed on a guess; it stays for a later sitting, where its
    recommendation may cite the answer.
@@ -238,7 +240,8 @@ package shows.
 next interview surfaces it with that answer as its recommendation.
 
 **Reach.** Applying forward, narrowing and merging reach every open question on file in the slice —
-every round, rounds written before this rulebook included — save a carried `[C]`.
+every round, rounds written before this rulebook included — save a carried `[C]`, and, for applying
+forward and narrowing, a question the person asked to answer themselves (§10).
 
 **What is on file.** This slice's `decisions.md`, the registers of its sibling slices under the same
 parent, and those of each BRD its `depends-on:` resolves to, a decision outside the slice cited in
@@ -294,8 +297,9 @@ It asks **once**: all correct, or name the ones — or a whole group — to reop
 is open in the registry again, and so is every answer applied from its decision, in turn; an undone
 merge or drop reopens the question it closed. **A question the person names to reopen here, or as
 an exception to a table (§9), is put singly in its turn**: for the rest of the run no later plan
-records it applied or puts it in a table, and no strategic answer closes it through its coverage
-(§8 step 1), so what the person asked to answer is never closed again without being asked.
+records it applied or puts it in a table, no strategic answer closes it through its coverage
+(§8 step 1), and the applier is never given it after a later answer (§8 step 2), so what the person
+asked to answer is never closed again without being asked.
 Because the list comes before the write, a question reopened there was never recorded as decided.
 The list counts nothing against the budget, and a sitting that closed nothing this way shows none. A merge or drop made before a sitting's first question is recorded with that
 sitting's number, so that its list shows it.

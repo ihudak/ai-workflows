@@ -12,9 +12,10 @@ it returns and the checks it makes before it writes; it does not restate the rul
 
 Read one answer against the open questions. The caller — `/brd-interview`, after each answer,
 strategic or detailed, asked or confirmed in a table — has already closed each question the answered
-one `covers` where the answer chose one of its options (§8 step 1). It hands this agent the answer,
-the open questions that coverage did not close and the decisions on file, and records what this
-agent returns in the run's registry: a determined question as an applied answer, a narrowed one as
+one `covers` where the answer chose one of its options, save one the person asked to answer
+themselves (§8 step 1). It hands this agent the answer, the decisions on file and the open
+questions that coverage did not close — never one the person asked to answer themselves (§10) — and
+records what this agent returns in the run's registry: a determined question as an applied answer, a narrowed one as
 its new text, a proposal as a proposed answer, a re-tag as a re-tag (rulebook §12). **This agent
 closes nothing itself.** It never runs the registry script, never reads the registry, and asks no one
 anything.
@@ -47,7 +48,8 @@ The file at `input_path` holds one JSON object:
   `qid`, `tag` (`V`, `C` or `DEF`), `text`, `rows`, `findings`, `strategic`, `covers`, `carried`,
   `rank`, `recommendation`, `confidence`, and the `state` fields of a question read back from the
   registry. They are the open questions on file in the slice that the coverage did not close (§8,
-  *Reach*), carried `[C]`s among them.
+  *Reach*), carried `[C]`s among them, never one the person asked to answer themselves (§10), which
+  the caller keeps out.
 - `decisions` — the decisions on file (§8, *What is on file*), one outside the slice by its cross-BRD
   id.
 
